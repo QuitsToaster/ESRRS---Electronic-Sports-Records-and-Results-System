@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\School;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+
+class SchoolController extends Controller
+{
+    public function index()
+    {
+        $schools = School::all();
+        return view('schools.index', compact('schools'));
+    }
+
+    public function create()
+    {
+        return view('schools.create');
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name'=>'required|string|unique:schools',
+            'division'=>'required|string',
+            'province'=>'nullable|string',
+            'city'=>'nullable|string',
+            'logo'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $data = $request->only(['name','division','province','city']);
+
+        if ($request->hasFile('logo')) {
+            $data['logo'] = $request->file('logo')->store('logos','public');
+        }
+
+        School::create($data);
+
+        return redirect()->route('schools.index')->with('success','School added successfully!');
+    }
+
+    public function edit(School $school)
+    {
+        return view('schools.edit', compact('school'));
+    }
+
+    public function update(Request $request, School $school)
+    {
+        $request->validate([
+            'name'=>'required|string|unique:schools,name,'.$school->id,
+            'division'=>'required|string',
+            'province'=>'nullable|string',
+            'city'=>'nullable|string',
+            'logo'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        $data = $request->only(['name','division','province','city']);
+
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($school->logo) Storage::disk('public')->delete($school->logo);
+
+            $data['logo'] = $request->file('logo')->store('logos','public');
+        }
+
+        $school->update($data);
+
+        return redirect()->route('schools.index')->with('success','School updated successfully!');
+    }
+
+    public function destroy(School $school)
+    {
+        if ($school->logo) Storage::disk('public')->delete($school->logo);
+
+        $school->delete();
+
+        return redirect()->route('schools.index')->with('success','School deleted successfully!');
+    }
+}
