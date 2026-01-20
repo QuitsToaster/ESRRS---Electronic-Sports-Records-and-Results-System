@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Sports Categories</h1>
+    <h1 class="text-2xl font-bold text-gray-800">Sports Categories</h1>
     <a href="{{ route('sports.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
         + Add Sport
     </a>
@@ -16,20 +16,20 @@
     </div>
 @endif
 
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 overflow-x-auto">
-    <table class="min-w-full border border-gray-200 dark:border-gray-700">
-        <thead class="bg-blue-200 dark:bg-blue-900">
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto">
+    <table class="min-w-full border-collapse">
+        <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
-                <th class="px-6 py-3 text-left font-medium text-gray-700 dark:text-gray-200 uppercase">ID</th>
-                <th class="px-6 py-3 text-left font-medium text-gray-700 dark:text-gray-200 uppercase">Name</th>
-                <th class="px-6 py-3 text-right font-medium text-gray-700 dark:text-gray-200 uppercase">Actions</th>
+                <th class="px-6 py-3 text-left font-medium text-gray-700 uppercase">ID</th>
+                <th class="px-6 py-3 text-left font-medium text-gray-700 uppercase">Name</th>
+                <th class="px-6 py-3 text-right font-medium text-gray-700 uppercase">Actions</th>
             </tr>
         </thead>
         <tbody>
             @forelse($sports as $sport)
-                <tr class="{{ $loop->even ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800' }}">
-                    <td class="px-6 py-4 text-gray-800 dark:text-gray-200">{{ $sport->id }}</td>
-                    <td class="px-6 py-4 text-gray-800 dark:text-gray-200">{{ $sport->name }}</td>
+                <tr class="{{ $loop->even ? 'bg-gray-50' : 'bg-white' }}">
+                    <td class="px-6 py-4">{{ $sport->id }}</td>
+                    <td class="px-6 py-4">{{ $sport->name }}</td>
                     <td class="px-6 py-4 text-right">
                         <a href="{{ route('sports.edit', $sport->id) }}" class="text-blue-600 hover:text-blue-800 font-semibold mr-2">Edit</a>
                         <form action="{{ route('sports.destroy', $sport->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this sport?');">
@@ -41,11 +41,10 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3" class="px-6 py-4 text-center text-gray-500 dark:text-gray-300">No sports found.</td>
+                    <td colspan="3" class="px-6 py-4 text-center text-gray-500">No sports found.</td>
                 </tr>
             @endforelse
         </tbody>
     </table>
 </div>
 @endsection
-    

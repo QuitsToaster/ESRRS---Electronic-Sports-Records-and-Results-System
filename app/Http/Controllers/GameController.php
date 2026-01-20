@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\Event;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class GameController extends Controller
 {
     public function index()
     {
-        $games = Game::with('event')->get();
+        $games = Game::with('event')->orderBy('game_time', 'asc')->get();
         return view('games.index', compact('games'));
     }
 
@@ -30,7 +32,17 @@ class GameController extends Controller
             'venue' => 'required|string',
         ]);
 
-        Game::create($request->all());
+        $game = Game::create($request->all());
+
+        // Audit log for creation
+        AuditLog::create([
+            'model_type' => 'Game',
+            'model_id' => $game->id,
+            'user_id' => Auth::id(),
+            'old_values' => null,
+            'new_values' => json_encode($game->toArray()),
+            'action' => 'Created Game: '.$game->team_a.' vs '.$game->team_b,
+        ]);
 
         return redirect()->route('games.index')->with('success', 'Game created successfully!');
     }
@@ -54,14 +66,39 @@ class GameController extends Controller
             'venue' => 'required|string',
         ]);
 
+        $oldValues = $game->toArray(); // store old data
+
         $game->update($request->all());
+
+        // Audit log for update
+        AuditLog::create([
+            'model_type' => 'Game',
+            'model_id' => $game->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($game->toArray()),
+            'action' => 'Updated Game: '.$game->team_a.' vs '.$game->team_b,
+        ]);
 
         return redirect()->route('games.index')->with('success', 'Game updated successfully!');
     }
 
     public function destroy(Game $game)
     {
+        $oldValues = $game->toArray();
+
         $game->delete();
+
+        // Audit log for deletion
+        AuditLog::create([
+            'model_type' => 'Game',
+            'model_id' => $game->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => null,
+            'action' => 'Deleted Game: '.$game->team_a.' vs '.$game->team_b,
+        ]);
+
         return redirect()->route('games.index')->with('success', 'Game deleted successfully!');
     }
 }

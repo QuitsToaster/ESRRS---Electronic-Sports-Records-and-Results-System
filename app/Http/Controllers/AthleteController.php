@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Models\Athlete;
 use App\Models\School;
 use App\Models\Sport;
+use App\Models\AuditLog;
+use Illuminate\Support\Facades\Auth;
 
 class AthleteController extends Controller
 {
@@ -19,7 +21,7 @@ class AthleteController extends Controller
     {
         $schools = School::all();
         $sports = Sport::all();
-        return view('athletes.create', compact('schools','sports'));
+        return view('athletes.create', compact('schools', 'sports'));
     }
 
     public function store(Request $request)
@@ -33,7 +35,18 @@ class AthleteController extends Controller
             'status' => 'required|in:Active,Disqualified,Injured'
         ]);
 
-        Athlete::create($request->all());
+        $athlete = Athlete::create($request->all());
+
+        // Audit log for creation
+        AuditLog::create([
+            'model_type' => 'Athlete',
+            'model_id' => $athlete->id,
+            'user_id' => Auth::id(),
+            'old_values' => null,
+            'new_values' => json_encode($athlete->toArray()),
+            'action' => 'Created Athlete: '.$athlete->name,
+        ]);
+
         return redirect()->route('athletes.index')->with('success', 'Athlete added successfully!');
     }
 
@@ -41,7 +54,7 @@ class AthleteController extends Controller
     {
         $schools = School::all();
         $sports = Sport::all();
-        return view('athletes.edit', compact('athlete','schools','sports'));
+        return view('athletes.edit', compact('athlete', 'schools', 'sports'));
     }
 
     public function update(Request $request, Athlete $athlete)
@@ -55,13 +68,39 @@ class AthleteController extends Controller
             'status' => 'required|in:Active,Disqualified,Injured'
         ]);
 
+        $oldValues = $athlete->toArray(); // store old data
+
         $athlete->update($request->all());
+
+        // Audit log for update
+        AuditLog::create([
+            'model_type' => 'Athlete',
+            'model_id' => $athlete->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($athlete->toArray()),
+            'action' => 'Updated Athlete: '.$athlete->name,
+        ]);
+
         return redirect()->route('athletes.index')->with('success', 'Athlete updated successfully!');
     }
 
     public function destroy(Athlete $athlete)
     {
+        $oldValues = $athlete->toArray();
+
         $athlete->delete();
+
+        // Audit log for deletion
+        AuditLog::create([
+            'model_type' => 'Athlete',
+            'model_id' => $athlete->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => null,
+            'action' => 'Deleted Athlete: '.$athlete->name,
+        ]);
+
         return redirect()->route('athletes.index')->with('success', 'Athlete deleted successfully!');
     }
 }

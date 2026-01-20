@@ -3,8 +3,12 @@
 @section('page-title', 'Edit Athlete')
 
 @section('content')
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6 max-w-lg">
-    <h1 class="text-xl font-bold mb-4">Edit Athlete</h1>
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
+
+    <h1 class="text-2xl font-bold text-gray-800 mb-2">Edit Athlete</h1>
+    <p class="text-sm text-gray-600 mb-6">
+        Update the details of the athlete.
+    </p>
 
     <form action="{{ route('athletes.update', $athlete->id) }}" method="POST">
         @csrf

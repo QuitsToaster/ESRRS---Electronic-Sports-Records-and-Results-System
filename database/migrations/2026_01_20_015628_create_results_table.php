@@ -12,9 +12,14 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('results', function (Blueprint $table) {
-            $table->id();
-            $table->timestamps();
-        });
+        $table->id();
+        $table->foreignId('school_id')->constrained()->onDelete('cascade');
+        $table->foreignId('athlete_id')->nullable()->constrained()->onDelete('cascade');
+        $table->foreignId('event_id')->constrained()->onDelete('cascade');
+        $table->enum('medal', ['Gold', 'Silver', 'Bronze']);
+        $table->timestamps();
+    });
+
     }
 
     /**

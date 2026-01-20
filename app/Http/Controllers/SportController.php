@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Sport; // ✅ Import the model
+use App\Models\Sport;
+use App\Models\AuditLog;
+use Illuminate\Support\Facades\Auth;
 
 class SportController extends Controller
 {
@@ -33,8 +35,18 @@ class SportController extends Controller
             'name' => 'required|string|unique:sports,name'
         ]);
 
-        Sport::create([
+        $sport = Sport::create([
             'name' => $request->name
+        ]);
+
+        // Audit log for creation
+        AuditLog::create([
+            'model_type' => 'Sport',
+            'model_id' => $sport->id,
+            'user_id' => Auth::id(),
+            'old_values' => null,
+            'new_values' => json_encode($sport->toArray()),
+            'action' => 'Created Sport: '.$sport->name,
         ]);
 
         return redirect()->route('sports.index')->with('success', 'Sport added successfully!');
@@ -60,8 +72,20 @@ class SportController extends Controller
             'name' => 'required|string|unique:sports,name,' . $sport->id
         ]);
 
+        $oldValues = $sport->toArray();
+
         $sport->update([
             'name' => $request->name
+        ]);
+
+        // Audit log for update
+        AuditLog::create([
+            'model_type' => 'Sport',
+            'model_id' => $sport->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($sport->toArray()),
+            'action' => 'Updated Sport: '.$sport->name,
         ]);
 
         return redirect()->route('sports.index')->with('success', 'Sport updated successfully!');
@@ -73,7 +97,19 @@ class SportController extends Controller
     public function destroy($id)
     {
         $sport = Sport::findOrFail($id);
+        $oldValues = $sport->toArray();
+
         $sport->delete();
+
+        // Audit log for deletion
+        AuditLog::create([
+            'model_type' => 'Sport',
+            'model_id' => $sport->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => null,
+            'action' => 'Deleted Sport: '.$sport->name,
+        ]);
 
         return redirect()->route('sports.index')->with('success', 'Sport deleted successfully!');
     }

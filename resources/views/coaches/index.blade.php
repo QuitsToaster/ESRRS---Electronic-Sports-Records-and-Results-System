@@ -4,7 +4,11 @@
 
 @section('content')
 <div class="flex justify-between items-center mb-4">
-    <h1 class="text-2xl font-bold text-gray-800 dark:text-gray-100">Coaches</h1>
+    <div>
+        <p class="text-sm text-gray-600 mt-1">
+            List of coaches registered in the system
+        </p>
+    </div>
     <a href="{{ route('coaches.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
         + Add Coach
     </a>
@@ -16,9 +20,10 @@
     </div>
 @endif
 
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-4 overflow-x-auto">
-    <table class="min-w-full border border-gray-200 dark:border-gray-700">
-        <thead class="bg-blue-200 dark:bg-blue-900">
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto">
+
+    <table class="min-w-full border-collapse">
+        <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
                 <th class="px-4 py-2 text-left">Name</th>
                 <th class="px-4 py-2 text-left">School</th>
@@ -26,9 +31,9 @@
                 <th class="px-4 py-2 text-right">Actions</th>
             </tr>
         </thead>
-        <tbody>
+        <tbody class="divide-y divide-gray-200">
             @forelse($coaches as $coach)
-                <tr class="{{ $loop->even ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800' }}">
+                <tr class="hover:bg-gray-50 transition">
                     <td class="px-4 py-2">{{ $coach->name }}</td>
                     <td class="px-4 py-2">{{ $coach->school->name }}</td>
                     <td class="px-4 py-2">{{ $coach->sport->name }}</td>

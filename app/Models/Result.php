@@ -6,5 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class Result extends Model
 {
-    //
+    public function results()
+    {
+        return $this->hasMany(Result::class);
+    }
 }

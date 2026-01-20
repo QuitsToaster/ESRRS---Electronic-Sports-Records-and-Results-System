@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Sport;
 use App\Models\Coach;
 use App\Models\Game;
+use App\Models\Result; 
 
 class DashboardController extends Controller
 {
@@ -22,14 +23,38 @@ class DashboardController extends Controller
         $gamesCount = Game::count();
         $ongoingGamesCount = Game::where('status', 'Ongoing')->count();
 
-        // Fetch live games (Upcoming + Ongoing)
+        // Live Games (Upcoming + Ongoing)
         $liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing'])
-                        ->orderBy('start_time', 'asc')
+                        ->orderBy('game_time', 'asc')
                         ->get();
 
+        // Medal Tally per school
+        // Assuming 'results' table has: school_id, gold, silver, bronze
+        $medalTally = School::withCount([
+            'results as gold' => function ($query) {
+                $query->where('medal', 'Gold');
+            },
+            'results as silver' => function ($query) {
+                $query->where('medal', 'Silver');
+            },
+            'results as bronze' => function ($query) {
+                $query->where('medal', 'Bronze');
+            },
+        ])->get()
+        ->map(function ($school) {
+            $school->total = $school->gold + $school->silver + $school->bronze;
+            return $school;
+        })
+        ->sortByDesc('total') // sort by total medals
+        ->values()
+        ->map(function ($school, $index) {
+            $school->rank = $index + 1; // assign rank
+            return $school;
+        });
+
         return view('dashboard', compact(
-            'schoolsCount', 'athletesCount', 'eventsCount', 'sportsCount', 
-            'coachesCount', 'gamesCount', 'ongoingGamesCount', 'liveGames'
+            'schoolsCount', 'athletesCount', 'eventsCount', 'sportsCount',
+            'coachesCount', 'gamesCount', 'ongoingGamesCount', 'liveGames', 'medalTally'
         ));
     }
 }

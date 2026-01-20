@@ -85,32 +85,43 @@
 </div>
 
 {{-- Live Games Table --}}
-<div class="bg-white dark:bg-gray-800 shadow rounded-lg p-6">
-    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-100 mb-4">Live Games</h2>
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto p-4 mb-6">
+
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Live Games</h2>
+
     @if($liveGames->isEmpty())
-        <div class="text-gray-500 dark:text-gray-300">No upcoming or ongoing games.</div>
+        <div class="text-gray-500 dark:text-gray-300 text-center py-6">No upcoming or ongoing games.</div>
     @else
         <div class="overflow-x-auto">
-            <table class="min-w-full border border-gray-200 dark:border-gray-700">
-                <thead class="bg-gray-50 dark:bg-gray-900">
+            <table class="min-w-full border border-gray-200 rounded-lg">
+                <thead class="bg-gray-100 border-b border-gray-300">
                     <tr>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200">Game</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200">Event</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200">Team A</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200">Team B</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200">Score</th>
-                        <th class="px-4 py-2 text-left text-gray-700 dark:text-gray-200">Status</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Event</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Team A</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Team B</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Score</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Status</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Time</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody class="divide-y divide-gray-200">
                     @foreach($liveGames as $game)
-                        <tr class="{{ $loop->even ? 'bg-gray-50 dark:bg-gray-700' : 'bg-white dark:bg-gray-800' }}">
-                            <td class="px-4 py-2">{{ $game->name }}</td>
-                            <td class="px-4 py-2">{{ $game->event->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $game->team_a }}</td>
-                            <td class="px-4 py-2">{{ $game->team_b }}</td>
-                            <td class="px-4 py-2 font-bold">{{ $game->score_a ?? 0 }} - {{ $game->score_b ?? 0 }}</td>
-                            <td class="px-4 py-2">{{ $game->status }}</td>
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-3">{{ $game->event->name ?? '-' }}</td>
+                            <td class="px-6 py-3">{{ $game->team_a }}</td>
+                            <td class="px-6 py-3">{{ $game->team_b }}</td>
+                            <td class="px-6 py-3 font-bold">{{ $game->score_a ?? 0 }} - {{ $game->score_b ?? 0 }}</td>
+                            <td class="px-6 py-3">
+                                <span class="
+                                    @if($game->current_status === 'Upcoming') text-blue-600
+                                    @elseif($game->current_status === 'Ongoing') text-green-600
+                                    @else text-gray-600
+                                    @endif
+                                    font-semibold">
+                                    {{ $game->current_status }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-3">{{ $game->game_time->format('M d, Y h:i A') }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -118,4 +129,43 @@
         </div>
     @endif
 </div>
+
+{{-- Real-Time Medal Tally --}}
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto p-4">
+
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Medal Tally</h2>
+
+    @if($medalTally->isEmpty())
+        <div class="text-gray-500 dark:text-gray-300 text-center py-6">No medal data available.</div>
+    @else
+        <div class="overflow-x-auto">
+            <table class="min-w-full border border-gray-200 rounded-lg">
+                <thead class="bg-gray-100 border-b border-gray-300">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-gray-800">School</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Gold</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Silver</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Bronze</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Total</th>
+                        <th class="px-6 py-3 text-left text-gray-800">Rank</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach($medalTally as $school)
+                        <tr class="hover:bg-gray-50 transition">
+                            <td class="px-6 py-3">{{ $school->name }}</td>
+                            <td class="px-6 py-3 font-bold text-yellow-500">{{ $school->gold }}</td>
+                            <td class="px-6 py-3 font-bold text-gray-400">{{ $school->silver }}</td>
+                            <td class="px-6 py-3 font-bold text-orange-500">{{ $school->bronze }}</td>
+                            <td class="px-6 py-3 font-bold">{{ $school->total }}</td>
+                            <td class="px-6 py-3 font-semibold">{{ $school->rank }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</div>
+
+
 @endsection

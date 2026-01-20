@@ -8,6 +8,8 @@ use App\Http\Controllers\EventController;
 use App\Http\Controllers\AthleteController;
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\AnnouncementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,6 +38,11 @@ Route::middleware('auth')->group(function () {
 Route::resource('athletes', AthleteController::class)->middleware('auth');
 Route::resource('coaches', CoachController::class)->middleware('auth');
 Route::resource('games', GameController::class)->middleware('auth');
+
+Route::resource('audit-logs', AuditLogController::class)->only(['index']);
+
+
+Route::resource('announcements', AnnouncementController::class);
 
 
 

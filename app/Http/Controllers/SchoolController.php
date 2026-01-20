@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\School;
+use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 
 class SchoolController extends Controller
 {
@@ -35,7 +37,17 @@ class SchoolController extends Controller
             $data['logo'] = $request->file('logo')->store('logos','public');
         }
 
-        School::create($data);
+        $school = School::create($data);
+
+        // Audit log for creation
+        AuditLog::create([
+            'model_type' => 'School',
+            'model_id' => $school->id,
+            'user_id' => Auth::id(),
+            'old_values' => null,
+            'new_values' => json_encode($school->toArray()),
+            'action' => 'Created School: '.$school->name,
+        ]);
 
         return redirect()->route('schools.index')->with('success','School added successfully!');
     }
@@ -55,10 +67,11 @@ class SchoolController extends Controller
             'logo'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
+        $oldValues = $school->toArray(); // store old data
+
         $data = $request->only(['name','division','province','city']);
 
         if ($request->hasFile('logo')) {
-            // Delete old logo if exists
             if ($school->logo) Storage::disk('public')->delete($school->logo);
 
             $data['logo'] = $request->file('logo')->store('logos','public');
@@ -66,14 +79,36 @@ class SchoolController extends Controller
 
         $school->update($data);
 
+        // Audit log for update
+        AuditLog::create([
+            'model_type' => 'School',
+            'model_id' => $school->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($school->toArray()),
+            'action' => 'Updated School: '.$school->name,
+        ]);
+
         return redirect()->route('schools.index')->with('success','School updated successfully!');
     }
 
     public function destroy(School $school)
     {
+        $oldValues = $school->toArray();
+
         if ($school->logo) Storage::disk('public')->delete($school->logo);
 
         $school->delete();
+
+        // Audit log for deletion
+        AuditLog::create([
+            'model_type' => 'School',
+            'model_id' => $school->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => null,
+            'action' => 'Deleted School: '.$school->name,
+        ]);
 
         return redirect()->route('schools.index')->with('success','School deleted successfully!');
     }
