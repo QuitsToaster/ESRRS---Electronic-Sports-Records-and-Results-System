@@ -10,6 +10,7 @@ use App\Http\Controllers\CoachController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -40,6 +41,22 @@ Route::resource('coaches', CoachController::class)->middleware('auth');
 Route::resource('games', GameController::class)->middleware('auth');
 
 Route::resource('audit-logs', AuditLogController::class)->only(['index']);
+Route::get('audit-logs/export/pdf', [AuditLogController::class, 'exportPdf'])
+    ->name('audit-logs.export')
+    ->middleware('auth');
+
+Route::prefix('users')->group(function() {
+    Route::get('/', [UserController::class, 'index'])->name('users.index');
+    Route::get('/create', [UserController::class, 'create'])->name('users.create');
+    Route::post('/', [UserController::class, 'store'])->name('users.store');
+    Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+});
+
+Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+
+
 
 
 Route::resource('announcements', AnnouncementController::class);

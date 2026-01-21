@@ -4,7 +4,7 @@
 
 @section('content')
 
-{{-- Header (Announcement-style) --}}
+{{-- Header with Add Button --}}
 <div class="flex justify-between items-center mb-6">
     <div>
         <p class="text-sm text-gray-600 mt-1">
@@ -25,13 +25,25 @@
     </div>
 @endif
 
+{{-- Search Bar --}}
+<form method="GET" action="{{ route('schools.index') }}" class="mb-4 flex items-center gap-2">
+    <input type="text" name="search" value="{{ request('search') }}"
+           placeholder="Search schools..."
+           class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
+        Search
+    </button>
+    @if(request('search'))
+        <a href="{{ route('schools.index') }}" class="text-gray-500 hover:text-gray-700 ml-2">Clear</a>
+    @endif
+</form>
+
 {{-- Empty State --}}
 @if($schools->isEmpty())
     <div class="bg-white border border-gray-300 rounded-lg p-8 text-center text-gray-500 shadow-sm">
-        No schools have been added yet.
+        No schools found.
     </div>
 @else
-
 {{-- Schools Table Card --}}
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto">
 

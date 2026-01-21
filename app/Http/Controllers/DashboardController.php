@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Sport;
 use App\Models\Coach;
 use App\Models\Game;
+use App\Models\Announcement;
 use App\Models\Result; 
 
 class DashboardController extends Controller
@@ -21,40 +22,42 @@ class DashboardController extends Controller
         $sportsCount = Sport::count();
         $coachesCount = Coach::count();
         $gamesCount = Game::count();
+
+        // ✅ Correct column: use 'status' for ongoing games
         $ongoingGamesCount = Game::where('status', 'Ongoing')->count();
 
         // Live Games (Upcoming + Ongoing)
         $liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing'])
-                        ->orderBy('game_time', 'asc')
-                        ->get();
+                         ->orderBy('game_time', 'asc')
+                         ->get();
 
         // Medal Tally per school
-        // Assuming 'results' table has: school_id, gold, silver, bronze
         $medalTally = School::withCount([
-            'results as gold' => function ($query) {
-                $query->where('medal', 'Gold');
-            },
-            'results as silver' => function ($query) {
-                $query->where('medal', 'Silver');
-            },
-            'results as bronze' => function ($query) {
-                $query->where('medal', 'Bronze');
-            },
+            'results as gold' => function ($query) { $query->where('medal', 'Gold'); },
+            'results as silver' => function ($query) { $query->where('medal', 'Silver'); },
+            'results as bronze' => function ($query) { $query->where('medal', 'Bronze'); },
         ])->get()
         ->map(function ($school) {
             $school->total = $school->gold + $school->silver + $school->bronze;
             return $school;
         })
-        ->sortByDesc('total') // sort by total medals
+        ->sortByDesc('total')
         ->values()
         ->map(function ($school, $index) {
-            $school->rank = $index + 1; // assign rank
+            $school->rank = $index + 1;
             return $school;
         });
 
+        // Latest 2 Announcements
+        $latestAnnouncements = Announcement::with('event', 'user')
+                                    ->latest('published_at')
+                                    ->take(3)
+                                    ->get();
+
         return view('dashboard', compact(
             'schoolsCount', 'athletesCount', 'eventsCount', 'sportsCount',
-            'coachesCount', 'gamesCount', 'ongoingGamesCount', 'liveGames', 'medalTally'
+            'coachesCount', 'gamesCount', 'ongoingGamesCount', 'liveGames',
+            'medalTally', 'latestAnnouncements'
         ));
     }
 }

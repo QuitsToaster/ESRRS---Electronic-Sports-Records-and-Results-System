@@ -9,14 +9,25 @@ use App\Models\AuditLog;
 
 class AnnouncementController extends Controller
 {
-    public function index()
-    {
-        $announcements = Announcement::with(['files', 'event', 'user'])
-            ->latest('published_at')
-            ->get();
+    public function index(Request $request)
+{
+    $search = $request->input('search');
 
-        return view('announcements.index', compact('announcements'));
-    }
+    $announcements = Announcement::with(['files', 'event', 'user'])
+        ->when($search, function ($query, $search) {
+            $query->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%")
+                  ->orWhere('type', 'like', "%{$search}%")
+                  ->orWhereHas('event', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+        })
+        ->latest('published_at')
+        ->get();
+
+    return view('announcements.index', compact('announcements'));
+}
+
 
     public function create()
     {
@@ -29,7 +40,7 @@ class AnnouncementController extends Controller
         $request->validate([
             'title'     => 'required|string|max:255',
             'content'   => 'required|string',
-            'type'      => 'required|in:General,Schedule,Venue,Result',
+            'type'      => 'required|in:General,Schedule Update,Venue Update,Results',
             'event_id'  => 'nullable|exists:events,id',
             'files.*'   => 'nullable|file|mimes:jpg,png,pdf,docx'
         ]);
@@ -78,7 +89,7 @@ class AnnouncementController extends Controller
         $request->validate([
             'title'     => 'required|string|max:255',
             'content'   => 'required|string',
-            'type'      => 'required|in:General,Schedule,Venue,Result',
+            'type'      => 'required|in:General,Schedule Update,Venue Update,Results',
             'event_id'  => 'nullable|exists:events,id',
             'files.*'   => 'nullable|file|mimes:jpg,png,pdf,docx'
         ]);

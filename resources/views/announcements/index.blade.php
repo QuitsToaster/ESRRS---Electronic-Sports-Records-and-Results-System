@@ -18,6 +18,19 @@
     </a>
 </div>
 
+{{-- Search Bar --}}
+<form method="GET" action="{{ route('announcements.index') }}" class="mb-4 flex items-center gap-2">
+    <input type="text" name="search" value="{{ request('search') }}"
+           placeholder="Search announcements..."
+           class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
+        Search
+    </button>
+    @if(request('search'))
+        <a href="{{ route('announcements.index') }}" class="text-gray-500 hover:text-gray-700 ml-2">Clear</a>
+    @endif
+</form>
+
 {{-- Empty State --}}
 @if($announcements->isEmpty())
     <div class="bg-white border border-gray-300 rounded-lg p-8 text-center text-gray-500 shadow-sm">
@@ -40,7 +53,8 @@
 
                     @if($announcement->event)
                         <p class="text-sm text-gray-500 mt-1">
-                            Related Event: <span class="font-medium">{{ $announcement->event->name }}</span>
+                            Related Event:
+                            <span class="font-medium">{{ $announcement->event->name }}</span>
                         </p>
                     @endif
                 </div>
@@ -60,31 +74,56 @@
                 {{ $announcement->content }}
             </div>
 
-            {{-- Attachments --}}
+            {{-- Attachments Preview --}}
             @if($announcement->files->count())
                 <div class="mt-5 border-t pt-4">
-                    <h4 class="text-sm font-semibold text-gray-700 mb-2">
+                    <h4 class="text-sm font-semibold text-gray-700 mb-3">
                         📎 Attachments
                     </h4>
 
-                    <ul class="list-disc list-inside space-y-1 text-sm">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         @foreach($announcement->files as $file)
-                            <li>
-                                <a href="{{ asset('storage/'.$file->file_path) }}"
-                                   target="_blank"
-                                   class="text-blue-600 hover:underline">
-                                    {{ strtoupper($file->file_type) }} Document
+                            @php
+                                $fileUrl = asset('storage/' . $file->file_path);
+                                $extension = strtolower($file->file_type);
+                            @endphp
+
+                            {{-- IMAGE PREVIEW --}}
+                            @if(in_array($extension, ['jpg', 'jpeg', 'png']))
+                                <a href="{{ $fileUrl }}" target="_blank"
+                                   class="block border rounded overflow-hidden hover:shadow-lg transition">
+                                    <img src="{{ $fileUrl }}"
+                                         alt="Attachment Image"
+                                         class="w-full h-32 object-cover">
                                 </a>
-                            </li>
+
+                            {{-- PDF PREVIEW --}}
+                            @elseif($extension === 'pdf')
+                                <a href="{{ $fileUrl }}" target="_blank"
+                                   class="block border rounded overflow-hidden hover:shadow-lg transition">
+                                    <iframe src="{{ $fileUrl }}"
+                                            class="w-full h-32 pointer-events-none"></iframe>
+                                </a>
+
+                            {{-- OTHER FILE TYPES --}}
+                            @else
+                                <a href="{{ $fileUrl }}" target="_blank"
+                                   class="flex items-center justify-center h-32 border rounded bg-gray-50 hover:bg-gray-100 text-sm font-medium text-blue-600">
+                                    Download {{ strtoupper($extension) }}
+                                </a>
+                            @endif
                         @endforeach
-                    </ul>
+                    </div>
                 </div>
             @endif
 
             {{-- Footer --}}
             <div class="mt-6 flex justify-between items-center text-sm text-gray-500">
                 <div>
-                    Posted by <span class="font-medium text-gray-700">{{ $announcement->user->name }}</span>
+                    Posted by
+                    <span class="font-medium text-gray-700">
+                        {{ $announcement->user->name }}
+                    </span>
                     • {{ $announcement->published_at->format('M d, Y h:i A') }}
                 </div>
 

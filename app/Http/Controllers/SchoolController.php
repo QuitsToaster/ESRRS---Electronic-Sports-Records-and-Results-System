@@ -10,11 +10,26 @@ use Illuminate\Support\Facades\Auth;
 
 class SchoolController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $schools = School::all();
+        $query = School::query();
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhere('division', 'like', "%{$search}%")
+                ->orWhere('province', 'like', "%{$search}%")
+                ->orWhere('city', 'like', "%{$search}%");
+            });
+        }
+
+        $schools = $query->orderBy('name')->get();
+
         return view('schools.index', compact('schools'));
     }
+
 
     public function create()
     {

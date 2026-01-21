@@ -10,11 +10,30 @@ use Illuminate\Support\Facades\Auth;
 
 class EventController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $events = Event::with('sport')->get();
+        $query = Event::with('sport');
+
+        // Search functionality
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                ->orWhereHas('sport', function($sq) use ($search) {
+                    $sq->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('level', 'like', "%{$search}%")
+                ->orWhere('age_group', 'like', "%{$search}%")
+                ->orWhere('category', 'like', "%{$search}%")
+                ->orWhere('venue', 'like', "%{$search}%");
+            });
+        }
+
+        $events = $query->orderBy('start_date')->get();
+
         return view('events.index', compact('events'));
     }
+
 
     public function create()
     {

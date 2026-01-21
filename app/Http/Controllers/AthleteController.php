@@ -11,11 +11,30 @@ use Illuminate\Support\Facades\Auth;
 
 class AthleteController extends Controller
 {
-    public function index()
-    {
-        $athletes = Athlete::with(['school', 'sport'])->get();
-        return view('athletes.index', compact('athletes'));
-    }
+    public function index(Request $request)
+{
+    $search = $request->input('search');
+
+    $athletes = Athlete::with(['school', 'sport'])
+        ->when($search, function($query, $search) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhereHas('school', function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('sport', function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('division', 'like', "%{$search}%")
+                ->orWhere('category', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%");
+        });
+
+    // Apply ordering and get results
+    $athletes = $athletes->orderBy('name')->get();
+
+    return view('athletes.index', compact('athletes'));
+}
+
 
     public function create()
     {

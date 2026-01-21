@@ -11,11 +11,26 @@ use Illuminate\Support\Facades\Auth;
 
 class CoachController extends Controller
 {
-    public function index()
-    {
-        $coaches = Coach::with(['school', 'sport'])->get();
-        return view('coaches.index', compact('coaches'));
-    }
+    public function index(Request $request)
+{
+    $search = $request->input('search');
+
+    $coaches = Coach::with(['school', 'sport'])
+        ->when($search, function ($query, $search) {
+            $query->where('name', 'like', "%{$search}%")
+                ->orWhereHas('school', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhereHas('sport', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                });
+        })
+        ->orderBy('name')
+        ->get();
+
+    return view('coaches.index', compact('coaches'));
+}
+
 
     public function create()
     {

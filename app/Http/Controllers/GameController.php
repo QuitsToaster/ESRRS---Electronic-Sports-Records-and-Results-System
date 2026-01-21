@@ -10,11 +10,27 @@ use Illuminate\Support\Facades\Auth;
 
 class GameController extends Controller
 {
-    public function index()
-    {
-        $games = Game::with('event')->orderBy('game_time', 'asc')->get();
-        return view('games.index', compact('games'));
-    }
+    public function index(Request $request)
+{
+    $search = $request->input('search');
+
+    $games = Game::with('event')
+        ->when($search, function ($query, $search) {
+            $query->whereHas('event', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('team_a', 'like', "%{$search}%")
+                ->orWhere('team_b', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhere('game_time', 'like', "%{$search}%")
+                ->orWhere('venue', 'like', "%{$search}%");
+        })
+        ->orderBy('game_time', 'asc')
+        ->get();
+
+    return view('games.index', compact('games'));
+}
+
 
     public function create()
     {

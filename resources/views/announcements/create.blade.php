@@ -12,8 +12,19 @@
     </p>
 </div>
 
+@if ($errors->any())
+    <div class="bg-red-100 border border-red-300 text-red-800 p-4 rounded mb-4">
+        <ul class="list-disc list-inside text-sm">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+
 {{-- Form Card --}}
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 max-w-4xl">
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
     <form action="{{ route('announcements.store') }}"
           method="POST"

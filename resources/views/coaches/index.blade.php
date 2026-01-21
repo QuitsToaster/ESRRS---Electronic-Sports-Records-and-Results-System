@@ -20,6 +20,19 @@
     </div>
 @endif
 
+{{-- Search Bar --}}
+<form method="GET" action="{{ route('coaches.index') }}" class="mb-4 flex items-center gap-2">
+    <input type="text" name="search" value="{{ request('search') }}"
+           placeholder="Search coaches..."
+           class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
+    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
+        Search
+    </button>
+    @if(request('search'))
+        <a href="{{ route('coaches.index') }}" class="text-gray-500 hover:text-gray-700 ml-2">Clear</a>
+    @endif
+</form>
+
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto">
 
     <table class="min-w-full border-collapse">
