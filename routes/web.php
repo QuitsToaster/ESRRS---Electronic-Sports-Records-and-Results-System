@@ -11,6 +11,9 @@ use App\Http\Controllers\GameController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\OfficialController;
+use App\Http\Controllers\ResultController;
+use App\Http\Controllers\ViewerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -20,6 +23,18 @@ Route::get('/', function () {
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')
     ->name('dashboard');
+
+// Viewer pages — no login required
+Route::prefix('viewer')->name('viewer.')->group(function() {
+    Route::get('home', [ViewerController::class, 'home'])->name('home');
+    Route::get('events', [ViewerController::class, 'events'])->name('events');
+    Route::get('games', [ViewerController::class, 'games'])->name('games');
+    Route::get('announcements', [ViewerController::class, 'announcements'])->name('announcements');
+    Route::get('feedbacks', [ViewerController::class, 'feedbacks'])->name('feedbacks');
+});
+
+Route::get('viewer/feedbacks', [App\Http\Controllers\ViewerController::class, 'feedbacks'])->name('viewer.feedbacks');
+Route::post('viewer/feedbacks/send', [App\Http\Controllers\ViewerController::class, 'sendFeedback'])->name('viewer.feedbacks.send');
 
 
 
@@ -40,6 +55,21 @@ Route::resource('athletes', AthleteController::class)->middleware('auth');
 Route::resource('coaches', CoachController::class)->middleware('auth');
 Route::resource('games', GameController::class)->middleware('auth');
 
+Route::middleware(['auth'])->group(function () {
+    Route::resource('officials', OfficialController::class)->only([
+        'index', 'create', 'store', 'destroy', 'edit', 'update'
+    ]);
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('results', ResultController::class)->only([
+        'index', 'create', 'store'
+    ]);
+});
+Route::get('/results/export', [ResultController::class, 'export'])->name('results.export');
+
+
+
 Route::resource('audit-logs', AuditLogController::class)->only(['index']);
 Route::get('audit-logs/export/pdf', [AuditLogController::class, 'exportPdf'])
     ->name('audit-logs.export')
@@ -55,8 +85,6 @@ Route::prefix('users')->group(function() {
 });
 
 Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-
-
 
 
 Route::resource('announcements', AnnouncementController::class);

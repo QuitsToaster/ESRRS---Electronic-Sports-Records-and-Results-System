@@ -3,12 +3,12 @@
 @section('page-title', 'Add School')
 
 @section('content')
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
-
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add New School</h1>
-    <p class="text-sm text-gray-600 mb-6">
-        Fill in the details of the school you want to register.
+<div class="mb-6">
+    <p class="text-sm text-gray-600 mt-1">
+        Add a new school to the system by filling out the form below.
     </p>
+</div>
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
     <form action="{{ route('schools.store') }}" method="POST" enctype="multipart/form-data" class="space-y-4 w-full">
         @csrf

@@ -6,6 +6,44 @@ use Illuminate\Database\Eloquent\Model;
 
 class Result extends Model
 {
+
+    protected $fillable = [
+        'school_id',
+        'athlete_id',
+        'event_id',
+        'sport_id',
+        'division',
+        'category',
+        'team_name',
+        'medal',
+        'awarded_by',
+    ];
+
+    public function school()
+    {
+        return $this->belongsTo(School::class);
+    }
+
+    public function athlete()
+    {
+        return $this->belongsTo(Athlete::class);
+    }
+
+    public function event()
+    {
+        return $this->belongsTo(Event::class);
+    }
+
+    public function sport()
+    {
+        return $this->belongsTo(Sport::class);
+    }
+
+    public function awardedBy()
+    {
+        return $this->belongsTo(User::class, 'awarded_by');
+    }
+    
     public function results()
     {
         return $this->hasMany(Result::class);

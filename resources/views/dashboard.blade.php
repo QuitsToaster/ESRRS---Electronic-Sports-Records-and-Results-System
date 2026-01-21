@@ -60,6 +60,17 @@
         </div>
     </a>
 
+    {{-- Officials Card --}}
+    <a href="{{ route('officials.index') }}" class="block bg-indigo-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-indigo-800">Officials</h2>
+                <p class="text-gray-700 mt-2">Total number of registered officials</p>
+            </div>
+            <div class="text-3xl font-bold text-indigo-800">{{ $officialsCount }}</div>
+        </div>
+    </a>
+
     {{-- Total Games Card --}}
     <a href="{{ route('games.index') }}" class="block bg-teal-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
         <div class="flex items-center justify-between">
@@ -68,17 +79,6 @@
                 <p class="text-gray-700 mt-2">Total number of games</p>
             </div>
             <div class="text-3xl font-bold text-teal-800">{{ $gamesCount }}</div>
-        </div>
-    </a>
-
-    {{-- Ongoing Games Card --}}
-    <a href="{{ route('games.index') }}" class="block bg-orange-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-lg font-semibold text-orange-800">Ongoing Games</h2>
-                <p class="text-gray-700 mt-2">Games currently in progress</p>
-            </div>
-            <div class="text-3xl font-bold text-orange-800">{{ $ongoingGamesCount }}</div>
         </div>
     </a>
 
@@ -174,23 +174,58 @@
     @if($medalTally->isEmpty())
         <div class="text-gray-500 text-center py-6">No medal data available.</div>
     @else
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach($medalTally as $school)
-                <a href="{{ route('schools.index') }}" class="block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition p-4 cursor-pointer">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ $school->name }}</h3>
-                    <div class="flex justify-between items-center text-sm text-gray-500 mb-2">
-                        <span class="font-bold text-black">Rank: {{ $school->rank }}</span>
-                        <span class="font-bold">Total Medals: {{ $school->total }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm">
-                        <span class="font-semibold text-yellow-500">Gold: {{ $school->gold }}</span>
-                        <span class="font-semibold text-gray-400">Silver: {{ $school->silver }}</span>
-                        <span class="font-semibold text-orange-500">Bronze: {{ $school->bronze }}</span>
-                    </div>
-                </a>
-            @endforeach
+        <div class="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Gold</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Silver</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Bronze</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($medalTally as $school)
+                        <tr class="hover:bg-gray-50 transition">
+                            {{-- Rank --}}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+                                {{ $school->rank }}
+                            </td>
+
+                            {{-- School --}}
+                            <td class="px-6 py-4 flex items-center space-x-3">
+                                @if($school->logo)
+                                    <img src="{{ asset('storage/' . $school->logo) }}" alt="{{ $school->name }} Logo"
+                                         class="w-10 h-10 object-cover rounded-full border">
+                                @else
+                                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 font-bold">
+                                        {{ strtoupper(substr($school->name, 0, 2)) }}
+                                    </div>
+                                @endif
+                                <span class="text-sm font-semibold text-gray-800">{{ $school->name }}</span>
+                            </td>
+
+                            {{-- Gold --}}
+                            <td class="px-6 py-4 text-center text-yellow-500 font-bold">{{ $school->gold }}</td>
+
+                            {{-- Silver --}}
+                            <td class="px-6 py-4 text-center text-gray-400 font-bold">{{ $school->silver }}</td>
+
+                            {{-- Bronze --}}
+                            <td class="px-6 py-4 text-center text-orange-500 font-bold">{{ $school->bronze }}</td>
+
+                            {{-- Total --}}
+                            <td class="px-6 py-4 text-center text-gray-700 font-bold">{{ $school->total }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
         </div>
     @endif
 </div>
+
+
 
 @endsection

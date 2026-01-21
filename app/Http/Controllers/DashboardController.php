@@ -9,6 +9,7 @@ use App\Models\Event;
 use App\Models\Sport;
 use App\Models\Coach;
 use App\Models\Game;
+use App\Models\Official;
 use App\Models\Announcement;
 use App\Models\Result; 
 
@@ -19,6 +20,7 @@ class DashboardController extends Controller
         $schoolsCount = School::count();
         $athletesCount = Athlete::count();
         $eventsCount = Event::count();
+        $officialsCount = Official::count();
         $sportsCount = Sport::count();
         $coachesCount = Coach::count();
         $gamesCount = Game::count();
@@ -41,7 +43,16 @@ class DashboardController extends Controller
             $school->total = $school->gold + $school->silver + $school->bronze;
             return $school;
         })
-        ->sortByDesc('total')
+        ->sort(function ($a, $b) {
+            // Sort by Gold first, then Silver, then Bronze
+            if ($b->gold !== $a->gold) {
+                return $b->gold <=> $a->gold;
+            }
+            if ($b->silver !== $a->silver) {
+                return $b->silver <=> $a->silver;
+            }
+            return $b->bronze <=> $a->bronze;
+        })
         ->values()
         ->map(function ($school, $index) {
             $school->rank = $index + 1;
@@ -56,7 +67,7 @@ class DashboardController extends Controller
 
         return view('dashboard', compact(
             'schoolsCount', 'athletesCount', 'eventsCount', 'sportsCount',
-            'coachesCount', 'gamesCount', 'ongoingGamesCount', 'liveGames',
+            'coachesCount', 'officialsCount', 'gamesCount', 'ongoingGamesCount', 'liveGames',
             'medalTally', 'latestAnnouncements'
         ));
     }

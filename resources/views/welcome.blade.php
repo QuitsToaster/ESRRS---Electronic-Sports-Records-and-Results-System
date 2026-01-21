@@ -38,25 +38,18 @@
 
             {{-- Buttons --}}
             <div class="flex justify-center space-x-4 animate-fade-in delay-400">
+                {{-- Admin Login --}}
                 <a href="{{ route('login') }}" 
-                   class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
-                    Login
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                    Admin Login
                 </a>
-                @if (Route::has('register'))
-                    <a href="{{ route('register') }}" 
-                       class="px-6 py-3 bg-white hover:bg-gray-100 text-blue-600 font-semibold rounded shadow-lg border border-blue-600 transition transform hover:-translate-y-1 hover:scale-105">
-                        Register
-                    </a>
-                @endif
-            </div>
 
-            {{-- Optional Illustration / Banner --}}
-            <div class="mt-12 animate-fade-in delay-600">
-                <img src="{{ asset('images/landing-banner.svg') }}" 
-                     alt="Sports illustration" 
-                     class="mx-auto w-full max-w-lg drop-shadow-lg">
+                {{-- Viewer Login --}}
+                <a href="{{ route('viewer.home') }}" 
+                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                    Viewer Access
+                </a>
             </div>
-
         </div>
 
         {{-- Footer --}}

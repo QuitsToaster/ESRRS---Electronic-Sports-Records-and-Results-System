@@ -3,11 +3,12 @@
 @section('page-title', 'Add Event')
 
 @section('content')
+<div class="mb-6">
+    <p class="text-sm text-gray-600 mt-1">
+        Add a new event by filling out the form below.
+    </p>
+</div>
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
-
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">Add New Event</h1>
-    <p class="text-sm text-gray-600 mb-6">Fill in the event details below.</p>
-
     @if ($errors->any())
         <div class="bg-red-100 text-red-800 p-4 rounded mb-4">
             <ul class="list-disc pl-5">
