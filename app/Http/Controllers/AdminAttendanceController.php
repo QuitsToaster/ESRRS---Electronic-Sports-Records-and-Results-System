@@ -4,38 +4,76 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Athlete;
-use App\Models\School;
-use PDF; // Import DomPDF facade
+use App\Models\Attendance;
+use PDF;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use Carbon\Carbon;
 
 class AdminAttendanceController extends Controller
 {
-    /**
-     * Show attendance management page
-     */
     public function index()
     {
-        $athletes = Athlete::with('school')->orderBy('created_at', 'desc')->get();
+        $today = Carbon::today();
 
-        return view('attendance.index', compact('athletes'));
+        // Attendance records for today
+        $attended = Attendance::with('athlete.school')
+            ->whereDate('created_at', $today)
+            ->get();
+
+        // Athletes who have NOT attended today
+        $attendedIds = $attended->pluck('athlete_id')->toArray();
+
+        $notAttended = Athlete::with('school')
+            ->whereNotIn('id', $attendedIds)
+            ->orderBy('name')
+            ->get();
+
+        return view('attendance.index', compact('attended', 'notAttended'));
     }
 
-    /**
-     * Generate QR code for attendance (placeholder)
-     */
-    public function generateQr()
+    public function generateQr(Request $request)
     {
-        return back()->with('success', 'QR code generated (placeholder)');
+        $request->validate([
+            'type' => 'required|in:athlete,coach'
+        ]);
+
+        $qrData = json_encode([
+            'type' => $request->type,
+            'action' => 'attendance',
+            'generated_at' => now()->toDateTimeString()
+        ]);
+
+        $qrImage = QrCode::format('png')
+            ->size(300)
+            ->generate($qrData);
+
+        return response($qrImage)->header('Content-Type', 'image/png');
     }
 
-    /**
-     * Export attendance as PDF
-     */
     public function exportPdf()
-    {
-        $athletes = Athlete::with('school')->orderBy('created_at', 'desc')->get();
+{
+    $today = Carbon::today();
 
-        $pdf = PDF::loadView('attendance.export', compact('athletes'));
+    // Attended today
+    $attended = Attendance::with('athlete.school')
+        ->whereDate('created_at', $today)
+        ->get();
 
-        return $pdf->download('attendance_' . now()->format('Ymd_His') . '.pdf');
-    }
+    $attendedIds = $attended->pluck('athlete_id')->toArray();
+
+    // Not attended
+    $notAttended = Athlete::with('school')
+        ->whereNotIn('id', $attendedIds)
+        ->orderBy('name')
+        ->get();
+
+    $pdf = PDF::loadView('attendance.export', [
+        'attended' => $attended,
+        'notAttended' => $notAttended,
+        'generatedAt' => now()->setTimezone('Asia/Manila')->format('M d, Y h:i A')
+    ]);
+
+    return $pdf->download('attendance_' . now()->format('Ymd_His') . '.pdf');
+}
+
 }

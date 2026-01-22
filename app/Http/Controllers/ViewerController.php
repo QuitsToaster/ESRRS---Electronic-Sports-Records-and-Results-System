@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\ViewerFeedback;
 use App\Models\Event;
+use App\Models\Banner;
 use App\Models\Game;
 use App\Models\Announcement;
 
@@ -23,17 +24,19 @@ class ViewerController extends Controller
         $announcementsCount = Announcement::count();
         $latestAnnouncements = Announcement::latest()->take(5)->get();
 
-        // Assuming you already have medals tallies aggregated in your Event or Result model
         $medalTally = \DB::table('results')
             ->selectRaw('school_id, SUM(medal="Gold") as gold, SUM(medal="Silver") as silver, SUM(medal="Bronze") as bronze')
             ->groupBy('school_id')
             ->get();
 
+        // Fetch banners for the homepage slideshow
+        $banners = Banner::orderBy('order')->get();
+
         return view('viewer.home', compact(
             'eventsCount', 'upcomingEvents',
             'gamesCount', 'upcomingGames',
             'announcementsCount', 'latestAnnouncements',
-            'medalTally'
+            'medalTally', 'banners' // <-- pass banners
         ));
     }
 
@@ -88,26 +91,59 @@ class ViewerController extends Controller
         ));
     }
 
-    // Events Page
-    public function events()
-    {
-       $events = Event::orderBy('start_date', 'asc')->get();
-        return view('viewer.events', compact('events'));
-    }
+    // Events Page with search
+public function events(Request $request)
+{
+    $search = $request->input('search');
 
-    // Games Page
-    public function games()
-    {
-        $games = Game::orderBy('game_time', 'asc')->get();
-        return view('viewer.games', compact('games'));
-    }
+    $events = Event::when($search, function($query, $search) {
+        $query->where('name', 'like', "%{$search}%");
+    })
+    ->orderBy('start_date', 'asc')
+    ->get();
 
-    // Announcements Page
-    public function announcements()
-    {
-        $announcements = Announcement::latest()->get();
-        return view('viewer.announcements', compact('announcements'));
-    }
+    return view('viewer.events', compact('events'));
+}
+
+
+    // Games Page with search
+public function games(Request $request)
+{
+    $search = $request->input('search');
+
+    $games = Game::with('event')
+        ->when($search, function($query, $search) {
+            $query->where('team_a', 'like', "%{$search}%")
+                  ->orWhere('team_b', 'like', "%{$search}%")
+                  ->orWhereHas('event', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+        })
+        ->orderBy('game_time', 'asc')
+        ->get();
+
+    return view('viewer.games', compact('games'));
+}
+
+
+    public function announcements(Request $request)
+{
+    $search = $request->input('search');
+
+    $announcements = Announcement::with('event')
+        ->when($search, function($query, $search) {
+            $query->where('title', 'like', "%{$search}%")
+                  ->orWhere('content', 'like', "%{$search}%")
+                  ->orWhereHas('event', function($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+        })
+        ->latest()
+        ->get();
+
+    return view('viewer.announcements', compact('announcements'));
+}
+
 
      // Feedback Page
     public function feedbacks()

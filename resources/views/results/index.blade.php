@@ -92,11 +92,11 @@
             <tr>
                 <th class="px-4 py-2">Event</th>
                 <th class="px-4 py-2">Sport</th>
-                <th class="px-4 py-2">School</th>
+                <th class="px-4 py-2">Team</th>
                 <th class="px-4 py-2">Division</th>
                 <th class="px-4 py-2">Category</th>
                 <th class="px-4 py-2">Medal</th>
-                <th class="px-4 py-2">Athlete / Team</th>
+                <th class="px-4 py-2">Athlete</th>
                 <th class="px-4 py-2">Awarded By</th>
                 <th class="px-4 py-2">Date</th>
             </tr>

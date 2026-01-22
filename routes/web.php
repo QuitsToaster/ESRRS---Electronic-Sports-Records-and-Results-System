@@ -14,11 +14,15 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\ViewerController;
+use App\Http\Controllers\AttendanceController;
 use Illuminate\Support\Facades\Route;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
+use App\Models\Athlete;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('welcome');
+
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')
@@ -38,17 +42,20 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
 Route::get('viewer/feedbacks', [App\Http\Controllers\ViewerController::class, 'feedbacks'])->name('viewer.feedbacks');
 Route::post('viewer/feedbacks/send', [App\Http\Controllers\ViewerController::class, 'sendFeedback'])->name('viewer.feedbacks.send');
 
-// Viewer attendance page
-Route::get('/viewer/attendance', [ViewerController::class, 'attendancePage'])->name('viewer.attendance');
-
-// QR scan POST endpoint
-Route::post('/viewer/attendance/scan', [ViewerController::class, 'attendanceScan'])->name('viewer.attendance.scan');
 
 Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('attendance', [\App\Http\Controllers\AdminAttendanceController::class, 'index'])->name('attendance.index');
     Route::post('attendance/generate', [\App\Http\Controllers\AdminAttendanceController::class, 'generateQr'])->name('attendance.generate');
     Route::get('attendance/export', [\App\Http\Controllers\AdminAttendanceController::class, 'exportPdf'])->name('attendance.export');
 });
+
+Route::get('/check-attendance', [AttendanceController::class, 'index'])
+    ->name('attendance.check');
+
+Route::post('/check-attendance', [AttendanceController::class, 'store'])
+    ->name('attendance.store');
+
+Route::get('/athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
 
 
 
@@ -66,6 +73,20 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::resource('athletes', AthleteController::class)->middleware('auth');
+
+Route::get('athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
+Route::get('/athletes/{athlete}/qr', function (Athlete $athlete) {
+
+    $data = json_encode([
+        'type' => 'athlete',
+        'qr_code' => $athlete->qr_code,
+    ]);
+
+    return response(
+        QrCode::format('png')->size(150)->generate($data)
+    )->header('Content-Type', 'image/png');
+
+})->name('athletes.qr');
 Route::resource('coaches', CoachController::class)->middleware('auth');
 Route::resource('games', GameController::class)->middleware('auth');
 
@@ -102,6 +123,11 @@ Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update']
 
 
 Route::resource('announcements', AnnouncementController::class);
+
+Route::prefix('settings')->name('settings.')->middleware('auth')->group(function () {
+    Route::get('/layout', [\App\Http\Controllers\SettingsController::class, 'layout'])->name('layout');
+    Route::post('/layout', [\App\Http\Controllers\SettingsController::class, 'saveLayout'])->name('layout.save');
+});
 
 
 

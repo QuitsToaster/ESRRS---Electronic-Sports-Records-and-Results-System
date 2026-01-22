@@ -54,6 +54,10 @@
             font-size: 10px;
             color: #666;
         }
+
+        h2 {
+            margin-top: 20px;
+        }
     </style>
 </head>
 <body>
@@ -64,25 +68,47 @@
     </div>
 
     <div class="meta">
-        <strong>Generated on:</strong> {{ now()->setTimezone('Asia/Manila')->format('F d, Y h:i A') }}
+        <strong>Generated on:</strong> {{ $generatedAt }}
     </div>
 
+    {{-- Attended Today --}}
+    <h2>Athletes with Attendance Today</h2>
     <table>
         <thead>
             <tr>
                 <th width="35%">Name</th>
                 <th width="40%">Team</th>
-                <th width="25%">Time In (PH)</th>
+                <th width="25%">Time In</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($athletes as $athlete)
+            @foreach($attended as $record)
+                @php
+                    $timeIn = $record->time_in ? \Carbon\Carbon::parse($record->time_in)->setTimezone('Asia/Manila')->format('h:i A') : '—';
+                @endphp
+                <tr>
+                    <td>{{ $record->athlete->name }}</td>
+                    <td>{{ $record->athlete->school->name ?? 'N/A' }}</td>
+                    <td>{{ $timeIn }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    {{-- Not Attended --}}
+    <h2>Athletes without Attendance Today</h2>
+    <table>
+        <thead>
+            <tr>
+                <th width="50%">Name</th>
+                <th width="50%">Team</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($notAttended as $athlete)
                 <tr>
                     <td>{{ $athlete->name }}</td>
                     <td>{{ $athlete->school->name ?? 'N/A' }}</td>
-                    <td>{{ $athlete->time_in
-                        ? $athlete->time_in->setTimezone('Asia/Manila')->format('M d, Y h:i A')
-                        : '—' }}</td>
                 </tr>
             @endforeach
         </tbody>

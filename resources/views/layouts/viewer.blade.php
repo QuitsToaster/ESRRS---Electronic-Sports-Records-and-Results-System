@@ -1,12 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" x-data="{ open: false }">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>@yield('page-title', 'Viewer Dashboard')</title>
     @vite('resources/css/app.css')
+    <script src="//unpkg.com/alpinejs" defer></script>
 </head>
-<body class="bg-gray-100 font-sans" x-data="{ open: false }">
+<body class="bg-gray-100 font-sans">
 
     {{-- Top Navbar --}}
     <nav class="bg-blue-600 text-white shadow-md">
@@ -17,7 +18,7 @@
                     <a href="{{ route('viewer.home') }}" class="text-lg font-bold">CEMS</a>
                 </div>
 
-                {{-- Navigation Links --}}
+                {{-- Desktop Navigation Links --}}
                 <div class="hidden md:flex items-center space-x-6 font-medium">
                     <a href="{{ route('viewer.home') }}"
                        class="hover:text-gray-200 {{ request()->routeIs('viewer.home') ? 'underline font-semibold' : '' }}">
@@ -44,7 +45,7 @@
                         Feedbacks
                     </a>
 
-                    {{-- Logout Button --}}
+                    {{-- Logout --}}
                     <a href="{{ url('/') }}" 
                        class="ml-4 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white font-semibold transition">
                         Logout
@@ -55,9 +56,9 @@
                 <div class="md:hidden flex items-center">
                     <button @click="open = !open" class="focus:outline-none">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            <path :class="{'hidden': open, 'inline-flex': !open }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M4 6h16M4 12h16M4 18h16" />
-                            <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            <path :class="{'hidden': !open, 'inline-flex': open }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                   d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
@@ -66,7 +67,7 @@
         </div>
 
         {{-- Mobile Menu --}}
-        <div x-show="open" class="md:hidden bg-blue-700 text-white space-y-1 px-2 pt-2 pb-3" x-cloak>
+        <div x-show="open" x-transition class="md:hidden bg-blue-700 text-white space-y-1 px-2 pt-2 pb-3" x-cloak>
             <a href="{{ route('viewer.home') }}" 
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.home') ? 'font-semibold bg-blue-800' : '' }}">
                 Home
@@ -91,6 +92,7 @@
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.feedbacks') ? 'font-semibold bg-blue-800' : '' }}">
                 Feedbacks
             </a>
+
             {{-- Mobile Logout --}}
             <a href="{{ url('/') }}" 
                class="block px-3 py-2 mt-1 rounded bg-red-600 hover:bg-red-700 text-white font-semibold">

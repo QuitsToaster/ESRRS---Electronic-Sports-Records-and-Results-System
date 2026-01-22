@@ -307,6 +307,11 @@
                        {{ request()->routeIs('users.create') ? 'bg-blue-700 font-semibold' : '' }}">
                         Add User
                     </a>
+                    <a href="{{ route('settings.layout') }}"
+                        class="block px-4 py-2 rounded hover:bg-blue-600
+                        {{ request()->routeIs('settings.layout') ? 'bg-blue-700 font-semibold' : '' }}">
+                        Layout Settings
+                    </a>
                 </div>
             </div>
         </nav>

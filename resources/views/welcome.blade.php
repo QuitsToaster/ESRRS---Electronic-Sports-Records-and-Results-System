@@ -51,8 +51,8 @@
                 </a>
 
                 {{-- Check Attendance --}}
-                <a href="{{ route('viewer.attendance') }}" 
-                   class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                <a href="{{ route('attendance.check') }}" 
+                class="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Check Attendance
                 </a>
             </div>
