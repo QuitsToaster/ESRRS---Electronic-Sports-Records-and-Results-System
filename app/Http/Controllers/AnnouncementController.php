@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Announcement;
 use App\Models\Event;
+use Illuminate\Support\Facades\Storage;
 use App\Models\AuditLog;
 
 class AnnouncementController extends Controller
@@ -84,48 +85,84 @@ class AnnouncementController extends Controller
         return view('announcements.edit', compact('announcement', 'events'));
     }
 
-    public function update(Request $request, Announcement $announcement)
-    {
-        $request->validate([
-            'title'     => 'required|string|max:255',
-            'content'   => 'required|string',
-            'type'      => 'required|in:General,Schedule Update,Venue Update,Results',
-            'event_id'  => 'nullable|exists:events,id',
-            'files.*'   => 'nullable|file|mimes:jpg,png,pdf,docx'
-        ]);
+    
+public function update(Request $request, Announcement $announcement)
+{
+    $request->validate([
+        'title'     => 'required|string|max:255',
+        'content'   => 'required|string',
+        'type'      => 'required|in:General,Schedule Update,Venue Update,Results',
+        'event_id'  => 'nullable|exists:events,id',
+        'files.*'   => 'nullable|file|mimes:jpg,png,pdf,docx'
+    ]);
 
-        $oldValues = $announcement->toArray();
+    $oldValues = $announcement->toArray();
 
-        $announcement->update([
-            'title'    => $request->title,
-            'content'  => $request->content,
-            'type'     => $request->type,
-            'event_id' => $request->event_id,
-        ]);
+    // Update announcement details
+    $announcement->update([
+        'title'    => $request->title,
+        'content'  => $request->content,
+        'type'     => $request->type,
+        'event_id' => $request->event_id,
+    ]);
 
-        if ($request->hasFile('files')) {
-            foreach ($request->file('files') as $file) {
-                $path = $file->store('announcements', 'public');
+    /**
+     * ------------------------------------------------
+     * DELETE SELECTED ATTACHMENTS
+     * ------------------------------------------------
+     */
+    if ($request->filled('delete_files')) {
+        $filesToDelete = $announcement->files()
+            ->whereIn('id', $request->delete_files)
+            ->get();
 
-                $announcement->files()->create([
-                    'file_path' => $path,
-                    'file_type' => $file->getClientOriginalExtension(),
-                ]);
-            }
+        foreach ($filesToDelete as $file) {
+            Storage::disk('public')->delete($file->file_path);
+            $file->delete();
         }
-
-        AuditLog::create([
-            'model_type' => 'Announcement',
-            'model_id'   => $announcement->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'Updated Announcement',
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($announcement->fresh()->toArray()),
-        ]);
-
-        return redirect()->route('announcements.index')
-            ->with('success', 'Announcement updated successfully.');
     }
+
+    /**
+     * ------------------------------------------------
+     * DELETE ALL EXISTING FILES IF CHECKED
+     * ------------------------------------------------
+     */
+    if ($request->has('remove_existing_files') && $request->hasFile('files')) {
+        foreach ($announcement->files as $file) {
+            Storage::disk('public')->delete($file->file_path);
+            $file->delete();
+        }
+    }
+
+    /**
+     * ------------------------------------------------
+     * SAVE NEW FILES
+     * ------------------------------------------------
+     */
+    if ($request->hasFile('files')) {
+        foreach ($request->file('files') as $file) {
+            $path = $file->store('announcements', 'public');
+
+            $announcement->files()->create([
+                'file_path' => $path,
+                'file_type' => $file->getClientOriginalExtension(),
+            ]);
+        }
+    }
+
+    // Audit Log
+    AuditLog::create([
+        'model_type' => 'Announcement',
+        'model_id'   => $announcement->id,
+        'user_id'    => auth()->id(),
+        'action'     => 'Updated Announcement',
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($announcement->fresh()->toArray()),
+    ]);
+
+    return redirect()->route('announcements.index')
+        ->with('success', 'Announcement updated successfully.');
+}
 
     public function destroy(Announcement $announcement)
     {

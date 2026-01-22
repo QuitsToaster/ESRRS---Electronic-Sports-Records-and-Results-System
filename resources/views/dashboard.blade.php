@@ -9,8 +9,9 @@
     <a href="{{ route('schools.index') }}" class="block bg-blue-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-lg font-semibold text-blue-800">Schools</h2>
-                <p class="text-gray-700 mt-2">Total number of participating schools</p>
+                <h2 class="text-lg font-semibold text-blue-800">Participants</h2>
+                    <p class="text-sm text-gray-700 mt-1">(Schools or Regions)</p>
+                <p class="text-gray-700 mt-2">Total number of participating schools or regions</p>
             </div>
             <div class="text-3xl font-bold text-blue-800">{{ $schoolsCount }}</div>
         </div>

@@ -3,12 +3,12 @@
 @section('page-title', 'Edit Coach')
 
 @section('content')
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
-
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">Edit Coach</h1>
-    <p class="text-sm text-gray-600 mb-6">
+<div class="mb-6">
+    <p class="text-sm text-gray-600 mt-1">
         Update the details of the coach.
     </p>
+</div>
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
     <form action="{{ route('coaches.update', $coach->id) }}" method="POST">
         @csrf
@@ -20,7 +20,7 @@
         </div>
 
         <div class="mb-3">
-            <label class="block mb-1">School</label>
+            <label class="block mb-1">Team</label>
             <select name="school_id" class="w-full border rounded px-3 py-2">
                 @foreach($schools as $school)
                     <option value="{{ $school->id }}" {{ $coach->school_id==$school->id?'selected':'' }}>{{ $school->name }}</option>

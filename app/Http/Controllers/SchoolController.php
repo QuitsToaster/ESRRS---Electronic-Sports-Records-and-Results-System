@@ -61,10 +61,10 @@ class SchoolController extends Controller
             'user_id' => Auth::id(),
             'old_values' => null,
             'new_values' => json_encode($school->toArray()),
-            'action' => 'Created School: '.$school->name,
+            'action' => 'Created Team: '.$school->name,
         ]);
 
-        return redirect()->route('schools.index')->with('success','School added successfully!');
+        return redirect()->route('schools.index')->with('success','Team added successfully!');
     }
 
     public function edit(School $school)
@@ -101,10 +101,10 @@ class SchoolController extends Controller
             'user_id' => Auth::id(),
             'old_values' => json_encode($oldValues),
             'new_values' => json_encode($school->toArray()),
-            'action' => 'Updated School: '.$school->name,
+            'action' => 'Updated Team: '.$school->name,
         ]);
 
-        return redirect()->route('schools.index')->with('success','School updated successfully!');
+        return redirect()->route('schools.index')->with('success','Team updated successfully!');
     }
 
     public function destroy(School $school)
@@ -122,9 +122,9 @@ class SchoolController extends Controller
             'user_id' => Auth::id(),
             'old_values' => json_encode($oldValues),
             'new_values' => null,
-            'action' => 'Deleted School: '.$school->name,
+            'action' => 'Deleted Team: '.$school->name,
         ]);
 
-        return redirect()->route('schools.index')->with('success','School deleted successfully!');
+        return redirect()->route('schools.index')->with('success','Team deleted successfully!');
     }
 }

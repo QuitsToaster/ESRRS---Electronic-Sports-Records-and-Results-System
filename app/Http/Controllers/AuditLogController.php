@@ -40,24 +40,38 @@ class AuditLogController extends Controller
 
 
 
-    /**
-     * Export audit logs to PDF
-     */
-    public function exportPdf()
-    {
-        $logs = AuditLog::with('user')
-            ->orderBy('created_at', 'desc')
-            ->get();
+    public function exportPdf(Request $request)
+{
+    $search     = $request->input('search');
+    $start_date = $request->input('start_date');
+    $end_date   = $request->input('end_date');
 
-        $generatedAt = Carbon::now('Asia/Manila')
-            ->format('M d, Y h:i A');
+    $logs = AuditLog::with('user')
+        ->when($search, function ($query, $search) {
+            $query->where('model_type', 'like', "%{$search}%")
+                  ->orWhere('action', 'like', "%{$search}%")
+                  ->orWhereHas('user', function ($q) use ($search) {
+                      $q->where('name', 'like', "%{$search}%");
+                  });
+        })
+        ->when($start_date, function ($query, $start_date) {
+            $query->whereDate('created_at', '>=', $start_date);
+        })
+        ->when($end_date, function ($query, $end_date) {
+            $query->whereDate('created_at', '<=', $end_date);
+        })
+        ->orderBy('created_at', 'desc')
+        ->get();
 
-        $pdf = Pdf::loadView('audit-logs.export', [
-            'logs' => $logs,
-            'generatedAt' => $generatedAt,
-        ])
-        ->setPaper('letter', 'portrait');
+    $generatedAt = Carbon::now('Asia/Manila')
+        ->format('M d, Y h:i A');
 
-        return $pdf->download('audit_logs_' . now()->format('Ymd_His') . '.pdf');
-    }
+    $pdf = Pdf::loadView('audit-logs.export', [
+        'logs'        => $logs,
+        'generatedAt' => $generatedAt,
+    ])->setPaper('letter', 'portrait');
+
+    return $pdf->download('audit_logs_' . now()->format('Ymd_His') . '.pdf');
+}
+
 }

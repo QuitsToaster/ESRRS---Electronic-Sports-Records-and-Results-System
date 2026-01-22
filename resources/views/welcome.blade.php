@@ -37,17 +37,23 @@
             </p>
 
             {{-- Buttons --}}
-            <div class="flex justify-center space-x-4 animate-fade-in delay-400">
+            <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4 animate-fade-in delay-400">
                 {{-- Admin Login --}}
                 <a href="{{ route('login') }}" 
-                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                   class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Admin Login
                 </a>
 
-                {{-- Viewer Login --}}
+                {{-- Viewer Access --}}
                 <a href="{{ route('viewer.home') }}" 
-                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                   class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Viewer Access
+                </a>
+
+                {{-- Check Attendance --}}
+                <a href="{{ route('viewer.attendance') }}" 
+                   class="px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                    Check Attendance
                 </a>
             </div>
         </div>
@@ -60,19 +66,13 @@
 
     {{-- Tailwind Animations --}}
     <style>
-        .animate-fade-in {
-            opacity: 0;
-            animation: fadeIn 1s forwards;
-        }
+        .animate-fade-in { opacity: 0; animation: fadeIn 1s forwards; }
         .animate-fade-in.delay-200 { animation-delay: 0.2s; }
         .animate-fade-in.delay-400 { animation-delay: 0.4s; }
         .animate-fade-in.delay-600 { animation-delay: 0.6s; }
         .animate-fade-in.delay-800 { animation-delay: 0.8s; }
 
-        @keyframes fadeIn {
-            to { opacity: 1; }
-        }
+        @keyframes fadeIn { to { opacity: 1; } }
     </style>
-
 </body>
 </html>

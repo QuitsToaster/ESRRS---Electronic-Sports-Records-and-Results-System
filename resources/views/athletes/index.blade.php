@@ -39,7 +39,7 @@
         <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
                 <th class="px-4 py-2 text-left">Name</th>
-                <th class="px-4 py-2 text-left">School</th>
+                <th class="px-4 py-2 text-left">Team</th>
                 <th class="px-4 py-2 text-left">Sport</th>
                 <th class="px-4 py-2 text-left">Division</th>
                 <th class="px-4 py-2 text-left">Category</th>

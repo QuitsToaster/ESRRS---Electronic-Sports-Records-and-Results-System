@@ -27,6 +27,8 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
 // Viewer pages — no login required
 Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('home', [ViewerController::class, 'home'])->name('home');
+    Route::get('participants', [ViewerController::class, 'participants'])->name('participants');
+    Route::get('participants/{school}', [ViewerController::class, 'participantShow'])->name('participants.show');
     Route::get('events', [ViewerController::class, 'events'])->name('events');
     Route::get('games', [ViewerController::class, 'games'])->name('games');
     Route::get('announcements', [ViewerController::class, 'announcements'])->name('announcements');
@@ -35,6 +37,18 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
 
 Route::get('viewer/feedbacks', [App\Http\Controllers\ViewerController::class, 'feedbacks'])->name('viewer.feedbacks');
 Route::post('viewer/feedbacks/send', [App\Http\Controllers\ViewerController::class, 'sendFeedback'])->name('viewer.feedbacks.send');
+
+// Viewer attendance page
+Route::get('/viewer/attendance', [ViewerController::class, 'attendancePage'])->name('viewer.attendance');
+
+// QR scan POST endpoint
+Route::post('/viewer/attendance/scan', [ViewerController::class, 'attendanceScan'])->name('viewer.attendance.scan');
+
+Route::middleware(['auth'])->prefix('admin')->group(function () {
+    Route::get('attendance', [\App\Http\Controllers\AdminAttendanceController::class, 'index'])->name('attendance.index');
+    Route::post('attendance/generate', [\App\Http\Controllers\AdminAttendanceController::class, 'generateQr'])->name('attendance.generate');
+    Route::get('attendance/export', [\App\Http\Controllers\AdminAttendanceController::class, 'exportPdf'])->name('attendance.export');
+});
 
 
 

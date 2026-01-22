@@ -26,6 +26,7 @@
     x-data="{
         openMenu:
             @if (request()->routeIs('schools.*')) 'schools'
+            @elseif (request()->routeIs('attendance.*')) 'attendance'
             @elseif (request()->routeIs('sports.*')) 'sports'
             @elseif (request()->routeIs('events.*')) 'events'
             @elseif (request()->routeIs('athletes.*')) 'athletes'
@@ -54,6 +55,24 @@
             Dashboard
         </a>
 
+
+        {{-- Attendance --}}
+        <div x-data="{ openMenu: {{ request()->routeIs('attendance.*') ? '\'attendance\'' : 'null' }} }">
+            <button @click="openMenu = openMenu === 'attendance' ? null : 'attendance'"
+                    class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
+                    {{ request()->routeIs('attendance.*') ? 'bg-blue-900 font-semibold' : '' }}">
+                Attendance
+                <span x-text="openMenu === 'attendance' ? '▾' : '▸'"></span>
+            </button>
+            <div x-show="openMenu === 'attendance'" x-cloak class="pl-6 mt-1 space-y-1">
+                <a href="{{ route('attendance.index') }}"
+                class="block px-4 py-2 rounded hover:bg-blue-600
+                {{ request()->routeIs('attendance.index') ? 'bg-blue-700 font-semibold' : '' }}">
+                    Manage Attendance
+                </a>
+            </div>
+        </div>
+
         {{-- Results / Awards --}}
         <div x-data="{ openMenu: {{ request()->routeIs('results.*') ? '\'results\'' : 'null' }} }">
             <button @click="openMenu = openMenu === 'results' ? null : 'results'"
@@ -81,19 +100,19 @@
             <button @click="openMenu = openMenu === 'schools' ? null : 'schools'"
                     class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
                     {{ request()->routeIs('schools.*') ? 'bg-blue-900 font-semibold' : '' }}">
-                Schools
+                Participants
                 <span x-text="openMenu === 'schools' ? '▾' : '▸'"></span>
             </button>
             <div x-show="openMenu === 'schools'" x-cloak class="pl-6 mt-1 space-y-1">
                 <a href="{{ route('schools.index') }}"
                 class="block px-4 py-2 rounded hover:bg-blue-600
                 {{ request()->routeIs('schools.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                    All Schools
+                    All Participants
                 </a>
                 <a href="{{ route('schools.create') }}"
                 class="block px-4 py-2 rounded hover:bg-blue-600
                 {{ request()->routeIs('schools.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                    Add School
+                    Add Participants
                 </a>
             </div>
         </div>

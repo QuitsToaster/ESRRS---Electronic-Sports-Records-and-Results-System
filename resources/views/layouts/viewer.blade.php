@@ -23,6 +23,10 @@
                        class="hover:text-gray-200 {{ request()->routeIs('viewer.home') ? 'underline font-semibold' : '' }}">
                         Home
                     </a>
+                    <a href="{{ route('viewer.participants') }}"
+                       class="hover:text-gray-200 {{ request()->routeIs('viewer.participants') ? 'underline font-semibold' : '' }}">
+                        Participants
+                    </a>
                     <a href="{{ route('viewer.events') }}"
                        class="hover:text-gray-200 {{ request()->routeIs('viewer.events') ? 'underline font-semibold' : '' }}">
                         Events
@@ -66,6 +70,10 @@
             <a href="{{ route('viewer.home') }}" 
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.home') ? 'font-semibold bg-blue-800' : '' }}">
                 Home
+            </a>
+            <a href="{{ route('viewer.participants') }}" 
+               class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.participants') ? 'font-semibold bg-blue-800' : '' }}">
+                Participants
             </a>
             <a href="{{ route('viewer.events') }}" 
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.events') ? 'font-semibold bg-blue-800' : '' }}">

@@ -3,12 +3,12 @@
 @section('page-title', 'Edit Game')
 
 @section('content')
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
-
-    <h1 class="text-2xl font-bold text-gray-800 mb-2">Edit Game</h1>
-    <p class="text-sm text-gray-600 mb-6">
-        Update the details of the game.
+<div class="mb-6">
+    <p class="text-sm text-gray-600 mt-1">
+        Update the details of the game below.
     </p>
+</div>
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
     <form action="{{ route('games.update', $game->id) }}" method="POST">
         @csrf

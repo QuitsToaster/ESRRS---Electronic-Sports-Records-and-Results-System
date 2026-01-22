@@ -6,14 +6,13 @@
 
 {{-- Page Header --}}
 <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">✏️ Edit Announcement</h1>
     <p class="text-sm text-gray-600 mt-1">
-        Update announcement details, attachments, or related event information.
+        Update the announcement details below.
     </p>
 </div>
 
 {{-- Form Card --}}
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 max-w-4xl">
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
     <form action="{{ route('announcements.update', $announcement) }}"
           method="POST"
@@ -78,21 +77,6 @@
                       class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">{{ old('content', $announcement->content) }}</textarea>
         </div>
 
-        {{-- Add Attachments --}}
-        <div class="mb-6">
-            <label class="block text-sm font-semibold text-gray-700 mb-1">
-                Add More Attachments
-            </label>
-            <input type="file"
-                   name="files[]"
-                   multiple
-                   class="w-full border border-gray-300 rounded px-3 py-2">
-
-            <p class="text-xs text-gray-500 mt-1">
-                Upload additional photos, PDFs, or official documents.
-            </p>
-        </div>
-
         {{-- Existing Attachments --}}
         @if($announcement->files->count())
             <div class="mb-6 border border-gray-200 rounded-lg p-4 bg-gray-50">
@@ -100,19 +84,56 @@
                     Existing Attachments
                 </h3>
 
-                <ul class="list-disc list-inside text-sm text-blue-700">
+                <ul class="space-y-2 text-sm">
                     @foreach($announcement->files as $file)
-                        <li>
+                        <li class="flex items-center justify-between">
                             <a href="{{ asset('storage/'.$file->file_path) }}"
                                target="_blank"
-                               class="hover:underline">
+                               class="text-blue-700 hover:underline">
                                 {{ strtoupper($file->file_type) }} File
                             </a>
+
+                            {{-- Individual delete checkbox --}}
+                            <label class="flex items-center gap-2 text-red-600">
+                                <input type="checkbox"
+                                       name="delete_files[]"
+                                       value="{{ $file->id }}"
+                                       class="rounded border-gray-300">
+                                Delete
+                            </label>
                         </li>
                     @endforeach
                 </ul>
             </div>
         @endif
+
+        {{-- Add Attachments --}}
+        <div class="mb-6">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+                Add New Attachments
+            </label>
+            <input type="file"
+                   name="files[]"
+                   multiple
+                   class="w-full border border-gray-300 rounded px-3 py-2">
+
+            <p class="text-xs text-gray-500 mt-1">
+                Uploading new files can automatically remove existing attachments.
+            </p>
+
+            {{-- Remove all existing attachments checkbox --}}
+            @if($announcement->files->count())
+                <div class="mt-3">
+                    <label class="flex items-center gap-2 text-sm text-red-600">
+                        <input type="checkbox"
+                               name="remove_existing_files"
+                               value="1"
+                               class="rounded border-gray-300">
+                        Remove all existing attachments when uploading new files
+                    </label>
+                </div>
+            @endif
+        </div>
 
         {{-- Actions --}}
         <div class="flex justify-end gap-3">

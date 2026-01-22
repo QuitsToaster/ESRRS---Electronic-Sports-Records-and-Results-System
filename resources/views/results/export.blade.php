@@ -68,7 +68,7 @@
         <thead>
             <tr>
                 <th>Rank</th>
-                <th>School</th>
+                <th>Team</th>
                 <th>Gold</th>
                 <th>Silver</th>
                 <th>Bronze</th>
@@ -95,7 +95,7 @@
             <tr>
                 <th>Event</th>
                 <th>Sport</th>
-                <th>School</th>
+                <th>Team</th>
                 <th>Division</th>
                 <th>Category</th>
                 <th>Medal</th>

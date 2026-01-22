@@ -3,8 +3,12 @@
 @section('page-title', 'Edit Official')
 
 @section('content')
+<div class="mb-6">
+    <p class="text-sm text-gray-600 mt-1">
+        Update the details of the official below.
+    </p>
+</div>
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
-    <h2 class="text-2xl font-semibold mb-4">Edit Official</h2>
 
     <form action="{{ route('officials.update', $official) }}" method="POST">
         @csrf

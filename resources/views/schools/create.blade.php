@@ -5,7 +5,7 @@
 @section('content')
 <div class="mb-6">
     <p class="text-sm text-gray-600 mt-1">
-        Add a new school to the system by filling out the form below.
+        Add a new participant to the system by filling out the form below.
     </p>
 </div>
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
@@ -15,7 +15,7 @@
 
         {{-- School Name --}}
         <div>
-            <label class="block text-gray-700 font-semibold mb-1">School Name</label>
+            <label class="block text-gray-700 font-semibold mb-1">Participant Name</label>
             <input type="text" name="name" value="{{ old('name') }}"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             @error('name') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror

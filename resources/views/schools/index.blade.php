@@ -8,13 +8,13 @@
 <div class="flex justify-between items-center mb-6">
     <div>
         <p class="text-sm text-gray-600 mt-1">
-            List of participating schools registered in the system
+            List of participatints registered in the system
         </p>
     </div>
 
     <a href="{{ route('schools.create') }}"
        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
-        + Add School
+        + Add Participants
     </a>
 </div>
 
@@ -28,7 +28,7 @@
 {{-- Search Bar --}}
 <form method="GET" action="{{ route('schools.index') }}" class="mb-4 flex items-center gap-2">
     <input type="text" name="search" value="{{ request('search') }}"
-           placeholder="Search schools..."
+           placeholder="Search participants..."
            class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
         Search
@@ -51,7 +51,7 @@
         <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Logo</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">School Name</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Participant Name</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Division</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Province / City</th>
                 <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Actions</th>

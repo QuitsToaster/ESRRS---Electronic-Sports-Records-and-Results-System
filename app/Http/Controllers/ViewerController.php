@@ -37,6 +37,57 @@ class ViewerController extends Controller
         ));
     }
 
+   public function participants(Request $request)
+    {
+        $search = $request->input('search');
+
+        $schools = \App\Models\School::with([
+            'coaches',
+            'athletes.sport', // still eager load for display
+        ])
+        ->when($search, function ($query, $search) {
+            // Filter schools by name only
+            $query->where('name', 'like', "%{$search}%");
+        })
+        ->orderBy('name')
+        ->get();
+
+        return view('viewer.participants', compact('schools', 'search'));
+    }
+
+
+    public function participantShow(\App\Models\School $school, Request $request)
+    {
+        $search   = $request->input('search');
+        $sportId  = $request->input('sport');
+        $division = $request->input('division');
+
+        // Load coaches + sport
+        $school->load('coaches.sport');
+
+        // Load athletes with sport, applying search & filters
+        $school->athletes = $school->athletes()
+            ->with('sport')
+            ->when($search, function ($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%");
+            })
+            ->when($sportId, function ($q) use ($sportId) {
+                $q->where('sport_id', $sportId);
+            })
+            ->when($division, function ($q) use ($division) {
+                $q->where('division', $division);
+            })
+            ->get();
+
+        // Get all sports and divisions for filter options
+        $sports    = \App\Models\Sport::orderBy('name')->get();
+        $divisions = $school->athletes->pluck('division')->unique()->sort();
+
+        return view('viewer.participants-show', compact(
+            'school', 'search', 'sportId', 'division', 'sports', 'divisions'
+        ));
+    }
+
     // Events Page
     public function events()
     {
@@ -79,4 +130,32 @@ class ViewerController extends Controller
 
         return back()->with('success', 'Thank you for your feedback! We will review it shortly.');
     }
+
+    // Display the QR attendance page
+    public function attendancePage()
+    {
+        return view('viewer.attendance');
+    }
+
+    // Handle the scanned QR code
+    public function attendanceScan(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string',
+        ]);
+
+        $code = $request->input('code');
+
+        // Here you can lookup the code in your attendance table
+        // For now, let's return a mock response
+        // You will later implement actual DB logic
+        $success = true; // mock
+        $message = "Attendance recorded successfully!";
+
+        return response()->json([
+            'success' => $success,
+            'message' => $message
+        ]);
+    }
+
 }

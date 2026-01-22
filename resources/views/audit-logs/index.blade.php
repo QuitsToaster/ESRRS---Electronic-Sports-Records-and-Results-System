@@ -12,8 +12,8 @@
         </p>
     </div>
 
-    {{-- Export PDF Button --}}
-    <a href="{{ route('audit-logs.export') }}"
+    {{-- Export PDF Button (PRESERVES FILTERS) --}}
+    <a href="{{ route('audit-logs.export', request()->query()) }}"
        class="inline-flex items-center px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold rounded shadow transition">
         Export Logs (PDF)
     </a>
@@ -28,26 +28,34 @@
 {{-- Search & Date Filter --}}
 <form method="GET" action="{{ route('audit-logs.index') }}" class="mb-4 flex flex-wrap items-center gap-2">
     {{-- Search --}}
-    <input type="text" name="search" value="{{ request('search') }}"
+    <input type="text"
+           name="search"
+           value="{{ request('search') }}"
            placeholder="Search logs by user, action, model..."
            class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
 
     {{-- Start Date --}}
-    <input type="date" name="start_date" value="{{ request('start_date') }}"
+    <input type="date"
+           name="start_date"
+           value="{{ request('start_date') }}"
            class="border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
 
     {{-- End Date --}}
-    <input type="date" name="end_date" value="{{ request('end_date') }}"
+    <input type="date"
+           name="end_date"
+           value="{{ request('end_date') }}"
            class="border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
 
     {{-- Submit --}}
-    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
+    <button type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
         Search
     </button>
 
     {{-- Clear --}}
     @if(request()->hasAny(['search','start_date','end_date']))
-        <a href="{{ route('audit-logs.index') }}" class="text-gray-500 hover:text-gray-700 ml-2">
+        <a href="{{ route('audit-logs.index') }}"
+           class="text-gray-500 hover:text-gray-700 ml-2">
             Clear
         </a>
     @endif
@@ -59,7 +67,6 @@
             No audit logs found.
         </div>
     @else
-
         <table class="min-w-full border-collapse">
             <thead class="bg-gray-100 border-b border-gray-300">
                 <tr>
@@ -74,11 +81,9 @@
                         <td class="px-4 py-2 font-medium text-gray-800">
                             {{ $log->user->name ?? 'System' }}
                         </td>
-
                         <td class="px-4 py-2 text-gray-700">
                             {{ $log->action }}
                         </td>
-
                         <td class="px-4 py-2 text-gray-700">
                             {{ $log->created_at->setTimezone('Asia/Manila')->format('M d, Y h:i A') }}
                         </td>
@@ -86,7 +91,6 @@
                 @endforeach
             </tbody>
         </table>
-
     @endif
 </div>
 

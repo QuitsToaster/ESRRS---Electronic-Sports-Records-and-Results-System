@@ -13,6 +13,9 @@ class School extends Model
 
     public function results()
     {
-        return $this->hasMany(Result::class); // Make sure your results table has school_id
+        return $this->hasMany(Result::class); 
     }
+
+    public function athletes() { return $this->hasMany(Athlete::class); }
+    public function coaches() { return $this->hasMany(Coach::class); }
 }
