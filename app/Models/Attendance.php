@@ -9,12 +9,22 @@ class Attendance extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['athlete_id', 'time_in', 'time_out'];
+    protected $fillable = [
+        'athlete_id',
+        'coach_id',
+        'time_in',
+        'time_out',
+    ];
 
+    // Athlete relationship
     public function athlete()
     {
         return $this->belongsTo(Athlete::class);
     }
 
-    
+    // Coach relationship
+    public function coach()
+    {
+        return $this->belongsTo(Coach::class);
+    }
 }

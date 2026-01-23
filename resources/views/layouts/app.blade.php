@@ -47,6 +47,7 @@
                 @elseif (request()->routeIs('athletes.*')) 'athletes'
                 @elseif (request()->routeIs('coaches.*')) 'coaches'
                 @elseif (request()->routeIs('games.*')) 'games'
+                @elseif (request()->routeIs('gallery.*')) 'gallery'
                 @elseif (request()->routeIs('announcements.*')) 'announcements'
                 @elseif (request()->routeIs('audit-logs.*')) 'logs'
                 @elseif (request()->routeIs('users.*')) 'settings'
@@ -245,6 +246,24 @@
                 </div>
             </div>
 
+            {{-- Gallery --}}
+            <div>
+                <button @click="openMenu = openMenu === 'gallery' ? null : 'gallery'"
+                        class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
+                        {{ request()->routeIs('gallery.*') ? 'bg-blue-900 font-semibold' : '' }}">
+                    Gallery
+                    <span x-text="openMenu === 'gallery' ? '▾' : '▸'"></span>
+                </button>
+                <div x-show="openMenu === 'gallery'" x-cloak class="pl-6 space-y-1">
+                    <a href="{{ route('gallery.index') }}" class="block px-4 py-2 hover:bg-blue-600">
+                        All Photos
+                    </a>
+                    <a href="{{ route('gallery.create') }}" class="block px-4 py-2 hover:bg-blue-600">
+                        Add Photos
+                    </a>
+                </div>
+            </div>
+
             {{-- Announcements --}}
             <div>
                 <button @click="openMenu = openMenu === 'announcements' ? null : 'announcements'"
@@ -337,21 +356,118 @@
             </h1>
 
             {{-- RIGHT --}}
-            <div class="flex items-center gap-4">
-                @auth
-                    <span class="hidden sm:block text-gray-700">
-                        Hello, {{ auth()->user()->name }}
-                    </span>
+<div class="flex items-center gap-4">
+    @auth
+        {{-- Greeting (desktop only) --}}
+        <span class="hidden sm:block text-gray-700">
+            Hello, {{ auth()->user()->name }}
+        </span>
 
-                    <form method="POST" action="{{ route('logout') }}">
-                        @csrf
-                        <button class="text-red-600 hover:text-red-800">
-                            Logout
-                        </button>
-                    </form>
-                @endauth
-            </div>
+        {{-- SETTINGS ICON --}}
+        <button onclick="openSettingsModal()"
+                class="text-gray-700 hover:text-gray-900 focus:outline-none"
+                title="Account Settings">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-wide-connected" viewBox="0 0 16 16">
+  <path d="M7.068.727c.243-.97 1.62-.97 1.864 0l.071.286a.96.96 0 0 0 1.622.434l.205-.211c.695-.719 1.888-.03 1.613.931l-.08.284a.96.96 0 0 0 1.187 1.187l.283-.081c.96-.275 1.65.918.931 1.613l-.211.205a.96.96 0 0 0 .434 1.622l.286.071c.97.243.97 1.62 0 1.864l-.286.071a.96.96 0 0 0-.434 1.622l.211.205c.719.695.03 1.888-.931 1.613l-.284-.08a.96.96 0 0 0-1.187 1.187l.081.283c.275.96-.918 1.65-1.613.931l-.205-.211a.96.96 0 0 0-1.622.434l-.071.286c-.243.97-1.62.97-1.864 0l-.071-.286a.96.96 0 0 0-1.622-.434l-.205.211c-.695.719-1.888.03-1.613-.931l.08-.284a.96.96 0 0 0-1.186-1.187l-.284.081c-.96.275-1.65-.918-.931-1.613l.211-.205a.96.96 0 0 0-.434-1.622l-.286-.071c-.97-.243-.97-1.62 0-1.864l.286-.071a.96.96 0 0 0 .434-1.622l-.211-.205c-.719-.695-.03-1.888.931-1.613l.284.08a.96.96 0 0 0 1.187-1.186l-.081-.284c-.275-.96.918-1.65 1.613-.931l.205.211a.96.96 0 0 0 1.622-.434zM12.973 8.5H8.25l-2.834 3.779A4.998 4.998 0 0 0 12.973 8.5m0-1a4.998 4.998 0 0 0-7.557-3.779l2.834 3.78zM5.048 3.967l-.087.065zm-.431.355A4.98 4.98 0 0 0 3.002 8c0 1.455.622 2.765 1.615 3.678L7.375 8zm.344 7.646.087.065z"/>
+</svg>
+        </button>
+
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            {{-- DESKTOP LOGOUT (text) --}}
+            <button type="submit"
+                    class="hidden sm:inline-block text-red-600 hover:text-red-800 font-medium">
+                Logout
+            </button>
+
+            {{-- MOBILE LOGOUT (icon) --}}
+            <button type="submit"
+                    class="sm:hidden text-red-600 hover:text-red-800 focus:outline-none"
+                    title="Logout">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="h-6 w-6"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+                </svg>
+            </button>
+        </form>
+    @endauth
+</div>
+
+
         </header>
+        {{-- SETTINGS MODAL --}}
+<div id="settingsModal"
+     class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 relative w-96">
+        <button onclick="closeSettingsModal()"
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl">&times;</button>
+
+        <h3 class="text-lg font-semibold text-center mb-4">Update Account Details</h3>
+
+        <form method="POST" action="{{ route('users.updateProfile') }}">
+    @csrf
+    @method('PUT')
+    
+    <div class="mb-3">
+        <label class="block text-sm font-medium text-gray-700">Name</label>
+        <input type="text" name="name" value="{{ auth()->user()->name }}"
+               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="block text-sm font-medium text-gray-700">Email</label>
+        <input type="email" name="email" value="{{ auth()->user()->email }}"
+               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500" required>
+    </div>
+
+    <div class="mb-3">
+        <label class="block text-sm font-medium text-gray-700">Password</label>
+        <input type="password" name="password"
+               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500"
+               placeholder="Leave blank to keep current password">
+    </div>
+
+    <div class="mb-3">
+        <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+        <input type="password" name="password_confirmation"
+               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500"
+               placeholder="Confirm new password">
+    </div>
+
+    <div class="flex justify-end gap-2 mt-4">
+        <button type="button"
+                onclick="closeSettingsModal()"
+                class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
+            Cancel
+        </button>
+        <button type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+            Save Changes
+        </button>
+    </div>
+</form>
+
+    </div>
+</div>
+
+<script>
+function openSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeSettingsModal() {
+    const modal = document.getElementById('settingsModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
+
 
         {{-- CONTENT --}}
         <main class="flex-1 overflow-y-auto p-4 sm:p-6 bg-gray-100">

@@ -150,4 +150,40 @@ public function index(Request $request)
 
         return redirect()->route('users.index')->with('success', 'User deleted successfully.');
     }
+
+    // Update logged-in user's profile
+public function updateProfile(Request $request)
+{
+    $user = auth()->user();
+
+    $request->validate([
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|email|unique:users,email,' . $user->id,
+        'password' => 'nullable|string|min:6|confirmed',
+    ]);
+
+    $oldValues = $user->toArray();
+
+    $user->name = $request->name;
+    $user->email = $request->email;
+
+    if ($request->filled('password')) {
+        $user->password = Hash::make($request->password);
+    }
+
+    $user->save();
+
+    // Audit log
+    AuditLog::create([
+        'model_type' => 'User',
+        'model_id'   => $user->id,
+        'user_id'    => auth()->id(),
+        'action'     => 'Updated Own Profile',
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($user->toArray()),
+    ]);
+
+    return back()->with('success', 'Profile updated successfully!');
+}
+
 }

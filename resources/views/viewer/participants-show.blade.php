@@ -13,7 +13,8 @@
     {{-- School Header --}}
     <div class="flex flex-col items-center mb-6">
         @if($school->logo)
-            <img src="{{ asset('storage/' . $school->logo) }}" alt="{{ $school->name }} Logo"
+            <img src="{{ asset('storage/' . $school->logo) }}"
+                 alt="{{ $school->name }} Logo"
                  class="w-32 h-32 object-contain rounded-full border border-gray-300 mb-3">
         @endif
         <h1 class="text-3xl font-bold text-gray-800">{{ $school->name }}</h1>
@@ -32,24 +33,27 @@
 
         @foreach(['Gold' => $gold, 'Silver' => $silver, 'Bronze' => $bronze] as $medal => $count)
             @php
-                $colorBg = $medal === 'Gold' ? 'bg-yellow-100' : ($medal === 'Silver' ? 'bg-gray-200' : 'bg-orange-100');
+                $colorBg   = $medal === 'Gold' ? 'bg-yellow-100' : ($medal === 'Silver' ? 'bg-gray-200' : 'bg-orange-100');
                 $colorText = $medal === 'Gold' ? 'text-yellow-600' : ($medal === 'Silver' ? 'text-gray-500' : 'text-orange-500');
             @endphp
 
-            <button 
-                @click="openModal = true; selectedMedal = '{{ $medal }}'" 
-                class="{{ $colorBg }} rounded-lg p-4 flex flex-col items-center shadow hover:shadow-lg transition focus:outline-none">
+            <button
+                @click="openModal = true; selectedMedal = '{{ $medal }}'"
+                class="{{ $colorBg }} rounded-lg p-4 flex flex-col items-center shadow hover:shadow-lg transition">
                 <span class="text-lg font-semibold text-gray-700">{{ $medal }}</span>
                 <span class="text-3xl font-bold {{ $colorText }} mt-2">{{ $count }}</span>
             </button>
         @endforeach
 
-        {{-- Modal --}}
-        <div x-show="openModal" x-transition class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div @click.away="openModal = false" class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 overflow-auto max-h-[80vh]">
+        {{-- Medal Modal --}}
+        <div x-show="openModal" x-transition
+             class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div @click.away="openModal = false"
+                 class="bg-white rounded-lg shadow-lg max-w-2xl w-full p-6 overflow-auto max-h-[80vh]">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-xl font-semibold" x-text="selectedMedal + ' Medals'"></h3>
-                    <button @click="openModal = false" class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
+                    <button @click="openModal = false"
+                            class="text-gray-500 hover:text-gray-700 text-2xl">&times;</button>
                 </div>
 
                 <table class="min-w-full text-sm border border-gray-200">
@@ -64,7 +68,8 @@
                     <tbody>
                         @foreach(['Gold', 'Silver', 'Bronze'] as $medalType)
                             @foreach($school->results()->where('medal', $medalType)->get() as $result)
-                                <tr x-show="selectedMedal === '{{ $medalType }}'" class="border-b border-gray-200 hover:bg-gray-50">
+                                <tr x-show="selectedMedal === '{{ $medalType }}'"
+                                    class="border-b border-gray-200 hover:bg-gray-50">
                                     <td class="px-2 py-1">{{ $result->event->name ?? 'N/A' }}</td>
                                     <td class="px-2 py-1">{{ $result->sport->name ?? 'N/A' }}</td>
                                     <td class="px-2 py-1">{{ $result->division ?? 'N/A' }}</td>
@@ -88,8 +93,12 @@
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                 @foreach($school->coaches as $coach)
                     <div class="bg-white rounded-lg shadow p-4 hover:shadow-lg transition flex flex-col items-center text-center">
-                        <div class="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mb-3">
-                            <span class="text-gray-500 font-bold uppercase">{{ substr($coach->name,0,1) }}</span>
+                        <div class="w-16 h-16 rounded-full overflow-hidden border mb-3">
+                            <img src="{{ $coach->profile_photo
+                                         ? asset('storage/' . $coach->profile_photo)
+                                         : asset('images/avatar-placeholder.png') }}"
+                                 alt="{{ $coach->name }} Photo"
+                                 class="w-full h-full object-cover">
                         </div>
                         <h3 class="font-semibold text-gray-800">{{ $coach->name }}</h3>
                         <p class="text-gray-500 text-sm mt-1">{{ $coach->sport->name ?? 'N/A' }}</p>
@@ -99,37 +108,36 @@
         @endif
     </div>
 
-    {{-- Athletes Filters --}}
+    {{-- Athletes --}}
     <h2 class="text-xl font-semibold text-gray-700 mb-2">Athletes</h2>
-    <div class="mb-4 flex flex-wrap gap-2 items-center">
-        <form method="GET" action="{{ route('viewer.participants.show', $school->id) }}" class="flex flex-wrap gap-2 items-center w-full">
-            <input type="text" name="search" value="{{ $search }}" placeholder="Search athletes..."
-                   class="border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500 flex-1">
 
-            <select name="sport"
-                class="border border-gray-300 rounded px-8 py-2 pr-8 appearance-none focus:ring focus:ring-blue-200 focus:border-blue-500 bg-white bg-no-repeat bg-right">
-            <option value="">Sports</option>
-            @foreach($sports as $sport)
-                <option value="{{ $sport->id }}" @if($sportId == $sport->id) selected @endif>{{ $sport->name }}</option>
-            @endforeach
-        </select>
+    {{-- Filters --}}
+    <div class="mb-4">
+        <form method="GET" action="{{ route('viewer.participants.show', $school->id) }}"
+              class="flex flex-wrap gap-2 items-center">
+            <input type="text" name="search" value="{{ $search }}"
+                   placeholder="Search athletes..."
+                   class="border rounded px-3 py-2 flex-1">
 
-        <select name="division"
-                class="border border-gray-300 rounded px-8 py-2 pr-8 appearance-none focus:ring focus:ring-blue-200 focus:border-blue-500 bg-white bg-no-repeat bg-right">
-            <option value="">Divisions</option>
-            @foreach($divisions as $div)
-                <option value="{{ $div }}" @if($division == $div) selected @endif>{{ $div }}</option>
-            @endforeach
-        </select>
+            <select name="sport" class="border rounded px-3 py-2">
+                <option value="">Sports</option>
+                @foreach($sports as $sport)
+                    <option value="{{ $sport->id }}" @selected($sportId == $sport->id)>
+                        {{ $sport->name }}
+                    </option>
+                @endforeach
+            </select>
 
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
-                Search
-            </button>
-            @if($search || $sportId || $division)
-                <a href="{{ route('viewer.participants.show', $school->id) }}" class="text-gray-500 hover:text-gray-700 px-2 py-2">
-                    Clear
-                </a>
-            @endif
+            <select name="division" class="border rounded px-3 py-2">
+                <option value="">Divisions</option>
+                @foreach($divisions as $div)
+                    <option value="{{ $div }}" @selected($division == $div)>
+                        {{ $div }}
+                    </option>
+                @endforeach
+            </select>
+
+            <button class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
         </form>
     </div>
 
@@ -138,6 +146,7 @@
         <table class="min-w-full border border-gray-200 text-sm">
             <thead class="bg-gray-100">
                 <tr>
+                    <th class="px-2 py-1 text-left">Photo</th>
                     <th class="px-2 py-1 text-left">Name</th>
                     <th class="px-2 py-1 text-left">Sport</th>
                     <th class="px-2 py-1 text-left">Division</th>
@@ -146,17 +155,30 @@
             </thead>
             <tbody>
                 @forelse($school->athletes as $athlete)
-                    <tr class="border-b border-gray-200 hover:bg-gray-50
-                        @if(strtolower($athlete->status) === 'injured') bg-yellow-100
-                        @elseif(strtolower($athlete->status) === 'disqualified') bg-red-100 text-red-700 @endif">
-                        <td class="px-2 py-1">{{ $athlete->name }}</td>
+                    <tr class="border-b hover:bg-gray-50
+                        @if(strtolower($athlete->status)=='injured') bg-yellow-100
+                        @elseif(strtolower($athlete->status)=='disqualified') bg-red-100 text-red-700 @endif">
+
+                        {{-- Athlete Photo --}}
+                        <td class="px-2 py-1">
+                            <img
+                                src="{{ $athlete->profile_photo
+                                        ? asset('storage/'.$athlete->profile_photo)
+                                        : asset('images/avatar-placeholder.png') }}"
+                                class="w-10 h-10 rounded-full object-cover border"
+                                alt="{{ $athlete->name }} Photo">
+                        </td>
+
+                        <td class="px-2 py-1 font-medium">{{ $athlete->name }}</td>
                         <td class="px-2 py-1">{{ $athlete->sport->name ?? 'N/A' }}</td>
                         <td class="px-2 py-1">{{ $athlete->division }}</td>
                         <td class="px-2 py-1">{{ $athlete->status }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="text-gray-400 px-2 py-2 text-center">No athletes listed</td>
+                        <td colspan="5" class="text-gray-400 text-center py-3">
+                            No athletes listed
+                        </td>
                     </tr>
                 @endforelse
             </tbody>
@@ -164,6 +186,5 @@
     </div>
 </div>
 
-{{-- Alpine.js --}}
 <script src="//unpkg.com/alpinejs" defer></script>
 @endsection

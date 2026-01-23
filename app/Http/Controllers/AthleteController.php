@@ -53,10 +53,18 @@ class AthleteController extends Controller
         'sport_id' => 'required|exists:sports,id',
         'division' => 'required|in:Elementary,Secondary',
         'category' => 'required|in:Boys,Girls',
-        'status' => 'required|in:Active,Disqualified,Injured'
+        'status' => 'required|in:Active,Disqualified,Injured',
+        'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
     ]);
 
-    // Generate unique QR code value with prefix
+    // Handle profile photo upload
+    $photoPath = null;
+    if ($request->hasFile('profile_photo')) {
+        $photoPath = $request->file('profile_photo')
+            ->store('athletes', 'public');
+    }
+
+    // Generate QR
     $qrValue = 'CEMS-' . strtoupper(Str::random(8));
 
     $athlete = Athlete::create([
@@ -66,7 +74,8 @@ class AthleteController extends Controller
         'division' => $request->division,
         'category' => $request->category,
         'status' => $request->status,
-        'qr_code' => $qrValue, // save QR code value in DB
+        'qr_code' => $qrValue,
+        'profile_photo' => $photoPath,
     ]);
 
     AuditLog::create([
@@ -75,12 +84,13 @@ class AthleteController extends Controller
         'user_id' => Auth::id(),
         'old_values' => null,
         'new_values' => json_encode($athlete->toArray()),
-        'action' => 'Created Athlete: '.$athlete->name,
+        'action' => 'Created Athlete: ' . $athlete->name,
     ]);
 
     return redirect()->route('athletes.index')
         ->with('success', 'Athlete added successfully!');
 }
+
 
 
 
@@ -91,33 +101,40 @@ class AthleteController extends Controller
         return view('athletes.edit', compact('athlete', 'schools', 'sports'));
     }
 
-    public function update(Request $request, Athlete $athlete)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'school_id' => 'required|exists:schools,id',
-            'sport_id' => 'required|exists:sports,id',
-            'division' => 'required|in:Elementary,Secondary',
-            'category' => 'required|in:Boys,Girls',
-            'status' => 'required|in:Active,Disqualified,Injured'
-        ]);
+   public function update(Request $request, Athlete $athlete)
+{
+    $request->validate([
+        'name' => 'required|string',
+        'school_id' => 'required|exists:schools,id',
+        'sport_id' => 'required|exists:sports,id',
+        'division' => 'required|in:Elementary,Secondary',
+        'category' => 'required|in:Boys,Girls',
+        'status' => 'required|in:Active,Disqualified,Injured',
+        'profile_photo' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+    ]);
 
-        $oldValues = $athlete->toArray(); // store old data
+    $oldValues = $athlete->toArray();
 
-        $athlete->update($request->all());
-
-        // Audit log for update
-        AuditLog::create([
-            'model_type' => 'Athlete',
-            'model_id' => $athlete->id,
-            'user_id' => Auth::id(),
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($athlete->toArray()),
-            'action' => 'Updated Athlete: '.$athlete->name,
-        ]);
-
-        return redirect()->route('athletes.index')->with('success', 'Athlete updated successfully!');
+    if ($request->hasFile('profile_photo')) {
+        $athlete->profile_photo = $request->file('profile_photo')
+            ->store('athletes', 'public');
     }
+
+    $athlete->update($request->except('profile_photo'));
+
+    AuditLog::create([
+        'model_type' => 'Athlete',
+        'model_id' => $athlete->id,
+        'user_id' => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($athlete->toArray()),
+        'action' => 'Updated Athlete: ' . $athlete->name,
+    ]);
+
+    return redirect()->route('athletes.index')
+        ->with('success', 'Athlete updated successfully!');
+}
+
 
     public function destroy(Athlete $athlete)
     {

@@ -17,42 +17,47 @@ class AttendanceController extends Controller
 
     // Handle QR code submission
     public function store(Request $request)
-    {
-        $request->validate([
-            'qr_code' => 'required|string',
+{
+    $request->validate([
+        'qr_code' => 'required|string',
+    ]);
+
+    $qr = $request->qr_code;
+
+    $today = Carbon::today();
+
+    // Check athlete first
+    $athlete = \App\Models\Athlete::where('qr_code', $qr)->first();
+    if ($athlete) {
+        $already = \App\Models\Attendance::where('athlete_id', $athlete->id)
+                    ->whereDate('created_at', $today)->first();
+        if ($already) return back()->with('already_scanned_name', $athlete->name);
+
+        \App\Models\Attendance::create([
+            'athlete_id' => $athlete->id,
+            'time_in' => now(),
         ]);
 
-        // Find athlete by QR code
-        $athlete = Athlete::where('qr_code', $request->qr_code)->first();
-
-        if (!$athlete) {
-            return back()->with('error', 'QR code not recognized. Athlete not registered.');
-        }
-
-        // Check if athlete already has an attendance record today
-        $today = Carbon::today();
-        $attendance = Attendance::where('athlete_id', $athlete->id)
-            ->whereDate('created_at', $today)
-            ->first();
-
-        if (!$attendance) {
-            // First scan = log time_in
-            Attendance::create([
-                'athlete_id' => $athlete->id,
-                'time_in' => now(),
-            ]);
-
-            return back()->with('success', $athlete->name . ' attendance recorded (Time In).');
-        } elseif ($attendance && !$attendance->time_out) {
-            // Second scan = log time_out
-            $attendance->update([
-                'time_out' => now(),
-            ]);
-
-            return back()->with('success', $athlete->name . ' attendance updated (Time Out).');
-        } else {
-            // Already has time_in and time_out
-            return back()->with('error', $athlete->name . ' already completed attendance today.');
-        }
+        return back()->with('success', $athlete->name . ' attendance recorded.');
     }
+
+    // Check coach next
+    $coach = \App\Models\Coach::where('qr_code', $qr)->first();
+    if ($coach) {
+        $already = \App\Models\Attendance::where('coach_id', $coach->id)
+                    ->whereDate('created_at', $today)->first();
+        if ($already) return back()->with('already_scanned_name', $coach->name);
+
+        \App\Models\Attendance::create([
+            'coach_id' => $coach->id,
+            'time_in' => now(),
+        ]);
+
+        return back()->with('success', $coach->name . ' attendance recorded.');
+    }
+
+    // If not found
+    return back()->with('error', 'QR code not recognized. Athlete or Coach not registered.');
+}
+
 }

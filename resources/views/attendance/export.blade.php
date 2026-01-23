@@ -34,6 +34,7 @@
         table {
             width: 100%;
             border-collapse: collapse;
+            margin-bottom: 20px;
         }
 
         th {
@@ -72,30 +73,36 @@
     </div>
 
     {{-- Attended Today --}}
-    <h2>Athletes with Attendance Today</h2>
+    <h2>Attendance Today</h2>
     <table>
         <thead>
             <tr>
-                <th width="35%">Name</th>
-                <th width="40%">Team</th>
-                <th width="25%">Time In</th>
+                <th width="30%">Name</th>
+                <th width="20%">Role</th>
+                <th width="30%">Team</th>
+                <th width="20%">Time In</th>
             </tr>
         </thead>
         <tbody>
             @foreach($attended as $record)
                 @php
-                    $timeIn = $record->time_in ? \Carbon\Carbon::parse($record->time_in)->setTimezone('Asia/Manila')->format('h:i A') : '—';
+                    $role = $record->athlete ? 'Athlete' : ($record->coach ? 'Coach' : '-');
+                    $name = $record->athlete->name ?? $record->coach->name ?? '-';
+                    $team = $record->athlete->school->name ?? $record->coach->school->name ?? 'N/A';
+                    $timeIn = $record->time_in ? \Carbon\Carbon::parse($record->time_in)
+                                ->setTimezone('Asia/Manila')->format('h:i A') : '—';
                 @endphp
                 <tr>
-                    <td>{{ $record->athlete->name }}</td>
-                    <td>{{ $record->athlete->school->name ?? 'N/A' }}</td>
+                    <td>{{ $name }}</td>
+                    <td>{{ $role }}</td>
+                    <td>{{ $team }}</td>
                     <td>{{ $timeIn }}</td>
                 </tr>
             @endforeach
         </tbody>
     </table>
 
-    {{-- Not Attended --}}
+    {{-- Not Attended Athletes --}}
     <h2>Athletes without Attendance Today</h2>
     <table>
         <thead>
@@ -109,6 +116,25 @@
                 <tr>
                     <td>{{ $athlete->name }}</td>
                     <td>{{ $athlete->school->name ?? 'N/A' }}</td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+
+    {{-- Not Attended Coaches --}}
+    <h2>Coaches without Attendance Today</h2>
+    <table>
+        <thead>
+            <tr>
+                <th width="50%">Name</th>
+                <th width="50%">Team</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($notAttendedCoaches as $coach)
+                <tr>
+                    <td>{{ $coach->name }}</td>
+                    <td>{{ $coach->school->name ?? 'N/A' }}</td>
                 </tr>
             @endforeach
         </tbody>

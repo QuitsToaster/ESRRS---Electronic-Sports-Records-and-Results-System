@@ -10,7 +10,7 @@
 </div>
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
-    <form action="{{ route('coaches.update', $coach->id) }}" method="POST">
+    <form action="{{ route('coaches.update', $coach->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         @method('PUT')
 
@@ -37,7 +37,29 @@
             </select>
         </div>
 
+        {{-- Profile Photo --}}
+        <div class="mb-3">
+            <label class="block mb-1">Profile Photo</label>
+            <div class="flex items-center gap-4">
+                <div class="w-20 h-20 rounded-full overflow-hidden border border-gray-300">
+                    <img id="photoPreview" src="{{ $coach->profile_photo ? asset('storage/' . $coach->profile_photo) : asset('images/avatar-placeholder.png') }}" alt="Profile Photo" class="w-full h-full object-cover">
+                </div>
+                <input type="file" name="profile_photo" accept="image/*" onchange="previewPhoto(event)">
+            </div>
+        </div>
+
         <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow">Update Coach</button>
     </form>
 </div>
+
+<script>
+function previewPhoto(event) {
+    const reader = new FileReader();
+    reader.onload = function(){
+        const output = document.getElementById('photoPreview');
+        output.src = reader.result;
+    };
+    reader.readAsDataURL(event.target.files[0]);
+}
+</script>
 @endsection

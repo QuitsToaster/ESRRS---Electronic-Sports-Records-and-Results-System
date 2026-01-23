@@ -8,7 +8,7 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-            <h1 class="text-3xl font-bold text-gray-800">Participants</h1>
+            <h1 class="text-3xl font-bold text-gray-800">Teams</h1>
             <p class="text-gray-600 mt-1">Click on a team to view coaches and athletes.</p>
         </div>
 

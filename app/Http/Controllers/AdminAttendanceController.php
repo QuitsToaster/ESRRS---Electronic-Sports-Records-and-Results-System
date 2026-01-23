@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Athlete;
+use App\Models\Coach;
 use App\Models\Attendance;
 use PDF;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
@@ -15,20 +16,28 @@ class AdminAttendanceController extends Controller
     {
         $today = Carbon::today();
 
-        // Attendance records for today
-        $attended = Attendance::with('athlete.school')
+        // Load all attendance (athlete or coach) for today
+        $attended = Attendance::with(['athlete.school', 'coach.school'])
             ->whereDate('created_at', $today)
             ->get();
 
-        // Athletes who have NOT attended today
-        $attendedIds = $attended->pluck('athlete_id')->toArray();
+        // Get all athlete IDs that attended
+        $attendedAthleteIds = $attended->pluck('athlete_id')->filter()->toArray();
 
+        // Athletes who have not attended today
         $notAttended = Athlete::with('school')
-            ->whereNotIn('id', $attendedIds)
+            ->whereNotIn('id', $attendedAthleteIds)
             ->orderBy('name')
             ->get();
 
-        return view('attendance.index', compact('attended', 'notAttended'));
+        $attendedCoachIds = $attended->pluck('coach_id')->filter()->toArray();
+
+        $notAttendedCoaches = Coach::with('school')
+            ->whereNotIn('id', $attendedCoachIds)
+            ->orderBy('name')
+            ->get();
+
+        return view('attendance.index', compact('attended', 'notAttended', 'notAttendedCoaches'));
     }
 
     public function generateQr(Request $request)
@@ -54,22 +63,34 @@ class AdminAttendanceController extends Controller
 {
     $today = Carbon::today();
 
-    // Attended today
-    $attended = Attendance::with('athlete.school')
+    // Load all attendance for today
+    $attended = Attendance::with(['athlete.school', 'coach.school'])
         ->whereDate('created_at', $today)
         ->get();
 
-    $attendedIds = $attended->pluck('athlete_id')->toArray();
+    // Athletes who attended
+    $attendedAthleteIds = $attended->pluck('athlete_id')->filter()->toArray();
 
-    // Not attended
+    // Athletes without attendance
     $notAttended = Athlete::with('school')
-        ->whereNotIn('id', $attendedIds)
+        ->whereNotIn('id', $attendedAthleteIds)
         ->orderBy('name')
         ->get();
 
+    // Coaches who attended
+    $attendedCoachIds = $attended->pluck('coach_id')->filter()->toArray();
+
+    // Coaches without attendance
+    $notAttendedCoaches = Coach::with('school')
+        ->whereNotIn('id', $attendedCoachIds)
+        ->orderBy('name')
+        ->get();
+
+    // Pass all data to export view
     $pdf = PDF::loadView('attendance.export', [
         'attended' => $attended,
         'notAttended' => $notAttended,
+        'notAttendedCoaches' => $notAttendedCoaches,
         'generatedAt' => now()->setTimezone('Asia/Manila')->format('M d, Y h:i A')
     ]);
 

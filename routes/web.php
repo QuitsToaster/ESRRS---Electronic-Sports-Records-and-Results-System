@@ -15,6 +15,7 @@ use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\GalleryController;
 use Illuminate\Support\Facades\Route;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Athlete;
@@ -65,6 +66,12 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
+// Logged-in user profile update
+Route::put('/profile/update', [UserController::class, 'updateProfile'])
+     ->name('users.updateProfile')
+     ->middleware('auth');
+
+
 Route::middleware('auth')->group(function () {
     Route::resource('schools', SchoolController::class);
     Route::resource('sports', SportController::class);
@@ -88,6 +95,8 @@ Route::get('/athletes/{athlete}/qr', function (Athlete $athlete) {
 
 })->name('athletes.qr');
 Route::resource('coaches', CoachController::class)->middleware('auth');
+Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
+
 Route::resource('games', GameController::class)->middleware('auth');
 
 Route::middleware(['auth'])->group(function () {
@@ -121,8 +130,22 @@ Route::prefix('users')->group(function() {
 
 Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
 
+Route::prefix('gallery')->group(function() {
+    Route::get('/', [GalleryController::class, 'index'])->name('gallery.index');
+    Route::get('/create', [GalleryController::class, 'create'])->name('gallery.create');
+    Route::post('/', [GalleryController::class, 'store'])->name('gallery.store');
+    Route::get('/{photo}/edit', [GalleryController::class, 'edit'])->name('gallery.edit');
+    Route::put('/{photo}', [GalleryController::class, 'update'])->name('gallery.update');
+    Route::delete('/{photo}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
+});
+
+// Viewer Gallery
+Route::get('/viewer/gallery', [ViewerController::class, 'gallery'])->name('viewer.gallery');
+
+
 
 Route::resource('announcements', AnnouncementController::class);
+
 
 Route::prefix('settings')->name('settings.')->middleware('auth')->group(function () {
     Route::get('/layout', [\App\Http\Controllers\SettingsController::class, 'layout'])->name('layout');

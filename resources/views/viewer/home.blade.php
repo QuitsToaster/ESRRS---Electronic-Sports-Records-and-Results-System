@@ -9,7 +9,6 @@
     @foreach($banners as $index => $banner)
         <div class="absolute inset-0 transition-opacity duration-1000 {{ $index === 0 ? 'opacity-100' : 'opacity-0' }}" data-slide>
             <img src="{{ asset('storage/' . $banner->image) }}" class="w-full h-full object-cover">
-            {{-- Gradient overlay: darkest left, lighter right --}}
             <div class="absolute inset-0 bg-gradient-to-r from-black/90 to-black/20"></div>
             <div class="absolute left-6 top-1/3 max-w-lg text-white">
                 <h2 class="text-5xl md:text-6xl font-bold mb-2">Welcome to CEMS</h2>
@@ -19,8 +18,6 @@
         </div>
     @endforeach
 </div>
-
-
 
 {{-- Main Container --}}
 <div class="space-y-8 max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-6">
@@ -45,8 +42,49 @@
         </div>
     </div>
 
+    {{-- Latest Gallery --}}
+    @php
+        use App\Models\GalleryPhoto;
+        $photos = GalleryPhoto::latest()->take(3)->get(); // latest 3 uploads
+    @endphp
+
+    @if($photos->isNotEmpty())
+    <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Latest Gallery Uploads</h3>
+
+        <div class="flex gap-4 overflow-x-auto pb-2">
+            @foreach($photos as $photo)
+                @php
+                    $firstImage = $photo->photos[0] ?? null;
+                    $extraCount = count($photo->photos) - 1;
+                @endphp
+                <div class="min-w-[300px] border rounded-lg overflow-hidden shadow-sm cursor-pointer relative flex-shrink-0" onclick="openPhotoModal({{ $photo->id }})">
+                    {{-- Title --}}
+                    <div class="p-2 font-semibold bg-gray-100">{{ $photo->title }}</div>
+
+                    {{-- First Image --}}
+                    @if($firstImage)
+                        <div class="relative">
+                            <img src="{{ asset('storage/' . $firstImage) }}" alt="Photo" class="w-full h-48 object-cover rounded">
+                            @if($extraCount > 0)
+                                <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                                    +{{ $extraCount }}
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
+                            No Image
+                        </div>
+                    @endif
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     {{-- Upcoming Events & Games --}}
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
         {{-- Events --}}
         <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
             <h3 class="text-lg font-semibold text-gray-800 mb-4">Upcoming Events</h3>
@@ -85,72 +123,62 @@
         </div>
     </div>
 
-    {{-- Announcements --}}
-    <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Latest Announcements</h3>
-        @if($latestAnnouncements->isEmpty())
-            <p class="text-gray-500 text-sm">No announcements available.</p>
-        @else
-            <ul class="divide-y">
-                @foreach($latestAnnouncements as $announcement)
-                    <li class="py-4 hover:bg-gray-50 rounded px-2 transition">
-                        <div class="flex justify-between items-center">
-                            <span class="font-medium text-gray-800">{{ $announcement->title }}</span>
-                            <span class="text-xs text-gray-500">{{ $announcement->published_at->format('M d, Y') }}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">{{ \Illuminate\Support\Str::limit($announcement->content, 120) }}</p>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-    </div>
-
-    {{-- Medal Tally --}}
-    <div class="bg-white rounded-lg shadow p-6 hover:shadow-lg transition">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">Medal Tally</h3>
-        @if($medalTally->isEmpty())
-            <p class="text-gray-500 text-sm">No medals awarded yet.</p>
-        @else
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm border border-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-4 py-2 text-left">School</th>
-                            <th class="px-4 py-2 text-center">Gold</th>
-                            <th class="px-4 py-2 text-center">Silver</th>
-                            <th class="px-4 py-2 text-center">Bronze</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y">
-                        @foreach($medalTally as $school)
-                            <tr class="hover:bg-gray-50">
-                                <td class="px-4 py-2">{{ \App\Models\School::find($school->school_id)->name ?? 'Unknown' }}</td>
-                                <td class="px-4 py-2 text-center">{{ $school->gold }}</td>
-                                <td class="px-4 py-2 text-center">{{ $school->silver }}</td>
-                                <td class="px-4 py-2 text-center">{{ $school->bronze }}</td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
-
 </div>
 
-{{-- Slideshow JS --}}
+{{-- Banner Slideshow JS --}}
 <script>
 let slides = document.querySelectorAll('[data-slide]');
 let current = 0;
+function showSlide(index){
+    slides.forEach((slide,i)=>slide.style.opacity = i===index?'1':'0');
+}
+setInterval(()=>{ current=(current+1)%slides.length; showSlide(current); },5000);
+</script>
 
-function showSlide(index) {
-    slides.forEach((slide, i) => slide.style.opacity = i === index ? '1' : '0');
+{{-- Gallery Modal JS --}}
+<script>
+const photosData = @json($photos ?? []);
+let currentPhotoIndex = 0;
+let currentPhotoSet = null;
+
+function openPhotoModal(id) {
+    const photo = photosData.find(p=>p.id===id);
+    if(!photo) return;
+    currentPhotoIndex = 0;
+    currentPhotoSet = photo;
+    const modal = document.createElement('div');
+    modal.id = 'photoModal';
+    modal.className = 'fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4';
+    modal.innerHTML = `
+        <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full relative flex flex-col">
+            <button onclick="closePhotoModal()" class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+            <div class="p-6 flex flex-col overflow-y-auto max-h-[90vh]" id="modalContent"></div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    renderImage();
 }
 
-setInterval(() => {
-    current = (current + 1) % slides.length;
-    showSlide(current);
-}, 5000);
+function renderImage(){
+    const content = document.getElementById('modalContent');
+    if(!currentPhotoSet) return;
+    let html = `<h2 class="text-xl font-semibold mb-2">${currentPhotoSet.title}</h2>`;
+    html += `<p class="text-gray-600 mb-4">${currentPhotoSet.description}</p>`;
+    html += `<div class="relative w-full h-96 flex items-center justify-center mb-4">`;
+    html += `<img src="/storage/${currentPhotoSet.photos[currentPhotoIndex]}" class="w-full h-full object-cover rounded">`;
+    if(currentPhotoSet.photos.length>1){
+        html += `<div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">${currentPhotoIndex+1} / ${currentPhotoSet.photos.length}</div>`;
+    }
+    html += `</div>`;
+    content.innerHTML = html;
+}
+
+function closePhotoModal(){
+    const modal = document.getElementById('photoModal');
+    if(modal) modal.remove();
+    currentPhotoIndex=0;
+    currentPhotoSet=null;
+}
 </script>
 
 @endsection

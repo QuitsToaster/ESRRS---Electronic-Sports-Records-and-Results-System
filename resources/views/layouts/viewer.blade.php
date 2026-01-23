@@ -26,7 +26,7 @@
                     </a>
                     <a href="{{ route('viewer.participants') }}"
                        class="hover:text-gray-200 {{ request()->routeIs('viewer.participants') ? 'underline font-semibold' : '' }}">
-                        Participants
+                        Teams
                     </a>
                     <a href="{{ route('viewer.events') }}"
                        class="hover:text-gray-200 {{ request()->routeIs('viewer.events') ? 'underline font-semibold' : '' }}">
@@ -35,6 +35,10 @@
                     <a href="{{ route('viewer.games') }}"
                        class="hover:text-gray-200 {{ request()->routeIs('viewer.games') ? 'underline font-semibold' : '' }}">
                         Games
+                    </a>
+                    <a href="{{ route('viewer.gallery') }}"
+                        class="hover:text-gray-200 {{ request()->routeIs('viewer.gallery') ? 'underline font-semibold' : '' }}">
+                        Gallery
                     </a>
                     <a href="{{ route('viewer.announcements') }}"
                        class="hover:text-gray-200 {{ request()->routeIs('viewer.announcements') ? 'underline font-semibold' : '' }}">
@@ -74,7 +78,7 @@
             </a>
             <a href="{{ route('viewer.participants') }}" 
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.participants') ? 'font-semibold bg-blue-800' : '' }}">
-                Participants
+                Teams
             </a>
             <a href="{{ route('viewer.events') }}" 
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.events') ? 'font-semibold bg-blue-800' : '' }}">
@@ -83,6 +87,10 @@
             <a href="{{ route('viewer.games') }}" 
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.games') ? 'font-semibold bg-blue-800' : '' }}">
                 Games
+            </a>
+            <a href="{{ route('viewer.gallery') }}" 
+                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.gallery') ? 'font-semibold bg-blue-800' : '' }}">
+                Gallery
             </a>
             <a href="{{ route('viewer.announcements') }}" 
                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.announcements') ? 'font-semibold bg-blue-800' : '' }}">

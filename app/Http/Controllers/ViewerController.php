@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\ViewerFeedback;
 use App\Models\Event;
 use App\Models\Banner;
+use App\Models\GalleryPhoto;
 use App\Models\Game;
 use App\Models\Announcement;
 
@@ -124,6 +125,21 @@ public function games(Request $request)
 
     return view('viewer.games', compact('games'));
 }
+
+public function gallery(Request $request)
+{
+    $search = $request->input('search');
+
+    $photos = GalleryPhoto::when($search, function($query, $search) {
+        $query->where('title', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%");
+    })
+    ->latest()
+    ->get();
+
+    return view('viewer.gallery', compact('photos'));
+}
+
 
 
     public function announcements(Request $request)
