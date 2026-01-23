@@ -57,12 +57,27 @@
     >
 
         {{-- BRAND --}}
-        <div class="p-6 font-bold text-xl border-b border-blue-700 flex-shrink-0">
-            CEMS
-            <p class="text-sm text-gray-300 mt-1">
-                CAVRAA Event Monitoring System
-            </p>
-        </div>
+@php
+    $adminLogo = \App\Models\LayoutSetting::where('key', 'admin_sidebar_logo')->first();
+@endphp
+
+<div class="p-6 border-b border-blue-700 flex flex-col items-center gap-2 flex-shrink-0">
+
+    @if($adminLogo && $adminLogo->value)
+        <img
+            src="{{ asset('storage/' . $adminLogo->value) }}"
+            alt="Admin Logo"
+            class="h-14 object-contain"
+        >
+    @else
+        <span class="font-bold text-xl">CEMS</span>
+    @endif
+
+    <p class="text-xs text-gray-300 text-center">
+        CAVRAA Event Monitoring System
+    </p>
+</div>
+
 
         {{-- MENU --}}
         <nav class="mt-6 flex-1 overflow-y-auto">

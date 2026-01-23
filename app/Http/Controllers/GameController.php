@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Game;
 use App\Models\Event;
+use App\Models\School;
 use App\Models\AuditLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,46 +12,45 @@ use Illuminate\Support\Facades\Auth;
 class GameController extends Controller
 {
     public function index(Request $request)
-{
-    $search = $request->input('search');
+    {
+        $search = $request->input('search');
 
-    $games = Game::with('event')
-        ->when($search, function ($query, $search) {
-            $query->whereHas('event', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })
-                ->orWhere('team_a', 'like', "%{$search}%")
-                ->orWhere('team_b', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%")
-                ->orWhere('game_time', 'like', "%{$search}%")
-                ->orWhere('venue', 'like', "%{$search}%");
-        })
-        ->orderBy('game_time', 'asc')
-        ->get();
+        $games = Game::with('event')
+            ->when($search, function ($query, $search) {
+                $query->whereHas('event', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    })
+                    ->orWhere('team_a', 'like', "%{$search}%")
+                    ->orWhere('team_b', 'like', "%{$search}%")
+                    ->orWhere('status', 'like', "%{$search}%")
+                    ->orWhere('venue', 'like', "%{$search}%");
+            })
+            ->orderBy('game_time')
+            ->get();
 
-    return view('games.index', compact('games'));
-}
-
+        return view('games.index', compact('games'));
+    }
 
     public function create()
     {
         $events = Event::all();
-        return view('games.create', compact('events'));
+        $schools = School::orderBy('name')->get();
+
+        return view('games.create', compact('events', 'schools'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
             'event_id' => 'required|exists:events,id',
-            'team_a' => 'required|string',
-            'team_b' => 'required|string',
-            'game_time' => 'required|date',
-            'venue' => 'required|string',
+            'team_a'   => 'required|string|different:team_b',
+            'team_b'   => 'required|string',
+            'game_time'=> 'required|date',
+            'venue'    => 'required|string',
         ]);
 
         $game = Game::create($request->all());
 
-        // Audit log for creation
         AuditLog::create([
             'model_type' => 'Game',
             'model_id' => $game->id,
@@ -66,27 +66,27 @@ class GameController extends Controller
     public function edit(Game $game)
     {
         $events = Event::all();
-        return view('games.edit', compact('game', 'events'));
+        $schools = School::orderBy('name')->get();
+
+        return view('games.edit', compact('game', 'events', 'schools'));
     }
 
     public function update(Request $request, Game $game)
     {
         $request->validate([
             'event_id' => 'required|exists:events,id',
-            'team_a' => 'required|string',
-            'team_b' => 'required|string',
-            'score_a' => 'nullable|integer',
-            'score_b' => 'nullable|integer',
-            'status' => 'required|in:Upcoming,Ongoing,Finished',
-            'game_time' => 'required|date',
-            'venue' => 'required|string',
+            'team_a'   => 'required|string|different:team_b',
+            'team_b'   => 'required|string',
+            'score_a'  => 'nullable|integer',
+            'score_b'  => 'nullable|integer',
+            'status'   => 'required|in:Upcoming,Ongoing,Finished',
+            'game_time'=> 'required|date',
+            'venue'    => 'required|string',
         ]);
 
-        $oldValues = $game->toArray(); // store old data
-
+        $oldValues = $game->toArray();
         $game->update($request->all());
 
-        // Audit log for update
         AuditLog::create([
             'model_type' => 'Game',
             'model_id' => $game->id,
@@ -102,10 +102,8 @@ class GameController extends Controller
     public function destroy(Game $game)
     {
         $oldValues = $game->toArray();
-
         $game->delete();
 
-        // Audit log for deletion
         AuditLog::create([
             'model_type' => 'Game',
             'model_id' => $game->id,

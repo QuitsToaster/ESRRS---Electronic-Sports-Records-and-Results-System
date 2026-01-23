@@ -48,7 +48,7 @@
                             <span class="font-semibold">Venue:</span> {{ $event->venue ?? 'TBD' }}
                         </p>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Division:</span> {{ $event->division ?? 'All' }}
+                            <span class="font-semibold">Division:</span> {{ $event->level ?? 'All' }}
                         </p>
                         <p class="text-gray-500 mb-1">
                             <span class="font-semibold">Category:</span> {{ $event->category ?? 'All' }}

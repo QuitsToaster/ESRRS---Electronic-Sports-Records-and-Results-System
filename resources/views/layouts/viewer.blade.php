@@ -1,5 +1,14 @@
 <!DOCTYPE html>
-<html lang="en" x-data="{ open: false }">
+<html lang="en"
+      x-data="{
+        open: false,
+        showTop: false
+      }"
+      x-init="
+        window.addEventListener('scroll', () => {
+            showTop = window.scrollY > 300
+        })
+      ">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,112 +16,104 @@
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
 </head>
+
 <body class="bg-gray-100 font-sans">
 
-    {{-- Top Navbar --}}
-    <nav class="bg-blue-600 text-white shadow-md">
+    {{-- Fixed Top Navbar --}}
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
-                {{-- Logo / Brand --}}
-                <div class="flex-shrink-0 flex items-center">
-                    <a href="{{ route('viewer.home') }}" class="text-lg font-bold">CEMS</a>
-                </div>
 
-                {{-- Desktop Navigation Links --}}
+                {{-- Logo --}}
+@php
+    $viewerLogo = \App\Models\LayoutSetting::where('key', 'viewer_top_logo')->first();
+@endphp
+
+<a href="{{ route('viewer.home') }}" class="flex items-center gap-2">
+    @if($viewerLogo && $viewerLogo->value)
+        <img src="{{ asset('storage/' . $viewerLogo->value) }}"
+             alt="Viewer Logo"
+             class="h-10 object-contain">
+    @else
+        <span class="text-lg font-bold">CEMS</span>
+    @endif
+</a>
+
+
+                {{-- Desktop Nav --}}
                 <div class="hidden md:flex items-center space-x-6 font-medium">
-                    <a href="{{ route('viewer.home') }}"
-                       class="hover:text-gray-200 {{ request()->routeIs('viewer.home') ? 'underline font-semibold' : '' }}">
-                        Home
-                    </a>
-                    <a href="{{ route('viewer.participants') }}"
-                       class="hover:text-gray-200 {{ request()->routeIs('viewer.participants') ? 'underline font-semibold' : '' }}">
-                        Teams
-                    </a>
-                    <a href="{{ route('viewer.events') }}"
-                       class="hover:text-gray-200 {{ request()->routeIs('viewer.events') ? 'underline font-semibold' : '' }}">
-                        Events
-                    </a>
-                    <a href="{{ route('viewer.games') }}"
-                       class="hover:text-gray-200 {{ request()->routeIs('viewer.games') ? 'underline font-semibold' : '' }}">
-                        Games
-                    </a>
-                    <a href="{{ route('viewer.gallery') }}"
-                        class="hover:text-gray-200 {{ request()->routeIs('viewer.gallery') ? 'underline font-semibold' : '' }}">
-                        Gallery
-                    </a>
-                    <a href="{{ route('viewer.announcements') }}"
-                       class="hover:text-gray-200 {{ request()->routeIs('viewer.announcements') ? 'underline font-semibold' : '' }}">
-                        Announcements
-                    </a>
-                    <a href="{{ route('viewer.feedbacks') }}"
-                       class="hover:text-gray-200 {{ request()->routeIs('viewer.feedbacks') ? 'underline font-semibold' : '' }}">
-                        Feedbacks
-                    </a>
+                    @php
+                        $linkClass = 'hover:text-gray-200';
+                        $active = 'underline font-semibold';
+                    @endphp
 
-                    {{-- Logout --}}
-                    <a href="{{ url('/') }}" 
+                    <a href="{{ route('viewer.home') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.home') ? $active : '' }}">Home</a>
+                    <a href="{{ route('viewer.participants') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $active : '' }}">Teams</a>
+                    <a href="{{ route('viewer.events') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.events') ? $active : '' }}">Events</a>
+                    <a href="{{ route('viewer.games') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.games') ? $active : '' }}">Games</a>
+                    <a href="{{ route('viewer.gallery') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.gallery') ? $active : '' }}">Gallery</a>
+                    <a href="{{ route('viewer.announcements') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.announcements') ? $active : '' }}">Announcements</a>
+                    <a href="{{ route('viewer.feedbacks') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.feedbacks') ? $active : '' }}">Feedbacks</a>
+
+                    <a href="{{ url('/') }}"
                        class="ml-4 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white font-semibold transition">
                         Logout
                     </a>
                 </div>
 
                 {{-- Mobile Menu Button --}}
-                <div class="md:hidden flex items-center">
-                    <button @click="open = !open" class="focus:outline-none">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path :class="{'hidden': open, 'inline-flex': !open }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M4 6h16M4 12h16M4 18h16" />
-                            <path :class="{'hidden': !open, 'inline-flex': open }" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                </div>
+                <button @click="open = !open" class="md:hidden focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4 6h16M4 12h16M4 18h16" />
+                        <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
         </div>
 
         {{-- Mobile Menu --}}
-        <div x-show="open" x-transition class="md:hidden bg-blue-700 text-white space-y-1 px-2 pt-2 pb-3" x-cloak>
-            <a href="{{ route('viewer.home') }}" 
-               class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.home') ? 'font-semibold bg-blue-800' : '' }}">
-                Home
-            </a>
-            <a href="{{ route('viewer.participants') }}" 
-               class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.participants') ? 'font-semibold bg-blue-800' : '' }}">
-                Teams
-            </a>
-            <a href="{{ route('viewer.events') }}" 
-               class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.events') ? 'font-semibold bg-blue-800' : '' }}">
-                Events
-            </a>
-            <a href="{{ route('viewer.games') }}" 
-               class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.games') ? 'font-semibold bg-blue-800' : '' }}">
-                Games
-            </a>
-            <a href="{{ route('viewer.gallery') }}" 
-                class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.gallery') ? 'font-semibold bg-blue-800' : '' }}">
-                Gallery
-            </a>
-            <a href="{{ route('viewer.announcements') }}" 
-               class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.announcements') ? 'font-semibold bg-blue-800' : '' }}">
-                Announcements
-            </a>
-            <a href="{{ route('viewer.feedbacks') }}" 
-               class="block px-3 py-2 rounded hover:bg-blue-600 {{ request()->routeIs('viewer.feedbacks') ? 'font-semibold bg-blue-800' : '' }}">
-                Feedbacks
-            </a>
+        <div x-show="open"
+             x-transition
+             x-cloak
+             class="md:hidden bg-blue-700 px-2 pt-2 pb-3 space-y-1">
 
-            {{-- Mobile Logout --}}
-            <a href="{{ url('/') }}" 
-               class="block px-3 py-2 mt-1 rounded bg-red-600 hover:bg-red-700 text-white font-semibold">
+            <a href="{{ route('viewer.home') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Home</a>
+            <a href="{{ route('viewer.participants') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Teams</a>
+            <a href="{{ route('viewer.events') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Events</a>
+            <a href="{{ route('viewer.games') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Games</a>
+            <a href="{{ route('viewer.gallery') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Gallery</a>
+            <a href="{{ route('viewer.announcements') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Announcements</a>
+            <a href="{{ route('viewer.feedbacks') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Feedbacks</a>
+
+            <a href="{{ url('/') }}"
+               class="block px-3 py-2 mt-1 rounded bg-red-600 hover:bg-red-700 font-semibold">
                 Logout
             </a>
         </div>
     </nav>
 
+    {{-- Offset for fixed navbar --}}
+    <div class="h-16"></div>
+
     {{-- Main Content --}}
     <main class="max-w-7xl mx-auto p-4">
         @yield('content')
     </main>
+
+    {{-- Scroll to Top Button --}}
+    <button
+        x-show="showTop"
+        x-transition
+        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        class="fixed bottom-6 right-6 z-50 bg-blue-600 hover:bg-blue-700
+               text-white w-12 h-12 rounded-full shadow-lg
+               flex items-center justify-center"
+        aria-label="Scroll to top"
+    >
+        ↑
+    </button>
 
 </body>
 </html>
