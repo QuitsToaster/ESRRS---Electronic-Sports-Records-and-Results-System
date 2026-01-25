@@ -18,56 +18,63 @@
     <div class="bg-green-100 text-green-800 p-4 rounded mb-4">{{ session('success') }}</div>
 @endif
 
-<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-    @forelse($photos as $photo)
-        @php
-            $firstImage = $photo->photos[0] ?? null;
-            $extraCount = count($photo->photos) - 1;
-        @endphp
+@php
+    $folders = $photos->groupBy('folder');
+@endphp
 
-        <div class="border rounded-lg overflow-hidden shadow-sm relative">
-            {{-- Title and Actions --}}
-            <div class="p-2 font-semibold bg-gray-100 flex justify-between items-center">
-                <span>{{ $photo->title }}</span>
-                <div class="flex gap-2">
-                    <a href="{{ route('gallery.edit', $photo->id) }}"
-                       class="text-blue-600 hover:text-blue-800"
-                       title="Edit">
-                        Edit
-                    </a>
-                    <form action="{{ route('gallery.destroy', $photo->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this photo?');">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
-                            Delete
-                        </button>
-                    </form>
+@forelse($folders as $folder => $folderPhotos)
+    <h3 class="text-lg font-semibold mb-2 mt-4">{{ $folder }}</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+        @foreach($folderPhotos as $photo)
+            @php
+                $firstImage = $photo->photos[0] ?? null;
+                $extraCount = count($photo->photos) - 1;
+            @endphp
+
+            <div class="border rounded-lg overflow-hidden shadow-sm relative">
+                {{-- Title and Actions --}}
+                <div class="p-2 font-semibold bg-gray-100 flex justify-between items-center">
+                    <span>{{ $photo->title }}</span>
+                    <div class="flex gap-2">
+                        <a href="{{ route('gallery.edit', $photo->id) }}"
+                           class="text-blue-600 hover:text-blue-800"
+                           title="Edit">
+                            Edit
+                        </a>
+                        <form action="{{ route('gallery.destroy', $photo->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this photo?');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="text-red-600 hover:text-red-800" title="Delete">
+                                Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                {{-- Clickable Image --}}
+                <div class="cursor-pointer" onclick="openPhotoModal({{ $photo->id }})">
+                    @if($firstImage)
+                        <div class="relative">
+                            <img src="{{ asset('storage/' . $firstImage) }}" alt="Photo" class="w-full h-48 object-cover">
+
+                            @if($extraCount > 0)
+                                <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
+                                    +{{ $extraCount }}
+                                </div>
+                            @endif
+                        </div>
+                    @else
+                        <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
+                            No Image
+                        </div>
+                    @endif
                 </div>
             </div>
-
-            {{-- Clickable Image --}}
-            <div class="cursor-pointer" onclick="openPhotoModal({{ $photo->id }})">
-                @if($firstImage)
-                    <div class="relative">
-                        <img src="{{ asset('storage/' . $firstImage) }}" alt="Photo" class="w-full h-48 object-cover">
-
-                        @if($extraCount > 0)
-                            <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                                +{{ $extraCount }}
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
-                        No Image
-                    </div>
-                @endif
-            </div>
-        </div>
-    @empty
-        <p class="text-gray-500">No photos uploaded yet.</p>
-    @endforelse
-</div>
+        @endforeach
+    </div>
+@empty
+    <p class="text-gray-500">No photos uploaded yet.</p>
+@endforelse
 
 {{-- PHOTO MODAL --}}
 <div id="photoModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 overflow-auto p-4">
@@ -98,8 +105,6 @@ function openPhotoModal(id) {
     function renderImage() {
         let html = `<h2 class="text-xl font-semibold mb-2">${photo.title}</h2>`;
         html += `<p class="text-gray-600 mb-4">${photo.description}</p>`;
-
-        // Image container
         html += `<div class="relative w-full h-96 flex items-center justify-center mb-4">`;
         html += `<img src="/storage/${photo.photos[currentPhotoIndex]}" class="w-full h-full object-cover rounded">`;
 

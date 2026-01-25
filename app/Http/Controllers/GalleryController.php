@@ -17,104 +17,120 @@ class GalleryController extends Controller
         return view('gallery.index', compact('photos'));
     }
 
-    // Show form to add photos
     public function create()
     {
-        return view('gallery.create');
+        // Get unique folders from existing photos
+        $existingFolders = GalleryPhoto::distinct()->pluck('folder')->filter()->toArray();
+        return view('gallery.create', compact('existingFolders'));
     }
 
-    // Store uploaded photos
+
     public function store(Request $request)
-    {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'photos.*' => 'required|image|mimes:jpg,jpeg,png|max:4096',
-        ]);
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'photos.*' => 'required|image|mimes:jpg,jpeg,png|max:4096',
+        'folder' => 'nullable|string',
+        'new_folder' => 'nullable|string|max:255',
+    ]);
 
-        $uploadedPhotos = [];
-        if($request->hasFile('photos')) {
-            foreach($request->file('photos') as $photo) {
-                $uploadedPhotos[] = $photo->store('gallery', 'public');
-            }
+    // Determine folder
+    $folder = trim($request->folder === 'new' ? $request->new_folder : $request->folder);
+    $folder = $folder ?: 'default'; // fallback folder
+
+    $uploadedPhotos = [];
+    if($request->hasFile('photos')) {
+        foreach($request->file('photos') as $photo) {
+            $uploadedPhotos[] = $photo->store("gallery/{$folder}", 'public');
         }
-
-        $gallery = GalleryPhoto::create([
-            'title' => $request->title,
-            'description' => $request->description,
-            'photos' => $uploadedPhotos,
-            'uploaded_by' => Auth::id(),
-        ]);
-
-        // Audit log
-        AuditLog::create([
-            'model_type' => 'GalleryPhoto',
-            'model_id' => $gallery->id,
-            'user_id' => Auth::id(),
-            'action' => 'Created Gallery Photo',
-            'old_values' => null,
-            'new_values' => json_encode($gallery->toArray()),
-        ]);
-
-        return redirect()->route('gallery.index')->with('success', 'Photos uploaded successfully!');
     }
 
-    // Show form to edit photo
+    $gallery = GalleryPhoto::create([
+        'title' => $request->title,
+        'folder' => $folder,
+        'description' => $request->description,
+        'photos' => $uploadedPhotos,
+        'uploaded_by' => Auth::id(),
+    ]);
+
+    // Audit log
+    AuditLog::create([
+        'model_type' => 'GalleryPhoto',
+        'model_id' => $gallery->id,
+        'user_id' => Auth::id(),
+        'action' => 'Created Gallery Photo',
+        'old_values' => null,
+        'new_values' => json_encode($gallery->toArray()),
+    ]);
+
+    return redirect()->route('gallery.index')->with('success', 'Photos uploaded successfully!');
+}
+
+
+
     public function edit(GalleryPhoto $photo)
-    {
-        return view('gallery.edit', compact('photo'));
+{
+    // Existing folders for select dropdown
+    $existingFolders = GalleryPhoto::distinct()->pluck('folder')->filter()->toArray();
+    return view('gallery.edit', compact('photo', 'existingFolders'));
+}
+
+   public function update(Request $request, GalleryPhoto $photo)
+{
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'description' => 'nullable|string',
+        'photos.*' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
+        'delete_photos' => 'nullable|array',
+        'folder' => 'nullable|string',
+        'new_folder' => 'nullable|string|max:255',
+    ]);
+
+    $oldValues = $photo->toArray();
+
+    // Determine folder
+    $folder = $request->folder === 'new' ? $request->new_folder : $request->folder;
+    $folder = $folder ?: 'default';
+    $photo->folder = $folder;
+
+    // Delete selected photos
+    if($request->filled('delete_photos')) {
+        $photosArr = $photo->photos;
+        foreach($request->delete_photos as $index) {
+            if(isset($photosArr[$index])) {
+                Storage::disk('public')->delete($photosArr[$index]);
+                unset($photosArr[$index]);
+            }
+        }
+        $photo->photos = array_values($photosArr);
     }
 
-    // Update gallery photo
-    public function update(Request $request, GalleryPhoto $photo)
-    {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'photos.*' => 'nullable|image|mimes:jpg,jpeg,png|max:4096',
-            'delete_photos' => 'nullable|array',
-        ]);
-
-        $oldValues = $photo->toArray();
-
-        // Delete selected photos
-        if($request->filled('delete_photos')) {
-            $photos = $photo->photos;
-            foreach($request->delete_photos as $index) {
-                if(isset($photos[$index])) {
-                    Storage::disk('public')->delete($photos[$index]);
-                    unset($photos[$index]);
-                }
-            }
-            // Re-index array
-            $photo->photos = array_values($photos);
+    // Add new photos
+    if($request->hasFile('photos')) {
+        $newPhotos = [];
+        foreach($request->file('photos') as $p) {
+            $newPhotos[] = $p->store("gallery/{$folder}", 'public');
         }
-
-        // Add new photos
-        if($request->hasFile('photos')) {
-            $newPhotos = [];
-            foreach($request->file('photos') as $p) {
-                $newPhotos[] = $p->store('gallery', 'public');
-            }
-            $photo->photos = array_merge($photo->photos ?? [], $newPhotos);
-        }
-
-        $photo->title = $request->title;
-        $photo->description = $request->description;
-        $photo->save();
-
-        // Audit log
-        AuditLog::create([
-            'model_type' => 'GalleryPhoto',
-            'model_id' => $photo->id,
-            'user_id' => Auth::id(),
-            'action' => 'Updated Gallery Photo',
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($photo->toArray()),
-        ]);
-
-        return redirect()->route('gallery.index')->with('success', 'Gallery updated successfully!');
+        $photo->photos = array_merge($photo->photos ?? [], $newPhotos);
     }
+
+    $photo->title = $request->title;
+    $photo->description = $request->description;
+    $photo->save();
+
+    // Audit log
+    AuditLog::create([
+        'model_type' => 'GalleryPhoto',
+        'model_id' => $photo->id,
+        'user_id' => Auth::id(),
+        'action' => 'Updated Gallery Photo',
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($photo->toArray()),
+    ]);
+
+    return redirect()->route('gallery.index')->with('success', 'Gallery updated successfully!');
+}
 
     // Delete gallery photo
     public function destroy(GalleryPhoto $photo)

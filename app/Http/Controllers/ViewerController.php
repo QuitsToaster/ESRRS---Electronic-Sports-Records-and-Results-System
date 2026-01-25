@@ -132,13 +132,15 @@ public function gallery(Request $request)
 
     $photos = GalleryPhoto::when($search, function($query, $search) {
         $query->where('title', 'like', "%{$search}%")
-              ->orWhere('description', 'like', "%{$search}%");
+              ->orWhere('description', 'like', "%{$search}%")
+              ->orWhere('folder', 'like', "%{$search}%");
     })
     ->latest()
     ->get();
 
     return view('viewer.gallery', compact('photos'));
 }
+
 
 
 

@@ -16,6 +16,21 @@
             <input type="text" name="title" value="{{ $photo->title }}" class="mt-1 block w-full border-gray-300 rounded p-2" required>
         </div>
 
+        {{-- Folder --}}
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Folder</label>
+            <select name="folder" id="folderSelect" class="mt-1 block w-full border-gray-300 rounded p-2">
+                <option value="">-- Select Existing Folder --</option>
+                @foreach($existingFolders as $f)
+                    <option value="{{ $f }}" {{ $photo->folder == $f ? 'selected' : '' }}>{{ $f }}</option>
+                @endforeach
+                <option value="new">+ Create New Folder</option>
+            </select>
+
+            <input type="text" name="new_folder" id="newFolderInput" placeholder="Enter new folder name"
+                   class="mt-2 block w-full border-gray-300 rounded p-2 {{ old('folder') === 'new' ? '' : 'hidden' }}">
+        </div>
+
         {{-- Description --}}
         <div class="mb-3">
             <label class="block text-sm font-medium text-gray-700">Description</label>
@@ -54,4 +69,15 @@
         </div>
     </form>
 </div>
+
+<script>
+document.getElementById('folderSelect').addEventListener('change', function() {
+    const newFolderInput = document.getElementById('newFolderInput');
+    if(this.value === 'new') {
+        newFolderInput.classList.remove('hidden');
+    } else {
+        newFolderInput.classList.add('hidden');
+    }
+});
+</script>
 @endsection
