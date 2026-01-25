@@ -408,15 +408,36 @@
         <span class="hidden sm:block text-gray-700">
             Hello, {{ auth()->user()->name }}
         </span>
+    {{-- SETTINGS WRAPPER --}}
+<div class="relative flex items-center">
 
-        {{-- SETTINGS ICON --}}
-        <button onclick="openSettingsModal()"
-                class="text-gray-700 hover:text-gray-900 focus:outline-none"
-                title="Account Settings">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-wide-connected" viewBox="0 0 16 16">
+    {{-- SETTINGS ICON (TOP SVG / KEBAB MENU) --}}
+    <button onclick="toggleSettingsDropdown()"
+            class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-400">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-gear-wide-connected" viewBox="0 0 16 16">
   <path d="M7.068.727c.243-.97 1.62-.97 1.864 0l.071.286a.96.96 0 0 0 1.622.434l.205-.211c.695-.719 1.888-.03 1.613.931l-.08.284a.96.96 0 0 0 1.187 1.187l.283-.081c.96-.275 1.65.918.931 1.613l-.211.205a.96.96 0 0 0 .434 1.622l.286.071c.97.243.97 1.62 0 1.864l-.286.071a.96.96 0 0 0-.434 1.622l.211.205c.719.695.03 1.888-.931 1.613l-.284-.08a.96.96 0 0 0-1.187 1.187l.081.283c.275.96-.918 1.65-1.613.931l-.205-.211a.96.96 0 0 0-1.622.434l-.071.286c-.243.97-1.62.97-1.864 0l-.071-.286a.96.96 0 0 0-1.622-.434l-.205.211c-.695.719-1.888.03-1.613-.931l.08-.284a.96.96 0 0 0-1.186-1.187l-.284.081c-.96.275-1.65-.918-.931-1.613l.211-.205a.96.96 0 0 0-.434-1.622l-.286-.071c-.97-.243-.97-1.62 0-1.864l.286-.071a.96.96 0 0 0 .434-1.622l-.211-.205c-.719-.695-.03-1.888.931-1.613l.284.08a.96.96 0 0 0 1.187-1.186l-.081-.284c-.275-.96.918-1.65 1.613-.931l.205.211a.96.96 0 0 0 1.622-.434zM12.973 8.5H8.25l-2.834 3.779A4.998 4.998 0 0 0 12.973 8.5m0-1a4.998 4.998 0 0 0-7.557-3.779l2.834 3.78zM5.048 3.967l-.087.065zm-.431.355A4.98 4.98 0 0 0 3.002 8c0 1.455.622 2.765 1.615 3.678L7.375 8zm.344 7.646.087.065z"/>
 </svg>
+    </button>
+
+    {{-- DROPDOWN --}}
+    <div id="settingsDropdown"
+         class="hidden absolute right-0 top-full mt-2 w-44
+                bg-white border rounded-lg shadow-lg z-50">
+
+        <button onclick="openProfileModal()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            Profile
         </button>
+
+        <button onclick="openSwitchAccountModal()"
+                class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+            Switch Account
+        </button>
+    </div>
+
+</div>
+
+
 
         <form method="POST" action="{{ route('logout') }}">
             @csrf
@@ -445,66 +466,126 @@
 
 
         </header>
-        {{-- SETTINGS MODAL --}}
+
+{{-- SETTINGS MODAL --}}
 <div id="settingsModal"
      class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
     <div class="bg-white rounded-lg shadow-lg p-6 relative w-96">
+
+        {{-- Close button --}}
         <button onclick="closeSettingsModal()"
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl">&times;</button>
-
-        <h3 class="text-lg font-semibold text-center mb-4">Update Account Details</h3>
-
-        <form method="POST" action="{{ route('users.updateProfile') }}">
-    @csrf
-    @method('PUT')
-    
-    <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700">Name</label>
-        <input type="text" name="name" value="{{ auth()->user()->name }}"
-               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500" required>
-    </div>
-
-    <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700">Email</label>
-        <input type="email" name="email" value="{{ auth()->user()->email }}"
-               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500" required>
-    </div>
-
-    <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700">Password</label>
-        <input type="password" name="password"
-               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500"
-               placeholder="Leave blank to keep current password">
-    </div>
-
-    <div class="mb-3">
-        <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
-        <input type="password" name="password_confirmation"
-               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500"
-               placeholder="Confirm new password">
-    </div>
-
-    <div class="flex justify-end gap-2 mt-4">
-        <button type="button"
-                onclick="closeSettingsModal()"
-                class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">
-            Cancel
+                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-xl">
+            &times;
         </button>
-        <button type="submit"
-                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-            Save Changes
-        </button>
-    </div>
-</form>
+
+        {{-- Header --}}
+        <h3 id="settingsTitle" class="text-lg font-semibold text-center mb-4"></h3>
+
+        {{-- PROFILE FORM --}}
+        <div id="profileForm" class="hidden">
+            <form method="POST" action="{{ route('users.updateProfile') }}">
+                @csrf
+                @method('PUT')
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700">Name</label>
+                    <input type="text" name="name"
+                           value="{{ auth()->user()->name }}"
+                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email"
+                           value="{{ auth()->user()->email }}"
+                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" name="password"
+                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                           placeholder="Leave blank to keep current password">
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+                    <input type="password" name="password_confirmation"
+                           class="mt-1 block w-full border-gray-300 rounded shadow-sm">
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        {{-- SWITCH ACCOUNT FORM --}}
+        <div id="switchAccountForm" class="hidden">
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700">Email</label>
+                    <input type="email" name="email"
+                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                           required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" name="password"
+                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                           required>
+                </div>
+
+                <div class="flex justify-end mt-4">
+                    <button type="submit"
+                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                        Login
+                    </button>
+                </div>
+            </form>
+        </div>
 
     </div>
 </div>
 
 <script>
-function openSettingsModal() {
+function toggleSettingsDropdown() {
+    document.getElementById('settingsDropdown').classList.toggle('hidden');
+}
+
+function openProfileModal() {
+    closeDropdown();
+    openModal('profile');
+}
+
+function openSwitchAccountModal() {
+    closeDropdown();
+    openModal('switch');
+}
+
+function openModal(type) {
     const modal = document.getElementById('settingsModal');
     modal.classList.remove('hidden');
     modal.classList.add('flex');
+
+    document.getElementById('profileForm').classList.add('hidden');
+    document.getElementById('switchAccountForm').classList.add('hidden');
+
+    if (type === 'profile') {
+        document.getElementById('settingsTitle').innerText = 'Update Profile';
+        document.getElementById('profileForm').classList.remove('hidden');
+    } else {
+        document.getElementById('settingsTitle').innerText = 'Switch Account';
+        document.getElementById('switchAccountForm').classList.remove('hidden');
+    }
 }
 
 function closeSettingsModal() {
@@ -512,7 +593,21 @@ function closeSettingsModal() {
     modal.classList.add('hidden');
     modal.classList.remove('flex');
 }
+
+function closeDropdown() {
+    document.getElementById('settingsDropdown').classList.add('hidden');
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function (e) {
+    const dropdown = document.getElementById('settingsDropdown');
+    if (!e.target.closest('.relative')) {
+        dropdown.classList.add('hidden');
+    }
+});
 </script>
+
+
 
 
         {{-- CONTENT --}}
