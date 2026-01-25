@@ -53,13 +53,13 @@
                             <span class="font-semibold">Venue:</span> {{ $event->venue ?? 'TBA' }}
                         </p>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Sport:</span> {{ $event->sport->name ?? 'TBA' }}
+                            <span class="font-semibold">Sport:</span> {{ $event->sport->name ?? '-' }}
                         </p>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Division:</span> {{ $event->level ?? 'TBA' }}
+                            <span class="font-semibold">Division:</span> {{ $event->level ?? '-' }}
                         </p>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Category:</span> {{ $event->category ?? 'TBA' }}
+                            <span class="font-semibold">Category:</span> {{ $event->category ?? '-' }}
                         </p>
                     </div>
                 </div>
