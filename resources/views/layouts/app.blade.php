@@ -527,31 +527,39 @@
 
         {{-- SWITCH ACCOUNT FORM --}}
         <div id="switchAccountForm" class="hidden">
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
+    <form method="POST" action="{{ route('switch.account') }}">
+        @csrf
 
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" name="email"
-                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                           required>
-                </div>
+        {{-- Show validation errors --}}
+        @if ($errors->any())
+            <div class="mb-3 text-red-600 text-sm">
+                {{ $errors->first() }}
+            </div>
+        @endif
 
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" name="password"
-                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                           required>
-                </div>
-
-                <div class="flex justify-end mt-4">
-                    <button type="submit"
-                            class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-                        Login
-                    </button>
-                </div>
-            </form>
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <input type="email" name="email"
+                   class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                   required>
         </div>
+
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Password</label>
+            <input type="password" name="password"
+                   class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                   required>
+        </div>
+
+        <div class="flex justify-end mt-4">
+            <button type="submit"
+                    class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+                Login
+            </button>
+        </div>
+    </form>
+</div>
+
 
     </div>
 </div>
@@ -605,6 +613,15 @@ document.addEventListener('click', function (e) {
         dropdown.classList.add('hidden');
     }
 });
+
+// Close modal after successful POST redirect
+@if(session()->has('success'))
+    <script>
+        document.getElementById('settingsModal').classList.add('hidden');
+        document.getElementById('settingsModal').classList.remove('flex');
+    </script>
+@endif
+
 </script>
 
 

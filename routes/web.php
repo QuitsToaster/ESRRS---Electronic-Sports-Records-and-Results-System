@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\SwitchAccountController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\SchoolController;
@@ -24,6 +25,9 @@ Route::get('/', function () {
     return view('welcome');
 })->name('welcome');
 
+
+Route::post('/switch-account', [SwitchAccountController::class, 'store'])
+    ->name('switch.account');
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')
