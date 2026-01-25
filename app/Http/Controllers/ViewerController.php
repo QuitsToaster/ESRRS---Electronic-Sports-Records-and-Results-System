@@ -141,6 +141,11 @@ public function gallery(Request $request)
     return view('viewer.gallery', compact('photos'));
 }
 
+public function liveScores()
+{
+    return Game::select('id', 'score_a', 'score_b')->get();
+}
+
 
 
 

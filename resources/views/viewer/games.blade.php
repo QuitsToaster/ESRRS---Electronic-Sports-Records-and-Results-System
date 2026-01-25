@@ -91,9 +91,10 @@
                             <span class="font-semibold text-sm">{{ $game->team_a }}</span>
 
                             @if(!is_null($game->score_a))
-                                <span class="text-blue-600 font-bold text-sm">
-                                    {{ $game->score_a }}
-                                </span>
+                                <span id="score-a-{{ $game->id }}"
+      class="text-blue-600 font-bold text-sm">
+    {{ $game->score_a ?? 0 }}
+</span>
                             @endif
                         </div>
 
@@ -113,9 +114,10 @@
                             <span class="font-semibold text-sm">{{ $game->team_b }}</span>
 
                             @if(!is_null($game->score_b))
-                                <span class="text-blue-600 font-bold text-sm">
-                                    {{ $game->score_b }}
-                                </span>
+                                <span id="score-b-{{ $game->id }}"
+      class="text-blue-600 font-bold text-sm">
+    {{ $game->score_b ?? 0 }}
+</span>
                             @endif
                         </div>
                     </div>
@@ -142,4 +144,23 @@
         </div>
     @endif
 </div>
+
+<script>
+function refreshScores() {
+    fetch("{{ route('viewer.liveScores') }}")
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(game => {
+                const a = document.getElementById(`score-a-${game.id}`);
+                const b = document.getElementById(`score-b-${game.id}`);
+
+                if (a) a.innerText = game.score_a;
+                if (b) b.innerText = game.score_b;
+            });
+        });
+}
+
+setInterval(refreshScores, 3000);
+</script>
+
 @endsection

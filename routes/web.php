@@ -102,6 +102,19 @@ Route::resource('coaches', CoachController::class)->middleware('auth');
 Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
 
 Route::resource('games', GameController::class)->middleware('auth');
+Route::get('/games/{game}/manage', [GameController::class, 'manage'])->name('games.manage');
+Route::post('/games/{game}/update-score', [GameController::class, 'updateScore'])->name('games.updateScore');
+Route::post('/games/{game}/update-period/{periodIndex}', [GameController::class, 'updatePeriodScore'])
+    ->name('games.updatePeriodScore');
+
+    // Admin live update
+Route::post('/games/{game}/live-score', [GameController::class, 'liveScore'])
+    ->name('games.liveScore');
+
+// Viewer polling
+Route::get('/viewer/live-scores', [ViewerController::class, 'liveScores'])
+    ->name('viewer.liveScores');
+
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('officials', OfficialController::class)->only([

@@ -47,7 +47,7 @@
                     <th class="px-4 py-2 text-left font-medium text-gray-700">Event</th>
                     <th class="px-4 py-2 text-left font-medium text-gray-700">Team A</th>
                     <th class="px-4 py-2 text-left font-medium text-gray-700">Team B</th>
-                    <th class="px-4 py-2 text-left font-medium text-gray-700">Score</th>
+                    <th class="px-4 py-2 text-left font-medium text-gray-700">Score (Current Period)</th>
                     <th class="px-4 py-2 text-left font-medium text-gray-700">Status</th>
                     <th class="px-4 py-2 text-left font-medium text-gray-700">Time</th>
                     <th class="px-4 py-2 text-left font-medium text-gray-700">Venue</th>
@@ -56,31 +56,53 @@
             </thead>
             <tbody class="divide-y divide-gray-200">
                 @foreach($games as $game)
+                    @php
+                        $scores = json_decode($game->scores, true) ?? ['team_a' => [], 'team_b' => []];
+                        $eventName = $game->event->name;
+                        $scoringTypes = [
+                            'Basketball' => ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'],
+                            'Volleyball'  => ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5'],
+                            'Soccer'      => ['First Half', 'Second Half'],
+                        ];
+                        $periods = $scoringTypes[$eventName] ?? ['Period 1', 'Period 2', 'Period 3', 'Period 4'];
+
+                        // Determine current period index
+                        $currentIndex = 0;
+                        foreach($periods as $i => $p) {
+                            if(!isset($scores['team_a'][$i]) && !isset($scores['team_b'][$i])) {
+                                $currentIndex = $i;
+                                break;
+                            }
+                            $currentIndex = $i;
+                        }
+
+                        $scoreA = $scores['team_a'][$currentIndex] ?? 0;
+                        $scoreB = $scores['team_b'][$currentIndex] ?? 0;
+                    @endphp
+
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-4 py-2 text-gray-800">{{ $game->event->name }}</td>
                         <td class="px-4 py-2 text-gray-800">{{ $game->team_a }}</td>
                         <td class="px-4 py-2 text-gray-800">{{ $game->team_b }}</td>
+                        <td class="px-4 py-2 text-gray-800">{{ $scoreA }} - {{ $scoreB }}</td>
                         <td class="px-4 py-2 text-gray-800">
-                            {{ $game->score_a ?? '-' }} - {{ $game->score_b ?? '-' }}
+                            <span class="
+                                @if($game->current_status === 'Upcoming') text-blue-600
+                                @elseif($game->current_status === 'Ongoing') text-green-600
+                                @else text-gray-600
+                                @endif
+                                font-semibold">
+                                {{ $game->current_status }}
+                            </span>
                         </td>
-                        <td class="px-4 py-2 text-gray-800">
-    <span class="
-        @if($game->current_status === 'Upcoming') text-blue-600
-        @elseif($game->current_status === 'Ongoing') text-green-600
-        @else text-gray-600
-        @endif
-        font-semibold">
-        {{ $game->current_status }}
-    </span>
-</td>
-
-
-
-
                         <td class="px-4 py-2 text-gray-800">{{ $game->game_time }}</td>
                         <td class="px-4 py-2 text-gray-800">{{ $game->venue }}</td>
                         <td class="px-4 py-2 text-right">
                             <a href="{{ route('games.edit', $game->id) }}" class="text-blue-600 hover:text-blue-800 font-semibold mr-2">Edit</a>
+                            <a href="{{ route('games.manage', $game->id) }}" 
+                               class="text-green-600 hover:text-green-800 font-semibold mr-2">
+                               Manage
+                            </a>
                             <form action="{{ route('games.destroy', $game->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this game?');">
                                 @csrf
                                 @method('DELETE')

@@ -115,4 +115,80 @@ class GameController extends Controller
 
         return redirect()->route('games.index')->with('success', 'Game deleted successfully!');
     }
+
+    public function manage(Game $game)
+{
+    // Determine the scoring type based on event/sport
+    $event = $game->event;
+    $scoringTypes = [
+        'Basketball' => ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'],
+        'Volleyball'  => ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5'],
+        'Soccer'      => ['First Half', 'Second Half'],
+        // Add more sports here
+    ];
+
+    $periods = $scoringTypes[$event->name] ?? ['Period 1', 'Period 2', 'Period 3', 'Period 4'];
+
+    return view('games.manage', compact('game', 'periods'));
+}
+
+public function updateScore(Request $request, Game $game)
+{
+    $request->validate([
+        'scores_a' => 'required|array',
+        'scores_b' => 'required|array',
+        'scores_a.*' => 'nullable|integer|min:0',
+        'scores_b.*' => 'nullable|integer|min:0',
+    ]);
+
+    // Save scores as JSON
+    $game->scores = json_encode([
+        'team_a' => $request->scores_a,
+        'team_b' => $request->scores_b
+    ]);
+
+    // Optional: calculate total score for quick display
+    $game->score_a = array_sum($request->scores_a);
+    $game->score_b = array_sum($request->scores_b);
+
+    $game->save();
+
+    return redirect()->route('games.manage', $game->id)->with('success', 'Scores updated successfully!');
+}
+
+public function updatePeriodScore(Request $request, Game $game, $periodIndex)
+{
+    $request->validate([
+        'score_a' => 'required|integer|min:0',
+        'score_b' => 'required|integer|min:0',
+    ]);
+
+    // Decode existing scores or initialize
+    $scores = json_decode($game->scores, true) ?? ['team_a' => [], 'team_b' => []];
+
+    // Update specific period
+    $scores['team_a'][$periodIndex] = $request->score_a;
+    $scores['team_b'][$periodIndex] = $request->score_b;
+
+    // Save back to DB
+    $game->scores = json_encode($scores);
+    $game->score_a = array_sum($scores['team_a']);
+    $game->score_b = array_sum($scores['team_b']);
+    $game->save();
+
+    return redirect()->route('games.manage', $game->id)
+                     ->with('success', "Period " . ($periodIndex + 1) . " scores updated successfully!");
+}
+
+public function liveScore(Request $request, Game $game)
+{
+    $game->update([
+        'score_a' => $request->score_a,
+        'score_b' => $request->score_b,
+    ]);
+
+    return response()->json(['success' => true]);
+}
+
+
 }
