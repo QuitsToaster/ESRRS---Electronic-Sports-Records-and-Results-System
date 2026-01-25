@@ -28,7 +28,39 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+        $user = Auth::user();
+
+        // If user has access, redirect to the first module they have access to
+        if (!empty($user->access) && is_array($user->access) && count($user->access) > 0) {
+            // Map module names to routes (you may need to adjust these route names)
+            $moduleRoutes = [
+                'dashboard' => 'dashboard',
+                'attendance' => 'attendance.index',
+                'results' => 'results.index',
+                'participants' => 'participants.index',
+                'events' => 'events.index',
+                'sports' => 'sports.index',
+                'athletes' => 'athletes.index',
+                'coaches' => 'coaches.index',
+                'officials' => 'officials.index',
+                'games' => 'games.index',
+                'gallery' => 'gallery.index',
+                'announcements' => 'announcements.index',
+                'users' => 'users.index',
+                'logs' => 'logs.index',
+                'settings' => 'settings.index',
+            ];
+
+            // Find the first module the user has access to that exists in the routes mapping
+            foreach ($user->access as $module) {
+                if (isset($moduleRoutes[$module])) {
+                    return redirect()->route($moduleRoutes[$module]);
+                }
+            }
+        }
+
+        // Default fallback
+        return redirect()->route('dashboard');
     }
 
     /**

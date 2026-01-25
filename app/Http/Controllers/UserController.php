@@ -41,12 +41,13 @@ public function index(Request $request)
     public function store(Request $request)
     {
         $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|email|unique:users,email',
-            'password' => 'required|string|min:6|confirmed',
-            'role_id'  => 'nullable|exists:roles,id',
-            'new_role' => 'nullable|string|max:50',
+            'name' => 'required',
+            'email' => 'required|email|unique:users',
+            'password' => 'required|confirmed|min:6',
+            'role_id' => 'required|exists:roles,id',
+            'access' => 'nullable|array',
         ]);
+
 
         // Determine the role
         if (!empty($request->new_role)) {
@@ -58,10 +59,11 @@ public function index(Request $request)
         }
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
+            'name' => $request->name,
+            'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role_id'  => $role->id,
+            'role_id' => $request->role_id,
+            'access' => $request->access ?? [],
         ]);
 
         AuditLog::create([
@@ -112,12 +114,14 @@ public function index(Request $request)
     $user->name = $request->name;
     $user->email = $request->email;
     $user->role_id = $role->id;
+    $user->access = $request->access ?? [];
 
     if ($request->filled('password')) {
         $user->password = Hash::make($request->password);
     }
 
     $user->save();
+
 
     // Audit log
     AuditLog::create([

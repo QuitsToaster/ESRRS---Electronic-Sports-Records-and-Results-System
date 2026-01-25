@@ -31,6 +31,10 @@
         class="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
     ></div>
 
+    @php
+    $access = auth()->user()->access ?? [];
+    @endphp
+
     {{-- SIDEBAR --}}
     @auth
     <aside
@@ -82,13 +86,15 @@
         {{-- MENU --}}
         <nav class="mt-6 flex-1 overflow-y-auto">
 
+            @if(in_array('dashboard', $access))
             <a href="{{ route('dashboard') }}"
                class="block px-6 py-3 hover:bg-blue-700
                {{ request()->routeIs('dashboard') ? 'bg-blue-900 font-semibold' : '' }}">
                 Dashboard
             </a>
+            @endif
 
-            {{-- Attendance --}}
+            @if(in_array('attendance', $access))
             <div>
                 <button @click="openMenu = openMenu === 'attendance' ? null : 'attendance'"
                         class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
@@ -102,7 +108,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('results', $access))
             {{-- Results --}}
             <div>
                 <button @click="openMenu = openMenu === 'results' ? null : 'results'"
@@ -115,7 +123,9 @@
                     <a href="{{ route('results.create') }}" class="block px-4 py-2 hover:bg-blue-600">Award Medal</a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('participants', $access))
             {{-- Participants --}}
             <div>
                 <button @click="openMenu = openMenu === 'schools' ? null : 'schools'"
@@ -128,7 +138,9 @@
                     <a href="{{ route('schools.create') }}" class="block px-4 py-2 hover:bg-blue-600">Add Participant</a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('sports', $access))
             {{-- Sports --}}
             <div>
                 <button @click="openMenu = openMenu === 'sports' ? null : 'sports'"
@@ -150,7 +162,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('events', $access))
             {{-- Events --}}
             <div>
                 <button @click="openMenu = openMenu === 'events' ? null : 'events'"
@@ -172,7 +186,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('athletes', $access))
             {{-- Athletes --}}
             <div>
                 <button @click="openMenu = openMenu === 'athletes' ? null : 'athletes'"
@@ -194,7 +210,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('coaches', $access))
             {{-- Coaches --}}
             <div>
                 <button @click="openMenu = openMenu === 'coaches' ? null : 'coaches'"
@@ -216,7 +234,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('officials', $access))
             {{-- Officials --}}
             <div>
                 <button @click="openMenu = openMenu === 'officials' ? null : 'officials'"
@@ -238,7 +258,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('games', $access))
             {{-- Games --}}
             <div>
                 <button @click="openMenu = openMenu === 'games' ? null : 'games'"
@@ -260,7 +282,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('gallery', $access))
             {{-- Gallery --}}
             <div>
                 <button @click="openMenu = openMenu === 'gallery' ? null : 'gallery'"
@@ -278,7 +302,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('announcements', $access))
             {{-- Announcements --}}
             <div>
                 <button @click="openMenu = openMenu === 'announcements' ? null : 'announcements'"
@@ -300,7 +326,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('logs', $access))
             {{-- Logs --}}
             <div>
                 <button @click="openMenu = openMenu === 'logs' ? null : 'logs'"
@@ -317,7 +345,9 @@
                     </a>
                 </div>
             </div>
+            @endif
 
+            @if(in_array('settings', $access))
             {{-- Settings --}}
             <div>
                 <button @click="openMenu = openMenu === 'settings' ? null : 'settings'"
@@ -344,6 +374,7 @@
                     </a>
                 </div>
             </div>
+            @endif
         </nav>
     </aside>
     @endauth
