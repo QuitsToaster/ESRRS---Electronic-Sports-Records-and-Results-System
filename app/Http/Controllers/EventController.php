@@ -14,26 +14,23 @@ class EventController extends Controller
     {
         $query = Event::with('sport');
 
-        // Search functionality
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('name', 'like', "%{$search}%")
-                ->orWhereHas('sport', function($sq) use ($search) {
-                    $sq->where('name', 'like', "%{$search}%");
-                })
-                ->orWhere('level', 'like', "%{$search}%")
-                ->orWhere('age_group', 'like', "%{$search}%")
-                ->orWhere('category', 'like', "%{$search}%")
-                ->orWhere('venue', 'like', "%{$search}%");
+                  ->orWhereHas('sport', function($sq) use ($search) {
+                      $sq->where('name', 'like', "%{$search}%");
+                  })
+                  ->orWhere('level', 'like', "%{$search}%")
+                  ->orWhere('age_group', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('venue', 'like', "%{$search}%");
             });
         }
 
         $events = $query->orderBy('start_date')->get();
-
         return view('events.index', compact('events'));
     }
-
 
     public function create()
     {
@@ -44,26 +41,25 @@ class EventController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string',
-            'sport_id' => 'required|exists:sports,id',
-            'level' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'venue' => 'required|string',
-            'age_group' => 'required',
-            'category' => 'required',
+            'name'       => 'required|string|max:255',
+            'sport_id'   => 'nullable|exists:sports,id',
+            'level'      => 'nullable|string',
+            'age_group'  => 'nullable|string',
+            'category'   => 'nullable|string',
+            'venue'      => 'nullable|string|max:255',
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date|after_or_equal:start_date',
         ]);
 
         $event = Event::create($request->all());
 
-        // Audit log for creation
         AuditLog::create([
             'model_type' => 'Event',
-            'model_id' => $event->id,
-            'user_id' => Auth::id(),
+            'model_id'   => $event->id,
+            'user_id'    => Auth::id(),
             'old_values' => null,
             'new_values' => json_encode($event->toArray()),
-            'action' => 'Created Event: '.$event->name,
+            'action'     => 'Created Event: ' . $event->name,
         ]);
 
         return redirect()->route('events.index')->with('success', 'Event created successfully!');
@@ -78,28 +74,26 @@ class EventController extends Controller
     public function update(Request $request, Event $event)
     {
         $request->validate([
-            'name' => 'required|string',
-            'sport_id' => 'required|exists:sports,id',
-            'level' => 'required',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after_or_equal:start_date',
-            'venue' => 'required|string',
-            'age_group' => 'required',
-            'category' => 'required',
+            'name'       => 'required|string|max:255',
+            'sport_id'   => 'nullable|exists:sports,id',
+            'level'      => 'nullable|string',
+            'age_group'  => 'nullable|string',
+            'category'   => 'nullable|string',
+            'venue'      => 'nullable|string|max:255',
+            'start_date' => 'nullable|date',
+            'end_date'   => 'nullable|date|after_or_equal:start_date',
         ]);
 
-        $oldValues = $event->toArray(); // store old data
-
+        $oldValues = $event->toArray();
         $event->update($request->all());
 
-        // Audit log for update
         AuditLog::create([
             'model_type' => 'Event',
-            'model_id' => $event->id,
-            'user_id' => Auth::id(),
+            'model_id'   => $event->id,
+            'user_id'    => Auth::id(),
             'old_values' => json_encode($oldValues),
             'new_values' => json_encode($event->toArray()),
-            'action' => 'Updated Event: '.$event->name,
+            'action'     => 'Updated Event: ' . $event->name,
         ]);
 
         return redirect()->route('events.index')->with('success', 'Event updated successfully!');
@@ -108,17 +102,15 @@ class EventController extends Controller
     public function destroy(Event $event)
     {
         $oldValues = $event->toArray();
-
         $event->delete();
 
-        // Audit log for deletion
         AuditLog::create([
             'model_type' => 'Event',
-            'model_id' => $event->id,
-            'user_id' => Auth::id(),
+            'model_id'   => $event->id,
+            'user_id'    => Auth::id(),
             'old_values' => json_encode($oldValues),
             'new_values' => null,
-            'action' => 'Deleted Event: '.$event->name,
+            'action'     => 'Deleted Event: ' . $event->name,
         ]);
 
         return redirect()->route('events.index')->with('success', 'Event deleted successfully!');

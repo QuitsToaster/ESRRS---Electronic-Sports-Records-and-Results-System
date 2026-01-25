@@ -38,20 +38,28 @@
                     <div>
                         <h3 class="text-xl font-semibold text-gray-800 mb-2">{{ $event->name }}</h3>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Date:</span> 
-                            {{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}
+                            <span class="font-semibold">Date:</span>
+
+                            {{ $event->start_date
+                                ? \Carbon\Carbon::parse($event->start_date)->format('M d, Y')
+                                : 'TBA'
+                            }}
+
                             @if($event->end_date)
                                 - {{ \Carbon\Carbon::parse($event->end_date)->format('M d, Y') }}
                             @endif
                         </p>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Venue:</span> {{ $event->venue ?? 'TBD' }}
+                            <span class="font-semibold">Venue:</span> {{ $event->venue ?? 'TBA' }}
                         </p>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Division:</span> {{ $event->level ?? 'All' }}
+                            <span class="font-semibold">Sport:</span> {{ $event->sport->name ?? 'TBA' }}
                         </p>
                         <p class="text-gray-500 mb-1">
-                            <span class="font-semibold">Category:</span> {{ $event->category ?? 'All' }}
+                            <span class="font-semibold">Division:</span> {{ $event->level ?? 'TBA' }}
+                        </p>
+                        <p class="text-gray-500 mb-1">
+                            <span class="font-semibold">Category:</span> {{ $event->category ?? 'TBA' }}
                         </p>
                     </div>
                 </div>

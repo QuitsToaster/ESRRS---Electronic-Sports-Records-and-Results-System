@@ -8,6 +8,7 @@
         Add a new event by filling out the form below.
     </p>
 </div>
+
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
     @if ($errors->any())
         <div class="bg-red-100 text-red-800 p-4 rounded mb-4">
@@ -22,78 +23,100 @@
     <form action="{{ route('events.store') }}" method="POST" class="space-y-4 w-full">
         @csrf
 
+        <!-- Event Name (REQUIRED) -->
         <div>
-            <label class="block text-gray-700 font-semibold mb-1">Event Name</label>
+            <label class="block text-gray-700 font-semibold mb-1">
+                Event Name <span class="text-red-500">*</span>
+            </label>
             <input type="text" name="name" value="{{ old('name') }}"
                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                    required>
         </div>
 
+        <!-- Sport (OPTIONAL) -->
         <div>
             <label class="block text-gray-700 font-semibold mb-1">Sport</label>
-            <select name="sport_id" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+            <select name="sport_id"
+                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <option value="">Select Sport</option>
                 @foreach($sports as $sport)
-                    <option value="{{ $sport->id }}">{{ $sport->name }}</option>
+                    <option value="{{ $sport->id }}" {{ old('sport_id') == $sport->id ? 'selected' : '' }}>
+                        {{ $sport->name }}
+                    </option>
                 @endforeach
             </select>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
+            <!-- Level -->
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Level</label>
-                <select name="level" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <select name="level"
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">Select Level</option>
-                    <option value="Division">Division</option>
-                    <option value="Regional">Regional</option>
-                    <option value="National">National</option>
+                    <option value="Division" {{ old('level') == 'Division' ? 'selected' : '' }}>Division</option>
+                    <option value="Regional" {{ old('level') == 'Regional' ? 'selected' : '' }}>Regional</option>
+                    <option value="National" {{ old('level') == 'National' ? 'selected' : '' }}>National</option>
                 </select>
             </div>
+
+            <!-- Age Group -->
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Age Group</label>
-                <select name="age_group" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <select name="age_group"
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">Select Age Group</option>
-                    <option value="Elementary">Elementary</option>
-                    <option value="Secondary">Secondary</option>
+                    <option value="Elementary" {{ old('age_group') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
+                    <option value="Secondary" {{ old('age_group') == 'Secondary' ? 'selected' : '' }}>Secondary</option>
                 </select>
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
+            <!-- Category -->
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Category</label>
-                <select name="category" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                <select name="category"
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                     <option value="">Select Category</option>
-                    <option value="Boys">Boys</option>
-                    <option value="Girls">Girls</option>
+                    <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
+                    <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
                 </select>
             </div>
+
+            <!-- Venue -->
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Venue</label>
                 <input type="text" name="venue" value="{{ old('venue') }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       required>
+                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
+            <!-- Start Date -->
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Start Date</label>
                 <input type="date" name="start_date" value="{{ old('start_date') }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       required>
+                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
+
+            <!-- End Date -->
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">End Date</label>
                 <input type="date" name="end_date" value="{{ old('end_date') }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                       required>
+                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
             </div>
         </div>
 
         <div class="flex justify-end space-x-2 mt-4">
-            <a href="{{ route('events.index') }}" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded shadow text-gray-700">Cancel</a>
-            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow">Save</button>
+            <a href="{{ route('events.index') }}"
+               class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded shadow text-gray-700">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow">
+                Save
+            </button>
         </div>
     </form>
 </div>

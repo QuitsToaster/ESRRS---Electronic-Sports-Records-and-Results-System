@@ -30,10 +30,10 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            {{-- Event Name --}}
+            {{-- Event Name (REQUIRED) --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Event Name
+                    Event Name <span class="text-red-500">*</span>
                 </label>
                 <input type="text"
                        name="name"
@@ -42,14 +42,13 @@
                        required>
             </div>
 
-            {{-- Sport --}}
+            {{-- Sport (OPTIONAL) --}}
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">
                     Sport
                 </label>
                 <select name="sport_id"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500"
-                        required>
+                        class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
                     <option value="">Select Sport</option>
                     @foreach($sports as $sport)
                         <option value="{{ $sport->id }}"
@@ -66,8 +65,8 @@
                     Level
                 </label>
                 <select name="level"
-                        class="w-full border border-gray-300 rounded px-3 py-2"
-                        required>
+                        class="w-full border border-gray-300 rounded px-3 py-2">
+                    <option value="">Select Level</option>
                     @foreach(['Division', 'Regional', 'National'] as $level)
                         <option value="{{ $level }}"
                             {{ old('level', $event->level) == $level ? 'selected' : '' }}>
@@ -83,8 +82,8 @@
                     Age Group
                 </label>
                 <select name="age_group"
-                        class="w-full border border-gray-300 rounded px-3 py-2"
-                        required>
+                        class="w-full border border-gray-300 rounded px-3 py-2">
+                    <option value="">Select Age Group</option>
                     @foreach(['Elementary', 'Secondary'] as $group)
                         <option value="{{ $group }}"
                             {{ old('age_group', $event->age_group) == $group ? 'selected' : '' }}>
@@ -100,8 +99,8 @@
                     Category
                 </label>
                 <select name="category"
-                        class="w-full border border-gray-300 rounded px-3 py-2"
-                        required>
+                        class="w-full border border-gray-300 rounded px-3 py-2">
+                    <option value="">Select Category</option>
                     @foreach(['Boys', 'Girls', 'Mixed'] as $category)
                         <option value="{{ $category }}"
                             {{ old('category', $event->category) == $category ? 'selected' : '' }}>
@@ -119,8 +118,7 @@
                 <input type="text"
                        name="venue"
                        value="{{ old('venue', $event->venue) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2"
-                       required>
+                       class="w-full border border-gray-300 rounded px-3 py-2">
             </div>
 
             {{-- Start Date --}}
@@ -130,9 +128,8 @@
                 </label>
                 <input type="date"
                        name="start_date"
-                       value="{{ old('start_date', $event->start_date->format('Y-m-d')) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2"
-                       required>
+                       value="{{ old('start_date', optional($event->start_date)->format('Y-m-d')) }}"
+                       class="w-full border border-gray-300 rounded px-3 py-2">
             </div>
 
             {{-- End Date --}}
@@ -142,9 +139,8 @@
                 </label>
                 <input type="date"
                        name="end_date"
-                       value="{{ old('end_date', $event->end_date->format('Y-m-d')) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2"
-                       required>
+                       value="{{ old('end_date', optional($event->end_date)->format('Y-m-d')) }}"
+                       class="w-full border border-gray-300 rounded px-3 py-2">
             </div>
 
         </div>
