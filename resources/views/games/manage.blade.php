@@ -34,6 +34,135 @@
     $currentScoreB = $game->score_b ?? 0;
 @endphp
 
+{{-- ================= LIVE VIDEO LINK ================= --}}
+<div class="bg-white border rounded-xl shadow-lg p-6 mb-8">
+    <h3 class="text-lg font-semibold mb-4">Live Video Link</h3>
+
+    <form id="liveVideoForm" method="POST" action="{{ route('games.updateLiveVideo', $game->id) }}">
+        @csrf
+        <div class="flex items-center gap-3">
+            <input type="url" name="live_video_url" placeholder="Enter Facebook or YouTube URL"
+                   value="{{ $game->live_video_url ?? '' }}"
+                   class="flex-1 px-3 py-2 border rounded-lg">
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg">
+                Save
+            </button>
+        </div>
+        <p class="text-sm text-gray-500 mt-2">
+            Example: https://www.youtube.com/watch?v=XXXXXXXXXX or https://www.facebook.com/.../live
+        </p>
+    </form>
+
+    @if($game->live_video_url)
+<div class="mt-4">
+    <h4 class="font-semibold mb-2">Preview:</h4>
+    <div class="aspect-w-16 aspect-h-9">
+        @php
+            $embedUrl = '';
+            $url = $game->live_video_url;
+
+            if (Str::contains($url, 'youtube.com') || Str::contains($url, 'youtu.be')) {
+                // Extract YouTube video ID
+                if (Str::contains($url, 'v=')) {
+                    $videoId = Str::after($url, 'v=');
+                    if (Str::contains($videoId, '&')) {
+                        $videoId = Str::before($videoId, '&');
+                    }
+                } elseif (Str::contains($url, 'youtu.be/')) {
+                    $videoId = Str::after($url, 'youtu.be/');
+                    if (Str::contains($videoId, '?')) {
+                        $videoId = Str::before($videoId, '?');
+                    }
+                }
+                $embedUrl = 'https://www.youtube.com/embed/' . $videoId . '?rel=0&modestbranding=1';
+            } elseif (Str::contains($url, 'facebook.com')) {
+                // Facebook embed URL
+                $embedUrl = 'https://www.facebook.com/plugins/video.php?href=' . urlencode($url) . '&show_text=false&width=560';
+            }
+        @endphp
+
+        @if($embedUrl)
+            <iframe class="w-full h-64 md:h-96 rounded-lg"
+                    src="{{ $embedUrl }}"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+            </iframe>
+        @endif
+    </div>
+</div>
+@endif
+
+
+</div>
+
+{{-- ================= GAME TIMER & SHOT CLOCK ================= --}}
+<div class="bg-white border rounded-xl shadow-lg p-6 mb-8">
+    <h3 class="text-lg font-semibold mb-4">Game Timer & Shot Clock</h3>
+
+    {{-- Game Timer --}}
+    <div class="mb-4 flex items-center gap-3">
+        <label class="font-semibold">Game Duration (minutes):</label>
+        <input type="number" id="gameDuration" value="{{ $game->game_duration ?? 48 }}"
+               class="w-20 px-3 py-1 border rounded-lg text-center">
+        <button onclick="saveGameDuration()" class="px-3 py-1 bg-indigo-600 text-white rounded-lg">Save</button>
+        <span id="gameTimerDisplay" class="ml-4 text-lg font-bold">{{ $game->game_duration ?? 48 }}:00</span>
+    </div>
+
+    {{-- Shot Clock --}}
+    <div class="flex items-center gap-3">
+        <label class="font-semibold">Shot Clock (seconds):</label>
+        <span id="shotClockDisplay" class="text-2xl font-bold">{{ $game->shot_clock ?? 24 }}</span>
+        <button onclick="startShotClock()" class="px-3 py-1 bg-green-500 text-white rounded-lg">Start</button>
+        <button onclick="pauseShotClock()" class="px-3 py-1 bg-yellow-400 text-white rounded-lg">Pause</button>
+        <button onclick="resetShotClock()" class="px-3 py-1 bg-red-500 text-white rounded-lg">Reset</button>
+    </div>
+</div>
+
+<script>
+let gameDuration = {{ $game->game_duration ?? 48 }} * 60; // in seconds
+let shotClock = {{ $game->shot_clock ?? 24 }};
+let shotClockInterval = null;
+
+function saveGameDuration() {
+    let duration = document.getElementById('gameDuration').value;
+    fetch("{{ route('games.updateTimer', $game->id) }}", {
+        method: "POST",
+        headers: { 
+            "Content-Type": "application/json", 
+            "X-CSRF-TOKEN": "{{ csrf_token() }}" 
+        },
+        body: JSON.stringify({ game_duration: duration })
+    }).then(res => alert('Game duration saved!'));
+}
+
+// ====== SHOT CLOCK ======
+function startShotClock() {
+    if (shotClockInterval) return;
+    shotClockInterval = setInterval(() => {
+        if (shotClock > 0) {
+            shotClock--;
+            document.getElementById('shotClockDisplay').innerText = shotClock;
+        } else {
+            clearInterval(shotClockInterval);
+            shotClockInterval = null;
+        }
+    }, 1000);
+}
+
+function pauseShotClock() {
+    clearInterval(shotClockInterval);
+    shotClockInterval = null;
+}
+
+function resetShotClock() {
+    shotClock = {{ $game->shot_clock ?? 24 }};
+    document.getElementById('shotClockDisplay').innerText = shotClock;
+    pauseShotClock();
+}
+</script>
+
 {{-- ================= CURRENT PERIOD SCORING ================= --}}
 <div class="bg-white border rounded-xl shadow-lg p-6 mb-8">
     <div class="text-center mb-6">

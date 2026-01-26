@@ -111,6 +111,12 @@ Route::post('/games/{game}/update-period/{periodIndex}', [GameController::class,
 Route::post('/games/{game}/live-score', [GameController::class, 'liveScore'])
     ->name('games.liveScore');
 
+Route::post('/games/{game}/update-timer', [GameController::class, 'updateTimer'])->name('games.updateTimer');
+
+Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLiveVideo'])
+    ->name('games.updateLiveVideo');
+
+
 // Viewer polling
 Route::get('/viewer/live-scores', [ViewerController::class, 'liveScores'])
     ->name('viewer.liveScores');

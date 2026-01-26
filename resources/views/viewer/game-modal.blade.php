@@ -11,7 +11,7 @@ $scores = json_decode($game->scores, true) ?? ['team_a'=>[], 'team_b'=>[]];
 
 $now = Carbon::now();
 $gameStart = Carbon::parse($game->game_time);
-$gameEnd = $gameStart->copy()->addMinutes($game->duration ?? 120); // default 2 hours
+$gameEnd = $gameStart->copy()->addMinutes($game->game_duration ?? 120); // default 2 hours
 
 if ($now->lt($gameStart)) {
     $status = 'Upcoming';
@@ -25,7 +25,6 @@ if ($now->lt($gameStart)) {
 }
 @endphp
 
-
 <div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
     {{-- BACK BUTTON --}}
@@ -38,6 +37,18 @@ if ($now->lt($gameStart)) {
 
     {{-- ================= SCOREBOARD HEADER ================= --}}
     <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl p-6 shadow-lg">
+
+        {{-- GAME TIMER & SHOT CLOCK --}}
+        <div class="flex justify-center gap-8 mb-4">
+            <div class="text-center">
+                <div class="text-sm font-semibold">Game Timer</div>
+                <div id="gameTimerDisplay" class="text-2xl font-bold">00:00</div>
+            </div>
+            <div class="text-center">
+                <div class="text-sm font-semibold">Shot Clock</div>
+                <div id="shotClockDisplay" class="text-2xl font-bold">00</div>
+            </div>
+        </div>
 
         <div class="flex items-center justify-between">
 
@@ -84,6 +95,48 @@ if ($now->lt($gameStart)) {
 
         </div>
     </div>
+
+    {{-- ================= LIVE VIDEO ================= --}}
+@if($game->live_video_url)
+<div class="bg-gray-900 rounded-xl shadow-lg p-4 mb-8">
+    <h3 class="text-lg font-semibold text-white mb-2">Live Stream</h3>
+    <div class="aspect-w-16 aspect-h-9">
+        @php
+            $embedUrl = '';
+            $url = $game->live_video_url;
+
+            if (Str::contains($url, 'youtube.com') || Str::contains($url, 'youtu.be')) {
+                if (Str::contains($url, 'v=')) {
+                    $videoId = Str::after($url, 'v=');
+                    if (Str::contains($videoId, '&')) {
+                        $videoId = Str::before($videoId, '&');
+                    }
+                } elseif (Str::contains($url, 'youtu.be/')) {
+                    $videoId = Str::after($url, 'youtu.be/');
+                    if (Str::contains($videoId, '?')) {
+                        $videoId = Str::before($videoId, '?');
+                    }
+                }
+                $embedUrl = 'https://www.youtube.com/embed/' . $videoId . '?rel=0&modestbranding=1';
+            } elseif (Str::contains($url, 'facebook.com')) {
+                $embedUrl = 'https://www.facebook.com/plugins/video.php?href=' . urlencode($url) . '&show_text=false&width=560';
+            }
+        @endphp
+
+        @if($embedUrl)
+            <iframe class="w-full h-64 md:h-96 rounded-lg"
+                    src="{{ $embedUrl }}"
+                    frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen>
+            </iframe>
+        @endif
+    </div>
+</div>
+@endif
+
+
+
 
     {{-- ================= PERIOD / QUARTER SCORES ================= --}}
     <div class="bg-white rounded-xl shadow p-6">
@@ -186,5 +239,70 @@ if ($now->lt($gameStart)) {
 
     </div>
 </div>
+
+{{-- ================= LIVE TIMER & SHOT CLOCK SCRIPT ================= --}}
+<script>
+let gameDuration = {{ $game->game_duration ?? 48 }} * 60; // in seconds
+let shotClock = {{ $game->shot_clock ?? 24 }};
+let shotClockInterval = null;
+let gameTimerInterval = null;
+
+// Initialize displays
+function formatTime(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2, '0');
+    const s = (sec % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+}
+
+document.getElementById('gameTimerDisplay').innerText = formatTime(gameDuration);
+document.getElementById('shotClockDisplay').innerText = shotClock;
+
+// Start game timer
+function startGameTimer() {
+    if (gameTimerInterval) return;
+    gameTimerInterval = setInterval(() => {
+        if (gameDuration > 0) {
+            gameDuration--;
+            document.getElementById('gameTimerDisplay').innerText = formatTime(gameDuration);
+        } else {
+            clearInterval(gameTimerInterval);
+        }
+    }, 1000);
+}
+
+// Start shot clock
+function startShotClock() {
+    if (shotClockInterval) return;
+    shotClockInterval = setInterval(() => {
+        if (shotClock > 0) {
+            shotClock--;
+            document.getElementById('shotClockDisplay').innerText = shotClock;
+        } else {
+            clearInterval(shotClockInterval);
+            shotClockInterval = null;
+        }
+    }, 1000);
+}
+
+// Pause shot clock
+function pauseShotClock() {
+    clearInterval(shotClockInterval);
+    shotClockInterval = null;
+}
+
+// Reset shot clock
+function resetShotClock() {
+    shotClock = {{ $game->shot_clock ?? 24 }};
+    document.getElementById('shotClockDisplay').innerText = shotClock;
+    pauseShotClock();
+}
+
+// Auto-start both timers if game is ongoing
+@if($status === 'Ongoing')
+startGameTimer();
+startShotClock();
+@endif
+
+</script>
 
 @endsection

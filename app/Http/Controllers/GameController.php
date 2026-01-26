@@ -196,5 +196,31 @@ public function liveScore(Request $request, Game $game)
     return response()->json(['success' => true]);
 }
 
+public function updateTimer(Request $request, Game $game)
+{
+    $request->validate([
+        'game_duration' => 'required|integer|min:1',
+    ]);
+
+    $game->game_duration = $request->game_duration;
+    $game->save();
+
+    return response()->json(['success' => true]);
+}
+
+public function updateLiveVideo(Request $request, Game $game)
+{
+    $request->validate([
+        'live_video_url' => 'nullable|url'
+    ]);
+
+    $game->live_video_url = $request->live_video_url;
+    $game->save();
+
+    return redirect()->route('games.manage', $game->id)
+                     ->with('success', 'Live video link updated successfully!');
+}
+
+
 
 }
