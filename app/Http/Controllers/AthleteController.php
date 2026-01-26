@@ -23,8 +23,11 @@ class AthleteController extends Controller
             ->when($search, function ($query, $search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%{$search}%")
-                      ->orWhere('lastname', 'like', "%{$search}%")
+                      ->orWhere('last_name', 'like', "%{$search}%")
                       ->orWhere('middle_initial', 'like', "%{$search}%")
+                      ->orWhere('region', 'like', "%{$search}%")
+                    ->orWhere('school_type', 'like', "%{$search}%")
+                    ->orWhere('lrn', 'like', "%{$search}%")
                       ->orWhereHas('school', function ($sq) use ($search) {
                           $sq->where('name', 'like', "%{$search}%");
                       })
@@ -51,59 +54,84 @@ class AthleteController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'first_name'        => 'required|string|max:255',
-            'middle_initial'   => 'nullable|string|max:1',
-            'last_name'         => 'required|string|max:255',
-            'sex'              => 'required|in:Male,Female',
-            'birthdate'        => 'nullable|date',
-            'school_id'        => 'required|exists:schools,id',
-            'sport_id'         => 'required|exists:sports,id',
-            'division'         => 'required|in:Elementary,Secondary',
-            'category'         => 'required|in:Boys,Girls',
-            'status'           => 'required|in:Active,Disqualified,Injured',
-            'profile_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
+{
+    $request->validate([
+        'first_name'      => 'required|string|max:255',
+        'middle_initial'  => 'nullable|string|max:1',
+        'last_name'       => 'required|string|max:255',
+        'sex'             => 'required|in:Male,Female',
+        'birthdate'       => 'nullable|date',
 
-        // Upload profile photo
-        $photoPath = null;
-        if ($request->hasFile('profile_photo')) {
-            $photoPath = $request->file('profile_photo')
-                ->store('athletes', 'public');
-        }
+        'school_id'       => 'nullable|exists:schools,id',
+        'school_name'     => 'nullable|string|max:255',
 
-        // Generate QR code value
-        $qrValue = 'CEMS-' . strtoupper(Str::random(8));
+        'sport_id'        => 'nullable|exists:sports,id',
+        'sport_name'      => 'nullable|string|max:255',
 
-        $athlete = Athlete::create([
-            'first_name'        => $request->first_name,
-            'middle_initial'   => $request->middle_initial,
-            'last_name'         => $request->last_name,
-            'sex'              => $request->sex,
-            'birthdate'        => $request->birthdate,
-            'school_id'        => $request->school_id,
-            'sport_id'         => $request->sport_id,
-            'division'         => $request->division,
-            'category'         => $request->category,
-            'status'           => $request->status,
-            'qr_code'          => $qrValue,
-            'profile_photo'    => $photoPath,
-        ]);
+        'division'        => 'required|in:Elementary,Secondary',
+        'category'        => 'required|in:Boys,Girls',
+        'status'          => 'required|in:Active,Injured,Disqualified',
 
-        AuditLog::create([
-            'model_type' => 'Athlete',
-            'model_id'   => $athlete->id,
-            'user_id'    => Auth::id(),
-            'old_values' => null,
-            'new_values' => json_encode($athlete->toArray()),
-            'action'     => 'Created Athlete: ' .
-                "{$athlete->lastname}, {$athlete->firstname}",
-        ]);
+        'profile_photo'   => 'nullable|image|max:2048',
+        'lrn'             => 'nullable|string|max:20|unique:athletes,lrn',
+        'school_type'     => 'nullable|in:Public,Private',
+    ]);
 
-        return redirect()->route('athletes.index')
-            ->with('success', 'Athlete added successfully!');
+    /* ================= SCHOOL AUTO-CREATE ================= */
+    if (!$request->school_id && $request->school_name) {
+        $school = School::firstOrCreate(
+            ['name' => $request->school_name],
+            ['division' => $request->school_division]
+        );
+        $schoolId = $school->id;
+    } else {
+        $schoolId = $request->school_id;
     }
+
+    /* ================= SPORT AUTO-CREATE ================= */
+    if (!$request->sport_id && $request->sport_name) {
+        $sport = Sport::firstOrCreate([
+            'name' => $request->sport_name
+        ]);
+        $sportId = $sport->id;
+    } else {
+        $sportId = $request->sport_id;
+    }
+
+    /* ================= PHOTO ================= */
+    $photoPath = null;
+    if ($request->hasFile('profile_photo')) {
+        $photoPath = $request->file('profile_photo')->store('athletes', 'public');
+    }
+
+    $athlete = Athlete::create([
+        'first_name'        => $request->first_name,
+        'middle_initial'    => $request->middle_initial,
+        'last_name'         => $request->last_name,
+        'sex'               => $request->sex,
+        'birthdate'         => $request->birthdate,
+
+        'school_id'         => $schoolId,
+        'sport_id'          => $sportId,
+
+        'division'          => $request->division,
+        'category'          => $request->category,
+        'status'            => $request->status,
+
+        'region'            => $request->region,
+        'school_type'       => $request->school_type,
+        'school_address'    => $request->school_address,
+        'school_division'   => $request->school_division,
+        'school_code'       => $request->school_code,
+        'lrn'               => $request->lrn,
+
+        'profile_photo'     => $photoPath,
+    ]);
+
+    return redirect()->route('athletes.index')
+        ->with('success', 'Athlete added successfully!');
+}
+
 
     public function edit(Athlete $athlete)
     {
@@ -147,6 +175,13 @@ class AthleteController extends Controller
     $athlete->division        = $request->division;
     $athlete->category        = $request->category;
     $athlete->status          = $request->status;
+    $athlete->region          = $request->region;
+    $athlete->school_type     = $request->school_type;
+    $athlete->school_address  = $request->school_address;
+    $athlete->school_division = $request->school_division;
+    $athlete->school_code     = $request->school_code;
+    $athlete->lrn             = $request->lrn;
+
 
     $athlete->save(); // ✅ important
 

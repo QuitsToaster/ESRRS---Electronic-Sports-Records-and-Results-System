@@ -10,7 +10,7 @@
 @method('PUT')
 
 {{-- PHOTO --}}
-<div class="mb-4">
+<div class="mb-6">
     <label class="block font-semibold mb-1">Profile Photo</label>
     <div class="flex items-center gap-4">
         <img id="photoPreview"
@@ -23,25 +23,23 @@
 </div>
 
 {{-- NAME --}}
-<div class="grid grid-cols-3 gap-3 mb-4">
+<div class="grid grid-cols-3 gap-4 mb-4">
     <div>
-        <label>First Name</label>
+        <label class="font-medium">First Name</label>
         <input name="first_name" value="{{ old('first_name',$athlete->first_name) }}"
                class="w-full border rounded px-3 py-2">
     </div>
-    <div>
-    <label>Middle Initial (no dot ".")</label>
-    <input name="middle_initial" 
-           value="{{ old('middle_initial',$athlete->middle_initial) }}"
-           class="w-full border rounded px-3 py-2"
-           pattern="[A-Za-z]"
-           title="Only letters are allowed"
-           maxlength="1">
-</div>
-
 
     <div>
-        <label>Last Name</label>
+        <label class="font-medium">Middle Initial</label>
+        <input name="middle_initial"
+               value="{{ old('middle_initial',$athlete->middle_initial) }}"
+               maxlength="1"
+               class="w-full border rounded px-3 py-2">
+    </div>
+
+    <div>
+        <label class="font-medium">Last Name</label>
         <input name="last_name" value="{{ old('last_name',$athlete->last_name) }}"
                class="w-full border rounded px-3 py-2">
     </div>
@@ -50,23 +48,75 @@
 {{-- SEX & BIRTHDATE --}}
 <div class="grid grid-cols-2 gap-4 mb-4">
     <div>
-        <label>Sex</label>
+        <label class="font-medium">Sex</label>
         <select name="sex" class="w-full border rounded px-3 py-2">
             <option value="Male" {{ $athlete->sex=='Male'?'selected':'' }}>Male</option>
             <option value="Female" {{ $athlete->sex=='Female'?'selected':'' }}>Female</option>
         </select>
     </div>
+
     <div>
-        <label>Birthdate</label>
+        <label class="font-medium">Birthdate</label>
         <input type="date" name="birthdate"
                value="{{ old('birthdate',$athlete->birthdate) }}"
                class="w-full border rounded px-3 py-2">
     </div>
 </div>
 
+{{-- SCHOOL INFO --}}
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+        <label class="font-medium">Region</label>
+        <input name="region"
+               value="{{ old('region',$athlete->region) }}"
+               class="w-full border rounded px-3 py-2">
+    </div>
+
+    <div>
+        <label class="font-medium">School Type</label>
+        <select name="school_type" class="w-full border rounded px-3 py-2">
+            <option value="">-- Select --</option>
+            <option value="Public" {{ $athlete->school_type=='Public'?'selected':'' }}>Public</option>
+            <option value="Private" {{ $athlete->school_type=='Private'?'selected':'' }}>Private</option>
+        </select>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+        <label class="font-medium">School Address</label>
+        <input name="school_address"
+               value="{{ old('school_address',$athlete->school_address) }}"
+               class="w-full border rounded px-3 py-2">
+    </div>
+
+    <div>
+        <label class="font-medium">School Division</label>
+        <input name="school_division"
+               value="{{ old('school_division',$athlete->school_division) }}"
+               class="w-full border rounded px-3 py-2">
+    </div>
+</div>
+
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+        <label class="font-medium">School Code</label>
+        <input name="school_code"
+               value="{{ old('school_code',$athlete->school_code) }}"
+               class="w-full border rounded px-3 py-2">
+    </div>
+
+    <div>
+        <label class="font-medium">LRN</label>
+        <input name="lrn"
+               value="{{ old('lrn',$athlete->lrn) }}"
+               class="w-full border rounded px-3 py-2">
+    </div>
+</div>
+
 {{-- TEAM --}}
-<div class="mb-3">
-    <label>Team</label>
+<div class="mb-4">
+    <label class="font-medium">Team / School</label>
     <select name="school_id" class="w-full border rounded px-3 py-2">
         @foreach($schools as $school)
             <option value="{{ $school->id }}" {{ $athlete->school_id==$school->id?'selected':'' }}>
@@ -77,8 +127,8 @@
 </div>
 
 {{-- SPORT --}}
-<div class="mb-3">
-    <label>Sport</label>
+<div class="mb-4">
+    <label class="font-medium">Sport</label>
     <select name="sport_id" class="w-full border rounded px-3 py-2">
         @foreach($sports as $sport)
             <option value="{{ $sport->id }}" {{ $athlete->sport_id==$sport->id?'selected':'' }}>
@@ -88,27 +138,28 @@
     </select>
 </div>
 
-{{-- DIVISION --}}
-<div class="mb-3">
-    <label>Division</label>
-    <select name="division" class="w-full border rounded px-3 py-2">
-        <option value="Elementary" {{ $athlete->division=='Elementary'?'selected':'' }}>Elementary</option>
-        <option value="Secondary" {{ $athlete->division=='Secondary'?'selected':'' }}>Secondary</option>
-    </select>
-</div>
+{{-- DIVISION & CATEGORY --}}
+<div class="grid grid-cols-2 gap-4 mb-4">
+    <div>
+        <label class="font-medium">Division</label>
+        <select name="division" class="w-full border rounded px-3 py-2">
+            <option value="Elementary" {{ $athlete->division=='Elementary'?'selected':'' }}>Elementary</option>
+            <option value="Secondary" {{ $athlete->division=='Secondary'?'selected':'' }}>Secondary</option>
+        </select>
+    </div>
 
-{{-- CATEGORY --}}
-<div class="mb-3">
-    <label>Category</label>
-    <select name="category" class="w-full border rounded px-3 py-2">
-        <option value="Boys" {{ $athlete->category=='Boys'?'selected':'' }}>Boys</option>
-        <option value="Girls" {{ $athlete->category=='Girls'?'selected':'' }}>Girls</option>
-    </select>
+    <div>
+        <label class="font-medium">Category</label>
+        <select name="category" class="w-full border rounded px-3 py-2">
+            <option value="Boys" {{ $athlete->category=='Boys'?'selected':'' }}>Boys</option>
+            <option value="Girls" {{ $athlete->category=='Girls'?'selected':'' }}>Girls</option>
+        </select>
+    </div>
 </div>
 
 {{-- STATUS --}}
-<div class="mb-4">
-    <label>Status</label>
+<div class="mb-6">
+    <label class="font-medium">Status</label>
     <select name="status" class="w-full border rounded px-3 py-2">
         <option value="Active" {{ $athlete->status=='Active'?'selected':'' }}>Active</option>
         <option value="Injured" {{ $athlete->status=='Injured'?'selected':'' }}>Injured</option>
@@ -116,7 +167,7 @@
     </select>
 </div>
 
-<button class="bg-blue-600 text-white px-6 py-2 rounded shadow">
+<button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">
     Update Athlete
 </button>
 
@@ -125,9 +176,9 @@
 
 <script>
 function previewPhoto(e){
-    const r = new FileReader();
-    r.onload = () => photoPreview.src = r.result;
-    r.readAsDataURL(e.target.files[0]);
+    const reader = new FileReader();
+    reader.onload = () => photoPreview.src = reader.result;
+    reader.readAsDataURL(e.target.files[0]);
 }
 </script>
 @endsection
