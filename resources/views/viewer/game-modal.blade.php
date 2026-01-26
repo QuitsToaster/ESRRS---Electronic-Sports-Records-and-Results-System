@@ -5,13 +5,11 @@
 @section('content')
 
 @php
-use Carbon\Carbon;
-
 $scores = json_decode($game->scores, true) ?? ['team_a'=>[], 'team_b'=>[]];
 
-$now = Carbon::now();
-$gameStart = Carbon::parse($game->game_time);
-$gameEnd = $gameStart->copy()->addMinutes($game->game_duration ?? 120); // default 2 hours
+$now = \Carbon\Carbon::now();
+$gameStart = \Carbon\Carbon::parse($game->game_time);
+$gameEnd = $gameStart->copy()->addHours(2);
 
 if ($now->lt($gameStart)) {
     $status = 'Upcoming';
@@ -24,6 +22,7 @@ if ($now->lt($gameStart)) {
     $statusColor = 'bg-gray-400';
 }
 @endphp
+
 
 <div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 

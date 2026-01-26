@@ -11,24 +11,25 @@
         @foreach($games as $game)
 
             @php
-                $schoolA = \App\Models\School::where('name', $game->team_a)->first();
-                $schoolB = \App\Models\School::where('name', $game->team_b)->first();
+$schoolA = \App\Models\School::where('name', $game->team_a)->first();
+$schoolB = \App\Models\School::where('name', $game->team_b)->first();
 
-                $now = \Carbon\Carbon::now();
-                $gameStart = $game->game_time;
-                $gameEnd = $gameStart->copy()->addHours(2); // adjust if needed
+$now = \Carbon\Carbon::now();
+$gameStart = \Carbon\Carbon::parse($game->game_time);
+$gameEnd = $gameStart->copy()->addHours(2); // ✅ consistent
 
-                if ($now->lt($gameStart)) {
-                    $status = 'Upcoming';
-                    $statusClass = 'bg-yellow-100 text-yellow-800';
-                } elseif ($now->between($gameStart, $gameEnd)) {
-                    $status = 'Ongoing';
-                    $statusClass = 'bg-green-100 text-green-800';
-                } else {
-                    $status = 'Finished';
-                    $statusClass = 'bg-gray-200 text-gray-800';
-                }
-            @endphp
+if ($now->lt($gameStart)) {
+    $status = 'Upcoming';
+    $statusClass = 'bg-yellow-100 text-yellow-800';
+} elseif ($now->between($gameStart, $gameEnd)) {
+    $status = 'Ongoing';
+    $statusClass = 'bg-green-100 text-green-800';
+} else {
+    $status = 'Finished';
+    $statusClass = 'bg-gray-200 text-gray-800';
+}
+@endphp
+
 
             <div onclick="openGame({{ $game->id }})"
                  class="cursor-pointer bg-white rounded-lg shadow hover:shadow-xl transition p-6 relative">
