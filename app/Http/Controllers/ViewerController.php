@@ -164,6 +164,12 @@ public function liveGame(Game $game)
     ]);
 }
 
+public function liveScores()
+{
+    return Game::select('id', 'score_a', 'score_b')->get();
+}
+
+
 public function gallery(Request $request)
 {
     $search = $request->input('search');
@@ -179,10 +185,7 @@ public function gallery(Request $request)
     return view('viewer.gallery', compact('photos'));
 }
 
-public function liveScores()
-{
-    return Game::select('id', 'score_a', 'score_b')->get();
-}
+
 
 
 

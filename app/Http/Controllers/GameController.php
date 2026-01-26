@@ -118,19 +118,26 @@ class GameController extends Controller
 
     public function manage(Game $game)
 {
-    // Determine the scoring type based on event/sport
     $event = $game->event;
     $scoringTypes = [
         'Basketball' => ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'],
         'Volleyball'  => ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5'],
         'Soccer'      => ['First Half', 'Second Half'],
-        // Add more sports here
     ];
 
     $periods = $scoringTypes[$event->name] ?? ['Period 1', 'Period 2', 'Period 3', 'Period 4'];
 
-    return view('games.manage', compact('game', 'periods'));
+    $scores = json_decode($game->scores, true) ?? ['team_a' => [], 'team_b' => []];
+
+    $currentPeriodIndex = count($scores['team_a']); // index for current period
+    $currentPeriod = $periods[$currentPeriodIndex] ?? 'Period '.($currentPeriodIndex + 1);
+
+    $currentScoreA = $scores['team_a'][$currentPeriodIndex] ?? 0;
+    $currentScoreB = $scores['team_b'][$currentPeriodIndex] ?? 0;
+
+    return view('games.manage', compact('game', 'periods', 'currentPeriodIndex', 'currentPeriod', 'currentScoreA', 'currentScoreB'));
 }
+
 
 public function updateScore(Request $request, Game $game)
 {
@@ -200,13 +207,18 @@ public function updateTimer(Request $request, Game $game)
 {
     $request->validate([
         'game_duration' => 'required|integer|min:1',
+        'shot_clock'    => 'nullable|integer|min:1',
     ]);
 
     $game->game_duration = $request->game_duration;
+    if ($request->shot_clock) {
+        $game->shot_clock = $request->shot_clock;
+    }
     $game->save();
 
     return response()->json(['success' => true]);
 }
+
 
 public function updateLiveVideo(Request $request, Game $game)
 {
