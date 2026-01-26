@@ -9,7 +9,34 @@ use App\Models\Sport;
 
 class Athlete extends Model
 {
-    protected $fillable = ['name', 'school_id', 'sport_id', 'division', 'category', 'status', 'qr_code', 'profile_photo',];
+    protected $fillable = [
+    'last_name',
+    'first_name',
+    'middle_initial',
+    'sex',
+    'birthdate',
+
+    'region',
+    'level',
+    'event',
+
+    'school_name',
+    'school_type',
+    'school_address',
+    'school_division',
+    'school_code',
+
+    'lrn',
+
+    'school_id',
+    'sport_id',
+    'division',
+    'category',
+    'status',
+    'qr_code',
+    'profile_photo',
+];
+
 
     public function school() { return $this->belongsTo(School::class); }
     public function sport() { return $this->belongsTo(Sport::class); }
@@ -22,5 +49,12 @@ class Athlete extends Model
         }
     });
 }
+
+public function getFullNameAttribute()
+{
+    return trim("{$this->last_name}, {$this->first_name} {$this->middle_initial}");
+}
+
+
 }
 
