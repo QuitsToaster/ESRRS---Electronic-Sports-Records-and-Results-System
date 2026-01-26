@@ -126,16 +126,16 @@
             @endif
 
             @if(in_array('participants', $access))
-            {{-- Participants --}}
+            {{-- Teams --}}
             <div>
                 <button @click="openMenu = openMenu === 'schools' ? null : 'schools'"
                         class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700">
-                    Participants
+                    Teams
                     <span x-text="openMenu === 'schools' ? '▾' : '▸'"></span>
                 </button>
                 <div x-show="openMenu === 'schools'" x-cloak class="pl-6 space-y-1">
-                    <a href="{{ route('schools.index') }}" class="block px-4 py-2 hover:bg-blue-600">All Participants</a>
-                    <a href="{{ route('schools.create') }}" class="block px-4 py-2 hover:bg-blue-600">Add Participant</a>
+                    <a href="{{ route('schools.index') }}" class="block px-4 py-2 hover:bg-blue-600">All Teams</a>
+                    <a href="{{ route('schools.create') }}" class="block px-4 py-2 hover:bg-blue-600">Add Teams</a>
                 </div>
             </div>
             @endif

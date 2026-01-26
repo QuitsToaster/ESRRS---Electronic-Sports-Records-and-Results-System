@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
                 'dashboard' => 'dashboard',
                 'attendance' => 'attendance.index',
                 'results' => 'results.index',
-                'participants' => 'participants.index',
+                'teams' => 'participants.index',
                 'events' => 'events.index',
                 'sports' => 'sports.index',
                 'athletes' => 'athletes.index',
