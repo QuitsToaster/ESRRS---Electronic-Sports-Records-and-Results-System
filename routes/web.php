@@ -84,6 +84,9 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::resource('athletes', AthleteController::class)->middleware('auth');
+Route::post('/athletes/bulk-upload', [AthleteController::class, 'bulkUpload'])
+     ->name('athletes.bulk-upload');
+
 
 Route::get('athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
 Route::get('/athletes/{athlete}/qr', function (Athlete $athlete) {

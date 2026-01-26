@@ -7,6 +7,8 @@ use App\Models\Athlete;
 use App\Models\School;
 use App\Models\Sport;
 use App\Models\AuditLog;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\AthletesImport;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
@@ -191,4 +193,17 @@ class AthleteController extends Controller
 
         return response($qr)->header('Content-Type', 'image/png');
     }
+
+    public function bulkUpload(Request $request)
+{
+    $request->validate([
+        'file' => 'required|mimes:xlsx,csv',
+    ]);
+
+    Excel::import(new AthletesImport, $request->file('file'));
+
+    return redirect()->route('athletes.index')
+        ->with('success', 'Athletes uploaded successfully!');
+}
+
 }

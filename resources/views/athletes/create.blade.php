@@ -13,6 +13,25 @@
 <form action="{{ route('athletes.store') }}" method="POST" enctype="multipart/form-data">
     @csrf
 
+    <hr class="my-6">
+
+<h3 class="text-lg font-semibold mb-2">Bulk Upload Athletes</h3>
+<p class="text-sm text-gray-600 mb-4">
+    Upload an Excel (.xlsx) file with the following headings: 
+    <code>first_name, middle_initial, last_name, sex, birthdate, school_id, sport_id, division, category, status</code>.
+</p>
+
+<form action="{{ route('athletes.bulk-upload') }}" method="POST" enctype="multipart/form-data">
+    @csrf
+    <div class="mb-4">
+        <input type="file" name="file" accept=".xlsx,.csv" class="w-full border rounded px-3 py-2" required>
+    </div>
+    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded shadow">
+        Upload Excel
+    </button>
+</form>
+
+
     {{-- Profile Photo --}}
     <div class="mb-4">
         <label class="block mb-1 font-medium">Profile Photo</label>
