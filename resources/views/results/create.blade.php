@@ -50,8 +50,11 @@
             <select name="athlete_id" class="w-full border rounded px-3 py-2">
                 <option value="">-- Select Athlete --</option>
                 @foreach($athletes as $athlete)
-                    <option value="{{ $athlete->id }}">{{ $athlete->name }}</option>
-                @endforeach
+    <option value="{{ $athlete->id }}">
+        {{ $athlete->full_name }}
+    </option>
+@endforeach
+
             </select>
         </div>
 

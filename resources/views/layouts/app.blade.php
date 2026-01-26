@@ -111,19 +111,29 @@
             @endif
 
             @if(in_array('results', $access))
-            {{-- Results --}}
-            <div>
-                <button @click="openMenu = openMenu === 'results' ? null : 'results'"
-                        class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700">
-                    Results / Awards
-                    <span x-text="openMenu === 'results' ? '▾' : '▸'"></span>
-                </button>
-                <div x-show="openMenu === 'results'" x-cloak class="pl-6 space-y-1">
-                    <a href="{{ route('results.index') }}" class="block px-4 py-2 hover:bg-blue-600">All Results</a>
-                    <a href="{{ route('results.create') }}" class="block px-4 py-2 hover:bg-blue-600">Award Medal</a>
-                </div>
-            </div>
-            @endif
+    {{-- Results --}}
+    <div>
+        <button @click="openMenu = openMenu === 'results' ? null : 'results'"
+                class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
+                {{ request()->routeIs('results.*') ? 'bg-blue-900 font-semibold' : '' }}">
+            Results / Awards
+            <span x-text="openMenu === 'results' ? '▾' : '▸'"></span>
+        </button>
+        <div x-show="openMenu === 'results'" x-cloak class="pl-6 mt-1 space-y-1">
+            <a href="{{ route('results.index') }}"
+               class="block px-4 py-2 rounded hover:bg-blue-600
+               {{ request()->routeIs('results.index') ? 'bg-blue-700 font-semibold' : '' }}">
+                All Results
+            </a>
+            <a href="{{ route('results.create') }}"
+               class="block px-4 py-2 rounded hover:bg-blue-600
+               {{ request()->routeIs('results.create') ? 'bg-blue-700 font-semibold' : '' }}">
+                Award Medal
+            </a>
+        </div>
+    </div>
+@endif
+
 
             @if(in_array('participants', $access))
 {{-- Teams / Schools --}}
