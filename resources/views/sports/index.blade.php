@@ -9,6 +9,9 @@
             List of sports available in the system.
         </p>
     </div>
+    <a href="{{ route('sports.create') }}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+        + Add Sport
+    </a>
 </div>
 
 @if(session('success'))

@@ -9,6 +9,9 @@ use App\Models\Event;
 use App\Models\Banner;
 use App\Models\GalleryPhoto;
 use App\Models\Game;
+use App\Models\School;
+use App\Models\Athlete;
+use App\Models\Coach;
 use App\Models\Announcement;
 
 class ViewerController extends Controller
@@ -124,6 +127,41 @@ public function games(Request $request)
         ->get();
 
     return view('viewer.games', compact('games'));
+}
+
+public function gameModal(Game $game)
+{
+    $schoolA = School::where('name', $game->team_a)->first();
+    $schoolB = School::where('name', $game->team_b)->first();
+
+    $athletesA = Athlete::where('school_id', $schoolA?->id)->get();
+    $athletesB = Athlete::where('school_id', $schoolB?->id)->get();
+
+    $coachesA = Coach::where('school_id', $schoolA?->id)->get();
+    $coachesB = Coach::where('school_id', $schoolB?->id)->get();
+
+    $eventName = strtolower(trim($game->event->name));
+
+    $periods = match($eventName) {
+        'basketball' => ['Q1','Q2','Q3','Q4'],
+        'volleyball' => ['Set 1','Set 2','Set 3','Set 4','Set 5'],
+        default => ['Period 1','Period 2','Period 3','Period 4'] // give 4 by default
+    };
+
+    return view('viewer.game-modal', compact(
+        'game','periods',
+        'athletesA','athletesB',
+        'coachesA','coachesB'
+    ));
+}
+
+
+public function liveGame(Game $game)
+{
+    return response()->json([
+        'score_a' => $game->score_a ?? 0,
+        'score_b' => $game->score_b ?? 0,
+    ]);
 }
 
 public function gallery(Request $request)

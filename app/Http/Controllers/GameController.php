@@ -163,22 +163,28 @@ public function updatePeriodScore(Request $request, Game $game, $periodIndex)
         'score_b' => 'required|integer|min:0',
     ]);
 
-    // Decode existing scores or initialize
-    $scores = json_decode($game->scores, true) ?? ['team_a' => [], 'team_b' => []];
+    $scores = json_decode($game->scores, true) ?? [
+        'team_a' => [],
+        'team_b' => [],
+    ];
 
-    // Update specific period
+    // Save ONLY the current period score
     $scores['team_a'][$periodIndex] = $request->score_a;
     $scores['team_b'][$periodIndex] = $request->score_b;
 
-    // Save back to DB
     $game->scores = json_encode($scores);
-    $game->score_a = array_sum($scores['team_a']);
-    $game->score_b = array_sum($scores['team_b']);
+
+    // ✅ RESET LIVE SCORE (NO TOTALING)
+    $game->score_a = 0;
+    $game->score_b = 0;
+
     $game->save();
 
-    return redirect()->route('games.manage', $game->id)
-                     ->with('success', "Period " . ($periodIndex + 1) . " scores updated successfully!");
+    return redirect()
+        ->route('games.manage', $game->id)
+        ->with('success', 'Period saved. Next period started.');
 }
+
 
 public function liveScore(Request $request, Game $game)
 {

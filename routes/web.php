@@ -115,6 +115,10 @@ Route::post('/games/{game}/live-score', [GameController::class, 'liveScore'])
 Route::get('/viewer/live-scores', [ViewerController::class, 'liveScores'])
     ->name('viewer.liveScores');
 
+Route::get('/viewer/game/{game}', [ViewerController::class, 'gameModal']);
+Route::get('/viewer/game/{game}/live', [ViewerController::class, 'liveGame']);
+
+
 
 Route::middleware(['auth'])->group(function () {
     Route::resource('officials', OfficialController::class)->only([
