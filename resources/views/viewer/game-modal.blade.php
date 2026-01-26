@@ -34,67 +34,111 @@ if ($now->lt($gameStart)) {
             ← Back to Games
         </a>
     </div>
+{{-- ================= SCOREBOARD HEADER ================= --}}
+<div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl p-6 shadow-lg">
 
-    {{-- ================= SCOREBOARD HEADER ================= --}}
-    <div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl p-6 shadow-lg">
+    
 
-        {{-- GAME TIMER & SHOT CLOCK --}}
-        <div class="flex justify-center gap-8 mb-4">
-            <div class="text-center">
-                <div class="text-sm font-semibold">Game Timer</div>
-                <div id="gameTimerDisplay" class="text-2xl font-bold">00:00</div>
-            </div>
-            <div class="text-center">
-                <div class="text-sm font-semibold">Shot Clock</div>
-                <div id="shotClockDisplay" class="text-2xl font-bold">00</div>
-            </div>
+    <div class="flex items-center justify-between">
+
+        {{-- TEAM A --}}
+        <div class="flex flex-col items-center w-1/3">
+            <span class="text-sm uppercase tracking-wide text-gray-300">{{ $game->team_a }}</span>
+            <span id="liveScoreA" class="text-6xl md:text-7xl font-extrabold text-green-400">
+                {{ $game->score_a ?? 0 }}
+            </span>
         </div>
 
-        <div class="flex items-center justify-between">
+        {{-- VS / STATUS --}}
+        <div class="flex flex-col items-center">
+            <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $statusColor ?? 'bg-gray-500' }} mb-1">
+                {{ $status ?? $game->status }}
+            </span>
 
-            {{-- TEAM A --}}
-            <div class="flex flex-col items-center w-1/3">
-                <span class="text-sm uppercase tracking-wide text-gray-300">
-                    {{ $game->team_a }}
+            @if(($status ?? $game->status) === 'Ongoing')
+                <span class="text-xs text-red-400 font-semibold tracking-widest mb-1 animate-pulse">
+                    ● LIVE
                 </span>
-                <span id="liveScoreA"
-                      class="text-6xl md:text-7xl font-extrabold text-green-400">
-                    {{ $game->score_a ?? 0 }}
-                </span>
-            </div>
+            @endif
 
-            {{-- VS / STATUS --}}
-            <div class="flex flex-col items-center">
-                {{-- Status Label --}}
-                <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $statusColor }} mb-1">
-                    {{ $status }}
-                </span>
-
-                {{-- Live Indicator (only flicker if ongoing) --}}
-                @if($status === 'Ongoing')
-                    <span class="text-xs text-red-400 font-semibold tracking-widest mb-1 animate-pulse">
-                        ● LIVE
-                    </span>
-                @endif
-
-                <span class="text-gray-300 text-sm">
-                    {{ $game->event->name }}
-                </span>
-            </div>
-
-            {{-- TEAM B --}}
-            <div class="flex flex-col items-center w-1/3">
-                <span class="text-sm uppercase tracking-wide text-gray-300">
-                    {{ $game->team_b }}
-                </span>
-                <span id="liveScoreB"
-                      class="text-6xl md:text-7xl font-extrabold text-red-400">
-                    {{ $game->score_b ?? 0 }}
-                </span>
-            </div>
-
+            <span class="text-gray-300 text-sm">{{ $game->event->name }}</span>
         </div>
+
+        {{-- TEAM B --}}
+        <div class="flex flex-col items-center w-1/3">
+            <span class="text-sm uppercase tracking-wide text-gray-300">{{ $game->team_b }}</span>
+            <span id="liveScoreB" class="text-6xl md:text-7xl font-extrabold text-red-400">
+                {{ $game->score_b ?? 0 }}
+            </span>
+        </div>
+
     </div>
+</div>
+
+<script>
+// ------------------- VARIABLES -------------------
+let gameTimer = {{ $game->game_duration ?? 48 }} * 60;
+let shotClock = {{ $game->shot_clock ?? 24 }};
+let timerInterval = null;
+let shotClockInterval = null;
+
+const gameTimerDisplay = document.getElementById('gameTimerDisplay');
+const shotClockDisplay = document.getElementById('shotClockDisplay');
+
+// ------------------- DISPLAY FUNCTION -------------------
+function updateDisplays() {
+    let min = Math.floor(gameTimer / 60);
+    let sec = gameTimer % 60;
+    gameTimerDisplay.innerText = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
+    shotClockDisplay.innerText = shotClock;
+}
+
+// ------------------- LIVE POLLING -------------------
+setInterval(async () => {
+    try {
+        const res = await fetch("{{ url('/viewer/game/'.$game->id.'/live-timer') }}");
+        const data = await res.json();
+
+        // Only update if timer is not running locally yet
+        if (data.timer_running && !timerInterval) {
+            timerInterval = setInterval(() => {
+                if (gameTimer > 0) gameTimer--;
+                updateDisplays();
+            }, 1000);
+        }
+
+        if (!data.timer_running && timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+        }
+
+        if (data.shot_clock_running && !shotClockInterval) {
+            shotClockInterval = setInterval(() => {
+                if (shotClock > 0) shotClock--;
+                updateDisplays();
+            }, 1000);
+        }
+
+        if (!data.shot_clock_running && shotClockInterval) {
+            clearInterval(shotClockInterval);
+            shotClockInterval = null;
+        }
+
+        // Sync remaining time from DB every 2–3 seconds to prevent drift
+        if (!timerInterval) gameTimer = (data.game_duration ?? 48) * 60;
+        if (!shotClockInterval) shotClock = data.shot_clock ?? 24;
+
+        updateDisplays();
+    } catch (err) {
+        console.error('Error fetching live timer:', err);
+    }
+}, 2000); // poll every 2 seconds
+
+// ------------------- INITIAL RENDER -------------------
+updateDisplays();
+</script>
+
+
 
     {{-- ================= LIVE VIDEO ================= --}}
 @if($game->live_video_url)
@@ -239,6 +283,24 @@ if ($now->lt($gameStart)) {
 
     </div>
 </div>
+<script>
+function format(sec) {
+    const m = Math.floor(sec / 60).toString().padStart(2,'0');
+    const s = (sec % 60).toString().padStart(2,'0');
+    return `${m}:${s}`;
+}
+
+setInterval(async () => {
+    const res = await fetch("{{ url('/viewer/game/'.$game->id.'/live-timer') }}");
+    const data = await res.json();
+
+    document.getElementById('gameTimerDisplay').innerText =
+        format(data.game_time_left);
+
+    document.getElementById('shotClockDisplay').innerText =
+        data.shot_clock_left;
+}, 1000);
+</script>
 
 {{-- ================= LIVE TIMER & SHOT CLOCK SCRIPT ================= --}}
 <script>

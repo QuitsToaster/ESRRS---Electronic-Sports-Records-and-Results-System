@@ -97,51 +97,12 @@
 
 </div>
 
-{{-- ================= SET GAME TIMER & SHOT CLOCK ================= --}}
-<div class="bg-white border rounded-xl shadow-lg p-6 mb-8">
-    <h3 class="text-lg font-semibold mb-4">Set Game Timer & Shot Clock</h3>
-
-    <div class="flex items-center gap-3">
-        <label class="font-semibold">Game Duration (minutes):</label>
-        <input type="number" id="gameDurationInput" value="{{ $game->game_duration ?? 48 }}"
-               class="w-20 px-3 py-1 border rounded-lg text-center">
-
-        <label class="font-semibold ml-4">Shot Clock (seconds):</label>
-        <input type="number" id="shotClockInput" value="{{ $game->shot_clock ?? 24 }}"
-               class="w-20 px-3 py-1 border rounded-lg text-center">
-
-        <button onclick="saveGameTimer()" class="px-3 py-1 bg-indigo-600 text-white rounded-lg">Save</button>
-    </div>
-</div>
 
 {{-- ================= CURRENT PERIOD SCORING WITH TIMERS ================= --}}
 <div class="bg-white border rounded-xl shadow-lg p-6 mb-8">
     <div class="text-center mb-6">
         <h3 class="text-lg font-semibold text-gray-700">Current Period</h3>
         <p class="text-2xl font-bold text-indigo-600">{{ $currentPeriod }}</p>
-    </div>
-
-    {{-- TIMER DISPLAY --}}
-    <div class="flex justify-center items-center gap-8 mb-4">
-        <div>
-            <h4 class="font-semibold text-gray-700">Game Timer</h4>
-            <span id="gameTimerDisplay" class="text-3xl font-bold text-indigo-600">{{ $game->game_duration ?? 48 }}:00</span>
-            <div class="mt-2 flex gap-2 justify-center">
-                <button onclick="startGameTimer()" class="px-3 py-1 bg-green-500 text-white rounded-lg">Start</button>
-                <button onclick="pauseGameTimer()" class="px-3 py-1 bg-yellow-400 text-white rounded-lg">Pause</button>
-                <button onclick="resetGameTimer()" class="px-3 py-1 bg-red-500 text-white rounded-lg">Reset</button>
-            </div>
-        </div>
-
-        <div>
-            <h4 class="font-semibold text-gray-700">Shot Clock</h4>
-            <span id="shotClockDisplay" class="text-3xl font-bold text-red-600">{{ $game->shot_clock ?? 24 }}</span>
-            <div class="mt-2 flex gap-2 justify-center">
-                <button onclick="startShotClock()" class="px-3 py-1 bg-green-500 text-white rounded-lg">Start</button>
-                <button onclick="pauseShotClock()" class="px-3 py-1 bg-yellow-400 text-white rounded-lg">Pause</button>
-                <button onclick="resetShotClock()" class="px-3 py-1 bg-red-500 text-white rounded-lg">Reset</button>
-            </div>
-        </div>
     </div>
 
     {{-- TEAM SCORES --}}
