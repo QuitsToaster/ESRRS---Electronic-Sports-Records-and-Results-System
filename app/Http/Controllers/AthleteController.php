@@ -53,7 +53,7 @@ class AthleteController extends Controller
         return view('athletes.create', compact('schools', 'sports'));
     }
 
-    public function store(Request $request)
+   public function store(Request $request)
 {
     $request->validate([
         'first_name'      => 'required|string|max:255',
@@ -64,6 +64,7 @@ class AthleteController extends Controller
 
         'school_id'       => 'nullable|exists:schools,id',
         'school_name'     => 'nullable|string|max:255',
+        'school_logo'     => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
 
         'sport_id'        => 'nullable|exists:sports,id',
         'sport_name'      => 'nullable|string|max:255',
@@ -79,10 +80,21 @@ class AthleteController extends Controller
 
     /* ================= SCHOOL AUTO-CREATE ================= */
     if (!$request->school_id && $request->school_name) {
+
+        $logoPath = null;
+        if ($request->hasFile('school_logo')) {
+            $logoPath = $request->file('school_logo')
+                ->store('logos', 'public');
+        }
+
         $school = School::firstOrCreate(
             ['name' => $request->school_name],
-            ['division' => $request->school_division]
+            [
+                'division' => $request->school_division,
+                'logo'     => $logoPath,
+            ]
         );
+
         $schoolId = $school->id;
     } else {
         $schoolId = $request->school_id;
@@ -90,21 +102,20 @@ class AthleteController extends Controller
 
     /* ================= SPORT AUTO-CREATE ================= */
     if (!$request->sport_id && $request->sport_name) {
-        $sport = Sport::firstOrCreate([
-            'name' => $request->sport_name
-        ]);
+        $sport = Sport::firstOrCreate(['name' => $request->sport_name]);
         $sportId = $sport->id;
     } else {
         $sportId = $request->sport_id;
     }
 
-    /* ================= PHOTO ================= */
+    /* ================= ATHLETE PHOTO ================= */
     $photoPath = null;
     if ($request->hasFile('profile_photo')) {
-        $photoPath = $request->file('profile_photo')->store('athletes', 'public');
+        $photoPath = $request->file('profile_photo')
+            ->store('athletes', 'public');
     }
 
-    $athlete = Athlete::create([
+    Athlete::create([
         'first_name'        => $request->first_name,
         'middle_initial'    => $request->middle_initial,
         'last_name'         => $request->last_name,
@@ -131,6 +142,7 @@ class AthleteController extends Controller
     return redirect()->route('athletes.index')
         ->with('success', 'Athlete added successfully!');
 }
+
 
 
     public function edit(Athlete $athlete)

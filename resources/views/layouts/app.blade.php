@@ -126,19 +126,36 @@
             @endif
 
             @if(in_array('participants', $access))
-            {{-- Teams --}}
-            <div>
-                <button @click="openMenu = openMenu === 'schools' ? null : 'schools'"
-                        class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700">
-                    Teams
-                    <span x-text="openMenu === 'schools' ? '▾' : '▸'"></span>
-                </button>
-                <div x-show="openMenu === 'schools'" x-cloak class="pl-6 space-y-1">
-                    <a href="{{ route('schools.index') }}" class="block px-4 py-2 hover:bg-blue-600">All Teams</a>
-                    <a href="{{ route('schools.create') }}" class="block px-4 py-2 hover:bg-blue-600">Add Teams</a>
-                </div>
-            </div>
-            @endif
+{{-- Teams / Schools --}}
+<div
+    x-data="{ isActive: {{ request()->routeIs('schools.*') ? 'true' : 'false' }} }"
+    x-init="if (isActive) openMenu = 'schools'"
+>
+    <button
+        @click="openMenu = openMenu === 'schools' ? null : 'schools'"
+        class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
+        {{ request()->routeIs('schools.*') ? 'bg-blue-900 font-semibold' : '' }}"
+    >
+        Teams / Schools
+        <span x-text="openMenu === 'schools' ? '▾' : '▸'"></span>
+    </button>
+
+    <div x-show="openMenu === 'schools'" x-cloak class="pl-6 mt-1 space-y-1">
+        <a href="{{ route('schools.index') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('schools.index') ? 'bg-blue-700 font-semibold' : '' }}">
+            All Teams / Schools
+        </a>
+
+        <a href="{{ route('schools.create') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('schools.create') ? 'bg-blue-700 font-semibold' : '' }}">
+            Add Teams / Schools
+        </a>
+    </div>
+</div>
+@endif
+
 
             @if(in_array('sports', $access))
             {{-- Sports --}}

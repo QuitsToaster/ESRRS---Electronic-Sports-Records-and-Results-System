@@ -16,14 +16,12 @@
 {{-- ================= ATHLETE INFO ================= --}}
 <h3 class="text-lg font-semibold mb-3">Athlete Information</h3>
 
-{{-- Profile Photo --}}
 <div class="mb-4">
     <label class="block mb-1 font-medium">Profile Photo</label>
     <input type="file" name="profile_photo" accept="image/*"
            class="w-full border rounded px-3 py-2">
 </div>
 
-{{-- Name --}}
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
     <div>
         <label>First Name</label>
@@ -44,7 +42,6 @@
     </div>
 </div>
 
-{{-- Sex & Birthdate --}}
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
     <div>
         <label>Sex</label>
@@ -81,6 +78,16 @@
     <label>Or Add New School</label>
     <input name="school_name"
            placeholder="Type school name if not listed"
+           class="w-full border rounded px-3 py-2">
+</div>
+
+{{-- ✅ NEW: SCHOOL LOGO --}}
+<div class="mb-4">
+    <label class="font-medium">
+        School Logo <span class="text-sm text-gray-500">(for new schools only)</span>
+    </label>
+    <input type="file" name="school_logo"
+           accept="image/png,image/jpeg"
            class="w-full border rounded px-3 py-2">
 </div>
 
