@@ -16,63 +16,119 @@
 </head>
 <body class="font-sans antialiased">
 
-    {{-- Background Image & Overlay --}}
+    {{-- ================= DATA PRIVACY MODAL ================= --}}
+    <div id="privacyModal"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 backdrop-blur-sm">
+
+        <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 mx-4 animate-fade-in">
+
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">
+                Data Privacy Notice
+            </h2>
+
+            <div class="text-gray-700 text-sm leading-relaxed mb-6 max-h-60 overflow-y-auto">
+                <p class="mb-3">
+                    In compliance with the Data Privacy Act of 2012 (RA 10173), the CAVRAA Monitoring System
+                    collects, processes, and stores personal information strictly for event monitoring,
+                    attendance tracking, and system management purposes.
+                </p>
+
+                <p class="mb-3">
+                    By accessing this system, you acknowledge that your data may be collected and used
+                    in accordance with our privacy policies, security measures, and legal obligations.
+                </p>
+
+                <p>
+                    If you do not agree with these terms, you must discontinue using this system.
+                </p>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <button onclick="disagreePrivacy()"
+                        class="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white font-semibold transition">
+                    Disagree
+                </button>
+
+                <button onclick="agreePrivacy()"
+                        class="px-4 py-2 rounded bg-green-600 hover:bg-green-700 text-white font-semibold transition">
+                    Agree
+                </button>
+            </div>
+        </div>
+    </div>
+    {{-- ================= END PRIVACY MODAL ================= --}}
+
+    {{-- ================= MAIN CONTENT ================= --}}
     <div class="relative min-h-screen flex flex-col justify-center items-center px-4"
          style="background-image: url('{{ asset('images/cavraa.jpg') }}'); background-size: cover; background-position: center;">
 
-        {{-- Overlay for blur and darkening --}}
+        {{-- Overlay --}}
         <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
 
         {{-- Content --}}
         <div class="relative max-w-3xl w-full text-center z-10">
 
-            {{-- Logo / App Name --}}
             <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 animate-fade-in">
                 {{ config('app.name', 'CAVRAA Monitoring System') }}
             </h1>
 
-            {{-- Tagline / Intro --}}
             <p class="text-gray-200 mb-8 text-lg md:text-xl animate-fade-in delay-200">
                 Monitor, manage, and track your school sports events in real-time.
             </p>
 
-            {{-- Buttons --}}
             <div class="flex flex-col md:flex-row justify-center space-y-4 md:space-y-0 md:space-x-4 animate-fade-in delay-400">
-                {{-- Admin Login --}}
-                <a href="{{ route('login') }}" 
+                <a href="{{ route('login') }}"
                    class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Admin Login
                 </a>
 
-                {{-- Viewer Access --}}
-                <a href="{{ route('viewer.home') }}" 
+                <a href="{{ route('viewer.home') }}"
                    class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Viewer Access
                 </a>
 
-                {{-- Check Attendance --}}
-                <a href="{{ route('attendance.check') }}" 
-                class="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
+                <a href="{{ route('attendance.check') }}"
+                   class="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white font-semibold rounded shadow-lg transition transform hover:-translate-y-1 hover:scale-105">
                     Check Attendance
                 </a>
             </div>
         </div>
 
-        {{-- Footer --}}
         <footer class="mt-12 text-gray-300 text-sm text-center z-10 relative animate-fade-in delay-800">
             © {{ date('Y') }} CAVRAA Monitoring System - SDO Santiago City
         </footer>
     </div>
 
-    {{-- Tailwind Animations --}}
+    {{-- ================= JAVASCRIPT ================= --}}
+    <script>
+        function agreePrivacy() {
+            document.getElementById('privacyModal').classList.add('hidden');
+        }
+
+        function disagreePrivacy() {
+            // Attempt to close tab (may be blocked by browser)
+            window.open('', '_self');
+            window.close();
+
+            // Fallback: redirect to blank page
+            setTimeout(() => {
+                window.location.href = 'about:blank';
+            }, 300);
+        }
+    </script>
+
+    {{-- ================= ANIMATIONS ================= --}}
     <style>
-        .animate-fade-in { opacity: 0; animation: fadeIn 1s forwards; }
+        .animate-fade-in { opacity: 0; animation: fadeIn 0.8s forwards; }
         .animate-fade-in.delay-200 { animation-delay: 0.2s; }
         .animate-fade-in.delay-400 { animation-delay: 0.4s; }
         .animate-fade-in.delay-600 { animation-delay: 0.6s; }
         .animate-fade-in.delay-800 { animation-delay: 0.8s; }
 
-        @keyframes fadeIn { to { opacity: 1; } }
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
     </style>
+
 </body>
 </html>
