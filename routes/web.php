@@ -119,6 +119,10 @@ Route::post('/games/{game}/update-timer', [GameController::class, 'updateTimer']
 Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLiveVideo'])
     ->name('games.updateLiveVideo');
 
+Route::post('/games/{game}/finish', [GameController::class, 'finishGame'])
+     ->name('games.finish');
+
+
 // Route::get('/viewer/game/{game}/live-timer', [GameController::class, 'liveTimer'])->name('viewer.liveTimer');
 Route::get('/viewer/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
 Route::get('/viewer/game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);

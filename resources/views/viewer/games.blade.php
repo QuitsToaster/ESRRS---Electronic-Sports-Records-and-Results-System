@@ -11,25 +11,22 @@
         @foreach($games as $game)
 
             @php
-$schoolA = \App\Models\School::where('name', $game->team_a)->first();
-$schoolB = \App\Models\School::where('name', $game->team_b)->first();
+                // Fetch schools
+                $schoolA = \App\Models\School::where('name', $game->team_a)->first();
+                $schoolB = \App\Models\School::where('name', $game->team_b)->first();
 
-$now = \Carbon\Carbon::now();
-$gameStart = \Carbon\Carbon::parse($game->game_time);
-$gameEnd = $gameStart->copy()->addHours(2); // ✅ consistent
+                // ✅ Use status from database
+                $status = $game->status ?? 'Upcoming';
 
-if ($now->lt($gameStart)) {
-    $status = 'Upcoming';
-    $statusClass = 'bg-yellow-100 text-yellow-800';
-} elseif ($now->between($gameStart, $gameEnd)) {
-    $status = 'Ongoing';
-    $statusClass = 'bg-green-100 text-green-800';
-} else {
-    $status = 'Finished';
-    $statusClass = 'bg-gray-200 text-gray-800';
-}
-@endphp
-
+                // Set badge classes
+                if($status === 'Upcoming') {
+                    $statusClass = 'bg-yellow-100 text-yellow-800';
+                } elseif($status === 'Ongoing') {
+                    $statusClass = 'bg-green-100 text-green-800';
+                } else { // Finished
+                    $statusClass = 'bg-gray-200 text-gray-800';
+                }
+            @endphp
 
             <div onclick="openGame({{ $game->id }})"
                  class="cursor-pointer bg-white rounded-lg shadow hover:shadow-xl transition p-6 relative">
@@ -58,16 +55,11 @@ if ($now->lt($gameStart)) {
                                 N/A
                             </div>
                         @endif
-
-                        <span class="font-semibold text-sm">
-                            {{ $game->team_a }}
-                        </span>
+                        <span class="font-semibold text-sm">{{ $game->team_a }}</span>
                     </div>
 
                     {{-- VS --}}
-                    <div class="text-gray-400 font-bold text-lg">
-                        VS
-                    </div>
+                    <div class="text-gray-400 font-bold text-lg">VS</div>
 
                     {{-- TEAM B --}}
                     <div class="flex flex-col items-center w-1/3 text-center">
@@ -80,16 +72,13 @@ if ($now->lt($gameStart)) {
                                 N/A
                             </div>
                         @endif
-
-                        <span class="font-semibold text-sm">
-                            {{ $game->team_b }}
-                        </span>
+                        <span class="font-semibold text-sm">{{ $game->team_b }}</span>
                     </div>
                 </div>
 
                 {{-- DATE --}}
                 <p class="text-sm text-gray-500 text-center">
-                    {{ $game->game_time->format('M d, Y h:i A') }}
+                    {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}
                 </p>
             </div>
         @endforeach
@@ -135,8 +124,13 @@ function startLive(gameId) {
         fetch(`/viewer/game/${gameId}/live`)
             .then(res => res.json())
             .then(data => {
-                document.getElementById('liveScoreA').innerText = data.score_a;
-                document.getElementById('liveScoreB').innerText = data.score_b;
+                // Live scores
+                if(document.getElementById('liveScoreA')) {
+                    document.getElementById('liveScoreA').innerText = data.score_a;
+                }
+                if(document.getElementById('liveScoreB')) {
+                    document.getElementById('liveScoreB').innerText = data.score_b;
+                }
             });
     }, 3000);
 }

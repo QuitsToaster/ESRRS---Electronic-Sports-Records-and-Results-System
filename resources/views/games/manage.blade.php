@@ -142,6 +142,18 @@
     </button>
 </form>
 
+{{-- FINISH GAME BUTTON --}}
+<div class="text-center mt-6">
+    <form action="{{ route('games.finish', $game->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to finish this game?');">
+        @csrf
+        <button type="submit"
+                class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-lg font-semibold">
+            Finish Game
+        </button>
+    </form>
+</div>
+
+
 <script>
 let scoreA = {{ $currentScoreA }};
 let scoreB = {{ $currentScoreB }};

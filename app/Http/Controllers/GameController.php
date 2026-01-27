@@ -284,6 +284,28 @@ public function updateLiveVideo(Request $request, Game $game)
                      ->with('success', 'Live video link updated successfully!');
 }
 
+public function finishGame(Game $game)
+{
+    // Only allow finishing if not already finished
+    if ($game->status !== 'Finished') {
+        $oldValues = $game->toArray();
+
+        $game->status = 'Finished';
+        $game->save();
+
+        AuditLog::create([
+            'model_type' => 'Game',
+            'model_id' => $game->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($game->toArray()),
+            'action' => 'Finished Game: '.$game->team_a.' vs '.$game->team_b,
+        ]);
+    }
+
+    return redirect()->route('games.manage', $game->id)
+                     ->with('success', 'Game marked as Finished!');
+}
 
 
 }
