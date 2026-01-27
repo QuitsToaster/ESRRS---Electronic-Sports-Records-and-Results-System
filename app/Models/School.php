@@ -9,7 +9,15 @@ class School extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name','division','province','city','logo'];
+     protected $fillable = [
+        'name',
+        'school_type',    // Public / Private
+        'school_address',
+        'school_division',
+        'division',       // Elementary / Secondary
+        'school_code',
+        'logo',
+    ];
 
     public function results()
     {

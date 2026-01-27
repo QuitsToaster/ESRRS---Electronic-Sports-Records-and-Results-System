@@ -155,10 +155,12 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
     <div>
         <label>Division</label>
-        <select name="division" class="w-full border rounded px-3 py-2">
-            <option>Elementary</option>
-            <option>Secondary</option>
-        </select>
+        <select name="division" class="w-full border rounded px-3 py-2" required>
+    <option value="">Select Division</option>
+    <option value="Elementary" {{ old('division')=='Elementary' ? 'selected':'' }}>Elementary</option>
+    <option value="Secondary" {{ old('division')=='Secondary' ? 'selected':'' }}>Secondary</option>
+</select>
+
     </div>
 
     <div>

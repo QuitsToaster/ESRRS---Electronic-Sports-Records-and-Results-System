@@ -37,35 +37,40 @@ class SchoolController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'name'=>'required|string|unique:schools',
-            'division'=>'required|string',
-            'province'=>'nullable|string',
-            'city'=>'nullable|string',
-            'logo'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+{
+    $request->validate([
+    'name' => 'required|string|unique:schools',
+    'school_type' => 'nullable|in:Public,Private',
+    'school_address' => 'nullable|string',
+    'division' => 'required|in:Elementary,Secondary',
+    'school_division' => 'nullable|string',
+    'school_code' => 'nullable|string|unique:schools,school_code',
+    'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+]);
 
-        $data = $request->only(['name','division','province','city']);
 
-        if ($request->hasFile('logo')) {
-            $data['logo'] = $request->file('logo')->store('logos','public');
-        }
+    $data = $request->only([
+        'name','school_type','school_address','division','school_division','school_code'
+    ]);
 
-        $school = School::create($data);
-
-        // Audit log for creation
-        AuditLog::create([
-            'model_type' => 'School',
-            'model_id' => $school->id,
-            'user_id' => Auth::id(),
-            'old_values' => null,
-            'new_values' => json_encode($school->toArray()),
-            'action' => 'Created Team: '.$school->name,
-        ]);
-
-        return redirect()->route('schools.index')->with('success','Team added successfully!');
+    if ($request->hasFile('logo')) {
+        $data['logo'] = $request->file('logo')->store('logos','public');
     }
+
+    $school = School::create($data);
+
+    // Audit log
+    AuditLog::create([
+        'model_type'=>'School',
+        'model_id'=>$school->id,
+        'user_id'=>Auth::id(),
+        'old_values'=>null,
+        'new_values'=>json_encode($school->toArray()),
+        'action'=>'Created School: '.$school->name,
+    ]);
+
+    return redirect()->route('schools.index')->with('success','School added successfully!');
+}
 
     public function edit(School $school)
     {
@@ -73,39 +78,42 @@ class SchoolController extends Controller
     }
 
     public function update(Request $request, School $school)
-    {
-        $request->validate([
-            'name'=>'required|string|unique:schools,name,'.$school->id,
-            'division'=>'required|string',
-            'province'=>'nullable|string',
-            'city'=>'nullable|string',
-            'logo'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-        ]);
+{
+    $request->validate([
+    'name'=>'required|string|unique:schools,name,'.$school->id,
+    'school_type'=>'nullable|in:Public,Private',
+    'school_address'=>'nullable|string',
+    'division'=>'required|in:Elementary,Secondary',
+    'school_division'=>'nullable|string',
+    'school_code'=>'nullable|string|unique:schools,school_code,'.$school->id,
+    'logo'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+]);
 
-        $oldValues = $school->toArray(); // store old data
+    $oldValues = $school->toArray();
 
-        $data = $request->only(['name','division','province','city']);
+    $data = $request->only([
+    'name','school_type','school_address','division','school_division','school_code'
+]);
 
-        if ($request->hasFile('logo')) {
-            if ($school->logo) Storage::disk('public')->delete($school->logo);
-
-            $data['logo'] = $request->file('logo')->store('logos','public');
-        }
-
-        $school->update($data);
-
-        // Audit log for update
-        AuditLog::create([
-            'model_type' => 'School',
-            'model_id' => $school->id,
-            'user_id' => Auth::id(),
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($school->toArray()),
-            'action' => 'Updated Team: '.$school->name,
-        ]);
-
-        return redirect()->route('schools.index')->with('success','Team updated successfully!');
+    if ($request->hasFile('logo')) {
+        if ($school->logo) Storage::disk('public')->delete($school->logo);
+        $data['logo'] = $request->file('logo')->store('logos','public');
     }
+
+    $school->update($data);
+
+    // Audit log
+    AuditLog::create([
+        'model_type'=>'School',
+        'model_id'=>$school->id,
+        'user_id'=>Auth::id(),
+        'old_values'=>json_encode($oldValues),
+        'new_values'=>json_encode($school->toArray()),
+        'action'=>'Updated School: '.$school->name,
+    ]);
+
+    return redirect()->route('schools.index')->with('success','School updated successfully!');
+}
 
     public function destroy(School $school)
     {
