@@ -55,9 +55,7 @@
         <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Event Name</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Sport</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Age Group</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Start Date</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">End Date</th>
@@ -74,17 +72,7 @@
                         {{ $event->name }}
                     </td>
 
-                    {{-- Sport --}}
-                    <td class="px-4 py-3 text-gray-700">
-                        {{ optional($event->sport)->name ?? 'TBA' }}
-                    </td>
-
                     {{-- Level --}}
-                    <td class="px-4 py-3 text-gray-700">
-                        {{ $event->level ?? 'TBA' }}
-                    </td>
-
-                    {{-- Age Group --}}
                     <td class="px-4 py-3 text-gray-700">
                         {{ $event->age_group ?? 'TBA' }}
                     </td>

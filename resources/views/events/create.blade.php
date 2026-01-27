@@ -33,39 +33,13 @@
                    required>
         </div>
 
-        <!-- Sport (OPTIONAL) -->
-        <div>
-            <label class="block text-gray-700 font-semibold mb-1">Sport</label>
-            <select name="sport_id"
-                    class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">Select Sport</option>
-                @foreach($sports as $sport)
-                    <option value="{{ $sport->id }}" {{ old('sport_id') == $sport->id ? 'selected' : '' }}>
-                        {{ $sport->name }}
-                    </option>
-                @endforeach
-            </select>
-        </div>
-
         <div class="grid grid-cols-2 gap-4">
             <!-- Level -->
             <div>
                 <label class="block text-gray-700 font-semibold mb-1">Level</label>
-                <select name="level"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Level</option>
-                    <option value="Division" {{ old('level') == 'Division' ? 'selected' : '' }}>Division</option>
-                    <option value="Regional" {{ old('level') == 'Regional' ? 'selected' : '' }}>Regional</option>
-                    <option value="National" {{ old('level') == 'National' ? 'selected' : '' }}>National</option>
-                </select>
-            </div>
-
-            <!-- Age Group -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Age Group</label>
                 <select name="age_group"
                         class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Age Group</option>
+                    <option value="">Select Level</option>
                     <option value="Elementary" {{ old('age_group') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
                     <option value="Secondary" {{ old('age_group') == 'Secondary' ? 'selected' : '' }}>Secondary</option>
                 </select>

@@ -9,11 +9,18 @@ class Sport extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name'];
+    protected $fillable = ['name', 'type_of_game'];
+
 
     public function events()
     {
         return $this->hasMany(Event::class);
     }
+
+    public function types()
+{
+    return $this->hasMany(SportType::class);
+}
+
 
 }

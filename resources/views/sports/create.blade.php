@@ -28,6 +28,39 @@
                    required>
         </div>
 
+                <!-- Type of Game (Dynamic) -->
+<div>
+    <label class="block text-gray-700 font-semibold mb-1">Type of Game</label>
+    <div id="typeFields">
+        <div class="flex mb-2">
+            <input type="text" name="type_of_game[]" 
+                   placeholder="e.g., Single Stick" 
+                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="button" onclick="removeField(this)" 
+                    class="ml-2 px-2 bg-red-500 text-white rounded">×</button>
+        </div>
+    </div>
+    <button type="button" onclick="addField()" 
+            class="mt-2 px-3 py-1 bg-green-500 text-white rounded">Add Another Type</button>
+</div>
+
+<script>
+function addField() {
+    const container = document.getElementById('typeFields');
+    const div = document.createElement('div');
+    div.classList.add('flex','mb-2');
+    div.innerHTML = `<input type="text" name="type_of_game[]" placeholder="e.g., Double Stick" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                     <button type="button" onclick="removeField(this)" class="ml-2 px-2 bg-red-500 text-white rounded">×</button>`;
+    container.appendChild(div);
+}
+
+function removeField(button) {
+    button.parentElement.remove();
+}
+</script>
+
+
+
         <div class="flex justify-end space-x-2 mt-4">
             <a href="{{ route('sports.index') }}" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded shadow text-gray-700">Cancel</a>
             <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow">Save</button>
