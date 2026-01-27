@@ -121,6 +121,7 @@ Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLi
 
 // Route::get('/viewer/game/{game}/live-timer', [GameController::class, 'liveTimer'])->name('viewer.liveTimer');
 Route::get('/viewer/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
+Route::get('/viewer/game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);
 
 
 // Viewer polling

@@ -169,6 +169,24 @@ public function liveScores()
     return Game::select('id', 'score_a', 'score_b')->get();
 }
 
+public function livePeriodScores(Game $game)
+{
+    // Reload the game fresh to get updated scores
+    $game = Game::find($game->id);
+
+    $scores = is_array($game->scores)
+        ? $game->scores
+        : (is_string($game->scores) ? json_decode($game->scores, true) : []);
+
+    return response()->json([
+        'team_a' => $scores['team_a'] ?? [],
+        'team_b' => $scores['team_b'] ?? [],
+        'total_a' => array_sum($scores['team_a'] ?? []),
+        'total_b' => array_sum($scores['team_b'] ?? []),
+    ]);
+}
+
+
 
 public function gallery(Request $request)
 {

@@ -5,22 +5,31 @@
 @section('content')
 
 @php
-$scores = json_decode($game->scores, true) ?? ['team_a'=>[], 'team_b'=>[]];
+    // ✅ SAFELY HANDLE SCORES (array OR json OR null)
+    if (is_array($game->scores)) {
+        $scores = $game->scores;
+    } elseif (is_string($game->scores)) {
+        $scores = json_decode($game->scores, true);
+    } else {
+        $scores = null;
+    }
 
-$now = \Carbon\Carbon::now();
-$gameStart = \Carbon\Carbon::parse($game->game_time);
-$gameEnd = $gameStart->copy()->addHours(2);
+    $scores = $scores ?? ['team_a' => [], 'team_b' => []];
 
-if ($now->lt($gameStart)) {
-    $status = 'Upcoming';
-    $statusColor = 'bg-yellow-400';
-} elseif ($now->between($gameStart, $gameEnd)) {
-    $status = 'Ongoing';
-    $statusColor = 'bg-green-500';
-} else {
-    $status = 'Finished';
-    $statusColor = 'bg-gray-400';
-}
+    $now = \Carbon\Carbon::now();
+    $gameStart = \Carbon\Carbon::parse($game->game_time);
+    $gameEnd = $gameStart->copy()->addHours(2);
+
+    if ($now->lt($gameStart)) {
+        $status = 'Upcoming';
+        $statusColor = 'bg-yellow-400';
+    } elseif ($now->between($gameStart, $gameEnd)) {
+        $status = 'Ongoing';
+        $statusColor = 'bg-green-500';
+    } else {
+        $status = 'Finished';
+        $statusColor = 'bg-gray-400';
+    }
 @endphp
 
 
@@ -201,32 +210,41 @@ updateDisplays();
                 </thead>
 
                 <tbody class="text-sm">
-                    {{-- TEAM A --}}
-                    <tr class="border-b">
-                        <td class="py-3 font-semibold text-left">
-                            {{ $game->team_a }}
-                        </td>
-                        @foreach($periods as $i => $p)
-                            <td>{{ $scores['team_a'][$i] ?? 0 }}</td>
-                        @endforeach
-                        <td class="font-bold">
-                            {{ array_sum($scores['team_a'] ?? []) }}
-                        </td>
-                    </tr>
+    {{-- TEAM A --}}
+    <tr class="border-b">
+        <td class="py-3 font-semibold text-left">
+            {{ $game->team_a }}
+        </td>
 
-                    {{-- TEAM B --}}
-                    <tr>
-                        <td class="py-3 font-semibold text-left">
-                            {{ $game->team_b }}
-                        </td>
-                        @foreach($periods as $i => $p)
-                            <td>{{ $scores['team_b'][$i] ?? 0 }}</td>
-                        @endforeach
-                        <td class="font-bold">
-                            {{ array_sum($scores['team_b'] ?? []) }}
-                        </td>
-                    </tr>
-                </tbody>
+        @foreach($periods as $i => $p)
+            <td id="teamA-period-{{ $i }}">
+                {{ $scores['team_a'][$i] ?? 0 }}
+            </td>
+        @endforeach
+
+        <td id="teamA-total" class="font-bold">
+            {{ array_sum($scores['team_a'] ?? []) }}
+        </td>
+    </tr>
+
+    {{-- TEAM B --}}
+    <tr>
+        <td class="py-3 font-semibold text-left">
+            {{ $game->team_b }}
+        </td>
+
+        @foreach($periods as $i => $p)
+            <td id="teamB-period-{{ $i }}">
+                {{ $scores['team_b'][$i] ?? 0 }}
+            </td>
+        @endforeach
+
+        <td id="teamB-total" class="font-bold">
+            {{ array_sum($scores['team_b'] ?? []) }}
+        </td>
+    </tr>
+</tbody>
+
             </table>
         </div>
     </div>
@@ -282,6 +300,31 @@ updateDisplays();
 
     </div>
 </div>
+<script>
+setInterval(async () => {
+    try {
+        const res = await fetch("{{ url('/viewer/game/'.$game->id.'/live-periods') }}");
+        const data = await res.json();
+
+        data.team_a.forEach((score, index) => {
+            const cell = document.getElementById(`teamA-period-${index}`);
+            if (cell) cell.innerText = score;
+        });
+
+        data.team_b.forEach((score, index) => {
+            const cell = document.getElementById(`teamB-period-${index}`);
+            if (cell) cell.innerText = score;
+        });
+
+        document.getElementById('teamA-total').innerText = data.total_a;
+        document.getElementById('teamB-total').innerText = data.total_b;
+
+    } catch (err) {
+        console.error('Live period update failed:', err);
+    }
+}, 2000); // every 2 seconds
+</script>
+
 <script>
 function format(sec) {
     const m = Math.floor(sec / 60).toString().padStart(2,'0');

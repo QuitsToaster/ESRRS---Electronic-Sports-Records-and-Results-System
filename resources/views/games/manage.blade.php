@@ -14,7 +14,8 @@
 </div>
 
 @php
-    $scores = json_decode($game->scores, true) ?? ['team_a' => [], 'team_b' => []];
+    $scores = $game->scores ?? ['team_a' => [], 'team_b' => []];
+
 
     // Determine current period
     $currentPeriodIndex = 0;

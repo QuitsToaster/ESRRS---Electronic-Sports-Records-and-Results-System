@@ -16,18 +16,27 @@ class Game extends Model
         'team_b',
         'score_a',
         'score_b',
-        'status',    // you can keep this for manual override if needed
+        'scores',
+        'status',    
         'game_time',
         'venue',
+        'live_video_url',
     ];
 
     protected $casts = [
-        'game_time' => 'datetime', // ensures Carbon object
+        'game_time' => 'datetime', 
+        'scores'    => 'array',
     ];
 
     public function event()
     {
         return $this->belongsTo(Event::class);
+    }
+
+    // NEW: Relationship to additional teams
+    public function teams()
+    {
+        return $this->hasMany(GameTeam::class);
     }
 
     // Dynamic status based purely on current time

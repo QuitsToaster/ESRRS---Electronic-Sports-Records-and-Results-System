@@ -61,6 +61,46 @@
             @error('team_b')<p class="text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
 
+        {{-- Additional Teams --}}
+<div class="mb-4">
+    <label class="block text-gray-700 font-semibold mb-1">Additional Teams (if any)</label>
+    <div id="additionalTeamsContainer">
+        <div class="flex mb-2">
+            <select name="additional_teams[]" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                <option value="">Select School</option>
+                @foreach($schools as $school)
+                    <option value="{{ $school->name }}">{{ $school->name }}</option>
+                @endforeach
+            </select>
+            <button type="button" onclick="removeTeam(this)" class="ml-2 px-3 py-1 bg-red-500 text-white rounded">Remove</button>
+        </div>
+    </div>
+    <button type="button" onclick="addTeam()" class="mt-2 px-4 py-2 bg-green-600 text-white rounded">Add Another Team</button>
+</div>
+
+<script>
+function addTeam() {
+    const container = document.getElementById('additionalTeamsContainer');
+    const div = document.createElement('div');
+    div.classList.add('flex', 'mb-2');
+    div.innerHTML = `
+        <select name="additional_teams[]" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500">
+            <option value="">Select School</option>
+            @foreach($schools as $school)
+                <option value="{{ $school->name }}">{{ $school->name }}</option>
+            @endforeach
+        </select>
+        <button type="button" onclick="removeTeam(this)" class="ml-2 px-3 py-1 bg-red-500 text-white rounded">Remove</button>
+    `;
+    container.appendChild(div);
+}
+
+function removeTeam(button) {
+    button.parentElement.remove();
+}
+</script>
+
+
         {{-- Game Time --}}
         <div class="mb-4">
             <label class="block text-gray-700 font-semibold mb-1">Game Time</label>

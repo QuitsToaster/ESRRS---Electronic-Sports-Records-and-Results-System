@@ -6,6 +6,7 @@ use App\Models\Game;
 use App\Models\Event;
 use App\Models\School;
 use App\Models\AuditLog;
+use App\Models\GameTeam;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -42,14 +43,28 @@ class GameController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'event_id' => 'required|exists:events,id',
-            'team_a'   => 'required|string|different:team_b',
-            'team_b'   => 'required|string',
-            'game_time'=> 'required|date',
-            'venue'    => 'required|string',
-        ]);
+    'event_id' => 'required|exists:events,id',
+    'team_a'   => 'required|string|different:team_b',
+    'team_b'   => 'required|string',
+    'game_time'=> 'required|date',
+    'venue'    => 'required|string',
+    'additional_teams.*' => 'nullable|string', // Validate additional teams
+]);
 
-        $game = Game::create($request->all());
+$gameData = $request->only(['event_id', 'team_a', 'team_b', 'game_time', 'venue']);
+$game = Game::create($gameData);
+
+// Save additional teams dynamically
+if ($request->has('additional_teams')) {
+    foreach ($request->additional_teams as $teamName) {
+        if ($teamName) {
+            GameTeam::create([
+                'game_id' => $game->id,
+                'team_name' => $teamName,
+            ]);
+        }
+    }
+}
 
         AuditLog::create([
             'model_type' => 'Game',
@@ -72,32 +87,56 @@ class GameController extends Controller
     }
 
     public function update(Request $request, Game $game)
-    {
-        $request->validate([
-            'event_id' => 'required|exists:events,id',
-            'team_a'   => 'required|string|different:team_b',
-            'team_b'   => 'required|string',
-            'score_a'  => 'nullable|integer',
-            'score_b'  => 'nullable|integer',
-            'status'   => 'required|in:Upcoming,Ongoing,Finished',
-            'game_time'=> 'required|date',
-            'venue'    => 'required|string',
-        ]);
+{
+    // 1️⃣ Validate input
+    $request->validate([
+        'event_id' => 'required|exists:events,id',
+        'team_a'   => 'required|string|different:team_b',
+        'team_b'   => 'required|string',
+        'score_a'  => 'nullable|integer',
+        'score_b'  => 'nullable|integer',
+        'status'   => 'required|in:Upcoming,Ongoing,Finished',
+        'game_time'=> 'required|date',
+        'venue'    => 'required|string',
+        'additional_teams.*' => 'nullable|string', // Validate additional teams
+    ]);
 
-        $oldValues = $game->toArray();
-        $game->update($request->all());
+    // 2️⃣ Save old values for audit
+    $oldValues = $game->toArray();
 
-        AuditLog::create([
-            'model_type' => 'Game',
-            'model_id' => $game->id,
-            'user_id' => Auth::id(),
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($game->toArray()),
-            'action' => 'Updated Game: '.$game->team_a.' vs '.$game->team_b,
-        ]);
+    // 3️⃣ Update main game info
+    $gameData = $request->only(['event_id', 'team_a', 'team_b', 'score_a', 'score_b', 'status', 'game_time', 'venue']);
+    $game->update($gameData);
 
-        return redirect()->route('games.index')->with('success', 'Game updated successfully!');
+    // 4️⃣ Sync additional teams
+    // Delete existing additional teams
+    $game->teams()->delete();
+
+    // Insert new ones
+    if ($request->has('additional_teams')) {
+        foreach ($request->additional_teams as $teamName) {
+            if ($teamName) {
+                \App\Models\GameTeam::create([
+                    'game_id' => $game->id,
+                    'team_name' => $teamName,
+                ]);
+            }
+        }
     }
+
+    // 5️⃣ Create audit log
+    AuditLog::create([
+        'model_type' => 'Game',
+        'model_id' => $game->id,
+        'user_id' => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($game->toArray()),
+        'action' => 'Updated Game: '.$game->team_a.' vs '.$game->team_b,
+    ]);
+
+    return redirect()->route('games.index')->with('success', 'Game updated successfully!');
+}
+
 
     public function destroy(Game $game)
     {
@@ -119,24 +158,38 @@ class GameController extends Controller
     public function manage(Game $game)
 {
     $event = $game->event;
+
     $scoringTypes = [
         'Basketball' => ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'],
-        'Volleyball'  => ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5'],
-        'Soccer'      => ['First Half', 'Second Half'],
+        'Volleyball' => ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5'],
+        'Soccer'     => ['First Half', 'Second Half'],
     ];
 
     $periods = $scoringTypes[$event->name] ?? ['Period 1', 'Period 2', 'Period 3', 'Period 4'];
 
-    $scores = json_decode($game->scores, true) ?? ['team_a' => [], 'team_b' => []];
+    $scores = $game->scores ?? [
+        'team_a' => [],
+        'team_b' => [],
+    ];
 
-    $currentPeriodIndex = count($scores['team_a']); // index for current period
-    $currentPeriod = $periods[$currentPeriodIndex] ?? 'Period '.($currentPeriodIndex + 1);
+    $currentPeriodIndex = count($scores['team_a']);
+    $currentPeriodIndex = min($currentPeriodIndex, count($periods) - 1);
 
-    $currentScoreA = $scores['team_a'][$currentPeriodIndex] ?? 0;
-    $currentScoreB = $scores['team_b'][$currentPeriodIndex] ?? 0;
+    $currentPeriod = $periods[$currentPeriodIndex];
 
-    return view('games.manage', compact('game', 'periods', 'currentPeriodIndex', 'currentPeriod', 'currentScoreA', 'currentScoreB'));
+    $currentScoreA = $game->score_a ?? 0;
+    $currentScoreB = $game->score_b ?? 0;
+
+    return view('games.manage', compact(
+        'game',
+        'periods',
+        'currentPeriodIndex',
+        'currentPeriod',
+        'currentScoreA',
+        'currentScoreB'
+    ));
 }
+
 
 
 public function updateScore(Request $request, Game $game)
@@ -170,27 +223,25 @@ public function updatePeriodScore(Request $request, Game $game, $periodIndex)
         'score_b' => 'required|integer|min:0',
     ]);
 
-    $scores = json_decode($game->scores, true) ?? [
+    $scores = $game->scores ?? [
         'team_a' => [],
         'team_b' => [],
     ];
 
-    // Save ONLY the current period score
     $scores['team_a'][$periodIndex] = $request->score_a;
     $scores['team_b'][$periodIndex] = $request->score_b;
 
-    $game->scores = json_encode($scores);
-
-    // ✅ RESET LIVE SCORE (NO TOTALING)
-    $game->score_a = 0;
-    $game->score_b = 0;
-
-    $game->save();
+    $game->update([
+        'scores'  => $scores,
+        'score_a'=> 0, // reset live score
+        'score_b'=> 0,
+    ]);
 
     return redirect()
         ->route('games.manage', $game->id)
         ->with('success', 'Period saved. Next period started.');
 }
+
 
 
 public function liveScore(Request $request, Game $game)
