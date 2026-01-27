@@ -25,4 +25,10 @@ class Coach extends Model
     {
         return $this->belongsTo(Sport::class);
     }
+
+    public function getFullNameAttribute()
+{
+    return trim("{$this->last_name}, {$this->first_name} {$this->middle_initial}");
+}
+
 }

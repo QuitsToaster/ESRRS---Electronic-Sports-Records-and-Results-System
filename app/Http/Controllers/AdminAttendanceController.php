@@ -27,15 +27,21 @@ class AdminAttendanceController extends Controller
         // Athletes who have not attended today
         $notAttended = Athlete::with('school')
             ->whereNotIn('id', $attendedAthleteIds)
-            ->orderBy('name')
-            ->get();
+            ->get()
+            ->sortBy(function ($athlete) {
+                return $athlete->full_name;  // sort in PHP using accessor
+            });
 
+        // Get all coach IDs that attended
         $attendedCoachIds = $attended->pluck('coach_id')->filter()->toArray();
 
+        // Coaches who have not attended today
         $notAttendedCoaches = Coach::with('school')
             ->whereNotIn('id', $attendedCoachIds)
-            ->orderBy('name')
-            ->get();
+            ->get()
+            ->sortBy(function ($coach) {
+                return $coach->full_name; // sort in PHP using accessor
+            });
 
         return view('attendance.index', compact('attended', 'notAttended', 'notAttendedCoaches'));
     }
@@ -60,41 +66,40 @@ class AdminAttendanceController extends Controller
     }
 
     public function exportPdf()
-{
-    $today = Carbon::today();
+    {
+        $today = Carbon::today();
 
-    // Load all attendance for today
-    $attended = Attendance::with(['athlete.school', 'coach.school'])
-        ->whereDate('created_at', $today)
-        ->get();
+        // Load all attendance for today
+        $attended = Attendance::with(['athlete.school', 'coach.school'])
+            ->whereDate('created_at', $today)
+            ->get();
 
-    // Athletes who attended
-    $attendedAthleteIds = $attended->pluck('athlete_id')->filter()->toArray();
+        // Athletes who attended
+        $attendedAthleteIds = $attended->pluck('athlete_id')->filter()->toArray();
 
-    // Athletes without attendance
-    $notAttended = Athlete::with('school')
-        ->whereNotIn('id', $attendedAthleteIds)
-        ->orderBy('name')
-        ->get();
+        // Athletes without attendance
+        $notAttended = Athlete::with('school')
+            ->whereNotIn('id', $attendedAthleteIds)
+            ->get()
+            ->sortBy(fn($athlete) => $athlete->full_name);
 
-    // Coaches who attended
-    $attendedCoachIds = $attended->pluck('coach_id')->filter()->toArray();
+        // Coaches who attended
+        $attendedCoachIds = $attended->pluck('coach_id')->filter()->toArray();
 
-    // Coaches without attendance
-    $notAttendedCoaches = Coach::with('school')
-        ->whereNotIn('id', $attendedCoachIds)
-        ->orderBy('name')
-        ->get();
+        // Coaches without attendance
+        $notAttendedCoaches = Coach::with('school')
+            ->whereNotIn('id', $attendedCoachIds)
+            ->get()
+            ->sortBy(fn($coach) => $coach->full_name);
 
-    // Pass all data to export view
-    $pdf = PDF::loadView('attendance.export', [
-        'attended' => $attended,
-        'notAttended' => $notAttended,
-        'notAttendedCoaches' => $notAttendedCoaches,
-        'generatedAt' => now()->setTimezone('Asia/Manila')->format('M d, Y h:i A')
-    ]);
+        // Pass all data to export view
+        $pdf = PDF::loadView('attendance.export', [
+            'attended' => $attended,
+            'notAttended' => $notAttended,
+            'notAttendedCoaches' => $notAttendedCoaches,
+            'generatedAt' => now()->setTimezone('Asia/Manila')->format('M d, Y h:i A')
+        ]);
 
-    return $pdf->download('attendance_' . now()->format('Ymd_His') . '.pdf');
-}
-
+        return $pdf->download('attendance_' . now()->format('Ymd_His') . '.pdf');
+    }
 }
