@@ -347,7 +347,7 @@ private function advanceWinner(Game $game)
 {
     if (!$game->winner) return;
 
-    // Map of round progression
+    // Map current round to next round
     $roundMap = [
         'Round 1'      => 'Quarterfinal',
         'Quarterfinal' => 'Semifinal',
@@ -358,10 +358,10 @@ private function advanceWinner(Game $game)
 
     $nextRound = $roundMap[$game->round];
 
-    // Calculate next match number
+    // Winners of two consecutive matches face each other
     $nextMatchNumber = ceil($game->match_number / 2);
 
-    // Find next round game
+    // Find or create the next game for this match
     $nextGame = Game::firstOrCreate(
         [
             'event_id' => $game->event_id,
@@ -377,8 +377,8 @@ private function advanceWinner(Game $game)
         ]
     );
 
-    // Fill the correct slot
-    if ($game->match_number % 2 == 1) {
+    // Assign winner to correct slot
+    if ($game->match_number % 2 === 1) {
         $nextGame->team_a = $game->winner;
     } else {
         $nextGame->team_b = $game->winner;
@@ -386,11 +386,13 @@ private function advanceWinner(Game $game)
 
     $nextGame->save();
 
-    // Generate bronze match if semifinals finished
+    // Generate Bronze match after semifinals
     if ($game->round === 'Semifinal') {
         $this->generateBronzeMatch($game->event_id);
     }
 }
+
+
 
 
 

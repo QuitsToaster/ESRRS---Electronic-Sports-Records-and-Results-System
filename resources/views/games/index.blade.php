@@ -143,7 +143,7 @@
 </div>
 @endif
 
-{{-- Brackets Section (Clickable) --}}
+{{-- Tournament Bracket Section --}}
 @if($games->isNotEmpty())
 <h2 class="text-2xl font-bold text-gray-800 mb-6">Tournament Bracket</h2>
 
@@ -152,46 +152,103 @@ $roundOrder = ['Round 1', 'Quarterfinal', 'Semifinal', 'Final', 'Bronze'];
 $grouped = $games->groupBy('round');
 @endphp
 
-<div class="flex overflow-x-auto space-x-10 pb-4">
-@foreach($roundOrder as $round)
-    @if(isset($grouped[$round]))
-        <div class="flex flex-col space-y-6 min-w-[220px]">
-            <h4 class="text-center font-bold text-gray-700">{{ $round }}</h4>
+<style>
+/* Bracket container */
+.bracket-container {
+    display: flex;
+    gap: 60px;
+    overflow-x: auto;
+    padding-bottom: 40px;
+}
 
-            @foreach($grouped[$round]->sortBy('match_number') as $game)
-                <div class="relative bg-white border rounded-xl shadow p-4 text-center">
+/* Each round column */
+.bracket-round {
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    min-width: 200px;
+    position: relative;
+}
 
-                    <div class="{{ $game->winner === $game->team_a ? 'font-bold text-green-600' : '' }}">
-                        {{ $game->team_a ?? 'TBD' }}
-                    </div>
+/* Each match box */
+.bracket-match {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    position: relative;
+}
 
-                    <div class="text-gray-400 text-sm my-1">vs</div>
+/* Team styling */
+.team {
+    font-weight: 500;
+    margin: 4px 0;
+}
 
-                    <div class="{{ $game->winner === $game->team_b ? 'font-bold text-green-600' : '' }}">
-                        {{ $game->team_b ?? 'TBD' }}
-                    </div>
+.team.winner {
+    font-weight: 700;
+    color: #16a34a; /* green */
+}
 
-                    <div class="mt-2 text-xs text-gray-500">
-                        {{ $game->event->name }}
-                    </div>
+/* Connector lines to next round */
+.bracket-match::after {
+    content: '';
+    position: absolute;
+    width: 40px;
+    height: 2px;
+    background: #888;
+    top: 50%;
+    right: -40px;
+}
 
-                    <a href="{{ route('games.manage', $game->id) }}"
-                       class="text-blue-600 text-sm block mt-2 font-semibold">
-                        Manage →
-                    </a>
+.bracket-match:last-child::after {
+    display: none;
+}
 
-                    @if($round !== 'Final' && $round !== 'Bronze')
-                        <div class="absolute -right-6 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
-                            →
+/* Vertical connector to align two matches into next match */
+.bracket-connector {
+    position: absolute;
+    width: 2px;
+    height: 40px;
+    background: #888;
+    top: 50%;
+    right: -40px;
+}
+</style>
+
+<div class="bracket-container">
+    @foreach($roundOrder as $roundIndex => $round)
+        @if(isset($grouped[$round]))
+            <div class="bracket-round">
+                <h4 class="text-center font-bold text-gray-700 mb-2">{{ $round }}</h4>
+
+                @foreach($grouped[$round]->sortBy('match_number') as $game)
+                    <div class="bracket-match">
+                        <div class="team {{ $game->winner === $game->team_a ? 'winner' : '' }}">
+                            {{ $game->team_a ?? 'TBD' }}
                         </div>
-                    @endif
-                </div>
-            @endforeach
-        </div>
-    @endif
-@endforeach
+
+                        <div class="text-gray-400 text-sm my-1">vs</div>
+
+                        <div class="team {{ $game->winner === $game->team_b ? 'winner' : '' }}">
+                            {{ $game->team_b ?? 'TBD' }}
+                        </div>
+
+                        <div class="text-xs text-gray-500 mt-2">{{ $game->event->name }}</div>
+
+                        <a href="{{ route('games.manage', $game->id) }}"
+                           class="text-blue-600 text-sm block mt-2 font-semibold">
+                            Manage →
+                        </a>
+                    </div>
+                @endforeach
+            </div>
+        @endif
+    @endforeach
 </div>
 @endif
+
 
 
 @endsection
