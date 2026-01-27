@@ -134,6 +134,65 @@
     </div>
 @endif
 
+{{-- Competitions (Events + Games) --}}
+@if(in_array('events', $access) || in_array('games', $access))
+<div>
+    <button
+        @click="openMenu = openMenu === 'competitions' ? null : 'competitions'"
+        class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
+        {{ request()->routeIs('events.*') || request()->routeIs('games.*') ? 'bg-blue-900 font-semibold' : '' }}">
+        
+        Competitions
+        <span x-text="openMenu === 'competitions' ? '▾' : '▸'"></span>
+    </button>
+
+    <div x-show="openMenu === 'competitions'" x-cloak class="pl-6 mt-1 space-y-1">
+
+        {{-- EVENTS (Multi-player sports like Swimming, Athletics) --}}
+        @if(in_array('events', $access))
+            <div class="pt-1">
+                <p class="px-4 py-1 text-xs text-blue-300 uppercase tracking-wide">
+                    Events
+                </p>
+
+                <a href="{{ route('events.index') }}"
+                   class="block px-4 py-2 rounded hover:bg-blue-600
+                   {{ request()->routeIs('events.index') ? 'bg-blue-700 font-semibold' : '' }}">
+                    All Events
+                </a>
+
+                <a href="{{ route('events.create') }}"
+                   class="block px-4 py-2 rounded hover:bg-blue-600
+                   {{ request()->routeIs('events.create') ? 'bg-blue-700 font-semibold' : '' }}">
+                    Add Event
+                </a>
+            </div>
+        @endif
+
+        {{-- GAMES (Ball games / Head-to-head) --}}
+        @if(in_array('games', $access))
+            <div class="pt-2 border-t border-blue-800">
+                <p class="px-4 py-1 text-xs text-blue-300 uppercase tracking-wide">
+                    Games
+                </p>
+
+                <a href="{{ route('games.index') }}"
+                   class="block px-4 py-2 rounded hover:bg-blue-600
+                   {{ request()->routeIs('games.index') ? 'bg-blue-700 font-semibold' : '' }}">
+                    All Games
+                </a>
+
+                <a href="{{ route('games.create') }}"
+                   class="block px-4 py-2 rounded hover:bg-blue-600
+                   {{ request()->routeIs('games.create') ? 'bg-blue-700 font-semibold' : '' }}">
+                    Add Game
+                </a>
+            </div>
+        @endif
+
+    </div>
+</div>
+@endif
 
             @if(in_array('participants', $access))
 {{-- Teams / Schools --}}
@@ -186,30 +245,6 @@
                        class="block px-4 py-2 rounded hover:bg-blue-600
                        {{ request()->routeIs('sports.create') ? 'bg-blue-700 font-semibold' : '' }}">
                         Add Sport
-                    </a>
-                </div>
-            </div>
-            @endif
-
-            @if(in_array('events', $access))
-            {{-- Events --}}
-            <div>
-                <button @click="openMenu = openMenu === 'events' ? null : 'events'"
-                        class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
-                        {{ request()->routeIs('events.*') ? 'bg-blue-900 font-semibold' : '' }}">
-                    Events
-                    <span x-text="openMenu === 'events' ? '▾' : '▸'"></span>
-                </button>
-                <div x-show="openMenu === 'events'" x-cloak class="pl-6 mt-1 space-y-1">
-                    <a href="{{ route('events.index') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('events.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                        All Events
-                    </a>
-                    <a href="{{ route('events.create') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('events.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                        Add Event
                     </a>
                 </div>
             </div>
@@ -287,29 +322,6 @@
             </div>
             @endif
 
-            @if(in_array('games', $access))
-            {{-- Games --}}
-            <div>
-                <button @click="openMenu = openMenu === 'games' ? null : 'games'"
-                        class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
-                        {{ request()->routeIs('games.*') ? 'bg-blue-900 font-semibold' : '' }}">
-                    Games
-                    <span x-text="openMenu === 'games' ? '▾' : '▸'"></span>
-                </button>
-                <div x-show="openMenu === 'games'" x-cloak class="pl-6 mt-1 space-y-1">
-                    <a href="{{ route('games.index') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('games.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                        All Games
-                    </a>
-                    <a href="{{ route('games.create') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('games.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                        Add Game
-                    </a>
-                </div>
-            </div>
-            @endif
 
             @if(in_array('gallery', $access))
             {{-- Gallery --}}
