@@ -21,6 +21,8 @@ class Game extends Model
         'game_time',
         'venue',
         'live_video_url',
+        'round',
+        'winner',
     ];
 
     protected $casts = [

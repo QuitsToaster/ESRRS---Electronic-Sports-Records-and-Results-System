@@ -40,14 +40,15 @@
     </div>
 @else
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto mb-8">
-
 <table class="min-w-full border-collapse">
     <thead class="bg-gray-100 border-b border-gray-300">
         <tr>
             <th class="px-4 py-2 text-left font-medium text-gray-700">Event</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-700">Bracket / Match</th>
             <th class="px-4 py-2 text-left font-medium text-gray-700">Team A</th>
             <th class="px-4 py-2 text-left font-medium text-gray-700">Team B</th>
-            <th class="px-4 py-2 text-left font-medium text-gray-700">Score (Current Period)</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-700">Score</th>
+            <th class="px-4 py-2 text-left font-medium text-gray-700">Winner</th>
             <th class="px-4 py-2 text-left font-medium text-gray-700">Status</th>
             <th class="px-4 py-2 text-left font-medium text-gray-700">Time</th>
             <th class="px-4 py-2 text-left font-medium text-gray-700">Venue</th>
@@ -57,18 +58,54 @@
     <tbody class="divide-y divide-gray-200">
         @foreach($games as $game)
             @php
-                $scores = is_array($game->scores) ? $game->scores : (is_string($game->scores) ? json_decode($game->scores, true) : null);
+                $scores = is_array($game->scores)
+                    ? $game->scores
+                    : (is_string($game->scores) ? json_decode($game->scores, true) : []);
+
                 $scores = $scores ?? ['team_a' => [], 'team_b' => []];
+
+                $scoreA = array_sum($scores['team_a'] ?? []);
+                $scoreB = array_sum($scores['team_b'] ?? []);
+
                 $status = $game->status ?? 'Upcoming';
-                $scoreA = $scores['team_a'][count($scores['team_a'])-1] ?? 0;
-                $scoreB = $scores['team_b'][count($scores['team_b'])-1] ?? 0;
+
+                // Determine bracket/match info
+                $bracketName = '';
+                if($brackets->isNotEmpty()) {
+                    foreach($brackets as $bracket) {
+                        $matches = json_decode($bracket->structure, true);
+                        foreach($matches as $index => $match) {
+                            if(
+                                ($match['team_a'] === $game->team_a && $match['team_b'] === $game->team_b) ||
+                                ($match['team_a'] === $game->team_b && $match['team_b'] === $game->team_a)
+                            ) {
+                                $bracketName = $bracket->event->name . ' - Match ' . ($index + 1);
+                            }
+                        }
+                    }
+                }
             @endphp
+
             <tr class="hover:bg-gray-50 transition">
-                <td class="px-4 py-2 text-gray-800">{{ $game->event->name }}</td>
-                <td class="px-4 py-2 text-gray-800">{{ $game->team_a }}</td>
-                <td class="px-4 py-2 text-gray-800">{{ $game->team_b }}</td>
-                <td class="px-4 py-2 text-gray-800">{{ $scoreA }} - {{ $scoreB }}</td>
-                <td class="px-4 py-2 text-gray-800">
+                <td class="px-4 py-2">{{ $game->event->name }}</td>
+                <td class="px-4 py-2">{{ $bracketName ?: 'N/A' }}</td>
+                <td class="px-4 py-2">{{ $game->team_a }}</td>
+                <td class="px-4 py-2">{{ $game->team_b }}</td>
+                <td class="px-4 py-2 font-semibold">{{ $scoreA }} - {{ $scoreB }}</td>
+
+                {{-- WINNER COLUMN --}}
+                <td class="px-4 py-2">
+                    @if($game->winner)
+                        <span class="text-green-700 font-bold">
+                            {{ $game->winner }}
+                        </span>
+                    @else
+                        <span class="text-gray-400 italic">TBD</span>
+                    @endif
+                </td>
+
+                {{-- STATUS --}}
+                <td class="px-4 py-2">
                     <span class="
                         @if($status === 'Upcoming') text-blue-600
                         @elseif($status === 'Ongoing') text-green-600
@@ -78,16 +115,25 @@
                         {{ $status }}
                     </span>
                 </td>
-                <td class="px-4 py-2 text-gray-800">{{ $game->game_time }}</td>
-                <td class="px-4 py-2 text-gray-800">{{ $game->venue }}</td>
+
+                <td class="px-4 py-2">{{ $game->game_time }}</td>
+                <td class="px-4 py-2">{{ $game->venue }}</td>
+
+                {{-- ACTIONS --}}
                 <td class="px-4 py-2 text-right">
-                    <a href="{{ route('games.edit', $game->id) }}" class="text-blue-600 hover:text-blue-800 font-semibold mr-2">Edit</a>
-                    <a href="{{ route('games.manage', $game->id) }}" 
-                       class="text-green-600 hover:text-green-800 font-semibold mr-2">Manage</a>
-                    <form action="{{ route('games.destroy', $game->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this game?');">
+                    <a href="{{ route('games.edit', $game->id) }}" class="text-blue-600 hover:text-blue-800 font-semibold mr-2">
+                        Edit
+                    </a>
+                    <a href="{{ route('games.manage', $game->id) }}" class="text-green-600 hover:text-green-800 font-semibold mr-2">
+                        Manage
+                    </a>
+                    <form action="{{ route('games.destroy', $game->id) }}" method="POST" class="inline-block"
+                          onsubmit="return confirm('Are you sure you want to delete this game?');">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="text-red-600 hover:text-red-800 font-semibold">Delete</button>
+                        <button type="submit" class="text-red-600 hover:text-red-800 font-semibold">
+                            Delete
+                        </button>
                     </form>
                 </td>
             </tr>
@@ -97,41 +143,55 @@
 </div>
 @endif
 
-{{-- Brackets Section --}}
-@if($brackets->isNotEmpty())
-<h2 class="text-2xl font-bold text-gray-800 mb-4">Tournament Brackets</h2>
+{{-- Brackets Section (Clickable) --}}
+@if($games->isNotEmpty())
+<h2 class="text-2xl font-bold text-gray-800 mb-6">Tournament Bracket</h2>
 
-<div class="overflow-x-auto">
-    @foreach($brackets as $bracket)
-        @php
-            $matches = json_decode($bracket->structure, true);
-        @endphp
-        <div class="mb-8">
-            <h3 class="font-semibold text-gray-700 mb-2">{{ $bracket->event->name }}</h3>
-            <div class="flex space-x-8">
-                {{-- Round 1 --}}
-                <div class="flex flex-col space-y-4">
-                    @foreach($matches as $match)
-                        <div class="border border-gray-300 p-2 rounded shadow text-center bg-gray-50">
-                            <div>{{ $match['team_a'] }}</div>
-                            <div class="text-gray-400">vs</div>
-                            <div>{{ $match['team_b'] ?? 'TBD' }}</div>
+@php
+$roundOrder = ['Round 1', 'Quarterfinal', 'Semifinal', 'Final', 'Bronze'];
+$grouped = $games->groupBy('round');
+@endphp
+
+<div class="flex overflow-x-auto space-x-10 pb-4">
+@foreach($roundOrder as $round)
+    @if(isset($grouped[$round]))
+        <div class="flex flex-col space-y-6 min-w-[220px]">
+            <h4 class="text-center font-bold text-gray-700">{{ $round }}</h4>
+
+            @foreach($grouped[$round]->sortBy('match_number') as $game)
+                <div class="relative bg-white border rounded-xl shadow p-4 text-center">
+
+                    <div class="{{ $game->winner === $game->team_a ? 'font-bold text-green-600' : '' }}">
+                        {{ $game->team_a ?? 'TBD' }}
+                    </div>
+
+                    <div class="text-gray-400 text-sm my-1">vs</div>
+
+                    <div class="{{ $game->winner === $game->team_b ? 'font-bold text-green-600' : '' }}">
+                        {{ $game->team_b ?? 'TBD' }}
+                    </div>
+
+                    <div class="mt-2 text-xs text-gray-500">
+                        {{ $game->event->name }}
+                    </div>
+
+                    <a href="{{ route('games.manage', $game->id) }}"
+                       class="text-blue-600 text-sm block mt-2 font-semibold">
+                        Manage →
+                    </a>
+
+                    @if($round !== 'Final' && $round !== 'Bronze')
+                        <div class="absolute -right-6 top-1/2 -translate-y-1/2 text-gray-400 text-xl">
+                            →
                         </div>
-                    @endforeach
+                    @endif
                 </div>
-                {{-- Future rounds (simplified placeholder) --}}
-                <div class="flex flex-col space-y-4 justify-center">
-                    <div class="border border-gray-300 p-2 rounded shadow text-center bg-gray-50 w-32">
-                        Next Round
-                    </div>
-                    <div class="border border-gray-300 p-2 rounded shadow text-center bg-gray-50 w-32">
-                        Next Round
-                    </div>
-                </div>
-            </div>
+            @endforeach
         </div>
-    @endforeach
+    @endif
+@endforeach
 </div>
 @endif
+
 
 @endsection

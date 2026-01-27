@@ -132,6 +132,49 @@
         </div>
     </div>
 
+    {{-- START GAME BUTTON --}}
+@if($game->status === 'Upcoming')
+<div class="text-center mb-4">
+    <form action="{{ route('games.start', $game->id) }}" method="POST">
+        @csrf
+        <button type="submit"
+                class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg text-lg font-semibold">
+            Start Game
+        </button>
+    </form>
+</div>
+@endif
+
+{{-- WINNER BUTTONS --}}
+@if($game->status === 'Finished' && !$game->winner)
+<div class="grid grid-cols-2 gap-4 mb-6 text-center">
+    <form action="{{ route('games.winner', $game->id) }}" method="POST">
+        @csrf
+        <input type="hidden" name="winner" value="{{ $game->team_a }}">
+        <button type="submit"
+                class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-lg font-semibold">
+            {{ $game->team_a }} Wins
+        </button>
+    </form>
+
+    <form action="{{ route('games.winner', $game->id) }}" method="POST">
+        @csrf
+        <input type="hidden" name="winner" value="{{ $game->team_b }}">
+        <button type="submit"
+                class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-lg font-semibold">
+            {{ $game->team_b }} Wins
+        </button>
+    </form>
+</div>
+@endif
+
+@if($game->winner)
+<div class="text-center mb-6">
+    <p class="text-xl font-bold text-green-600">Winner: {{ $game->winner }}</p>
+</div>
+@endif
+
+
     {{-- FINISH PERIOD --}}
 <form id="finishPeriodForm" method="POST" action="{{ route('games.updatePeriodScore', [$game->id, $currentPeriodIndex]) }}" class="text-center mt-8">
     @csrf

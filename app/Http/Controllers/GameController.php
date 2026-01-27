@@ -17,25 +17,26 @@ class GameController extends Controller
 {
     $search = $request->input('search');
 
-    // Fetch games
     $games = Game::with('event')
         ->when($search, function ($query, $search) {
             $query->whereHas('event', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                })
-                ->orWhere('team_a', 'like', "%{$search}%")
-                ->orWhere('team_b', 'like', "%{$search}%")
-                ->orWhere('status', 'like', "%{$search}%")
-                ->orWhere('venue', 'like', "%{$search}%");
+                $q->where('name', 'like', "%{$search}%");
+            })
+            ->orWhere('team_a', 'like', "%{$search}%")
+            ->orWhere('team_b', 'like', "%{$search}%")
+            ->orWhere('status', 'like', "%{$search}%")
+            ->orWhere('venue', 'like', "%{$search}%");
         })
+        ->orderBy('round')
         ->orderBy('game_time')
         ->get();
 
-    // Fetch brackets with related event
+    // Only brackets that actually have games
     $brackets = Bracket::with('event')->get();
 
     return view('games.index', compact('games', 'brackets'));
 }
+
 
 
     public function create()
@@ -47,43 +48,45 @@ class GameController extends Controller
     }
 
     public function store(Request $request)
-    {
-        $request->validate([
-    'event_id' => 'required|exists:events,id',
-    'team_a'   => 'required|string|different:team_b',
-    'team_b'   => 'required|string',
-    'game_time'=> 'required|date',
-    'venue'    => 'required|string',
-    'additional_teams.*' => 'nullable|string', // Validate additional teams
-]);
+{
+    $request->validate([
+        'event_id' => 'required|exists:events,id',
+        'team_a'   => 'required|string|different:team_b',
+        'team_b'   => 'required|string',
+        'game_time'=> 'required|date',
+        'venue'    => 'required|string',
+    ]);
 
-$gameData = $request->only(['event_id', 'team_a', 'team_b', 'game_time', 'venue']);
-$game = Game::create($gameData);
+    // Count existing Round 1 games for this event
+    $roundGames = Game::where('event_id', $request->event_id)
+        ->where('round', 'Round 1')
+        ->count();
 
-// Save additional teams dynamically
-if ($request->has('additional_teams')) {
-    foreach ($request->additional_teams as $teamName) {
-        if ($teamName) {
-            GameTeam::create([
-                'game_id' => $game->id,
-                'team_name' => $teamName,
-            ]);
-        }
-    }
+    $game = Game::create([
+        'event_id' => $request->event_id,
+        'team_a'   => $request->team_a,
+        'team_b'   => $request->team_b,
+        'round'    => 'Round 1',
+        'match_number' => $roundGames + 1, // auto-increment match number
+        'status'   => 'Upcoming',
+        'game_time'=> $request->game_time,
+        'venue'    => $request->venue,
+    ]);
+
+    AuditLog::create([
+        'model_type' => 'Game',
+        'model_id' => $game->id,
+        'user_id' => Auth::id(),
+        'old_values' => null,
+        'new_values' => json_encode($game->toArray()),
+        'action' => 'Created Game: '.$game->team_a.' vs '.$game->team_b,
+    ]);
+
+    return redirect()->route('games.index')
+        ->with('success', 'Game created and added to bracket!');
 }
 
 
-        AuditLog::create([
-            'model_type' => 'Game',
-            'model_id' => $game->id,
-            'user_id' => Auth::id(),
-            'old_values' => null,
-            'new_values' => json_encode($game->toArray()),
-            'action' => 'Created Game: '.$game->team_a.' vs '.$game->team_b,
-        ]);
-
-        return redirect()->route('games.index')->with('success', 'Game created successfully!');
-    }
 
     public function edit(Game $game)
     {
@@ -291,6 +294,134 @@ public function updateLiveVideo(Request $request, Game $game)
                      ->with('success', 'Live video link updated successfully!');
 }
 
+// Start game (sets status to Ongoing)
+public function startGame(Game $game)
+{
+    if ($game->status === 'Upcoming') {
+        $oldValues = $game->toArray();
+        $game->status = 'Ongoing';
+        $game->save();
+
+        AuditLog::create([
+            'model_type' => 'Game',
+            'model_id' => $game->id,
+            'user_id' => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($game->toArray()),
+            'action' => 'Started Game: '.$game->team_a.' vs '.$game->team_b,
+        ]);
+    }
+
+    return redirect()->route('games.manage', $game->id)
+                     ->with('success', 'Game started!');
+}
+
+// Set winner
+public function setWinner(Request $request, Game $game)
+{
+    $request->validate([
+        'winner' => 'required|in:'.$game->team_a.','.$game->team_b
+    ]);
+
+    $oldValues = $game->toArray();
+
+    $game->winner = $request->winner;
+    $game->save();
+
+    $this->advanceWinner($game);
+
+    AuditLog::create([
+        'model_type' => 'Game',
+        'model_id' => $game->id,
+        'user_id' => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($game->toArray()),
+        'action' => 'Set Winner: '.$game->winner.' for game '.$game->team_a.' vs '.$game->team_b,
+    ]);
+
+    return redirect()->route('games.manage', $game->id)
+                     ->with('success', 'Winner selected: '.$game->winner);
+}
+
+private function advanceWinner(Game $game)
+{
+    if (!$game->winner) return;
+
+    // Map of round progression
+    $roundMap = [
+        'Round 1'      => 'Quarterfinal',
+        'Quarterfinal' => 'Semifinal',
+        'Semifinal'    => 'Final',
+    ];
+
+    if (!isset($roundMap[$game->round])) return;
+
+    $nextRound = $roundMap[$game->round];
+
+    // Calculate next match number
+    $nextMatchNumber = ceil($game->match_number / 2);
+
+    // Find next round game
+    $nextGame = Game::firstOrCreate(
+        [
+            'event_id' => $game->event_id,
+            'round'    => $nextRound,
+            'match_number' => $nextMatchNumber,
+        ],
+        [
+            'team_a' => null,
+            'team_b' => null,
+            'status' => 'Upcoming',
+            'game_time' => now()->addDay(),
+            'venue' => 'Main Court',
+        ]
+    );
+
+    // Fill the correct slot
+    if ($game->match_number % 2 == 1) {
+        $nextGame->team_a = $game->winner;
+    } else {
+        $nextGame->team_b = $game->winner;
+    }
+
+    $nextGame->save();
+
+    // Generate bronze match if semifinals finished
+    if ($game->round === 'Semifinal') {
+        $this->generateBronzeMatch($game->event_id);
+    }
+}
+
+
+
+
+private function generateBronzeMatch($eventId)
+{
+    $semis = Game::where('event_id', $eventId)
+        ->where('round', 'Semifinal')
+        ->whereNotNull('winner')
+        ->get();
+
+    if ($semis->count() !== 2) return;
+
+    $losers = $semis->map(fn ($g) =>
+        $g->winner === $g->team_a ? $g->team_b : $g->team_a
+    );
+
+    Game::firstOrCreate(
+        ['event_id' => $eventId, 'round' => 'Bronze'],
+        [
+            'team_a' => $losers[0],
+            'team_b' => $losers[1],
+            'status' => 'Upcoming',
+            'game_time' => now()->addDay(),
+            'venue' => 'Main Court',
+        ]
+    );
+}
+
+
+
 public function finishGame(Game $game)
 {
     // Only allow finishing if not already finished
@@ -299,6 +430,8 @@ public function finishGame(Game $game)
 
         $game->status = 'Finished';
         $game->save();
+
+        $this->generateBronzeMatch($game->event_id);
 
         AuditLog::create([
             'model_type' => 'Game',
@@ -313,6 +446,7 @@ public function finishGame(Game $game)
     return redirect()->route('games.manage', $game->id)
                      ->with('success', 'Game marked as Finished!');
 }
+
 
 
 }
