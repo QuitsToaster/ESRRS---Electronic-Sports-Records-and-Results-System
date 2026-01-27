@@ -17,6 +17,7 @@ use App\Http\Controllers\ResultController;
 use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\BracketController;
 use Illuminate\Support\Facades\Route;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Athlete;
@@ -121,6 +122,11 @@ Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLi
 
 Route::post('/games/{game}/finish', [GameController::class, 'finishGame'])
      ->name('games.finish');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('brackets/create', [BracketController::class, 'create'])->name('brackets.create');
+    Route::post('brackets', [BracketController::class, 'store'])->name('brackets.store');
+});
 
 
 // Route::get('/viewer/game/{game}/live-timer', [GameController::class, 'liveTimer'])->name('viewer.liveTimer');

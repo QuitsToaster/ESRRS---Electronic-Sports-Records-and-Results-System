@@ -33,13 +33,13 @@
     @endif
 </form>
 
+{{-- Games Table --}}
 @if($games->isEmpty())
     <div class="bg-white border border-gray-300 rounded-lg p-8 text-center text-gray-500 shadow-sm">
         No games found.
     </div>
 @else
-
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto">
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto mb-8">
 
 <table class="min-w-full border-collapse">
     <thead class="bg-gray-100 border-b border-gray-300">
@@ -57,41 +57,12 @@
     <tbody class="divide-y divide-gray-200">
         @foreach($games as $game)
             @php
-                // Decode scores safely
-                if (is_array($game->scores)) {
-                    $scores = $game->scores;
-                } elseif (is_string($game->scores)) {
-                    $scores = json_decode($game->scores, true);
-                } else {
-                    $scores = null;
-                }
+                $scores = is_array($game->scores) ? $game->scores : (is_string($game->scores) ? json_decode($game->scores, true) : null);
                 $scores = $scores ?? ['team_a' => [], 'team_b' => []];
-
-                $eventName = $game->event->name;
-                $scoringTypes = [
-                    'Basketball' => ['Quarter 1', 'Quarter 2', 'Quarter 3', 'Quarter 4'],
-                    'Volleyball'  => ['Set 1', 'Set 2', 'Set 3', 'Set 4', 'Set 5'],
-                    'Soccer'      => ['First Half', 'Second Half'],
-                ];
-                $periods = $scoringTypes[$eventName] ?? ['Period 1', 'Period 2', 'Period 3', 'Period 4'];
-
-                // Determine current period index
-                $currentIndex = 0;
-                foreach($periods as $i => $p) {
-                    if(!isset($scores['team_a'][$i]) && !isset($scores['team_b'][$i])) {
-                        $currentIndex = $i;
-                        break;
-                    }
-                    $currentIndex = $i;
-                }
-
-                $scoreA = $scores['team_a'][$currentIndex] ?? 0;
-                $scoreB = $scores['team_b'][$currentIndex] ?? 0;
-
-                // ✅ Fetch status from the DB
                 $status = $game->status ?? 'Upcoming';
+                $scoreA = $scores['team_a'][count($scores['team_a'])-1] ?? 0;
+                $scoreB = $scores['team_b'][count($scores['team_b'])-1] ?? 0;
             @endphp
-
             <tr class="hover:bg-gray-50 transition">
                 <td class="px-4 py-2 text-gray-800">{{ $game->event->name }}</td>
                 <td class="px-4 py-2 text-gray-800">{{ $game->team_a }}</td>
@@ -112,9 +83,7 @@
                 <td class="px-4 py-2 text-right">
                     <a href="{{ route('games.edit', $game->id) }}" class="text-blue-600 hover:text-blue-800 font-semibold mr-2">Edit</a>
                     <a href="{{ route('games.manage', $game->id) }}" 
-                       class="text-green-600 hover:text-green-800 font-semibold mr-2">
-                       Manage
-                    </a>
+                       class="text-green-600 hover:text-green-800 font-semibold mr-2">Manage</a>
                     <form action="{{ route('games.destroy', $game->id) }}" method="POST" class="inline-block" onsubmit="return confirm('Are you sure you want to delete this game?');">
                         @csrf
                         @method('DELETE')
@@ -127,4 +96,42 @@
 </table>
 </div>
 @endif
+
+{{-- Brackets Section --}}
+@if($brackets->isNotEmpty())
+<h2 class="text-2xl font-bold text-gray-800 mb-4">Tournament Brackets</h2>
+
+<div class="overflow-x-auto">
+    @foreach($brackets as $bracket)
+        @php
+            $matches = json_decode($bracket->structure, true);
+        @endphp
+        <div class="mb-8">
+            <h3 class="font-semibold text-gray-700 mb-2">{{ $bracket->event->name }}</h3>
+            <div class="flex space-x-8">
+                {{-- Round 1 --}}
+                <div class="flex flex-col space-y-4">
+                    @foreach($matches as $match)
+                        <div class="border border-gray-300 p-2 rounded shadow text-center bg-gray-50">
+                            <div>{{ $match['team_a'] }}</div>
+                            <div class="text-gray-400">vs</div>
+                            <div>{{ $match['team_b'] ?? 'TBD' }}</div>
+                        </div>
+                    @endforeach
+                </div>
+                {{-- Future rounds (simplified placeholder) --}}
+                <div class="flex flex-col space-y-4 justify-center">
+                    <div class="border border-gray-300 p-2 rounded shadow text-center bg-gray-50 w-32">
+                        Next Round
+                    </div>
+                    <div class="border border-gray-300 p-2 rounded shadow text-center bg-gray-50 w-32">
+                        Next Round
+                    </div>
+                </div>
+            </div>
+        </div>
+    @endforeach
+</div>
+@endif
+
 @endsection

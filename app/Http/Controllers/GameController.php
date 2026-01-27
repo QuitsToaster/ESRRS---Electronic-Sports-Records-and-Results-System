@@ -7,30 +7,36 @@ use App\Models\Event;
 use App\Models\School;
 use App\Models\AuditLog;
 use App\Models\GameTeam;
+use App\Models\Bracket;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class GameController extends Controller
 {
     public function index(Request $request)
-    {
-        $search = $request->input('search');
+{
+    $search = $request->input('search');
 
-        $games = Game::with('event')
-            ->when($search, function ($query, $search) {
-                $query->whereHas('event', function ($q) use ($search) {
-                        $q->where('name', 'like', "%{$search}%");
-                    })
-                    ->orWhere('team_a', 'like', "%{$search}%")
-                    ->orWhere('team_b', 'like', "%{$search}%")
-                    ->orWhere('status', 'like', "%{$search}%")
-                    ->orWhere('venue', 'like', "%{$search}%");
-            })
-            ->orderBy('game_time')
-            ->get();
+    // Fetch games
+    $games = Game::with('event')
+        ->when($search, function ($query, $search) {
+            $query->whereHas('event', function ($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%");
+                })
+                ->orWhere('team_a', 'like', "%{$search}%")
+                ->orWhere('team_b', 'like', "%{$search}%")
+                ->orWhere('status', 'like', "%{$search}%")
+                ->orWhere('venue', 'like', "%{$search}%");
+        })
+        ->orderBy('game_time')
+        ->get();
 
-        return view('games.index', compact('games'));
-    }
+    // Fetch brackets with related event
+    $brackets = Bracket::with('event')->get();
+
+    return view('games.index', compact('games', 'brackets'));
+}
+
 
     public function create()
     {
@@ -65,6 +71,7 @@ if ($request->has('additional_teams')) {
         }
     }
 }
+
 
         AuditLog::create([
             'model_type' => 'Game',
