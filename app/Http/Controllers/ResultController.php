@@ -4,157 +4,163 @@ namespace App\Http\Controllers;
 
 use App\Models\Result;
 use App\Models\School;
-use App\Models\Athlete;
-use App\Models\Event;
 use App\Models\Sport;
-use App\Models\AuditLog;
-use Barryvdh\DomPDF\Facade\Pdf; 
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class ResultController extends Controller
 {
     public function index(Request $request)
-{
-    $query = Result::with(['school', 'sport', 'event', 'athlete', 'awardedBy']);
-
-    if ($request->filled('search')) {
-        $search = $request->search;
-
-        $query->where(function ($q) use ($search) {
-
-            // Athlete name search
-            $q->whereHas('athlete', function ($qa) use ($search) {
-                $qa->where('last_name', 'like', "%{$search}%")
-                   ->orWhere('first_name', 'like', "%{$search}%")
-                   ->orWhere('middle_initial', 'like', "%{$search}%");
-            })
-
-            // Sport
-            ->orWhereHas('sport', function ($qs) use ($search) {
-                $qs->where('name', 'like', "%{$search}%");
-            })
-
-            // Event
-            ->orWhereHas('event', function ($qe) use ($search) {
-                $qe->where('name', 'like', "%{$search}%");
-            })
-
-            // Result fields
-            ->orWhere('division', 'like', "%{$search}%")
-            ->orWhere('category', 'like', "%{$search}%")
-            ->orWhere('medal', 'like', "%{$search}%");
-
-            // Optional date search (YYYY-MM-DD)
-            if (strtotime($search)) {
-                $q->orWhereDate('created_at', $search);
-            }
-        });
-    }
-
-    $results = $query->orderBy('created_at', 'desc')->get();
-
-    // Medal Tally per school
-    $medalTally = School::withCount([
-        'results as gold'   => fn($q) => $q->where('medal', 'Gold'),
-        'results as silver' => fn($q) => $q->where('medal', 'Silver'),
-        'results as bronze' => fn($q) => $q->where('medal', 'Bronze'),
-    ])
-    ->get()
-    ->map(function ($school) {
-        $school->total = $school->gold + $school->silver + $school->bronze;
-        return $school;
-    })
-    ->sort(function ($a, $b) {
-        return [$b->gold, $b->silver, $b->bronze] <=> [$a->gold, $a->silver, $a->bronze];
-    })
-    ->values()
-    ->map(function ($school, $index) {
-        $school->rank = $index + 1;
-        return $school;
-    });
-
-    return view('results.index', compact('results', 'medalTally'));
-}
-
-
-
-    public function create()
-{
-    return view('results.create', [
-        'schools'  => School::orderBy('name')->get(),
-        'sports'   => Sport::orderBy('name')->get(),
-        'events'   => Event::orderBy('name')->get(),
-
-        // ✅ FIXED: no more "name" column
-        'athletes' => Athlete::orderBy('last_name')
-                             ->orderBy('first_name')
-                             ->get(),
-    ]);
-}
-
-
-    public function store(Request $request)
     {
-        $request->validate([
-            'school_id' => 'required|exists:schools,id',
-            'sport_id'  => 'required|exists:sports,id',
-            'event_id'  => 'required|exists:events,id',
-            'division'  => 'required|in:Elementary,Secondary',
-            'category'  => 'required|in:Boys,Girls,Mixed',
-            'medal'     => 'required|in:Gold,Silver,Bronze',
-        ]);
+        $query = Result::with(['school', 'sport', 'awardedBy']);
 
-        $result = Result::create([
-            'school_id' => $request->school_id,
-            'sport_id'  => $request->sport_id,
-            'event_id'  => $request->event_id,
-            'athlete_id'=> $request->athlete_id,
-            'team_name' => $request->team_name,
-            'division'  => $request->division,
-            'category'  => $request->category,
-            'medal'     => $request->medal,
-            'awarded_by'=> Auth::id(),
-        ]);
+        if ($request->filled('search')) {
+            $search = $request->search;
 
-        // ✅ Audit log (IMPORTANT)
-        AuditLog::create([
-            'user_id'    => Auth::id(),
-            'model_type' => Result::class,
-            'model_id'   => $result->id,
-            'action'     => 'Awarded Medal',
-            'details'    => "{$request->medal} medal awarded to school ID {$request->school_id}",
-        ]);
+            $query->where(function ($q) use ($search) {
+                $q->orWhereHas('sport', fn($qs) => $qs->where('name', 'like', "%{$search}%"))
+                  ->orWhere('division', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('medal', 'like', "%{$search}%");
+            });
+        }
 
-        return redirect()->route('results.index')
-            ->with('success', 'Medal awarded successfully.');
-    }
-
-    
-    public function export()
-    {
-        $results = Result::with(['school', 'sport', 'event', 'athlete'])->orderBy('created_at', 'desc')->get();
+        $results = $query->latest()->get();
 
         $medalTally = School::withCount([
-            'results as gold' => fn($q) => $q->where('medal', 'Gold'),
+    'results as gold'   => fn($q) => $q->where('medal', 'Gold'),
+    'results as silver' => fn($q) => $q->where('medal', 'Silver'),
+    'results as bronze' => fn($q) => $q->where('medal', 'Bronze'),
+])->get();
+
+// Calculate points for ranking (Gold=3, Silver=2, Bronze=1)
+$medalTally->transform(function($school) {
+    $school->points = ($school->gold * 3) + ($school->silver * 2) + ($school->bronze * 1);
+    return $school;
+});
+
+// Sort by points descending, then gold, silver, bronze count
+$medalTally = $medalTally->sortByDesc(function($school) {
+    return [$school->points, $school->gold, $school->silver, $school->bronze];
+})->values();
+
+// Assign rank
+$rank = 1;
+foreach($medalTally as $school) {
+    $school->rank = $rank++;
+}
+
+
+        return view('results.index', compact('results', 'medalTally'));
+    }
+
+    /**
+     * ✅ SHOW ALL SPORTS + TYPES
+     */
+    public function create(Request $request)
+{
+    $division = $request->get('division', 'Elementary');
+    $category = $request->get('category', 'Boys');
+
+    // Load all sports with types
+    $sports = Sport::with('types')
+        ->orderBy('name')
+        ->get();
+
+    $schools = School::orderBy('name')->get();
+
+    // ✅ Fetch existing results for this division & category
+    $existingResults = Result::where('division', $division)
+        ->where('category', $category)
+        ->get()
+        ->groupBy(function($item) {
+            return $item->sport_id . '-' . $item->type_id . '-' . $item->school_id . '-' . $item->medal;
+        });
+
+    return view('results.create', compact(
+        'sports',
+        'schools',
+        'division',
+        'category',
+        'existingResults'
+    ));
+}
+
+
+    /**
+     * ✅ SAVE RESULTS BASED ON FILTER
+     */
+    public function store(Request $request)
+{
+    $eventId = \App\Models\Event::where('is_active', 1)->value('id');
+
+    if (!$eventId) {
+        return back()->with('error', 'No active event found.');
+    }
+
+    foreach ($request->results ?? [] as $sportId => $types) {
+        foreach ($types as $typeId => $schools) {
+            $typeId = $typeId == 0 ? null : $typeId;
+
+            foreach ($schools as $schoolId => $medals) {
+                foreach ($medals as $medal => $count) {
+
+                    // ✅ Delete only existing results for THIS division/category
+                    Result::where('event_id', $eventId)
+                        ->where('sport_id', $sportId)
+                        ->where('type_id', $typeId)
+                        ->where('school_id', $schoolId)
+                        ->where('medal', $medal)
+                        ->where('division', $request->division)
+                        ->where('category', $request->category)
+                        ->delete();
+
+                    // Insert new results
+                    if ($count > 0) {
+                        for ($i = 0; $i < $count; $i++) {
+                            Result::create([
+                                'event_id'   => $eventId,
+                                'sport_id'   => $sportId,
+                                'type_id'    => $typeId,
+                                'school_id'  => $schoolId,
+                                'division'   => $request->division,
+                                'category'   => $request->category,
+                                'medal'      => $medal,
+                                'awarded_by' => Auth::id(),
+                            ]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    return redirect()
+        ->route('results.create', [
+            'division' => $request->division,
+            'category' => $request->category
+        ])
+        ->with('success', 'Results saved successfully.');
+}
+
+
+
+    public function export()
+    {
+        $results = Result::with(['school', 'sport'])->latest()->get();
+
+        $medalTally = School::withCount([
+            'results as gold'   => fn($q) => $q->where('medal', 'Gold'),
             'results as silver' => fn($q) => $q->where('medal', 'Silver'),
             'results as bronze' => fn($q) => $q->where('medal', 'Bronze'),
-        ])->get()
-        ->map(fn($school) => tap($school, fn($s) => $s->total = $s->gold + $s->silver + $s->bronze))
-        ->sort(function($a, $b) {
-            if($b->gold !== $a->gold) return $b->gold <=> $a->gold;
-            if($b->silver !== $a->silver) return $b->silver <=> $a->silver;
-            return $b->bronze <=> $a->bronze;
-        })
-        ->values()
-        ->map(fn($school, $index) => tap($school, fn($s) => $s->rank = $index + 1));
+        ])->get();
 
-        $generatedAt = now()->setTimezone('Asia/Manila')->format('M d, Y h:i A');
+        $generatedAt = now()->format('M d, Y h:i A');
 
         $pdf = Pdf::loadView('results.export', compact('results','medalTally','generatedAt'))
-                ->setPaper('a4', 'landscape');
+            ->setPaper('a4', 'landscape');
 
-        // ✅ Force download instead of opening in browser
-        return $pdf->download('awards_report_' . now()->format('Ymd_His') . '.pdf');
+        return $pdf->download('awards_report.pdf');
     }
 }

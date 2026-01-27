@@ -9,7 +9,8 @@ class Sport extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'type_of_game'];
+    protected $fillable = ['name', 'type_of_game', 'division',
+    'category',];
 
 
     public function events()

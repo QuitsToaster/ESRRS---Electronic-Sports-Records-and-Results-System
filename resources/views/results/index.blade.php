@@ -20,7 +20,6 @@
     </div>
 </div>
 
-
 @if(session('success'))
     <div class="bg-green-100 text-green-800 p-3 rounded mb-4">
         {{ session('success') }}
@@ -77,7 +76,7 @@
                                 <span class="font-semibold">{{ $school->bronze }} Bronze</span>
                             </div>
                         </div>
-                        <div class="text-sm text-gray-500 mt-1">Total Medals: {{ $school->total }}</div>
+                        <div class="text-sm text-gray-500 mt-1">Total Points: {{ $school->points }}</div>
                     </div>
                 </div>
             @endforeach
@@ -85,49 +84,51 @@
     @endif
 </div>
 
-{{-- Results Table --}}
-<div class="bg-white rounded shadow overflow-x-auto">
-    <table class="w-full text-left table-auto">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="px-4 py-2">Event</th>
-                <th class="px-4 py-2">Sport</th>
-                <th class="px-4 py-2">Team</th>
-                <th class="px-4 py-2">Division</th>
-                <th class="px-4 py-2">Category</th>
-                <th class="px-4 py-2">Medal</th>
-                <th class="px-4 py-2">Athlete</th>
-                <th class="px-4 py-2">Awarded By</th>
-                <th class="px-4 py-2">Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            @forelse($results as $result)
-                <tr class="border-b">
-                    <td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
-                    <td class="px-4 py-2">{{ $result->sport->name ?? '-' }}</td>
-                    <td class="px-4 py-2">{{ $result->school->name ?? '-' }}</td>
-                    <td class="px-4 py-2">{{ $result->division }}</td>
-                    <td class="px-4 py-2">{{ $result->category }}</td>
-                    <td class="px-4 py-2">
-                        <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
-                                      @elseif($result->medal==='Silver') text-gray-400 font-bold
-                                      @else text-orange-500 font-bold @endif">
-                            {{ $result->medal }}
-                        </span>
-                    </td>
-                    <td class="px-4 py-2">{{ $result->athlete->name ?? $result->team_name ?? '-' }}</td>
-                    <td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
-                    <td class="px-4 py-2">{{ $result->created_at->format('M d, Y') }}</td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="9" class="px-4 py-4 text-center text-gray-500">
-                        No results/awards recorded.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
-</div>
+{{-- Results Table by Division --}}
+@foreach(['Elementary','Secondary'] as $division)
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">{{ $division }} Division</h2>
+
+    @php
+        $divisionResults = $results->where('division', $division);
+    @endphp
+
+    @if($divisionResults->isEmpty())
+        <div class="text-gray-500 py-4">No results recorded for {{ $division }} Division.</div>
+    @else
+        <div class="bg-white rounded shadow overflow-x-auto mb-6">
+            <table class="w-full text-left table-auto">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-2">Event</th>
+                        <th class="px-4 py-2">Sport</th>
+                        <th class="px-4 py-2">Team</th>
+                        <th class="px-4 py-2">Category</th>
+                        <th class="px-4 py-2">Medal</th>
+                        <th class="px-4 py-2">Awarded By</th>
+                        <th class="px-4 py-2">Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($divisionResults as $result)
+                        <tr class="border-b">
+                            <td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $result->sport->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $result->school->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $result->category }}</td>
+                            <td class="px-4 py-2">
+                                <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
+                                              @elseif($result->medal==='Silver') text-gray-400 font-bold
+                                              @else text-orange-500 font-bold @endif">
+                                    {{ $result->medal }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $result->created_at->format('M d, Y') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+@endforeach
 @endsection

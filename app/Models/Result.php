@@ -11,6 +11,7 @@ class Result extends Model
         'school_id',
         'athlete_id',
         'event_id',
+        'type_id', 
         'sport_id',
         'division',
         'category',
