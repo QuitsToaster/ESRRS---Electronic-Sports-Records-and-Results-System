@@ -1,13 +1,12 @@
 @extends('layouts.app')
 
-@section('page-title', 'Edit Event')
+@section('page-title', 'Edit Competition')
 
 @section('content')
 
-{{-- Page Header --}}
 <div class="mb-6">
     <p class="text-sm text-gray-600">
-        Update the details of this CAVRAA event.
+        Update the details of this CAVRAA competition.
     </p>
 </div>
 
@@ -22,33 +21,17 @@
     </div>
 @endif
 
-{{-- Edit Event Form --}}
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6">
-    <form action="{{ route('events.update', $event->id) }}" method="POST">
+    <form action="{{ route('events.update', $event->id) }}" method="POST" class="space-y-6">
         @csrf
         @method('PUT')
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
-            {{-- Event Name (REQUIRED) --}}
+            {{-- Sport --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Event Name <span class="text-red-500">*</span>
-                </label>
-                <input type="text"
-                       name="name"
-                       value="{{ old('name', $event->name) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500"
-                       required>
-            </div>
-
-            {{-- Sport (OPTIONAL) --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Sport
-                </label>
-                <select name="sport_id"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
+                <label class="block font-medium">Sport *</label>
+                <select name="sport_id" class="w-full border rounded px-3 py-2" required>
                     <option value="">Select Sport</option>
                     @foreach($sports as $sport)
                         <option value="{{ $sport->id }}"
@@ -59,32 +42,31 @@
                 </select>
             </div>
 
-            {{-- Level --}}
+            {{-- Sport Type --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Level
-                </label>
-                <select name="level"
-                        class="w-full border border-gray-300 rounded px-3 py-2">
-                    <option value="">Select Level</option>
-                    @foreach(['Division', 'Regional', 'National'] as $level)
-                        <option value="{{ $level }}"
-                            {{ old('level', $event->level) == $level ? 'selected' : '' }}>
-                            {{ $level }}
+                <label class="block font-medium">Sport Type *</label>
+                <select name="sport_type_id" class="w-full border rounded px-3 py-2" required>
+                    <option value="">Select Type</option>
+
+                    @foreach($event->sport->sportTypes as $type)
+                        <option value="{{ $type->id }}"
+                            {{ old('sport_type_id', $event->sport_type_id) == $type->id ? 'selected' : '' }}>
+                            {{ $type->type_name }}
                         </option>
                     @endforeach
                 </select>
+
+                <p class="text-xs text-gray-500 mt-1">
+                    Event = multi-player (Swimming, Athletics) • Game = team vs team
+                </p>
             </div>
 
             {{-- Age Group --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Age Group
-                </label>
-                <select name="age_group"
-                        class="w-full border border-gray-300 rounded px-3 py-2">
+                <label class="block font-medium">Age Group</label>
+                <select name="age_group" class="w-full border rounded px-3 py-2">
                     <option value="">Select Age Group</option>
-                    @foreach(['Elementary', 'Secondary'] as $group)
+                    @foreach(['Elementary','Secondary'] as $group)
                         <option value="{{ $group }}"
                             {{ old('age_group', $event->age_group) == $group ? 'selected' : '' }}>
                             {{ $group }}
@@ -95,16 +77,13 @@
 
             {{-- Category --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Category
-                </label>
-                <select name="category"
-                        class="w-full border border-gray-300 rounded px-3 py-2">
+                <label class="block font-medium">Category</label>
+                <select name="category" class="w-full border rounded px-3 py-2">
                     <option value="">Select Category</option>
-                    @foreach(['Boys', 'Girls', 'Mixed'] as $category)
-                        <option value="{{ $category }}"
-                            {{ old('category', $event->category) == $category ? 'selected' : '' }}>
-                            {{ $category }}
+                    @foreach(['Boys','Girls','Mixed'] as $cat)
+                        <option value="{{ $cat }}"
+                            {{ old('category', $event->category) == $cat ? 'selected' : '' }}>
+                            {{ $cat }}
                         </option>
                     @endforeach
                 </select>
@@ -112,50 +91,76 @@
 
             {{-- Venue --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Venue
-                </label>
+                <label class="block font-medium">Venue</label>
                 <input type="text"
                        name="venue"
                        value="{{ old('venue', $event->venue) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2">
+                       class="w-full border rounded px-3 py-2">
             </div>
 
             {{-- Start Date --}}
             <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    Start Date
-                </label>
+                <label class="block font-medium">Start Date</label>
                 <input type="date"
                        name="start_date"
                        value="{{ old('start_date', optional($event->start_date)->format('Y-m-d')) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2">
+                       class="w-full border rounded px-3 py-2">
             </div>
 
-            {{-- End Date --}}
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    End Date
-                </label>
-                <input type="date"
-                       name="end_date"
-                       value="{{ old('end_date', optional($event->end_date)->format('Y-m-d')) }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2">
-            </div>
+        </div>
 
+        {{-- PARTICIPATING SCHOOLS --}}
+        <div x-data="{
+                schools: {{ json_encode(old('schools', $event->schools->pluck('id')->toArray())) }}
+            }"
+            class="mt-6">
+
+            <label class="block font-semibold mb-2">
+                Participating Schools / Teams *
+            </label>
+
+            <template x-for="(school, index) in schools" :key="index">
+                <div class="flex gap-2 mb-2">
+                    <select name="schools[]"
+                            x-model="schools[index]"
+                            class="flex-1 border rounded px-3 py-2"
+                            required>
+                        <option value="">Select School</option>
+                        @foreach($schools as $school)
+                            <option value="{{ $school->id }}">
+                                {{ $school->name }}
+                            </option>
+                        @endforeach
+                    </select>
+
+                    <button type="button"
+                            x-show="schools.length > 1"
+                            @click="schools.splice(index, 1)"
+                            class="px-3 bg-red-500 text-white rounded">
+                        ✕
+                    </button>
+                </div>
+            </template>
+
+            <button type="button"
+                    @click="schools.push('')"
+                    class="mt-2 px-4 py-2 bg-green-600 text-white rounded">
+                + Add Another School
+            </button>
         </div>
 
         {{-- Actions --}}
-        <div class="mt-6 flex justify-end gap-3">
+        <div class="flex justify-end gap-3 pt-6">
             <a href="{{ route('events.index') }}"
-               class="px-4 py-2 border border-gray-300 rounded text-gray-700 hover:bg-gray-100">
+               class="px-4 py-2 border rounded text-gray-700">
                 Cancel
             </a>
             <button type="submit"
-                    class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded font-semibold">
-                Update Event
+                    class="px-6 py-2 bg-blue-600 text-white rounded font-semibold">
+                Update Competition
             </button>
         </div>
+
     </form>
 </div>
 

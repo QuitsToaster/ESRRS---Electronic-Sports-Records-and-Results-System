@@ -3,95 +3,135 @@
 @section('page-title', 'Add Event')
 
 @section('content')
+
 <div class="mb-6">
-    <p class="text-sm text-gray-600 mt-1">
-        Add a new event by filling out the form below.
+    <p class="text-sm text-gray-600">
+        Select a sport and its discipline. Event details will be generated automatically.
     </p>
 </div>
 
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
-    @if ($errors->any())
-        <div class="bg-red-100 text-red-800 p-4 rounded mb-4">
-            <ul class="list-disc pl-5">
-                @foreach ($errors->all() as $error)
-                    <li>{{ $error }}</li>
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6">
+
+<form action="{{ route('events.store') }}" method="POST"
+      x-data="{
+        sports: @js($sports),
+        selectedSport: null,
+        sportTypes: []
+      }"
+      class="space-y-4">
+@csrf
+
+{{-- SPORT --}}
+<div>
+    <label class="block font-semibold">Sport *</label>
+    <select name="sport_id"
+            x-model="selectedSport"
+            @change="
+                sportTypes = sports.find(s => s.id == selectedSport)?.sport_types || []
+            "
+            required
+            class="w-full border rounded px-3 py-2">
+        <option value="">Select Sport</option>
+        <template x-for="sport in sports" :key="sport.id">
+            <option :value="sport.id">
+                <span x-text="sport.name"></span>
+            </option>
+        </template>
+    </select>
+</div>
+
+{{-- SPORT TYPE --}}
+<div>
+    <label class="block font-semibold">Discipline / Event *</label>
+    <select name="sport_type_id"
+            :disabled="sportTypes.length === 0"
+            required
+            class="w-full border rounded px-3 py-2">
+        <option value="">Select Discipline</option>
+        <template x-for="type in sportTypes" :key="type.id">
+            <option :value="type.id" x-text="type.type_name"></option>
+        </template>
+    </select>
+    <p class="text-xs text-gray-500 mt-1">
+        Loaded automatically based on selected sport.
+    </p>
+</div>
+
+{{-- LEVEL --}}
+<div>
+    <label class="block font-semibold">Level</label>
+    <select name="age_group" class="w-full border rounded px-3 py-2">
+        <option value="">Select Level</option>
+        <option value="Elementary">Elementary</option>
+        <option value="Secondary">Secondary</option>
+    </select>
+</div>
+
+{{-- CATEGORY --}}
+<div>
+    <label class="block font-semibold">Category</label>
+    <select name="category" class="w-full border rounded px-3 py-2">
+        <option value="">Select Category</option>
+        <option value="Boys">Boys</option>
+        <option value="Girls">Girls</option>
+        <option value="Mixed">Mixed</option>
+    </select>
+</div>
+
+{{-- VENUE --}}
+<div>
+    <label class="block font-semibold">Venue</label>
+    <input type="text" name="venue"
+           class="w-full border rounded px-3 py-2">
+</div>
+
+{{-- DATE --}}
+<div>
+    <label class="block font-semibold">Start Date</label>
+    <input type="date" name="start_date"
+           class="w-full border rounded px-3 py-2">
+</div>
+
+{{-- SCHOOLS --}}
+<div x-data="{ teams: [0] }">
+    <label class="block font-semibold mb-2">Participating Schools *</label>
+
+    <template x-for="(team, index) in teams" :key="index">
+        <div class="flex gap-2 mb-2">
+            <select name="schools[]" required
+                    class="flex-1 border rounded px-3 py-2">
+                <option value="">Select School</option>
+                @foreach($schools as $school)
+                    <option value="{{ $school->id }}">{{ $school->name }}</option>
                 @endforeach
-            </ul>
-        </div>
-    @endif
+            </select>
 
-    <form action="{{ route('events.store') }}" method="POST" class="space-y-4 w-full">
-        @csrf
-
-        <!-- Event Name (REQUIRED) -->
-        <div>
-            <label class="block text-gray-700 font-semibold mb-1">
-                Event Name <span class="text-red-500">*</span>
-            </label>
-            <input type="text" name="name" value="{{ old('name') }}"
-                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                   required>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <!-- Level -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Level</label>
-                <select name="age_group"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Level</option>
-                    <option value="Elementary" {{ old('age_group') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
-                    <option value="Secondary" {{ old('age_group') == 'Secondary' ? 'selected' : '' }}>Secondary</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <!-- Category -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Category</label>
-                <select name="category"
-                        class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select Category</option>
-                    <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
-                    <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
-                </select>
-            </div>
-
-            <!-- Venue -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Venue</label>
-                <input type="text" name="venue" value="{{ old('venue') }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-            <!-- Start Date -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">Start Date</label>
-                <input type="date" name="start_date" value="{{ old('start_date') }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-
-            <!-- End Date -->
-            <div>
-                <label class="block text-gray-700 font-semibold mb-1">End Date</label>
-                <input type="date" name="end_date" value="{{ old('end_date') }}"
-                       class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            </div>
-        </div>
-
-        <div class="flex justify-end space-x-2 mt-4">
-            <a href="{{ route('events.index') }}"
-               class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded shadow text-gray-700">
-                Cancel
-            </a>
-            <button type="submit"
-                    class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded shadow">
-                Save
+            <button type="button"
+                    x-show="teams.length > 1"
+                    @click="teams.splice(index, 1)"
+                    class="bg-red-500 text-white px-3 rounded">
+                ✕
             </button>
         </div>
-    </form>
+    </template>
+
+    <button type="button"
+            @click="teams.push(teams.length)"
+            class="mt-2 bg-green-600 text-white px-4 py-2 rounded">
+        + Add School
+    </button>
+</div>
+
+{{-- ACTIONS --}}
+<div class="flex justify-end gap-2 pt-4">
+    <a href="{{ route('events.index') }}" class="px-4 py-2 bg-gray-300 rounded">
+        Cancel
+    </a>
+    <button class="px-4 py-2 bg-blue-600 text-white rounded">
+        Save Event
+    </button>
+</div>
+
+</form>
 </div>
 @endsection

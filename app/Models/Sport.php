@@ -23,5 +23,10 @@ class Sport extends Model
     return $this->hasMany(SportType::class);
 }
 
+public function sportTypes()
+{
+    return $this->hasMany(SportType::class);
+}
+
 
 }

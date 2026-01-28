@@ -132,6 +132,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('brackets', [BracketController::class, 'store'])->name('brackets.store');
 });
 
+Route::get('/events/{event}/manage', [EventController::class, 'manage'])
+    ->name('events.manage');
+Route::post('/events/{event}/winners', [EventController::class, 'saveWinners'])
+    ->name('events.winners');
+
 
 // Route::get('/viewer/game/{game}/live-timer', [GameController::class, 'liveTimer'])->name('viewer.liveTimer');
 Route::get('/viewer/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);

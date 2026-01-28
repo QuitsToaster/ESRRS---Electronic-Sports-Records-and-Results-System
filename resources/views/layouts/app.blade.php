@@ -173,7 +173,7 @@
         @if(in_array('games', $access))
             <div class="pt-2 border-t border-blue-800">
                 <p class="px-4 py-1 text-xs text-blue-300 uppercase tracking-wide">
-                    Games
+                    Ball Games
                 </p>
 
                 <a href="{{ route('games.index') }}"
