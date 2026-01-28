@@ -15,44 +15,47 @@
     <title>@yield('page-title', 'Viewer Dashboard')</title>
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
+    <!-- Stylish Calligraphy/Script -->
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <!-- Sporty Font Example -->
+    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
 </head>
 
 <body class="bg-gray-100 font-sans">
 
     {{-- Fixed Top Navbar --}}
-    <nav class="fixed top-0 left-0 right-0 z-50 bg-blue-600 text-white shadow-md">
+    <nav class="fixed top-0 left-0 right-0 z-50 bg-white/30 backdrop-blur-md shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16 items-center">
+            <div class="flex items-center h-16 justify-between relative">
 
-                {{-- Logo --}}
+                {{-- Left: Logo --}}
                 @php
                     $viewerLogo = \App\Models\LayoutSetting::where('key', 'viewer_top_logo')->first();
                 @endphp
-
                 <a href="{{ route('viewer.home') }}" class="flex items-center gap-2">
                     @if($viewerLogo && $viewerLogo->value)
                         <img src="{{ asset('storage/' . $viewerLogo->value) }}"
                              alt="Viewer Logo"
                              class="h-10 object-contain">
                     @else
-                        <span class="text-lg font-bold">CEMS</span>
+                        <span class="text-lg font-bold text-gray-800">CEMS</span>
                     @endif
                 </a>
 
-                {{-- Desktop Nav --}}
-                <div class="hidden md:flex items-center space-x-6 font-medium">
+                {{-- Center: Desktop Navs --}}
+                <div class="hidden md:flex items-center space-x-6 font-medium text-gray-800 absolute left-1/2 transform -translate-x-1/2">
                     @php
-                        $linkClass = 'hover:text-gray-200';
+                        $linkClass = 'hover:text-gray-600 transition';
                         $active = 'underline font-semibold';
                     @endphp
 
                     <a href="{{ route('viewer.home') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.home') ? $active : '' }}">Home</a>
                     <a href="{{ route('viewer.participants') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $active : '' }}">Teams</a>
-                    <a href="{{ route('viewer.medalTally') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.medalTally') ? $active : '' }}">Medal Tally</a>
+                    <a href="{{ route('viewer.medalTally') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.medalTally') ? $active : '' }}">Medals</a>
+
                     {{-- Combined Competitions Nav --}}
                     <div x-data="{ openComp: false }" class="relative">
-                        <button @click="openComp = !openComp"
-                                class="flex items-center gap-1 {{ request()->routeIs('viewer.events','viewer.games') ? $active : '' }}">
+                        <button @click="openComp = !openComp" class="flex items-center gap-1 {{ request()->routeIs('viewer.events','viewer.games') ? $active : '' }}">
                             Competitions
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -70,7 +73,10 @@
                     <a href="{{ route('viewer.gallery') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.gallery') ? $active : '' }}">Gallery</a>
                     <a href="{{ route('viewer.announcements') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.announcements') ? $active : '' }}">Announcements</a>
                     <a href="{{ route('viewer.feedbacks') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.feedbacks') ? $active : '' }}">Feedbacks</a>
+                </div>
 
+                {{-- Right: Logout --}}
+                <div class="hidden md:flex items-center">
                     <a href="{{ url('/') }}"
                        class="ml-4 px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white font-semibold transition">
                         Logout
@@ -93,31 +99,31 @@
         <div x-show="open"
              x-transition
              x-cloak
-             class="md:hidden bg-blue-700 px-2 pt-2 pb-3 space-y-1">
+             class="md:hidden bg-white/80 backdrop-blur-md px-2 pt-2 pb-3 space-y-1 text-gray-800">
 
-            <a href="{{ route('viewer.home') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Home</a>
-            <a href="{{ route('viewer.participants') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Teams</a>
-            <a href="{{ route('viewer.medalTally') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Medal Tally</a>
+            <a href="{{ route('viewer.home') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Home</a>
+            <a href="{{ route('viewer.participants') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Teams</a>
+            <a href="{{ route('viewer.medalTally') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Medals</a>
             {{-- Combined Competitions --}}
             <div x-data="{ openComp: false }" class="relative">
-                <button @click="openComp = !openComp" class="w-full text-left px-3 py-2 rounded hover:bg-blue-600 flex justify-between items-center">
+                <button @click="openComp = !openComp" class="w-full text-left px-3 py-2 rounded hover:bg-gray-200 flex justify-between items-center">
                     Competitions
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                     </svg>
                 </button>
-                <div x-show="openComp" x-transition @click.away="openComp = false" class="bg-blue-600 mt-1 rounded shadow-lg">
-                    <a href="{{ route('viewer.events') }}" class="block px-4 py-2 hover:bg-blue-500">Events</a>
-                    <a href="{{ route('viewer.games') }}" class="block px-4 py-2 hover:bg-blue-500">Games</a>
+                <div x-show="openComp" x-transition @click.away="openComp = false" class="bg-white mt-1 rounded shadow-lg">
+                    <a href="{{ route('viewer.events') }}" class="block px-4 py-2 hover:bg-gray-100">Events</a>
+                    <a href="{{ route('viewer.games') }}" class="block px-4 py-2 hover:bg-gray-100">Games</a>
                 </div>
             </div>
 
-            <a href="{{ route('viewer.gallery') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Gallery</a>
-            <a href="{{ route('viewer.announcements') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Announcements</a>
-            <a href="{{ route('viewer.feedbacks') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Feedbacks</a>
+            <a href="{{ route('viewer.gallery') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Gallery</a>
+            <a href="{{ route('viewer.announcements') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Announcements</a>
+            <a href="{{ route('viewer.feedbacks') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Feedbacks</a>
 
             <a href="{{ url('/') }}"
-               class="block px-3 py-2 mt-1 rounded bg-red-600 hover:bg-red-700 font-semibold">
+               class="block px-3 py-2 mt-1 rounded bg-red-600 hover:bg-red-700 font-semibold text-white">
                 Logout
             </a>
         </div>

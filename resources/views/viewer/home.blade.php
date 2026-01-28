@@ -5,7 +5,7 @@
 @section('content')
 
 {{-- Banner Slideshow --}}
-<div class="relative w-full h-64 md:h-96 overflow-hidden">
+<div class="relative w-full h-64 md:h-96 overflow-hidden -mt-16 z-0">
     @foreach($banners as $index => $banner)
         <div class="absolute inset-0 transition-opacity duration-1000 {{ $index === 0 ? 'opacity-100' : 'opacity-0' }}" data-slide>
             <img src="{{ asset('storage/' . $banner->image) }}" class="w-full h-full object-cover" 
@@ -24,9 +24,20 @@
     @endforeach
 </div>
 
+
 {{-- Quick Stats --}}
 <section class="relative -mt-8 py-12" 
          style="clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);">
+
+    {{-- Section Title --}}
+<div class="text-center mb-8">
+    <h2 class="text-5xl md:text-6xl text-black font-bold" style="font-family: 'Poppins', sans-serif;">
+        Quick Actions
+    </h2>
+</div>
+
+
+    {{-- Stats Grid --}}
     <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
 
         {{-- Events --}}
@@ -67,6 +78,7 @@
 
 
 
+
 {{-- Medal Tally --}}
 <section class="relative py-10">
     {{-- Background Image --}}
@@ -74,14 +86,30 @@
         <img src="{{ asset('storage/medalbg.jpg') }}" 
              alt="Medal Background" 
              class="w-full h-full object-cover brightness-75 blur-sm">
-        <div class="absolute inset-0 bg-black/30"></div> {{-- Dark overlay for contrast --}}
+        <div class="absolute inset-0 bg-black/30"></div>
     </div>
 
     {{-- Content --}}
     <div class="relative max-w-7xl mx-auto px-6">
-        <h3 class="text-3xl font-bold text-white mb-6 flex items-center space-x-2">
-            <span>Medal Tally</span>
-        </h3>
+
+        {{-- Header --}}
+        <div class="grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white">
+            <div></div>
+            <h3 class="text-3xl font-bold">
+                Medal Tally
+            </h3>
+
+            {{-- Medal Labels (ALIGNED WITH COUNTS) --}}
+            <div class="grid grid-cols-3 text-center font-semibold text-lg">
+                <span class="text-yellow-400">Gold</span>
+                <span class="text-gray-300">Silver</span>
+                <span class="text-orange-400">Bronze</span>
+            </div>
+
+            <div class="text-center font-semibold text-4xl text-red-600">
+                Total
+            </div>
+        </div>
 
         @if($medalTally->isEmpty())
             <p class="text-gray-200 text-sm">No medals awarded yet.</p>
@@ -93,41 +121,54 @@
                         $total = $school->gold + $school->silver + $school->bronze;
                     @endphp
 
-                    {{-- Card Row --}}
-                    <div class="flex items-center justify-between p-4 md:p-6 bg-white/10 backdrop-blur-md rounded-xl shadow-lg hover:shadow-2xl transition">
+                    {{-- Row --}}
+                    <div class="grid grid-cols-[40px_1fr_420px_70px] items-center p-4 md:p-6 bg-white/10 backdrop-blur-md rounded-xl shadow-lg hover:shadow-2xl transition">
+
                         {{-- Rank --}}
-                        <div class="text-white text-lg font-bold w-8 text-center">{{ $index + 1 }}</div>
+                        <div class="text-white font-bold text-lg text-center">
+                            {{ $index + 1 }}
+                        </div>
 
                         {{-- School Info --}}
-                        <div class="flex items-center space-x-4 flex-1">
+                        <div class="flex items-center space-x-4">
                             @if($schoolModel && $schoolModel->logo)
-                                <img src="{{ asset('storage/' . $schoolModel->logo) }}" alt="Logo"
+                                <img src="{{ asset('storage/' . $schoolModel->logo) }}"
                                      class="w-12 h-12 object-cover rounded-full border border-white/30">
                             @else
-                                <div class="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center text-gray-200 text-xs">N/A</div>
+                                <div class="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center text-gray-200 text-xs">
+                                    N/A
+                                </div>
                             @endif
-                            <span class="text-white font-semibold text-lg">{{ $schoolModel->name ?? 'Unknown' }}</span>
+
+                            <span class="text-white font-semibold text-lg">
+                                {{ $schoolModel->name ?? 'Unknown' }}
+                            </span>
                         </div>
 
-                        {{-- Medal Counts --}}
-                        <div class="flex items-center space-x-6 font-bold">
-                            <div class="flex flex-col items-center text-yellow-400">
-                                <span class="text-xl">{{ $school->gold }}</span>
-                                <span class="text-sm">🥇</span>
-                            </div>
-                            <div class="flex flex-col items-center text-gray-300">
-                                <span class="text-xl">{{ $school->silver }}</span>
-                                <span class="text-sm">🥈</span>
-                            </div>
-                            <div class="flex flex-col items-center text-orange-400">
-                                <span class="text-xl">{{ $school->bronze }}</span>
-                                <span class="text-sm">🥉</span>
-                            </div>
-                            <div class="flex flex-col items-center text-white">
-                                <span class="text-xl">{{ $total }}</span>
-                                <span class="text-sm">Total</span>
-                            </div>
+                        {{-- Medal Counts (CENTERED & BIG) --}}
+                        <div class="grid grid-cols-3 text-center font-extrabold text-4xl">
+                            <span class="text-yellow-400">{{ $school->gold }}</span>
+                            <span class="text-gray-300">{{ $school->silver }}</span>
+                            <span class="text-orange-400">{{ $school->bronze }}</span>
                         </div>
+
+                     {{-- Total --}}
+<div class="relative h-full">
+    {{-- Yellow/Gold gradient background spanning from Total column to the container's right edge --}}
+    <div class="absolute top-0 bottom-0 left-0 w-[198px] -z-10
+                bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
+                opacity-90"></div>
+
+    {{-- Total number --}}
+    <div class="relative text-center text-red-600 font-extrabold text-6xl py-4">
+        {{ $total }}
+    </div>
+</div>
+
+
+
+
+
                     </div>
                 @endforeach
             </div>
@@ -137,102 +178,222 @@
 
 
 
-{{-- Latest Gallery --}}
+
+
+{{-- Latest Gallery Highlight --}}
 @php
     use App\Models\GalleryPhoto;
-    $photos = GalleryPhoto::latest()->take(3)->get();
+    $latestPhoto = GalleryPhoto::latest()->first();
+    $remainingPhotos = GalleryPhoto::latest()->skip(1)->take(5)->get(); // remaining photos for carousel
 @endphp
-@if($photos->isNotEmpty())
-<section class="bg-white py-10 border-t">
+
+@if($latestPhoto)
+<section class="bg-gray-50 py-16 border-t">
     <div class="max-w-7xl mx-auto px-6">
-        <h3 class="text-xl font-semibold text-gray-800 mb-4">Latest Gallery Uploads</h3>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            @foreach($photos as $photo)
+
+        {{-- Section Title on Top --}}
+        <h3 class="text-3xl md:text-6xl font-bold text-gray-800 mb-12 text-center tracking-wide">
+            Gallery Highlights
+        </h3>
+
+        {{-- Spotlight Container --}}
+        <div class="flex flex-col md:flex-row items-center gap-10">
+
+            {{-- Left Side: Latest Photo --}}
+            <div class="flex-1">
                 @php
-                    $firstImage = $photo->photos[0] ?? null;
-                    $extraCount = count($photo->photos) - 1;
+                    $firstImage = $latestPhoto->photos[0] ?? null;
                 @endphp
-                <div class="border rounded-lg overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition"
-                     onclick="openPhotoModal({{ $photo->id }})">
-                    <div class="p-3 font-semibold bg-gray-100">{{ $photo->title }}</div>
-                    @if($firstImage)
-                        <div class="relative">
-                            <img src="{{ asset('storage/' . $firstImage) }}" class="w-full h-48 object-cover">
-                            @if($extraCount > 0)
-                                <div class="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
-                                    +{{ $extraCount }}
+                @if($firstImage)
+                    <img src="{{ asset('storage/' . $firstImage) }}" 
+                         alt="{{ $latestPhoto->title ?? 'Gallery Image' }}"
+                         class="w-full h-96 object-cover rounded-3xl shadow-2xl hover:scale-105 transition-transform duration-500">
+                @else
+                    <div class="w-full h-96 bg-gray-300 flex items-center justify-center text-gray-600 text-xl font-semibold rounded-3xl">
+                        No Image
+                    </div>
+                @endif
+            </div>
+
+            {{-- Right Side: Title + Description --}}
+            <div class="flex-1 space-y-6">
+                <h2 class="text-5xl font-bold text-gray-800" style="font-family: 'Poppins', sans-serif;">
+                    {{ $latestPhoto->title ?? 'Gallery Highlight' }}
+                </h2>
+                <p class="text-gray-600 text-lg leading-relaxed">
+                    {{ $latestPhoto->description ?? 'No description available for this gallery item.' }}
+                </p>
+                <button onclick="openPhotoModal({{ $latestPhoto->id }})"
+                        class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg transition">
+                    View Gallery
+                </button>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+@endif
+
+{{-- Remaining Gallery Carousel --}}
+@if($remainingPhotos->isNotEmpty())
+<section class="bg-gray-50 py-12 border-t relative overflow-hidden">
+    <div class="max-w-7xl mx-auto px-6">
+        {{-- Carousel Wrapper --}}
+        <div class="relative">
+
+            {{-- Left Arrow --}}
+            <button 
+                class="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/100 text-gray-800 rounded-full p-3 shadow-lg z-20"
+                onclick="document.getElementById('gallery-carousel').scrollBy({left: -300, behavior: 'smooth'})"
+            >
+                &#8592;
+            </button>
+
+            {{-- Right Arrow --}}
+            <button 
+                class="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/100 text-gray-800 rounded-full p-3 shadow-lg z-20"
+                onclick="document.getElementById('gallery-carousel').scrollBy({left: 300, behavior: 'smooth'})"
+            >
+                &#8594;
+            </button>
+
+            {{-- Carousel --}}
+            <div id="gallery-carousel" class="flex space-x-6 overflow-x-auto scrollbar-hide scroll-smooth py-2">
+                @foreach($remainingPhotos as $photo)
+                    @php
+                        $firstImage = $photo->photos[0] ?? null;
+                        $extraCount = count($photo->photos) - 1;
+                    @endphp
+
+                    {{-- Photo Card --}}
+                    <div 
+                        class="relative flex-shrink-0 w-64 md:w-72 rounded-2xl shadow-lg cursor-pointer transform hover:scale-105 transition-all duration-500 group"
+                        onclick="openPhotoModal({{ $photo->id }})"
+                    >
+                        @if($firstImage)
+                            <img src="{{ asset('storage/' . $firstImage) }}" 
+                                 class="w-full h-64 md:h-72 object-cover rounded-2xl group-hover:scale-110 transition-transform duration-500">
+
+                            {{-- Overlay --}}
+                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-center items-center rounded-2xl">
+                                @if($extraCount > 0)
+                                    <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white font-semibold text-sm mb-2">
+                                        +{{ $extraCount }} More
+                                    </div>
+                                @endif
+                                <div class="text-white text-lg font-bold text-center">
+                                    {{ $photo->title ?? 'Gallery Item' }}
                                 </div>
-                            @endif
-                        </div>
-                    @else
-                        <div class="h-48 bg-gray-200 flex items-center justify-center text-gray-500">
-                            No Image
-                        </div>
-                    @endif
-                </div>
-            @endforeach
+                            </div>
+                        @else
+                            <div class="h-64 md:h-72 bg-gray-200 flex items-center justify-center text-gray-500 text-lg font-semibold rounded-2xl">
+                                No Image
+                            </div>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
         </div>
     </div>
 </section>
 @endif
 
+
+
+
 {{-- Upcoming Events & Games --}}
-<section class="bg-indigo-50 py-10 border-t">
+<section class="bg-gray-50 py-12 border-t">
     <div class="max-w-7xl mx-auto px-6">
-        <h3 class="text-xl font-semibold text-indigo-700 mb-4">Upcoming Events</h3>
+
+        {{-- Upcoming Events --}}
+        <h3 class="text-3xl font-bold text-indigo-700 mb-6">Upcoming Events</h3>
         @if($upcomingEvents->isEmpty())
-            <p class="text-gray-700 text-sm">No upcoming events.</p>
+            <p class="text-gray-600 text-sm">No upcoming events.</p>
         @else
-            <ul class="divide-y">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach($upcomingEvents as $event)
-                    <li class="py-3 flex justify-between items-center text-sm hover:bg-indigo-100 rounded px-2 transition">
-                        <span class="font-medium text-indigo-800">{{ $event->name }}</span>
-                        <span class="text-gray-500">{{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}</span>
-                    </li>
+                    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 relative overflow-hidden group cursor-pointer">
+                        {{-- Decorative Accent --}}
+                        <div class="absolute top-0 left-0 w-2 h-full bg-indigo-400 rounded-l-xl"></div>
+
+                        <div class="ml-4">
+                            <h4 class="font-semibold text-indigo-800 text-lg group-hover:text-indigo-600 transition">
+                                {{ $event->name }}
+                            </h4>
+                            <p class="text-gray-500 text-sm mt-1">
+                                {{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}
+                            </p>
+                        </div>
+
+                        {{-- Hover effect: overlay --}}
+                        <div class="absolute inset-0 bg-indigo-50/30 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </div>
                 @endforeach
-            </ul>
+            </div>
         @endif
 
-        <h3 class="text-xl font-semibold text-teal-700 mt-8 mb-4">Upcoming Games</h3>
+        {{-- Upcoming Games --}}
+        <h3 class="text-3xl font-bold text-teal-700 mt-12 mb-6">Upcoming Games</h3>
         @if($upcomingGames->isEmpty())
-            <p class="text-gray-700 text-sm">No upcoming games.</p>
+            <p class="text-gray-600 text-sm">No upcoming games.</p>
         @else
-            <ul class="divide-y">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 @foreach($upcomingGames as $game)
-                    <li class="py-3 px-2 hover:bg-teal-100 rounded transition">
-                        <div class="flex justify-between text-sm">
-                            <span class="font-medium text-teal-800">{{ $game->team_a }} vs {{ $game->team_b }}</span>
-                            <span class="text-gray-500">{{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}</span>
+                    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 relative overflow-hidden group cursor-pointer">
+                        {{-- Decorative Accent --}}
+                        <div class="absolute top-0 left-0 w-2 h-full bg-teal-400 rounded-l-xl"></div>
+
+                        <div class="ml-4">
+                            <h4 class="font-semibold text-teal-800 text-lg group-hover:text-teal-600 transition">
+                                {{ $game->team_a }} vs {{ $game->team_b }}
+                            </h4>
+                            <p class="text-gray-500 text-sm mt-1">
+                                {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}
+                            </p>
+                            <p class="text-gray-400 text-xs mt-1 italic">{{ $game->event->name ?? 'No Event' }}</p>
                         </div>
-                        <div class="text-gray-400 text-xs mt-1">{{ $game->event->name ?? 'No Event' }}</div>
-                    </li>
+
+                        {{-- Hover overlay --}}
+                        <div class="absolute inset-0 bg-teal-50/30 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </div>
                 @endforeach
-            </ul>
+            </div>
+        @endif
+
+    </div>
+</section>
+
+{{-- Latest Announcements --}}
+<section class="bg-gray-50 py-12 border-t">
+    <div class="max-w-7xl mx-auto px-6">
+        <h3 class="text-3xl font-bold text-pink-700 mb-6">Announcements</h3>
+        @if($latestAnnouncements->isEmpty())
+            <p class="text-gray-600 text-sm">No announcements available.</p>
+        @else
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($latestAnnouncements as $announcement)
+                    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 relative overflow-hidden group cursor-pointer">
+                        {{-- Decorative Accent --}}
+                        <div class="absolute top-0 left-0 w-2 h-full bg-pink-400 rounded-l-xl"></div>
+
+                        <div class="ml-4">
+                            <h4 class="font-semibold text-pink-800 text-lg group-hover:text-pink-600 transition">
+                                {{ $announcement->title }}
+                            </h4>
+                            <p class="text-gray-400 text-xs mt-1">{{ $announcement->published_at->format('M d, Y') }}</p>
+                            <p class="text-gray-600 text-sm mt-2">{{ \Illuminate\Support\Str::limit($announcement->content, 120) }}</p>
+                        </div>
+
+                        {{-- Hover overlay --}}
+                        <div class="absolute inset-0 bg-pink-50/30 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </div>
+                @endforeach
+            </div>
         @endif
     </div>
 </section>
 
-{{-- Announcements --}}
-<section class="bg-pink-50 py-10 border-t">
-    <div class="max-w-7xl mx-auto px-6">
-        <h3 class="text-xl font-semibold text-pink-700 mb-4">Latest Announcements</h3>
-        @if($latestAnnouncements->isEmpty())
-            <p class="text-gray-700 text-sm">No announcements available.</p>
-        @else
-            <ul class="divide-y">
-                @foreach($latestAnnouncements as $announcement)
-                    <li class="py-4 hover:bg-pink-100 rounded px-2 transition">
-                        <div class="flex justify-between items-center">
-                            <span class="font-medium text-pink-800">{{ $announcement->title }}</span>
-                            <span class="text-xs text-gray-500">{{ $announcement->published_at->format('M d, Y') }}</span>
-                        </div>
-                        <p class="text-sm text-gray-600 mt-1">{{ \Illuminate\Support\Str::limit($announcement->content, 120) }}</p>
-                    </li>
-                @endforeach
-            </ul>
-        @endif
-    </div>
-</section>
 
 {{-- Banner Slideshow JS --}}
 <script>
