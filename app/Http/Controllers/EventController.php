@@ -182,13 +182,15 @@ public function saveWinners(Request $request, Event $event)
         'bronze_school_id' => 'required|different:gold_school_id,silver_school_id',
     ]);
 
-    $event->update($request->only([
-        'gold_school_id',
-        'silver_school_id',
-        'bronze_school_id',
-    ]));
+    // Update winners AND award_date
+    $event->update([
+        'gold_school_id'   => $request->gold_school_id,
+        'silver_school_id' => $request->silver_school_id,
+        'bronze_school_id' => $request->bronze_school_id,
+        'award_date'       => now(), // ✅ set award date
+    ]);
 
-    // 🔥 Sync results table (single source of truth)
+    // Sync results table
     Result::where('event_id', $event->id)->delete();
 
     Result::insert([
@@ -221,8 +223,9 @@ public function saveWinners(Request $request, Event $event)
         ],
     ]);
 
-    return back()->with('success', 'Winners saved and medal tally updated.');
+    return back()->with('success', 'Winners saved, award date recorded, and medal tally updated.');
 }
+
 
 
 }

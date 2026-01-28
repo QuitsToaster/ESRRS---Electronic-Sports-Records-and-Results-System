@@ -20,10 +20,12 @@ class Event extends Model
     'gold_school_id',
     'silver_school_id',
     'bronze_school_id',
+    'award_date',
 ];
 
     protected $casts = [
         'start_date' => 'date',
+        'award_date' => 'datetime',
     ];
 
     public function sport()

@@ -13,7 +13,7 @@ class ResultController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Result::with(['school', 'sport', 'awardedBy']);
+        $query = Result::with(['school', 'sport', 'awardedBy', 'event']);
 
         if ($request->filled('search')) {
             $search = $request->search;
@@ -58,34 +58,64 @@ foreach($medalTally as $school) {
     /**
      * ✅ SHOW ALL SPORTS + TYPES
      */
-    public function create(Request $request)
+   public function create(Request $request)
 {
     $division = $request->get('division', 'Elementary');
     $category = $request->get('category', 'Boys');
 
-    // Load all sports with types
-    $sports = Sport::with('types')
-        ->orderBy('name')
-        ->get();
-
+    $sports = Sport::with('types')->orderBy('name')->get();
     $schools = School::orderBy('name')->get();
 
-    // ✅ Fetch existing results for this division & category
+    /**
+     * 1️⃣ EXISTING RESULTS (manual or previously saved)
+     */
     $existingResults = Result::where('division', $division)
         ->where('category', $category)
         ->get()
-        ->groupBy(function($item) {
-            return $item->sport_id . '-' . $item->type_id . '-' . $item->school_id . '-' . $item->medal;
-        });
+        ->groupBy(fn ($r) =>
+            $r->sport_id . '-' .
+            ($r->type_id ?? 0) . '-' .
+            $r->school_id . '-' .
+            $r->medal
+        );
+
+    /**
+     * 2️⃣ AUTO RESULTS FROM EVENTS (gold/silver/bronze)
+     */
+    $eventResults = [];
+
+    $events = \App\Models\Event::where('age_group', $division)
+        ->where('category', $category)
+        ->whereNotNull('gold_school_id')
+        ->get();
+
+    foreach ($events as $event) {
+
+        $map = [
+            'Gold'   => $event->gold_school_id,
+            'Silver' => $event->silver_school_id,
+            'Bronze' => $event->bronze_school_id,
+        ];
+
+        foreach ($map as $medal => $schoolId) {
+            if (!$schoolId) continue;
+
+            $key = $event->sport_id . '-0-' . $schoolId . '-' . $medal;
+
+            $eventResults[$key] = 1; // one medal per event
+        }
+    }
 
     return view('results.create', compact(
         'sports',
         'schools',
         'division',
         'category',
-        'existingResults'
+        'existingResults',
+        'eventResults'
     ));
 }
+
 
 
     /**
@@ -159,7 +189,7 @@ foreach($medalTally as $school) {
         $generatedAt = now()->format('M d, Y h:i A');
 
         $pdf = Pdf::loadView('results.export', compact('results','medalTally','generatedAt'))
-            ->setPaper('a4', 'landscape');
+            ->setPaper('letter', 'landscape');
 
         return $pdf->download('awards_report.pdf');
     }

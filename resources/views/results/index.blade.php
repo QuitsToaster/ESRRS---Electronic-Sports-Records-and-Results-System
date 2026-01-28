@@ -111,19 +111,28 @@
                 <tbody>
                     @foreach($divisionResults as $result)
                         <tr class="border-b">
-                            <td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $result->sport->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $result->school->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $result->category }}</td>
-                            <td class="px-4 py-2">
-                                <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
-                                              @elseif($result->medal==='Silver') text-gray-400 font-bold
-                                              @else text-orange-500 font-bold @endif">
-                                    {{ $result->medal }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $result->created_at->format('M d, Y') }}</td>
+                          
+<td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
+<td class="px-4 py-2">{{ $result->sport->name ?? '-' }}</td>
+<td class="px-4 py-2">{{ $result->school->name ?? '-' }}</td>
+<td class="px-4 py-2">{{ $result->category }}</td>
+<td class="px-4 py-2">
+    <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
+                  @elseif($result->medal==='Silver') text-gray-400 font-bold
+                  @else text-orange-500 font-bold @endif">
+        {{ $result->medal }}
+    </span>
+</td>
+<td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
+<td class="px-4 py-2">
+    {{ 
+        $result->created_at 
+            ? $result->created_at->format('M d, Y') 
+            : ($result->event?->award_date?->format('M d, Y') ?? '-') 
+    }}
+</td>
+
+
                         </tr>
                     @endforeach
                 </tbody>

@@ -83,7 +83,7 @@
                     <td>{{ $school->gold }}</td>
                     <td>{{ $school->silver }}</td>
                     <td>{{ $school->bronze }}</td>
-                    <td>{{ $school->total }}</td>
+                    <td>{{ ($school->gold*3 + $school->silver*2 + $school->bronze) }}</td>
                 </tr>
             @endforeach
         </tbody>
@@ -113,7 +113,13 @@
                     <td>{{ $result->category }}</td>
                     <td>{{ $result->medal }}</td>
                     <td>{{ $result->athlete->name ?? $result->team_name ?? '-' }}</td>
-                    <td>{{ $result->created_at->format('M d, Y') }}</td>
+                    <td>
+                        {{ 
+                            $result->created_at 
+                                ? $result->created_at->format('M d, Y') 
+                                : ($result->event?->award_date?->format('M d, Y') ?? '-') 
+                        }}
+                    </td>
                 </tr>
             @endforeach
         </tbody>

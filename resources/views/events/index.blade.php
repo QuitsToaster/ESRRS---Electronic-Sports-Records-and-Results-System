@@ -64,6 +64,7 @@
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Participants</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Start Date</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Venue</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Winners</th>
                 <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Actions</th>
             </tr>
         </thead>
@@ -128,6 +129,25 @@
                     {{-- Venue --}}
                     <td class="px-4 py-3 text-gray-700">
                         {{ $event->venue ?? 'TBA' }}
+                    </td>
+
+                    {{-- Winners --}}
+                    <td class="px-4 py-3 text-gray-700 text-sm">
+                        @if($event->gold_school_id || $event->silver_school_id || $event->bronze_school_id)
+                            <div class="flex flex-col gap-1">
+                                @if($event->goldWinner)
+                                    <span class="text-yellow-500 font-semibold">🥇 {{ $event->goldWinner->name }}</span>
+                                @endif
+                                @if($event->silverWinner)
+                                    <span class="text-gray-500 font-semibold">🥈 {{ $event->silverWinner->name }}</span>
+                                @endif
+                                @if($event->bronzeWinner)
+                                    <span class="text-orange-500 font-semibold">🥉 {{ $event->bronzeWinner->name }}</span>
+                                @endif
+                            </div>
+                        @else
+                            <span class="text-gray-400 italic">No winners yet</span>
+                        @endif
                     </td>
 
                     {{-- Actions --}}
