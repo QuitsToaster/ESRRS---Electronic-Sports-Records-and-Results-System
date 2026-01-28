@@ -89,15 +89,15 @@ body {
             <div class="p-3 bg-blue-50 rounded-lg flex items-center gap-3">
                 <div class="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">1</div>
                 <div>
-                    <p class="text-sm font-semibold text-blue-800">First Scan</p>
-                    <p class="text-xs text-blue-600">Check-in</p>
+                    <p class="text-sm font-semibold text-black">First Scan</p>
+                    <p class="text-xs text-black">Check-in</p>
                 </div>
             </div>
             <div class="p-3 bg-purple-50 rounded-lg flex items-center gap-3">
-                <div class="w-7 h-7 bg-purple-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
+                <div class="w-7 h-7 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">2</div>
                 <div>
-                    <p class="text-sm font-semibold text-purple-800">Second Scan</p>
-                    <p class="text-xs text-purple-600">Check-out</p>
+                    <p class="text-sm font-semibold text-black">Second Scan</p>
+                    <p class="text-xs text-black">Check-out</p>
                 </div>
             </div>
         </div>
@@ -170,11 +170,11 @@ body {
 {{-- Back to Home (Bottom Center) --}}
 <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
     <a href="{{ route('welcome') }}" 
-       class="bg-white/90 hover:bg-white text-indigo-600 hover:text-indigo-800 font-medium px-6 py-3 rounded-full shadow flex items-center gap-2 transition">
+       class="bg-white/90 hover:bg-white text-black hover:text-black font-medium px-6 py-3 rounded-full shadow flex items-center gap-2 transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
-        Back to Home
+        Back
     </a>
 </div>
 
