@@ -72,78 +72,84 @@
             @endforeach
 
             {{-- Full Page Modal --}}
-            <template x-for="event in {{ $events->toJson() }}" :key="event.id">
-                <div x-show="activeEvent === event.id"
-                     x-transition
-                     class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-auto"
-                     style="display: none;">
-                    <div @click.away="activeEvent = null"
-                         class="bg-white w-full h-full md:h-auto md:max-w-4xl rounded-lg shadow-lg overflow-auto relative">
+<template x-for="event in {{ $eventsJson->toJson() }}" :key="event.id">
+    <div x-show="activeEvent === event.id"
+         x-transition
+         class="fixed inset-0 z-50 bg-black bg-opacity-50 flex items-center justify-center p-4 overflow-auto"
+         style="display: none;">
+        <div @click.away="activeEvent = null"
+             class="bg-white w-full h-full md:h-auto md:max-w-4xl rounded-lg shadow-lg overflow-auto relative">
 
-                        {{-- Modal Header --}}
-                        <div class="flex justify-between items-center p-4 border-b">
-                            <h3 class="text-2xl font-bold text-gray-800" x-text="event.name"></h3>
-                            <button @click="activeEvent = null" class="text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
-                        </div>
+            {{-- Modal Header --}}
+            <div class="flex justify-between items-center p-4 border-b">
+                <h3 class="text-2xl font-bold text-gray-800" x-text="event.name"></h3>
+                <button @click="activeEvent = null" class="text-gray-600 hover:text-gray-800 text-2xl">&times;</button>
+            </div>
 
-                        {{-- Modal Body --}}
-                        <div class="p-6 space-y-6 text-gray-700">
+            {{-- Modal Body --}}
+            <div class="p-6 space-y-6 text-gray-700">
 
-                            {{-- Event Info --}}
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div><span class="font-semibold">Sport:</span> <span x-text="event.sport?.name ?? '-'"></span></div>
-                                <div><span class="font-semibold">Division:</span> <span x-text="event.age_group ?? '-'"></span></div>
-                                <div><span class="font-semibold">Category:</span> <span x-text="event.category ?? '-'"></span></div>
-                                <div><span class="font-semibold">Venue:</span> <span x-text="event.venue ?? '-'"></span></div>
-                                <div>
-                                    <span class="font-semibold">Date:</span>
-                                    <span x-text="event.start_date ? new Date(event.start_date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : 'TBA'"></span>
-                                    <span x-show="event.end_date"> - <span x-text="new Date(event.end_date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })"></span></span>
-                                </div>
-                            </div>
-
-                            {{-- Participating Schools --}}
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-800 mb-2">Participating Schools</h4>
-                                <ul class="list-disc list-inside space-y-1">
-                                    <template x-for="school in event.schools" :key="school.id">
-                                        <li x-text="school.name"></li>
-                                    </template>
-                                    <li x-show="!event.schools.length">No schools assigned.</li>
-                                </ul>
-                            </div>
-
-                            {{-- Winners --}}
-                            <div>
-                                <h4 class="text-lg font-semibold text-gray-800 mb-2">Winners</h4>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                                    <div class="bg-yellow-100 p-4 rounded text-center">
-                                        <div class="text-lg font-bold">Gold</div>
-                                        <div class="text-gray-700 mt-1" x-text="event.gold_winner?.name ?? '-'"></div>
-                                    </div>
-                                    <div class="bg-gray-200 p-4 rounded text-center">
-                                        <div class="text-lg font-bold">Silver</div>
-                                        <div class="text-gray-700 mt-1" x-text="event.silver_winner?.name ?? '-'"></div>
-                                    </div>
-                                    <div class="bg-orange-100 p-4 rounded text-center">
-                                        <div class="text-lg font-bold">Bronze</div>
-                                        <div class="text-gray-700 mt-1" x-text="event.bronze_winner?.name ?? '-'"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-
-                        {{-- Modal Footer --}}
-                        <div class="flex justify-end p-4 border-t">
-                            <button @click="activeEvent = null" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded shadow transition">
-                                Close
-                            </button>
-                        </div>
-
+                {{-- Event Info --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div><span class="font-semibold">Sport:</span> <span x-text="event.sport?.name ?? '-'"></span></div>
+                    <div><span class="font-semibold">Division:</span> <span x-text="event.age_group ?? '-'"></span></div>
+                    <div><span class="font-semibold">Category:</span> <span x-text="event.category ?? '-'"></span></div>
+                    <div><span class="font-semibold">Venue:</span> <span x-text="event.venue ?? '-'"></span></div>
+                    <div>
+                        <span class="font-semibold">Date:</span>
+                        <span x-text="event.start_date ? new Date(event.start_date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : 'TBA'"></span>
+                        <span x-show="event.end_date"> - <span x-text="new Date(event.end_date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })"></span></span>
                     </div>
                 </div>
-            </template>
+
+                {{-- Participating Schools --}}
+                <div>
+                    <h4 class="text-lg font-semibold text-gray-800 mb-2">Participating Schools</h4>
+                    <ul class="list-disc list-inside space-y-1">
+                        <template x-for="school in event.schools" :key="school.id">
+                            <li x-text="school.name"></li>
+                        </template>
+                        <li x-show="!event.schools.length">No schools assigned.</li>
+                    </ul>
+                </div>
+
+                {{-- Winners --}}
+<div>
+    <h4 class="text-lg font-semibold text-gray-800 mb-2">Winners</h4>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+        <div class="bg-yellow-100 p-4 rounded text-center">
+            <div class="text-lg font-bold">Gold</div>
+            <div class="text-gray-700 mt-1" x-text="event.goldWinner ? event.goldWinner.name : '-'"></div>
+        </div>
+
+        <div class="bg-gray-200 p-4 rounded text-center">
+            <div class="text-lg font-bold">Silver</div>
+            <div class="text-gray-700 mt-1" x-text="event.silverWinner ? event.silverWinner.name : '-'"></div>
+        </div>
+
+        <div class="bg-orange-100 p-4 rounded text-center">
+            <div class="text-lg font-bold">Bronze</div>
+            <div class="text-gray-700 mt-1" x-text="event.bronzeWinner ? event.bronzeWinner.name : '-'"></div>
+        </div>
+
+    </div>
+</div>
+
+
+            </div>
+
+            {{-- Modal Footer --}}
+            <div class="flex justify-end p-4 border-t">
+                <button @click="activeEvent = null" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded shadow transition">
+                    Close
+                </button>
+            </div>
+
+        </div>
+    </div>
+</template>
+
 
         </div>
     @endif

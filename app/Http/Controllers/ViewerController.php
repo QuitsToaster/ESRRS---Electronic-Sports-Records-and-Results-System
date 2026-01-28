@@ -100,14 +100,34 @@ public function events(Request $request)
 {
     $search = $request->input('search');
 
-    $events = Event::when($search, function($query, $search) {
-        $query->where('name', 'like', "%{$search}%");
-    })
-    ->orderBy('start_date', 'asc')
-    ->get();
+    // Keep Eloquent models for Blade
+    $events = Event::with(['schools', 'goldWinner', 'silverWinner', 'bronzeWinner', 'sport'])
+        ->when($search, function($query, $search) {
+            $query->where('name', 'like', "%{$search}%");
+        })
+        ->orderBy('start_date', 'asc')
+        ->get();
 
-    return view('viewer.events', compact('events'));
+    // Prepare JSON version for AlpineJS modal
+    $eventsJson = $events->map(function($event) {
+        return [
+            'id' => $event->id,
+            'name' => $event->name,
+            'start_date' => $event->start_date?->toDateString(),
+            'venue' => $event->venue,
+            'age_group' => $event->age_group,
+            'category' => $event->category,
+            'sport' => $event->sport ? ['name' => $event->sport->name] : null,
+            'schools' => $event->schools->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->toArray(),
+            'goldWinner' => $event->goldWinner ? ['id' => $event->goldWinner->id, 'name' => $event->goldWinner->name] : null,
+            'silverWinner' => $event->silverWinner ? ['id' => $event->silverWinner->id, 'name' => $event->silverWinner->name] : null,
+            'bronzeWinner' => $event->bronzeWinner ? ['id' => $event->bronzeWinner->id, 'name' => $event->bronzeWinner->name] : null,
+        ];
+    });
+
+    return view('viewer.events', compact('events', 'eventsJson'));
 }
+
 
 
     // Games Page with search
