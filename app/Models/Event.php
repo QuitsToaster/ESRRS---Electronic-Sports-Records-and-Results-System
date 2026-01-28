@@ -38,6 +38,7 @@ class Event extends Model
         return $this->belongsToMany(School::class, 'event_school')
                     ->withTimestamps();
     }
+    
 
     public function sportType()
 {
