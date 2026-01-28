@@ -146,45 +146,61 @@
                                 ->get();
                         @endphp
                         
-                        @foreach($recent as $record)
-                            @php
-                                $user = $record->athlete ?? $record->coach;
-                                $isTimeIn = is_null($record->time_out);
-                                $time = $isTimeIn ? $record->time_in : $record->time_out;
-                            @endphp
-                            <tr class="border-b hover:bg-slate-50">
-                                <td class="p-3 font-medium">
-                                    {{ Carbon::parse($time)->format('h:i A') }}
-                                </td>
-                                <td class="p-3">
-                                    <div class="flex items-center gap-2">
-                                        @if($user && $user->profile_photo)
-                                            <img src="{{ asset('storage/'.$user->profile_photo) }}" 
-                                                 class="w-8 h-8 rounded-full object-cover">
-                                        @else
-                                            <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
-                                                <span class="text-slate-500 text-xs font-medium">
-                                                    {{ substr($user->name ?? '?', 0, 1) }}
-                                                </span>
-                                            </div>
-                                        @endif
-                                        <span>{{ $user->name ?? 'Unknown' }}</span>
-                                    </div>
-                                </td>
-                                <td class="p-3">
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                        {{ $record->athlete ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
-                                        {{ $record->athlete ? 'Athlete' : 'Coach' }}
-                                    </span>
-                                </td>
-                                <td class="p-3">
-                                    <span class="px-2 py-1 rounded-full text-xs font-medium 
-                                        {{ $isTimeIn ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
-                                        {{ $isTimeIn ? 'Checked In' : 'Checked Out' }}
-                                    </span>
-                                </td>
-                            </tr>
-                        @endforeach
+                       @foreach($recent as $record)
+    @php
+        $athlete = $record->athlete;
+        $coach   = $record->coach;
+        $userType = $athlete ? 'athlete' : 'coach';
+        $user = $athlete ?? $coach;
+
+        // Determine display name
+        if ($athlete) {
+            $fullName = trim($athlete->first_name 
+                         . ' ' 
+                         . ($athlete->middle_initial ? $athlete->middle_initial . '. ' : '') 
+                         . $athlete->last_name);
+        } else {
+            $fullName = $coach->name;
+        }
+
+        $isTimeIn = is_null($record->time_out);
+        $time = $isTimeIn ? $record->time_in : $record->time_out;
+    @endphp
+
+    <tr class="border-b hover:bg-slate-50">
+        <td class="p-3 font-medium">
+            {{ Carbon::parse($time)->format('h:i A') }}
+        </td>
+        <td class="p-3">
+            <div class="flex items-center gap-2">
+                @if($user && $user->profile_photo)
+                    <img src="{{ asset('storage/'.$user->profile_photo) }}" 
+                         class="w-8 h-8 rounded-full object-cover">
+                @else
+                    <div class="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                        <span class="text-slate-500 text-xs font-medium">
+                            {{ substr($fullName ?? '?', 0, 1) }}
+                        </span>
+                    </div>
+                @endif
+                <span>{{ $fullName ?? 'Unknown' }}</span>
+            </div>
+        </td>
+        <td class="p-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium 
+                {{ $athlete ? 'bg-blue-100 text-blue-800' : 'bg-purple-100 text-purple-800' }}">
+                {{ $athlete ? 'Athlete' : 'Coach' }}
+            </span>
+        </td>
+        <td class="p-3">
+            <span class="px-2 py-1 rounded-full text-xs font-medium 
+                {{ $isTimeIn ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800' }}">
+                {{ $isTimeIn ? 'Checked In' : 'Checked Out' }}
+            </span>
+        </td>
+    </tr>
+@endforeach
+
                         
                         @if($recent->isEmpty())
                             <tr>
