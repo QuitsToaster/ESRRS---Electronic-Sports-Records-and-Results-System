@@ -25,20 +25,19 @@
             <div class="flex justify-between h-16 items-center">
 
                 {{-- Logo --}}
-@php
-    $viewerLogo = \App\Models\LayoutSetting::where('key', 'viewer_top_logo')->first();
-@endphp
+                @php
+                    $viewerLogo = \App\Models\LayoutSetting::where('key', 'viewer_top_logo')->first();
+                @endphp
 
-<a href="{{ route('viewer.home') }}" class="flex items-center gap-2">
-    @if($viewerLogo && $viewerLogo->value)
-        <img src="{{ asset('storage/' . $viewerLogo->value) }}"
-             alt="Viewer Logo"
-             class="h-10 object-contain">
-    @else
-        <span class="text-lg font-bold">CEMS</span>
-    @endif
-</a>
-
+                <a href="{{ route('viewer.home') }}" class="flex items-center gap-2">
+                    @if($viewerLogo && $viewerLogo->value)
+                        <img src="{{ asset('storage/' . $viewerLogo->value) }}"
+                             alt="Viewer Logo"
+                             class="h-10 object-contain">
+                    @else
+                        <span class="text-lg font-bold">CEMS</span>
+                    @endif
+                </a>
 
                 {{-- Desktop Nav --}}
                 <div class="hidden md:flex items-center space-x-6 font-medium">
@@ -49,8 +48,25 @@
 
                     <a href="{{ route('viewer.home') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.home') ? $active : '' }}">Home</a>
                     <a href="{{ route('viewer.participants') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $active : '' }}">Teams</a>
-                    <a href="{{ route('viewer.events') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.events') ? $active : '' }}">Events</a>
-                    <a href="{{ route('viewer.games') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.games') ? $active : '' }}">Games</a>
+
+                    {{-- Combined Competitions Nav --}}
+                    <div x-data="{ openComp: false }" class="relative">
+                        <button @click="openComp = !openComp"
+                                class="flex items-center gap-1 {{ request()->routeIs('viewer.events','viewer.games') ? $active : '' }}">
+                            Competitions
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                            </svg>
+                        </button>
+                        <div x-show="openComp"
+                             x-transition
+                             @click.away="openComp = false"
+                             class="absolute mt-2 bg-white text-gray-800 rounded shadow-lg w-36 z-50">
+                            <a href="{{ route('viewer.events') }}" class="block px-4 py-2 hover:bg-gray-100">Events</a>
+                            <a href="{{ route('viewer.games') }}" class="block px-4 py-2 hover:bg-gray-100">Games</a>
+                        </div>
+                    </div>
+
                     <a href="{{ route('viewer.gallery') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.gallery') ? $active : '' }}">Gallery</a>
                     <a href="{{ route('viewer.announcements') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.announcements') ? $active : '' }}">Announcements</a>
                     <a href="{{ route('viewer.feedbacks') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.feedbacks') ? $active : '' }}">Feedbacks</a>
@@ -81,8 +97,21 @@
 
             <a href="{{ route('viewer.home') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Home</a>
             <a href="{{ route('viewer.participants') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Teams</a>
-            <a href="{{ route('viewer.events') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Events</a>
-            <a href="{{ route('viewer.games') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Games</a>
+
+            {{-- Combined Competitions --}}
+            <div x-data="{ openComp: false }" class="relative">
+                <button @click="openComp = !openComp" class="w-full text-left px-3 py-2 rounded hover:bg-blue-600 flex justify-between items-center">
+                    Competitions
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+                <div x-show="openComp" x-transition @click.away="openComp = false" class="bg-blue-600 mt-1 rounded shadow-lg">
+                    <a href="{{ route('viewer.events') }}" class="block px-4 py-2 hover:bg-blue-500">Events</a>
+                    <a href="{{ route('viewer.games') }}" class="block px-4 py-2 hover:bg-blue-500">Games</a>
+                </div>
+            </div>
+
             <a href="{{ route('viewer.gallery') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Gallery</a>
             <a href="{{ route('viewer.announcements') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Announcements</a>
             <a href="{{ route('viewer.feedbacks') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Feedbacks</a>
