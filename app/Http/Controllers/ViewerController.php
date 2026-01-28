@@ -16,33 +16,38 @@ use App\Models\Announcement;
 
 class ViewerController extends Controller
 {
-    // Home Page
     public function home()
-    {
-        $eventsCount = Event::count();
-        $upcomingEvents = Event::orderBy('start_date', 'asc')->take(5)->get();
+{
+    $eventsCount = Event::count();
+    $upcomingEvents = Event::orderBy('start_date', 'asc')->take(5)->get();
 
-        $gamesCount = Game::count();
-        $upcomingGames = Game::with('event')->orderBy('game_time', 'asc')->take(5)->get();
+    $gamesCount = Game::count();
+    $upcomingGames = Game::with('event')->orderBy('game_time', 'asc')->take(5)->get();
 
-        $announcementsCount = Announcement::count();
-        $latestAnnouncements = Announcement::latest()->take(5)->get();
+    $announcementsCount = Announcement::count();
+    $latestAnnouncements = Announcement::latest()->take(5)->get();
 
-        $medalTally = \DB::table('results')
-            ->selectRaw('school_id, SUM(medal="Gold") as gold, SUM(medal="Silver") as silver, SUM(medal="Bronze") as bronze')
-            ->groupBy('school_id')
-            ->get();
+    // Medal tally with rank sorting (Gold > Silver > Bronze)
+    $medalTally = \DB::table('results')
+        ->selectRaw('school_id, SUM(medal="Gold") as gold, SUM(medal="Silver") as silver, SUM(medal="Bronze") as bronze')
+        ->groupBy('school_id')
+        ->get()
+        ->sortByDesc(function($school){
+            return [$school->gold, $school->silver, $school->bronze];
+        })
+        ->values(); // reindex after sort
 
-        // Fetch banners for the homepage slideshow
-        $banners = Banner::orderBy('order')->get();
+    // Fetch banners for the homepage slideshow
+    $banners = Banner::orderBy('order')->get();
 
-        return view('viewer.home', compact(
-            'eventsCount', 'upcomingEvents',
-            'gamesCount', 'upcomingGames',
-            'announcementsCount', 'latestAnnouncements',
-            'medalTally', 'banners' // <-- pass banners
-        ));
-    }
+    return view('viewer.home', compact(
+        'eventsCount', 'upcomingEvents',
+        'gamesCount', 'upcomingGames',
+        'announcementsCount', 'latestAnnouncements',
+        'medalTally', 'banners'
+    ));
+}
+
 
    public function participants(Request $request)
     {
@@ -295,5 +300,23 @@ public function gallery(Request $request)
             'message' => $message
         ]);
     }
+
+    public function medalTally()
+{
+    $medalTally = \DB::table('results')
+        ->selectRaw('school_id, SUM(medal="Gold") as gold, SUM(medal="Silver") as silver, SUM(medal="Bronze") as bronze')
+        ->groupBy('school_id')
+        ->get()
+        ->sortByDesc(function($school){
+            return [$school->gold, $school->silver, $school->bronze];
+        })
+        ->values();
+
+    // Fetch schools names
+    $schools = \App\Models\School::whereIn('id', $medalTally->pluck('school_id'))->get()->keyBy('id');
+
+    return view('viewer.medal-tally', compact('medalTally', 'schools'));
+}
+
 
 }

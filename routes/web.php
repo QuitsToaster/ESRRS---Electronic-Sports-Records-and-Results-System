@@ -43,6 +43,10 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('games', [ViewerController::class, 'games'])->name('games');
     Route::get('announcements', [ViewerController::class, 'announcements'])->name('announcements');
     Route::get('feedbacks', [ViewerController::class, 'feedbacks'])->name('feedbacks');
+
+        // Medal Tally
+    Route::get('/medal-tally', [ViewerController::class, 'medalTally'])->name('medalTally');
+
 });
 
 Route::get('viewer/feedbacks', [App\Http\Controllers\ViewerController::class, 'feedbacks'])->name('viewer.feedbacks');

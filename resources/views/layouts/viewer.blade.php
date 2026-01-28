@@ -48,7 +48,7 @@
 
                     <a href="{{ route('viewer.home') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.home') ? $active : '' }}">Home</a>
                     <a href="{{ route('viewer.participants') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $active : '' }}">Teams</a>
-
+                    <a href="{{ route('viewer.medalTally') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.medalTally') ? $active : '' }}">Medal Tally</a>
                     {{-- Combined Competitions Nav --}}
                     <div x-data="{ openComp: false }" class="relative">
                         <button @click="openComp = !openComp"
@@ -97,7 +97,7 @@
 
             <a href="{{ route('viewer.home') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Home</a>
             <a href="{{ route('viewer.participants') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Teams</a>
-
+            <a href="{{ route('viewer.medalTally') }}" class="block px-3 py-2 rounded hover:bg-blue-600">Medal Tally</a>
             {{-- Combined Competitions --}}
             <div x-data="{ openComp: false }" class="relative">
                 <button @click="openComp = !openComp" class="w-full text-left px-3 py-2 rounded hover:bg-blue-600 flex justify-between items-center">
@@ -126,8 +126,8 @@
     {{-- Offset for fixed navbar --}}
     <div class="h-16"></div>
 
-    {{-- Main Content --}}
-    <main class="max-w-7xl mx-auto p-4">
+    {{-- Main Content FULL WIDTH --}}
+    <main class="w-full">
         @yield('content')
     </main>
 
