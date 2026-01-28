@@ -10,56 +10,65 @@
 </head>
 <body class="bg-gray-100 font-sans antialiased">
 
-<div class="min-h-screen flex items-center justify-center px-4">
-    <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8">
-        <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Login to {{ config('app.name') }}</h1>
+    <div class="relative min-h-screen flex flex-col justify-center items-center px-4">
+        {{-- Background Image + Blur --}}
+        <div class="fixed inset-0 -z-10">
+            <img src="{{ asset('images/cavraa.jpg') }}" 
+                 alt="Background"
+                 class="w-full h-full object-cover filter brightness-75 blur-sm">
+            <div class="absolute inset-0 bg-black/40"></div> {{-- Dark overlay --}}
+        </div>
 
-        @if ($errors->any())
-            <div class="mb-4 text-red-600">
-                <ul class="list-disc pl-5">
-                    @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                    @endforeach
-                </ul>
-            </div>
-        @endif
+        {{-- Form --}}
+        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 relative z-10">
+            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Login to {{ config('app.name') }}</h1>
 
-        <form method="POST" action="{{ route('login') }}">
-            @csrf
+            @if ($errors->any())
+                <div class="mb-4 text-red-600">
+                    <ul class="list-disc pl-5">
+                        @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
-            <div class="mb-4">
-                <label for="email" class="block text-gray-700 font-semibold">Email</label>
-                <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
-                    class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500">
-            </div>
+            <form method="POST" action="{{ route('login') }}">
+                @csrf
 
-            <div class="mb-4">
-                <label for="password" class="block text-gray-700 font-semibold">Password</label>
-                <input id="password" type="password" name="password" required
-                    class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500">
-            </div>
+                <div class="mb-4">
+                    <label for="email" class="block text-gray-700 font-semibold">Email</label>
+                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
+                        class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
 
-            <div class="flex items-center justify-between mb-4">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" name="remember" class="rounded border-gray-300">
-                    <span class="ml-2 text-gray-600">Remember me</span>
-                </label>
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">Forgot password?</a>
-                @endif
-            </div>
+                <div class="mb-4">
+                    <label for="password" class="block text-gray-700 font-semibold">Password</label>
+                    <input id="password" type="password" name="password" required
+                        class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                </div>
 
-            <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow">
-                Login
-            </button>
-        </form>
+                <div class="flex items-center justify-between mb-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="remember" class="rounded border-gray-300">
+                        <span class="ml-2 text-gray-600">Remember me</span>
+                    </label>
+                    @if (Route::has('password.request'))
+                        <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">Forgot password?</a>
+                    @endif
+                </div>
 
-        <p class="mt-6 text-center text-gray-600">
-            Don't have an account? 
-            <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Register</a>
-        </p>
+                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow">
+                    Login
+                </button>
+            </form>
+
+            <p class="mt-6 text-center text-gray-600">
+                Don't have an account? 
+                <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Register</a>
+            </p>
+        </div>
     </div>
-</div>
 
 </body>
 </html>
