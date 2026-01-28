@@ -16,6 +16,12 @@ class Attendance extends Model
         'time_out',
     ];
 
+    // ADD THESE CASTS - THIS IS CRITICAL!
+    protected $casts = [
+        'time_in' => 'datetime',
+        'time_out' => 'datetime',
+    ];
+
     // Athlete relationship
     public function athlete()
     {

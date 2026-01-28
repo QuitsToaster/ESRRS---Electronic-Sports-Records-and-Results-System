@@ -17,6 +17,7 @@ use App\Http\Controllers\ResultController;
 use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\BracketController;
 use Illuminate\Support\Facades\Route;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Athlete;
@@ -119,8 +120,27 @@ Route::post('/games/{game}/update-timer', [GameController::class, 'updateTimer']
 Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLiveVideo'])
     ->name('games.updateLiveVideo');
 
+Route::post('games/{game}/start', [GameController::class, 'startGame'])->name('games.start');
+Route::post('games/{game}/winner', [GameController::class, 'setWinner'])->name('games.winner');
+
+
+Route::post('/games/{game}/finish', [GameController::class, 'finishGame'])
+     ->name('games.finish');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('brackets/create', [BracketController::class, 'create'])->name('brackets.create');
+    Route::post('brackets', [BracketController::class, 'store'])->name('brackets.store');
+});
+
+Route::get('/events/{event}/manage', [EventController::class, 'manage'])
+    ->name('events.manage');
+Route::post('/events/{event}/winners', [EventController::class, 'saveWinners'])
+    ->name('events.winners');
+
+
 // Route::get('/viewer/game/{game}/live-timer', [GameController::class, 'liveTimer'])->name('viewer.liveTimer');
 Route::get('/viewer/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
+Route::get('/viewer/game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);
 
 
 // Viewer polling

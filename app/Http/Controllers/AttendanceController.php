@@ -4,60 +4,94 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Athlete;
+use App\Models\Coach;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
-    // Show the attendance scanning page
+    // Show the attendance scanning page (this is what users see)
     public function index()
     {
         return view('attendance.check');
     }
 
-    // Handle QR code submission
+    // Handle QR code submission from user self-scanning
     public function store(Request $request)
-{
-    $request->validate([
-        'qr_code' => 'required|string',
-    ]);
-
-    $qr = $request->qr_code;
-
-    $today = Carbon::today();
-
-    // Check athlete first
-    $athlete = \App\Models\Athlete::where('qr_code', $qr)->first();
-    if ($athlete) {
-        $already = \App\Models\Attendance::where('athlete_id', $athlete->id)
-                    ->whereDate('created_at', $today)->first();
-        if ($already) return back()->with('already_scanned_name', $athlete->name);
-
-        \App\Models\Attendance::create([
-            'athlete_id' => $athlete->id,
-            'time_in' => now(),
+    {
+        $request->validate([
+            'qr_code' => 'required|string',
         ]);
 
-        return back()->with('success', $athlete->name . ' attendance recorded.');
+        $qr = $request->qr_code;
+        $now = Carbon::now();
+        $today = Carbon::today();
+
+        DB::beginTransaction();
+
+        try {
+            // Check athlete first
+            $athlete = Athlete::where('qr_code', $qr)->first();
+            
+            if ($athlete) {
+                return $this->handleAttendance($athlete, 'athlete', $now, $today);
+            }
+
+            // Check coach next
+            $coach = Coach::where('qr_code', $qr)->first();
+            
+            if ($coach) {
+                return $this->handleAttendance($coach, 'coach', $now, $today);
+            }
+
+            DB::rollBack();
+            return back()->with('error', 'QR code not recognized. Please try again.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'System error. Please try again.');
+        }
     }
 
-    // Check coach next
-    $coach = \App\Models\Coach::where('qr_code', $qr)->first();
-    if ($coach) {
-        $already = \App\Models\Attendance::where('coach_id', $coach->id)
-                    ->whereDate('created_at', $today)->first();
-        if ($already) return back()->with('already_scanned_name', $coach->name);
+    private function handleAttendance($user, $type, $now, $today)
+    {
+        $userIdField = $type . '_id';
+        $userName = $user->name;
 
-        \App\Models\Attendance::create([
-            'coach_id' => $coach->id,
-            'time_in' => now(),
-        ]);
+        // Find existing attendance for today
+        $existing = Attendance::where($userIdField, $user->id)
+            ->whereDate('created_at', $today)
+            ->first();
 
-        return back()->with('success', $coach->name . ' attendance recorded.');
+        if ($existing) {
+            // User already scanned today
+            if ($existing->time_out) {
+                // Already timed out
+                DB::rollBack();
+                return back()->with('error', 
+                    "$userName has already timed out at " . 
+                    Carbon::parse($existing->time_out)->format('h:i A')
+                );
+            } else {
+                // Has time_in, needs time_out
+                $existing->update(['time_out' => $now]);
+                DB::commit();
+                return back()->with('success', 
+                    "Time out recorded for $userName at " . $now->format('h:i A')
+                );
+            }
+        } else {
+            // First scan - create time_in
+            Attendance::create([
+                $userIdField => $user->id,
+                'time_in' => $now,
+            ]);
+            
+            DB::commit();
+            return back()->with('success', 
+                "Time in recorded for $userName at " . $now->format('h:i A')
+            );
+        }
     }
-
-    // If not found
-    return back()->with('error', 'QR code not recognized. Athlete or Coach not registered.');
-}
-
 }
