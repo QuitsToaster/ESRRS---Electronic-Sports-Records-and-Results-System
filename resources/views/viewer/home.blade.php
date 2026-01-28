@@ -83,8 +83,8 @@
 <section class="relative py-10">
     {{-- Background Image --}}
     <div class="absolute inset-0">
-        <img src="{{ asset('storage/medalbg.jpg') }}" 
-             alt="Medal Background" 
+        <img src="{{ asset('storage/medalbg.jpg') }}"
+             alt="Medal Background"
              class="w-full h-full object-cover brightness-75 blur-sm">
         <div class="absolute inset-0 bg-black/30"></div>
     </div>
@@ -92,14 +92,11 @@
     {{-- Content --}}
     <div class="relative max-w-7xl mx-auto px-6">
 
-        {{-- Header --}}
-        <div class="grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white">
+        {{-- Header (Desktop Only) --}}
+        <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white">
             <div></div>
-            <h3 class="text-3xl font-bold">
-                Medal Tally
-            </h3>
+            <h3 class="text-3xl font-bold">Medal Tally</h3>
 
-            {{-- Medal Labels (ALIGNED WITH COUNTS) --}}
             <div class="grid grid-cols-3 text-center font-semibold text-lg">
                 <span class="text-yellow-400">Gold</span>
                 <span class="text-gray-300">Silver</span>
@@ -114,62 +111,103 @@
         @if($medalTally->isEmpty())
             <p class="text-gray-200 text-sm">No medals awarded yet.</p>
         @else
-            <div class="grid gap-4 md:gap-6">
+            <div class="space-y-4 md:space-y-6">
                 @foreach($medalTally as $index => $school)
                     @php
                         $schoolModel = \App\Models\School::find($school->school_id);
                         $total = $school->gold + $school->silver + $school->bronze;
                     @endphp
 
-                    {{-- Row --}}
-                    <div class="grid grid-cols-[40px_1fr_420px_70px] items-center p-4 md:p-6 bg-white/10 backdrop-blur-md rounded-xl shadow-lg hover:shadow-2xl transition">
+                    {{-- ================= DESKTOP ROW ================= --}}
+                    <div class="hidden md:grid
+                                grid-cols-[40px_1fr_420px_70px]
+                                items-center p-6
+                                bg-white/10 backdrop-blur-md
+                                rounded-xl shadow-lg hover:shadow-2xl transition">
 
                         {{-- Rank --}}
                         <div class="text-white font-bold text-lg text-center">
                             {{ $index + 1 }}
                         </div>
 
-                        {{-- School Info --}}
+                        {{-- School --}}
                         <div class="flex items-center space-x-4">
                             @if($schoolModel && $schoolModel->logo)
                                 <img src="{{ asset('storage/' . $schoolModel->logo) }}"
                                      class="w-12 h-12 object-cover rounded-full border border-white/30">
-                            @else
-                                <div class="w-12 h-12 bg-white/30 rounded-full flex items-center justify-center text-gray-200 text-xs">
-                                    N/A
-                                </div>
                             @endif
-
                             <span class="text-white font-semibold text-lg">
                                 {{ $schoolModel->name ?? 'Unknown' }}
                             </span>
                         </div>
 
-                        {{-- Medal Counts (CENTERED & BIG) --}}
+                        {{-- Medals --}}
                         <div class="grid grid-cols-3 text-center font-extrabold text-4xl">
                             <span class="text-yellow-400">{{ $school->gold }}</span>
                             <span class="text-gray-300">{{ $school->silver }}</span>
                             <span class="text-orange-400">{{ $school->bronze }}</span>
                         </div>
 
-                     {{-- Total --}}
-<div class="relative h-full">
-    {{-- Yellow/Gold gradient background spanning from Total column to the container's right edge --}}
-    <div class="absolute top-0 bottom-0 left-0 w-[500px] -z-10
-                bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
-                opacity-90"></div>
+                        {{-- Total (UNCHANGED DESIGN) --}}
+                        <div class="relative h-full flex items-center justify-center">
+                            <div class="absolute inset-y-0 left-0 w-[500px] -z-10
+                                        bg-gradient-to-r
+                                        from-yellow-300 via-yellow-400 to-amber-500
+                                        opacity-90"></div>
 
-    {{-- Total number --}}
-    <div class="relative text-center text-red-600 font-extrabold text-6xl py-4">
-        {{ $total }}
-    </div>
-</div>
-
-
-
-
-
+                            <div class="relative text-red-600 font-extrabold text-6xl">
+                                {{ $total }}
+                            </div>
+                        </div>
                     </div>
+
+                    {{-- ================= MOBILE CARD ================= --}}
+                    <div class="md:hidden
+                                bg-white/10 backdrop-blur-md
+                                rounded-xl shadow-lg p-4 space-y-4">
+
+                        {{-- Header --}}
+                        <div class="flex items-center gap-3">
+                            <span class="text-white font-bold">#{{ $index + 1 }}</span>
+
+                            @if($schoolModel && $schoolModel->logo)
+                                <img src="{{ asset('storage/' . $schoolModel->logo) }}"
+                                     class="w-10 h-10 rounded-full border border-white/30 object-cover">
+                            @endif
+
+                            <span class="text-white font-semibold">
+                                {{ $schoolModel->name ?? 'Unknown' }}
+                            </span>
+                        </div>
+
+                        {{-- Medals --}}
+                        <div class="grid grid-cols-3 text-center">
+                            <div>
+                                <p class="text-xs text-yellow-300">Gold</p>
+                                <p class="text-3xl font-extrabold text-yellow-400">{{ $school->gold }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-300">Silver</p>
+                                <p class="text-3xl font-extrabold text-gray-300">{{ $school->silver }}</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-orange-300">Bronze</p>
+                                <p class="text-3xl font-extrabold text-orange-400">{{ $school->bronze }}</p>
+                            </div>
+                        </div>
+
+                        {{-- Total --}}
+                        <div class="relative overflow-hidden rounded-lg">
+                            <div class="absolute inset-0
+                                        bg-gradient-to-r
+                                        from-yellow-300 via-yellow-400 to-amber-500
+                                        opacity-90"></div>
+                            <div class="relative text-center text-red-700 font-extrabold text-4xl py-2">
+                                Total: {{ $total }}
+                            </div>
+                        </div>
+                    </div>
+
                 @endforeach
             </div>
         @endif
