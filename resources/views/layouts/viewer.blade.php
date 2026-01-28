@@ -8,7 +8,7 @@
         window.addEventListener('scroll', () => {
             showTop = window.scrollY > 300
         })
-      ">
+      " class="overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,7 +21,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
 </head>
 
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-100 font-sans overflow-x-hidden">
 
     {{-- Fixed Top Navbar --}}
     <nav class="fixed top-0 left-0 right-0 z-50 bg-white/30 backdrop-blur-md shadow-md">

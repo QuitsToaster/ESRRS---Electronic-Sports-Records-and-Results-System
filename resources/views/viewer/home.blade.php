@@ -155,7 +155,7 @@
                      {{-- Total --}}
 <div class="relative h-full">
     {{-- Yellow/Gold gradient background spanning from Total column to the container's right edge --}}
-    <div class="absolute top-0 bottom-0 left-0 w-[198px] -z-10
+    <div class="absolute top-0 bottom-0 left-0 w-[500px] -z-10
                 bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
                 opacity-90"></div>
 

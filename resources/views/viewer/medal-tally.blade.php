@@ -3,7 +3,7 @@
 @section('page-title', 'Medal Tally')
 
 @section('content')
-<section class="relative py-10 min-h-screen">
+<section class="relative py-10 min-h-screen -mt-16">
     {{-- Background --}}
     <div class="absolute inset-0">
         <img src="{{ asset('storage/medalbg.jpg') }}" 
@@ -13,7 +13,7 @@
     </div>
 
     {{-- Content --}}
-    <div class="relative max-w-7xl mx-auto px-6">
+    <div class="relative max-w-7xl mx-auto pt-20 px-6 ">
 
         {{-- Medal Tally Header --}}
         <div class="grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white">
@@ -74,7 +74,7 @@
 
                         {{-- Total --}}
                         <div class="relative h-full">
-                            <div class="absolute top-0 bottom-0 left-0 w-[198px] -z-10
+                            <div class="absolute top-0 bottom-0 left-0 w-[500px] -z-10
                                         bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
                                         opacity-90"></div>
 
