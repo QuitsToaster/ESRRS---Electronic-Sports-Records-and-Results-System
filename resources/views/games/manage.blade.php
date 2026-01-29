@@ -14,26 +14,23 @@
 </div>
 
 @php
-    $scores = $game->scores ?? ['team_a' => [], 'team_b' => []];
+$scores = $game->scores ?? ['team_a' => [], 'team_b' => []];
 
-
-    // Determine current period
-    $currentPeriodIndex = 0;
-    foreach ($periods as $i => $period) {
-        if (!isset($scores['team_a'][$i]) && !isset($scores['team_b'][$i])) {
-            $currentPeriodIndex = $i;
-            break;
-        }
-        $currentPeriodIndex = $i + 1;
+// Find current period
+$currentPeriodIndex = 0;
+foreach ($periods as $i => $p) {
+    if (!isset($scores['team_a'][$i])) {
+        $currentPeriodIndex = $i;
+        break;
     }
+}
+$currentPeriod = $periods[$currentPeriodIndex];
 
-    $currentPeriodIndex = min($currentPeriodIndex, count($periods) - 1);
-    $currentPeriod = $periods[$currentPeriodIndex];
-
-    // LIVE SCORE ONLY (resets after each finish)
-    $currentScoreA = $game->score_a ?? 0;
-    $currentScoreB = $game->score_b ?? 0;
+// LIVE SCORE ONLY
+$currentScoreA = $game->score_a ?? 0;
+$currentScoreB = $game->score_b ?? 0;
 @endphp
+
 
 {{-- ================= LIVE VIDEO LINK ================= --}}
 <div class="bg-white border rounded-xl shadow-lg p-6 mb-8">
@@ -197,130 +194,7 @@
 </div>
 
 
-<script>
-let scoreA = {{ $currentScoreA }};
-let scoreB = {{ $currentScoreB }};
-
-function changeScore(team, change) {
-    if (team === 'a') {
-        scoreA = Math.max(0, scoreA + change);
-        document.getElementById('scoreA').innerText = scoreA;
-    } else {
-        scoreB = Math.max(0, scoreB + change);
-        document.getElementById('scoreB').innerText = scoreB;
-    }
-
-    fetch("{{ route('games.liveScore', $game->id) }}", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": "{{ csrf_token() }}"
-        },
-        body: JSON.stringify({
-            score_a: scoreA,
-            score_b: scoreB
-        })
-    });
-}
-
-// ✅ Attach finishPeriod to form submit
-document.getElementById('finishPeriodForm').addEventListener('submit', function(e) {
-    // Set hidden inputs before form submission
-    document.getElementById('finalScoreA').value = scoreA;
-    document.getElementById('finalScoreB').value = scoreB;
-
-    // Reset live scores UI immediately
-    scoreA = 0;
-    scoreB = 0;
-    document.getElementById('scoreA').innerText = 0;
-    document.getElementById('scoreB').innerText = 0;
-});
-</script>
-
 </div>
-
-<script>
-// ====== SAVE GAME TIMER & SHOT CLOCK ======
-function saveGameTimer() {
-    let duration = document.getElementById('gameDurationInput').value;
-    let shot = document.getElementById('shotClockInput').value;
-
-    fetch("{{ route('games.updateTimer', $game->id) }}", {
-        method: "POST",
-        headers: { 
-            "Content-Type": "application/json", 
-            "X-CSRF-TOKEN": "{{ csrf_token() }}" 
-        },
-        body: JSON.stringify({ game_duration: duration, shot_clock: shot })
-    }).then(res => {
-        alert('Game timer and shot clock saved!');
-        gameDuration = duration * 60;
-        shotClock = shot;
-        document.getElementById('gameTimerDisplay').innerText = duration + ":00";
-        document.getElementById('shotClockDisplay').innerText = shotClock;
-    });
-}
-
-// ====== GAME TIMER ======
-let gameDuration = {{ $game->game_duration ?? 48 }} * 60;
-let gameTimerInterval = null;
-
-function startGameTimer() {
-    if (gameTimerInterval) return;
-    gameTimerInterval = setInterval(() => {
-        if (gameDuration > 0) {
-            gameDuration--;
-            let min = Math.floor(gameDuration / 60);
-            let sec = gameDuration % 60;
-            document.getElementById('gameTimerDisplay').innerText = `${min}:${sec.toString().padStart(2,'0')}`;
-        } else {
-            clearInterval(gameTimerInterval);
-            gameTimerInterval = null;
-        }
-    }, 1000);
-}
-
-function pauseGameTimer() {
-    clearInterval(gameTimerInterval);
-    gameTimerInterval = null;
-}
-
-function resetGameTimer() {
-    gameDuration = {{ $game->game_duration ?? 48 }} * 60;
-    let min = Math.floor(gameDuration / 60);
-    let sec = gameDuration % 60;
-    document.getElementById('gameTimerDisplay').innerText = `${min}:${sec.toString().padStart(2,'0')}`;
-    pauseGameTimer();
-}
-
-// ====== SHOT CLOCK ======
-let shotClock = {{ $game->shot_clock ?? 24 }};
-let shotClockInterval = null;
-
-function startShotClock() {
-    if (shotClockInterval) return;
-    shotClockInterval = setInterval(() => {
-        if (shotClock > 0) {
-            shotClock--;
-            document.getElementById('shotClockDisplay').innerText = shotClock;
-        } else {
-            clearInterval(shotClockInterval);
-            shotClockInterval = null;
-        }
-    }, 1000);
-}
-
-function pauseShotClock() {
-    clearInterval(shotClockInterval);
-    shotClockInterval = null;
-}
-
-function resetShotClock() {
-    shotClock = {{ $game->shot_clock ?? 24 }};
-    document.getElementById('shotClockDisplay').innerText = shotClock;
-    pauseShotClock();
-}
-</script>
 
 
 {{-- ================= PERIOD SCORE SUMMARY ================= --}}
@@ -361,17 +235,16 @@ function resetShotClock() {
     </div>
 </div>
 
-{{-- ================= LIVE SCORE SCRIPT ================= --}}
 <script>
 let scoreA = {{ $currentScoreA }};
 let scoreB = {{ $currentScoreB }};
 
-function changeScore(team, change) {
+function changeScore(team, delta) {
     if (team === 'a') {
-        scoreA = Math.max(0, scoreA + change);
+        scoreA = Math.max(0, scoreA + delta);
         document.getElementById('scoreA').innerText = scoreA;
     } else {
-        scoreB = Math.max(0, scoreB + change);
+        scoreB = Math.max(0, scoreB + delta);
         document.getElementById('scoreB').innerText = scoreB;
     }
 
@@ -381,23 +254,19 @@ function changeScore(team, change) {
             "Content-Type": "application/json",
             "X-CSRF-TOKEN": "{{ csrf_token() }}"
         },
-        body: JSON.stringify({
-            score_a: scoreA,
-            score_b: scoreB
-        })
+        body: JSON.stringify({ score_a: scoreA, score_b: scoreB })
     });
 }
 
-function finishPeriod() {
-    // send final scores
+// Finish period
+document.getElementById('finishPeriodForm').addEventListener('submit', () => {
     document.getElementById('finalScoreA').value = scoreA;
     document.getElementById('finalScoreB').value = scoreB;
 
-    // reset UI immediately (backend should also reset)
+    // RESET UI
     scoreA = 0;
     scoreB = 0;
-    document.getElementById('scoreA').innerText = 0;
-    document.getElementById('scoreB').innerText = 0;
-}
+});
 </script>
+
 @endsection

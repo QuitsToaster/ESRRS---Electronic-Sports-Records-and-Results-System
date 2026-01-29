@@ -325,4 +325,20 @@ startShotClock();
 
 </script>
 
+<script>
+setInterval(async () => {
+    try {
+        const res = await fetch("{{ route('viewer.liveGame', $game->id) }}");
+        const data = await res.json();
+
+        document.getElementById('liveScoreA').innerText = data.score_a;
+        document.getElementById('liveScoreB').innerText = data.score_b;
+
+    } catch (e) {
+        console.error('Live score fetch failed', e);
+    }
+}, 1000); // every 1.5 seconds
+</script>
+
+
 @endsection

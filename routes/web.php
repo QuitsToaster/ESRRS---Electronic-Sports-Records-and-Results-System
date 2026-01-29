@@ -146,6 +146,19 @@ Route::post('/events/{event}/winners', [EventController::class, 'saveWinners'])
 Route::get('/viewer/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
 Route::get('/viewer/game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);
 
+Route::get('/viewer/game/{game}/live-score',
+    [ViewerController::class, 'liveGame']
+)->name('viewer.liveGame');
+
+Route::post('/games/{game}/live-score',
+    [GameController::class, 'liveScore']
+)->name('games.liveScore');
+
+Route::post('/games/{game}/update-period/{periodIndex}',
+    [GameController::class, 'updatePeriodScore']
+)->name('games.updatePeriodScore');
+
+
 
 // Viewer polling
 Route::get('/viewer/live-scores', [ViewerController::class, 'liveScores'])
