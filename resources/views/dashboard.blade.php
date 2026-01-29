@@ -142,7 +142,7 @@
 
 {{-- Live Games --}}
 <div class="mt-6">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Live Games</h2>
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Games</h2>
 
     @if($liveGames->isEmpty())
         <div class="text-gray-500 text-center py-6">No upcoming or ongoing games.</div>
@@ -151,14 +151,20 @@
             @foreach($liveGames as $game)
                 <a href="{{ route('games.index') }}" class="block bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition p-4 cursor-pointer">
                     <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ $game->event->name ?? '-' }}</h3>
+                    
                     <div class="flex justify-between items-center mb-2">
-                        <span class="font-medium">{{ $game->team_a }}</span>
-                        <span class="font-bold">{{ $game->score_a ?? 0 }} - {{ $game->score_b ?? 0 }}</span>
-                        <span class="font-medium">{{ $game->team_b }}</span>
+                        <span class="font-bold @if($game->winner === $game->team_a) text-emerald-600 font-bold @endif">
+                            {{ $game->team_a }}
+                        </span>
+                        <span class="font-bold">VS</span>
+                        <span class="font-bold @if($game->winner === $game->team_b) text-emerald-600 font-bold @endif">
+                            {{ $game->team_b }}
+                        </span>
                     </div>
+                    
                     <div class="flex justify-between items-center text-sm text-gray-500">
-                        <span class="@if($game->current_status === 'Upcoming') text-blue-600 @elseif($game->current_status === 'Ongoing') text-green-600 @else text-gray-600 @endif font-semibold">
-                            {{ $game->current_status }}
+                        <span class="@if($game->status === 'Upcoming') text-blue-600 @elseif($game->status === 'Ongoing') text-green-600 @else text-gray-600 @endif font-semibold">
+                            {{ $game->status }}
                         </span>
                         <span>{{ $game->game_time->format('M d, Y h:i A') }}</span>
                     </div>
@@ -167,6 +173,8 @@
         </div>
     @endif
 </div>
+
+
 
 {{-- Medal Tally --}}
 <div class="mt-6">

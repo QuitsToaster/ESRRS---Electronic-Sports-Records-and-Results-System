@@ -28,10 +28,12 @@ class DashboardController extends Controller
         // ✅ Correct column: use 'status' for ongoing games
         $ongoingGamesCount = Game::where('status', 'Ongoing')->count();
 
-        // Live Games (Upcoming + Ongoing)
-        $liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing'])
-                         ->orderBy('game_time', 'asc')
-                         ->get();
+        // Live Games (Upcoming + Ongoing) - LIMIT 3
+$liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing', 'Finished'])
+                 ->orderBy('game_time', 'asc')
+                 ->take(3) // <- limit to first 3 games
+                 ->get();
+
 
         // Medal Tally per school
         $medalTally = School::withCount([
