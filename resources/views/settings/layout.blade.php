@@ -187,9 +187,88 @@ function addDeveloperRow() {
             </div>
         </div>
 
-        <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow font-semibold">
-            Save Layout Settings
-        </button>
+        {{-- =======================
+   FOOTER SETTINGS
+========================--}}
+<div class="bg-white border rounded-lg p-6 shadow-sm">
+    <h2 class="text-xl font-semibold mb-4">Footer Settings</h2>
+
+    @php
+        $footer = $footerSetting ?? null;
+        $socials = $footer ? $footer->socials : [];
+    @endphp
+
+    {{-- Footer Logo --}}
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">Footer Logo</label>
+        <img src="{{ $footer && $footer->logo ? asset('storage/' . $footer->logo) : 'https://via.placeholder.com/150x50?text=Footer+Logo' }}"
+             class="h-16 object-contain mb-2 border rounded p-1">
+        <input type="file" name="footer_logo" class="block text-sm text-gray-600">
+    </div>
+
+    {{-- Footer Logo Name --}}
+    <div class="mb-4">
+        <label class="block mb-1 font-semibold">Footer Logo Name</label>
+        <input type="text" name="footer_logo_name"
+               value="{{ $footer ? $footer->logo_name : '' }}"
+               class="w-full border rounded px-2 py-1" placeholder="Company / Website Name">
+    </div>
+
+    {{-- Social Media Links --}}
+    <div id="socials-container" class="space-y-2 mb-4">
+        <label class="block mb-1 font-semibold">Social Media Accounts</label>
+        @forelse($socials as $index => $social)
+            <div class="flex gap-2 items-center">
+                <input type="text" name="social_name[]" placeholder="Facebook, Twitter..."
+                       value="{{ $social['name'] ?? '' }}"
+                       class="border rounded px-2 py-1 w-1/3">
+                <input type="url" name="social_link[]" placeholder="https://..."
+                       value="{{ $social['link'] ?? '' }}"
+                       class="border rounded px-2 py-1 w-2/3">
+                <button type="button" onclick="this.closest('div').remove()"
+                        class="text-red-600 font-bold px-2">X</button>
+            </div>
+        @empty
+            <div class="flex gap-2 items-center">
+                <input type="text" name="social_name[]" placeholder="Facebook, Twitter..."
+                       class="border rounded px-2 py-1 w-1/3">
+                <input type="url" name="social_link[]" placeholder="https://..."
+                       class="border rounded px-2 py-1 w-2/3">
+                <button type="button" onclick="this.closest('div').remove()"
+                        class="text-red-600 font-bold px-2">X</button>
+            </div>
+        @endforelse
+    </div>
+
+    <button type="button" onclick="addSocialRow()"
+            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow font-semibold">
+        + Add Social
+    </button>
+</div>
+
+<script>
+function addSocialRow() {
+    const container = document.getElementById('socials-container');
+    const div = document.createElement('div');
+    div.classList = 'flex gap-2 items-center mt-2';
+    div.innerHTML = `
+        <input type="text" name="social_name[]" placeholder="Facebook, Twitter..."
+               class="border rounded px-2 py-1 w-1/3">
+        <input type="url" name="social_link[]" placeholder="https://..."
+               class="border rounded px-2 py-1 w-2/3">
+        <button type="button" onclick="this.closest('div').remove()" class="text-red-600 font-bold px-2">X</button>
+    `;
+    container.appendChild(div);
+}
+</script>
+
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow font-semibold">
+    Save Layout Settings
+</button>
+
     </form>
 </div>
+
+
+
 @endsection

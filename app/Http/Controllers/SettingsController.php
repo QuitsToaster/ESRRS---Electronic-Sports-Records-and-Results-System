@@ -6,38 +6,48 @@ use Illuminate\Http\Request;
 use App\Models\Banner;
 use App\Models\SystemDeveloper;
 use App\Models\LayoutSetting;
+use App\Models\FooterSetting;
 use Illuminate\Support\Facades\Storage;
 
 class SettingsController extends Controller
 {
-    public function layout()
-    {
-        $banners = Banner::orderBy('order')->get();
-        $adminLogo  = LayoutSetting::where('key', 'admin_sidebar_logo')->first();
-        $viewerLogo = LayoutSetting::where('key', 'viewer_top_logo')->first();
-        $developers = SystemDeveloper::all();
 
-        return view('settings.layout', compact(
-            'banners',
-            'adminLogo',
-            'viewerLogo',
-            'developers'
-        ));
-    }
+public function layout()
+{
+    $banners = Banner::orderBy('order')->get();
+    $adminLogo  = LayoutSetting::where('key', 'admin_sidebar_logo')->first();
+    $viewerLogo = LayoutSetting::where('key', 'viewer_top_logo')->first();
+    $developers = SystemDeveloper::all();
+    $footerSetting = FooterSetting::first(); // load footer
 
-    public function saveLayout(Request $request)
-    {
-        $request->validate([
-            'images.*' => 'nullable|image|max:5120',
-            'admin_logo' => 'nullable|image|max:2048',
-            'viewer_logo' => 'nullable|image|max:2048',
-            'developer_photo.*' => 'nullable|image|max:2048',
-            'developer_name.*' => 'nullable|string|max:255',
-            'developer_email.*' => 'nullable|email|max:255',
-            'developer_contact.*' => 'nullable|string|max:50',
-            'developer_role.*' => 'nullable|string|max:255',
-            'developer_description.*' => 'nullable|string|max:1000',
-        ]);
+    return view('settings.layout', compact(
+        'banners',
+        'adminLogo',
+        'viewerLogo',
+        'developers',
+        'footerSetting'
+    ));
+}
+
+public function saveLayout(Request $request)
+{
+    // existing validations...
+    $request->validate([
+        'images.*' => 'nullable|image|max:5120',
+        'admin_logo' => 'nullable|image|max:2048',
+        'viewer_logo' => 'nullable|image|max:2048',
+        'developer_photo.*' => 'nullable|image|max:2048',
+        'developer_name.*' => 'nullable|string|max:255',
+        'developer_email.*' => 'nullable|email|max:255',
+        'developer_contact.*' => 'nullable|string|max:50',
+        'developer_role.*' => 'nullable|string|max:255',
+        'developer_description.*' => 'nullable|string|max:1000',
+
+        'footer_logo' => 'nullable|image|max:2048',
+        'footer_logo_name' => 'nullable|string|max:255',
+        'social_name.*' => 'nullable|string|max:50',
+        'social_link.*' => 'nullable|url|max:255',
+    ]);
 
         /* =======================
            Save Banner Images
@@ -121,6 +131,42 @@ class SettingsController extends Controller
             }
         }
 
-        return back()->with('success', 'Layout settings saved successfully!');
-    }
+         /* =======================
+   Save Footer
+=======================*/
+$footer = FooterSetting::first();
+
+$data = [
+    'logo_name' => $request->footer_logo_name ?? '',
+    'socials' => [],
+    'logo' => $footer->logo ?? null, // default existing logo
+];
+
+// Handle uploaded logo
+if ($request->hasFile('footer_logo')) {
+    $path = $request->file('footer_logo')->store('footer', 'public');
+    $data['logo'] = $path;
+}
+
+// Handle socials
+$socialNames = $request->social_name ?? [];
+$socialLinks = $request->social_link ?? [];
+
+foreach ($socialNames as $i => $name) {
+    if (empty($name)) continue;
+    $data['socials'][] = [
+        'name' => $name,
+        'link' => $socialLinks[$i] ?? '',
+    ];
+}
+
+// Save or create
+if ($footer) {
+    $footer->update($data);
+} else {
+    FooterSetting::create($data);
+}
+
+return back()->with('success', 'Layout settings saved successfully!');
+}
 }
