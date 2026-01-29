@@ -38,9 +38,9 @@ window.scrollTo(0, 0);
 
     {{-- Back Button --}}
 <button onclick="history.back()"
-   class="fixed top-20 left-4 md:left-6 z-[9999] inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
-          text-white font-bold rounded-full shadow-lg hover:scale-105 transition-transform">
-    ← Back to Games
+   class="fixed top-20 left-4 md:left-6 z-[9999] inline-flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700
+          text-white font-bold rounded-full shadow-lg hover:scale-105 transition-transform text-sm" style="font-family: 'Teko', sans-serif;">
+    ← Back
 </button>
 
 
