@@ -50,7 +50,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
             @forelse($schools as $school)
                 <a href="{{ route('viewer.participants.show', $school->id) }}"
-                   class="group relative bg-white/20 border border-white/30 rounded-lg shadow hover:shadow-xl transition transform hover:-translate-y-1 p-5 flex flex-col items-center text-center backdrop-blur-md">
+                   class="group relative bg-black/60 border border-white/30 rounded-lg shadow hover:shadow-xl transition transform hover:-translate-y-1 p-5 flex flex-col items-center text-center backdrop-blur-md">
                     
                     {{-- School Logo --}}
                     @if($school->logo)
