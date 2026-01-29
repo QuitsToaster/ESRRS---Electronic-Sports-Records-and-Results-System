@@ -8,8 +8,8 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Announcements</h2>
-            <p class="text-gray-600 mt-1 text-sm">Latest updates, schedule changes, and results</p>
+            <h2 class="text-4xl md:text-6xl font-bold text-gray-600" style="font-family: 'Poppins', sans-serif;">The Bulletin.</h2>
+            <p class="text-gray-600 mt-2 text-lg" style="font-family: 'Poppins', sans-serif;">Stay up-to-date with the latest announcements, schedules, and results</p>
         </div>
 
         {{-- Search Form --}}
@@ -17,7 +17,7 @@
             <input type="text" name="search" value="{{ request('search') ?? '' }}"
                    placeholder="Search announcements..."
                    class="w-full sm:w-64 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
+            <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
                 Search
             </button>
             @if(request('search'))
@@ -34,10 +34,10 @@
     @else
         <div class="space-y-6">
             @foreach($announcements as $announcement)
-                <div class="bg-white rounded-lg shadow hover:shadow-xl transition p-6">
+                <div x-data="{ open: false }" class="bg-white rounded-xl shadow hover:shadow-lg transition p-6 border-l-4 border-blue-500">
                     {{-- Title & Type Badge --}}
                     <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-semibold text-blue-600">{{ $announcement->title }}</h3>
+                        <h3 class="text-xl md:text-xl font-semibold text-gray-700" style="font-family: 'Poppins', sans-serif;">{{ $announcement->title }}</h3>
                         <span class="px-3 py-1 text-sm font-semibold rounded-full
                             @switch($announcement->type)
                                 @case('General') bg-gray-100 text-gray-800 @break
@@ -52,17 +52,22 @@
 
                     {{-- Linked Event --}}
                     @if($announcement->event)
-                        <p class="text-sm text-gray-500 mb-2">
+                        <p class="text-gray-500 text-sm mb-2">
                             <span class="font-semibold">Event:</span> {{ $announcement->event->name }}
                         </p>
                     @endif
 
-                    {{-- Content --}}
-                    <p class="text-gray-700 mb-3">{{ \Illuminate\Support\Str::limit($announcement->content, 150, '...') }}</p>
+                    {{-- Content with Read More --}}
+                    <p class="text-gray-700 mb-2" x-show="!open">{{ \Illuminate\Support\Str::limit($announcement->content, 150, '...') }}</p>
+                    <p class="text-gray-700 mb-2" x-show="open" x-transition>{{ $announcement->content }}</p>
+                    <button @click="open = !open"
+                            class="text-blue-600 font-semibold hover:underline text-sm mb-3 transition">
+                        <span x-text="open ? 'Read Less' : 'Read More'"></span>
+                    </button>
 
                     {{-- Attachments --}}
                     @if($announcement->files && $announcement->files->count() > 0)
-                        <div class="mb-3 flex flex-wrap gap-3" x-data="{ open: false, image: '' }">
+                        <div class="mb-3 flex flex-wrap gap-3" x-data="{ openModal: false, image: '' }">
                             @foreach($announcement->files as $file)
                                 @php
                                     $ext = strtolower(pathinfo($file->file_path, PATHINFO_EXTENSION));
@@ -70,25 +75,25 @@
 
                                 @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
                                     {{-- Clickable image preview --}}
-                                    <button @click="open = true; image='{{ asset('storage/'.$file->file_path) }}'"
+                                    <button @click="openModal = true; image='{{ asset('storage/'.$file->file_path) }}'"
                                             class="block w-20 h-20 overflow-hidden rounded shadow hover:scale-105 transform transition focus:outline-none">
                                         <img src="{{ asset('storage/'.$file->file_path) }}" alt="Attachment" class="w-full h-full object-cover">
                                     </button>
                                 @else
                                     {{-- Document/PDF icon preview --}}
                                     <a href="{{ asset('storage/'.$file->file_path) }}" target="_blank"
-                                       class="flex items-center justify-center w-20 h-20 bg-gray-100 rounded shadow text-xs text-gray-700 font-semibold hover:bg-gray-200 transition text-center p-1">
+                                       class="flex items-center justify-center w-20 h-20 bg-gray-100 rounded shadow text-xs text-gray-800 font-semibold hover:bg-gray-200 transition text-center p-1">
                                         {{ strtoupper($ext) }}
                                     </a>
                                 @endif
                             @endforeach
 
                             {{-- Modal / Lightbox --}}
-                            <div x-show="open" x-transition.opacity
+                            <div x-show="openModal" x-transition.opacity
                                  class="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50"
                                  style="display: none;">
                                 <div class="relative max-w-3xl w-full">
-                                    <button @click="open = false"
+                                    <button @click="openModal = false"
                                             class="absolute top-2 right-2 text-white text-2xl font-bold hover:text-gray-300">&times;</button>
                                     <img :src="image" class="w-full rounded shadow-lg">
                                 </div>
@@ -106,6 +111,6 @@
     @endif
 </div>
 
-{{-- Alpine.js for modal --}}
+{{-- Alpine.js for modal & Read More --}}
 <script src="//unpkg.com/alpinejs" defer></script>
 @endsection

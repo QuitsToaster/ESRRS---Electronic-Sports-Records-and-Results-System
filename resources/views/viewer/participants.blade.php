@@ -34,7 +34,7 @@
         <input type="text" name="search" value="{{ $search ?? '' }}"
                placeholder="Search teams..."
                class="w-full sm:w-64 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition">
-        <button type="submit" class="bg-gray-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
+        <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
             Search
         </button>
         @if($search)
