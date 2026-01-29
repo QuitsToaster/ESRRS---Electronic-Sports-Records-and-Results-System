@@ -8,7 +8,7 @@
     {{-- Header --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
         <div>
-            <h2 class="text-4xl md:text-6xl font-bold text-gray-600" style="font-family: 'Poppins', sans-serif;">The Bulletin.</h2>
+            <h2 class="text-4xl md:text-6xl font-bold text-gray-800" style="font-family: 'Poppins', sans-serif;">The Bulletin.</h2>
             <p class="text-gray-600 mt-2 text-lg" style="font-family: 'Poppins', sans-serif;">Stay up-to-date with the latest announcements, schedules, and results</p>
         </div>
 

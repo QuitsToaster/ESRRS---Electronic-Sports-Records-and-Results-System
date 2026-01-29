@@ -100,12 +100,11 @@ class ViewerController extends Controller
         ));
     }
 
-    // Events Page with search
-public function events(Request $request)
+    public function events(Request $request)
 {
     $search = $request->input('search');
 
-    // Keep Eloquent models for Blade
+    // Fetch events with related data
     $events = Event::with(['schools', 'goldWinner', 'silverWinner', 'bronzeWinner', 'sport'])
         ->when($search, function($query, $search) {
             $query->where('name', 'like', "%{$search}%");
@@ -113,7 +112,7 @@ public function events(Request $request)
         ->orderBy('start_date', 'asc')
         ->get();
 
-    // Prepare JSON version for AlpineJS modal
+    // JSON for AlpineJS modal
     $eventsJson = $events->map(function($event) {
         return [
             'id' => $event->id,
@@ -130,7 +129,10 @@ public function events(Request $request)
         ];
     });
 
-    return view('viewer.events', compact('events', 'eventsJson'));
+    // Fetch gallery photos
+    $gallery_photos = GalleryPhoto::orderBy('created_at', 'desc')->get();
+
+    return view('viewer.events', compact('events', 'eventsJson', 'gallery_photos'));
 }
 
 
