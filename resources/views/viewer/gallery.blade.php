@@ -5,10 +5,10 @@
 @section('content')
 <div class="max-w-7xl mx-auto px-4 py-8 space-y-6">
     {{-- Header --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4" style="font-family: 'Poppins', sans-serif;">
         <div>
-            <h2 class="text-3xl font-bold text-gray-800">Official Gallery</h2>
-            <p class="text-gray-600 mt-1 text-sm">Browse official photos uploaded by folder.</p>
+            <h2 class="text-6xl font-bold text-gray-800">This is the show.</h2>
+            <p class="text-gray-800 mt-1 text-lg">Browse official photos.</p>
         </div>
 
         {{-- Search Form --}}
@@ -16,7 +16,7 @@
             <input type="text" name="search" value="{{ request('search') ?? '' }}"
                    placeholder="Search photos..."
                    class="w-full sm:w-64 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition">
-            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
+            <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
                 Search
             </button>
             @if(request('search'))
@@ -51,7 +51,7 @@
                         </div>
                     @endif
                     <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-60"></div>
-                    <div class="absolute bottom-4 left-4 text-white">
+                    <div class="absolute bottom-4 left-4 text-white" style="font-family: 'Poppins', sans-serif;">
                         <h3 class="text-xl font-semibold">{{ $folder }}</h3>
                         <p class="text-sm">{{ $photoCount }} photos</p>
                     </div>
@@ -62,24 +62,32 @@
         {{-- Photo View --}}
         <div id="photoView" class="hidden mt-6">
             <button onclick="backToFolders()"
-                    class="mb-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition">
+                    class="mb-4 px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition" style="font-family: 'Poppins', sans-serif;">
                 &larr; Back to Folders
             </button>
-            <h2 class="text-2xl font-bold mb-4" id="currentFolderTitle"></h2>
+            <h2 class="text-3xl md:text-4xl font-bold mb-4" style="font-family: 'Poppins', sans-serif;" id="currentFolderTitle"></h2>
             <div id="photosGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
         </div>
     @endif
 </div>
 
 {{-- PHOTO MODAL --}}
-<div id="photoModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 overflow-auto p-4">
-    <div class="bg-white rounded-lg shadow-lg max-w-4xl w-full relative flex flex-col">
-        <button onclick="closePhotoModal()"
-                class="absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold">&times;</button>
+<div id="photoModal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50 flex flex-col items-center justify-center overflow-auto p-4">
+    <button onclick="closePhotoModal()"
+            class="absolute top-6 right-6 text-white text-4xl font-bold z-50 hover:text-gray-300 transition">&times;</button>
 
-        <div class="p-6 flex flex-col overflow-y-auto max-h-[90vh]" id="modalContent">
-            {{-- Content injected by JS --}}
+    <div id="modalMain" class="w-full max-w-6xl flex flex-col items-center gap-4 relative">
+        <button id="prevBtn" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white text-3xl px-4 py-2 rounded hover:bg-opacity-70 z-50">&larr;</button>
+        <button id="nextBtn" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white text-3xl px-4 py-2 rounded hover:bg-opacity-70 z-50">&rarr;</button>
+
+        <div class="w-full flex justify-center">
+            <img id="modalImage" src="" class="w-full max-h-[80vh] object-contain transition-all duration-300 rounded">
         </div>
+
+        <button id="showThumbnailsBtn" class="px-6 py-2 bg-gray-700 text-white font-semibold hover:bg-gray-600 rounded transition">
+            Show Thumbnails
+        </button>
+        <div id="thumbnailsContainer" class="hidden w-full overflow-x-auto flex gap-2 mt-2 p-2 bg-black/50 rounded"></div>
     </div>
 </div>
 
@@ -90,6 +98,7 @@ const foldersData = @json($photos->groupBy('folder'));
 let currentPhotoIndex = 0;
 let currentPhotoSet = null;
 
+// Open folder
 function openFolder(folderName) {
     const folderPhotos = foldersData[folderName];
     if(!folderPhotos) return;
@@ -109,20 +118,21 @@ function openFolder(folderName) {
         const extraCount = (photo.photos.length || 0) - 1;
 
         const div = document.createElement('div');
-        div.className = 'border rounded-lg overflow-hidden shadow-sm cursor-pointer relative hover:shadow-lg transition';
+        div.className = 'relative rounded-lg overflow-hidden shadow-sm cursor-pointer hover:shadow-lg transition group';
         div.onclick = () => openPhotoModal(photo.id);
 
-        div.innerHTML = `
-            <div class="p-2 font-semibold bg-gray-100">${photo.title}</div>
-            ${firstImage ? `
-                <div class="relative">
-                    <img src="/storage/${firstImage}" alt="Photo" class="w-full h-48 object-cover rounded">
-                    ${extraCount > 0 ? `<div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">+${extraCount}</div>` : ''}
+        if(firstImage) {
+            div.innerHTML = `
+                <img src="/storage/${firstImage}" alt="Photo" class="w-full h-48 object-cover rounded transform transition duration-300 group-hover:scale-105">
+                ${extraCount > 0 ? `<div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">+${extraCount}</div>` : ''}
+                <div class="absolute bottom-0 left-0 w-full bg-gradient-to-t from-black via-black/40 to-transparent p-3 opacity-0 group-hover:opacity-100 transition-all duration-500 text-white" style="font-family: 'Poppins', sans-serif;">
+                    <p class="truncate font-semibold text-lg md:text-lg">${photo.title}</p>
                 </div>
-            ` : `
-                <div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">No Image</div>
-            `}
-        `;
+            `;
+        } else {
+            div.innerHTML = `<div class="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">No Image</div>`;
+        }
+
         photosGrid.appendChild(div);
     });
 }
@@ -132,61 +142,79 @@ function backToFolders() {
     document.getElementById('folderView').classList.remove('hidden');
 }
 
-// Photo Modal functions
+// Open folder photo modal
 function openPhotoModal(id) {
-    const photo = photosData.find(p => p.id === id);
-    if(!photo) return;
+    // Find the folder that contains the clicked photo
+    let folderPhotos = [];
+    let clickedPhoto = null;
 
-    currentPhotoIndex = 0;
-    currentPhotoSet = photo;
+    for (const folderName in foldersData) {
+        foldersData[folderName].forEach(photo => {
+            if(photo.id === id){
+                clickedPhoto = photo;
+                // Collect all images from all photos in this folder
+                photoFolder = foldersData[folderName];
+                folderPhotos = [];
+                photoFolder.forEach(p => {
+                    p.photos.forEach(img => folderPhotos.push({photoId: p.id, src: img}));
+                });
+            }
+        });
+    }
+
+    if(!clickedPhoto || folderPhotos.length === 0) return;
+
+    currentPhotoSet = folderPhotos;
+    // Set currentPhotoIndex to the clicked image
+    currentPhotoIndex = folderPhotos.findIndex(p => p.photoId === clickedPhoto.id);
+
     const modal = document.getElementById('photoModal');
-    const content = document.getElementById('modalContent');
+    const modalImage = document.getElementById('modalImage');
+    const thumbnailsContainer = document.getElementById('thumbnailsContainer');
+    const showThumbnailsBtn = document.getElementById('showThumbnailsBtn');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
 
-    function renderImage() {
-        let html = `<h2 class="text-xl font-semibold mb-2">${photo.title}</h2>`;
-        html += `<p class="text-gray-600 mb-4">${photo.description}</p>`;
-        html += `<div class="relative w-full h-96 flex items-center justify-center mb-4">`;
-        html += `<img src="/storage/${photo.photos[currentPhotoIndex]}" class="w-full h-full object-cover rounded">`;
-
-        if(photo.photos.length > 1) {
-            html += `
-                <button onclick="prevImage()" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70">&larr;</button>
-                <button onclick="nextImage()" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white px-3 py-1 rounded hover:bg-opacity-70">&rarr;</button>
-                <div class="absolute top-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-                    ${currentPhotoIndex + 1} / ${photo.photos.length}
-                </div>
-            `;
-        }
-
-        html += `</div>`;
-        content.innerHTML = html;
+    function renderMainImage() {
+        modalImage.src = `/storage/${currentPhotoSet[currentPhotoIndex].src}`;
+        updateNavigationButtons();
+        if(!thumbnailsContainer.classList.contains('hidden')) renderThumbnails();
     }
 
-    window.prevImage = function() {
-        if(currentPhotoIndex > 0) {
-            currentPhotoIndex--;
-            renderImage();
-        }
+    function updateNavigationButtons() {
+        prevBtn.style.display = currentPhotoIndex > 0 ? 'block' : 'none';
+        nextBtn.style.display = currentPhotoIndex < currentPhotoSet.length - 1 ? 'block' : 'none';
     }
 
-    window.nextImage = function() {
-        if(currentPhotoIndex < photo.photos.length - 1) {
-            currentPhotoIndex++;
-            renderImage();
-        }
+    function renderThumbnails() {
+        thumbnailsContainer.innerHTML = '';
+        currentPhotoSet.forEach((p, index) => {
+            const thumb = document.createElement('img');
+            thumb.src = `/storage/${p.src}`;
+            thumb.className = `h-20 object-cover cursor-pointer border-2 ${index === currentPhotoIndex ? 'border-blue-500' : 'border-transparent'} transition rounded`;
+            thumb.onclick = () => { currentPhotoIndex = index; renderMainImage(); };
+            thumbnailsContainer.appendChild(thumb);
+        });
     }
 
-    renderImage();
+    showThumbnailsBtn.onclick = () => thumbnailsContainer.classList.toggle('hidden');
+
+    prevBtn.onclick = () => { if(currentPhotoIndex > 0){ currentPhotoIndex--; renderMainImage(); } };
+    nextBtn.onclick = () => { if(currentPhotoIndex < currentPhotoSet.length - 1){ currentPhotoIndex++; renderMainImage(); } };
+
+    renderMainImage();
+    thumbnailsContainer.classList.add('hidden');
     modal.classList.remove('hidden');
-    modal.classList.add('flex');
 }
+
 
 function closePhotoModal() {
     const modal = document.getElementById('photoModal');
     modal.classList.add('hidden');
-    modal.classList.remove('flex');
     currentPhotoIndex = 0;
     currentPhotoSet = null;
 }
+
+
 </script>
 @endsection
