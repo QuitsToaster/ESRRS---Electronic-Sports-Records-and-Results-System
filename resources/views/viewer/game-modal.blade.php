@@ -5,15 +5,7 @@
 @section('content')
 
 @php
-    // ✅ SAFELY HANDLE SCORES (array OR json OR null)
-    if (is_array($game->scores)) {
-        $scores = $game->scores;
-    } elseif (is_string($game->scores)) {
-        $scores = json_decode($game->scores, true);
-    } else {
-        $scores = null;
-    }
-
+    $scores = is_array($game->scores) ? $game->scores : (is_string($game->scores) ? json_decode($game->scores, true) : null);
     $scores = $scores ?? ['team_a' => [], 'team_b' => []];
 
     $now = \Carbon\Carbon::now();
@@ -30,276 +22,200 @@
         $status = 'Finished';
         $statusColor = 'bg-gray-400';
     }
+
+    $schoolA = \App\Models\School::where('name', $game->team_a)->first();
+    $schoolB = \App\Models\School::where('name', $game->team_b)->first();
 @endphp
 
+<div class="relative min-h-screen overflow-hidden">
 
-<div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
-
-    {{-- BACK BUTTON --}}
-    <div class="mb-4">
-        <a href="{{ route('viewer.games') }}"
-           class="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow">
-            ← Back to Games
-        </a>
+    {{-- Background --}}
+    <div class="absolute inset-0 -z-10">
+        <img src="{{ asset('storage/game1.jpg') }}" class="w-full h-full object-cover scale-105 brightness-75 blur-sm">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
     </div>
-{{-- ================= SCOREBOARD HEADER ================= --}}
-<div class="bg-gradient-to-r from-gray-900 to-gray-800 text-white rounded-xl p-6 shadow-lg">
 
-    
+    {{-- Back Button --}}
+    <a href="{{ route('viewer.games') }}"
+       class="fixed top-6 left-4 md:left-6 z-50 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
+              text-white font-bold rounded-full shadow-lg hover:scale-105 transition-transform">
+        ← Back to Games
+    </a>
 
-    <div class="flex items-center justify-between">
+    {{-- NBA Header Banner --}}
+    <div class="w-full h-48 md:h-56 grid grid-cols-[1fr_1.5fr_1fr] relative">
 
-        {{-- TEAM A --}}
-        <div class="flex flex-col items-center w-1/3">
-            <span class="text-sm uppercase tracking-wide text-gray-300">{{ $game->team_a }}</span>
-            <span id="liveScoreA" class="text-6xl md:text-7xl font-extrabold text-green-400">
-                {{ $game->score_a ?? 0 }}
-            </span>
+        {{-- Team A Logo --}}
+        <div class="relative overflow-hidden">
+            @if($schoolA && $schoolA->logo)
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('{{ asset('storage/'.$schoolA->logo) }}')"></div>
+            @endif
+            <div class="absolute inset-0 bg-black/30"></div>
         </div>
 
-        {{-- VS / STATUS --}}
-        <div class="flex flex-col items-center">
-            <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $statusColor ?? 'bg-gray-500' }} mb-1">
-                {{ $status ?? $game->status }}
+        {{-- Center Score --}}
+        <div class="bg-black flex flex-col items-center justify-center text-white text-center px-4">
+            <span class="text-lg md:text-xl tracking-widest uppercase opacity-80" style="font-family: 'Teko', sans-serif;">{{ $game->event->name }}</span>
+
+            <div class="flex items-center gap-4 md:gap-6 mt-2 text-6xl md:text-9xl font-extrabold">
+                <span id="liveScoreA" class="text-gray-100 flex-1" style="font-family: 'Teko', sans-serif;">{{ $game->score_a ?? 0 }}</span>
+                <span class="text-2xl md:text-3xl font-bold tracking-widest opacity-80">—</span>
+                <span id="liveScoreB" class="text-gray-100 flex-1" style="font-family: 'Teko', sans-serif;">{{ $game->score_b ?? 0 }}</span>
+            </div>
+
+            <span class="mt-2 px-3 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
+                {{ $status }}
             </span>
 
-            @if(($status ?? $game->status) === 'Ongoing')
-                <span class="text-xs text-red-400 font-semibold tracking-widest mb-1 animate-pulse">
+            @if($status === 'Ongoing')
+                <span class="mt-1 text-xs text-red-400 tracking-widest animate-pulse">
                     ● LIVE
                 </span>
             @endif
-
-            <span class="text-gray-300 text-sm">{{ $game->event->name }}</span>
         </div>
 
-        {{-- TEAM B --}}
-        <div class="flex flex-col items-center w-1/3">
-            <span class="text-sm uppercase tracking-wide text-gray-300">{{ $game->team_b }}</span>
-            <span id="liveScoreB" class="text-6xl md:text-7xl font-extrabold text-red-400">
-                {{ $game->score_b ?? 0 }}
-            </span>
+        {{-- Team B Logo --}}
+        <div class="relative overflow-hidden">
+            @if($schoolB && $schoolB->logo)
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('{{ asset('storage/'.$schoolB->logo) }}')"></div>
+            @endif
+            <div class="absolute inset-0 bg-black/30"></div>
         </div>
-
     </div>
-</div>
 
-<script>
-// ------------------- VARIABLES -------------------
-let gameTimer = {{ $game->game_duration ?? 48 }} * 60;
-let shotClock = {{ $game->shot_clock ?? 24 }};
-let timerInterval = null;
-let shotClockInterval = null;
+    {{-- Main Content --}}
+    <div class="w-full px-2 md:px-4 py-10 space-y-12 relative z-10">
 
-const gameTimerDisplay = document.getElementById('gameTimerDisplay');
-const shotClockDisplay = document.getElementById('shotClockDisplay');
-
-// ------------------- DISPLAY FUNCTION -------------------
-function updateDisplays() {
-    let min = Math.floor(gameTimer / 60);
-    let sec = gameTimer % 60;
-    gameTimerDisplay.innerText = `${min.toString().padStart(2,'0')}:${sec.toString().padStart(2,'0')}`;
-    shotClockDisplay.innerText = shotClock;
-}
-
-// ------------------- LIVE POLLING -------------------
-setInterval(async () => {
-    try {
-        const res = await fetch("{{ url('/viewer/game/'.$game->id.'/live-timer') }}");
-        const data = await res.json();
-
-        // Only update if timer is not running locally yet
-        if (data.timer_running && !timerInterval) {
-            timerInterval = setInterval(() => {
-                if (gameTimer > 0) gameTimer--;
-                updateDisplays();
-            }, 1000);
-        }
-
-        if (!data.timer_running && timerInterval) {
-            clearInterval(timerInterval);
-            timerInterval = null;
-        }
-
-        if (data.shot_clock_running && !shotClockInterval) {
-            shotClockInterval = setInterval(() => {
-                if (shotClock > 0) shotClock--;
-                updateDisplays();
-            }, 1000);
-        }
-
-        if (!data.shot_clock_running && shotClockInterval) {
-            clearInterval(shotClockInterval);
-            shotClockInterval = null;
-        }
-
-        // Sync remaining time from DB every 2–3 seconds to prevent drift
-        if (!timerInterval) gameTimer = (data.game_duration ?? 48) * 60;
-        if (!shotClockInterval) shotClock = data.shot_clock ?? 24;
-
-        updateDisplays();
-    } catch (err) {
-        console.error('Error fetching live timer:', err);
-    }
-}, 2000); // poll every 2 seconds
-
-// ------------------- INITIAL RENDER -------------------
-updateDisplays();
-</script>
-
-
-
-    {{-- ================= LIVE VIDEO ================= --}}
-@if($game->live_video_url)
-<div class="bg-gray-900 rounded-xl shadow-lg p-4 mb-8">
-    <h3 class="text-lg font-semibold text-white mb-2">Live Stream</h3>
-    <div class="aspect-w-16 aspect-h-9">
-        @php
-            $embedUrl = '';
-            $url = $game->live_video_url;
-
-            if (Str::contains($url, 'youtube.com') || Str::contains($url, 'youtu.be')) {
-                if (Str::contains($url, 'v=')) {
-                    $videoId = Str::after($url, 'v=');
-                    if (Str::contains($videoId, '&')) {
-                        $videoId = Str::before($videoId, '&');
-                    }
-                } elseif (Str::contains($url, 'youtu.be/')) {
-                    $videoId = Str::after($url, 'youtu.be/');
-                    if (Str::contains($videoId, '?')) {
-                        $videoId = Str::before($videoId, '?');
-                    }
-                }
-                $embedUrl = 'https://www.youtube.com/embed/' . $videoId . '?rel=0&modestbranding=1';
-            } elseif (Str::contains($url, 'facebook.com')) {
-                $embedUrl = 'https://www.facebook.com/plugins/video.php?href=' . urlencode($url) . '&show_text=false&width=560';
-            }
-        @endphp
-
-        @if($embedUrl)
-            <iframe class="w-full h-64 md:h-96 rounded-lg"
-                    src="{{ $embedUrl }}"
-                    frameborder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowfullscreen>
-            </iframe>
+        {{-- Live Video --}}
+        @if($game->live_video_url)
+            <div class="bg-black/80 backdrop-blur shadow-lg p-4 rounded-lg">
+                <h3 class="text-white font-semibold mb-2 text-lg md:text-xl">Live Stream</h3>
+                <div class="aspect-w-16 aspect-h-9">
+                    @php
+                        $embedUrl = '';
+                        $url = $game->live_video_url;
+                        if (Str::contains($url, 'youtube')) {
+                            $videoId = Str::after($url, 'v=');
+                            $videoId = Str::before($videoId, '&');
+                            $embedUrl = 'https://www.youtube.com/embed/'.$videoId;
+                        }
+                    @endphp
+                    @if($embedUrl)
+                        <iframe class="w-full h-64 md:h-96" src="{{ $embedUrl }}" frameborder="0" allowfullscreen></iframe>
+                    @endif
+                </div>
+            </div>
         @endif
-    </div>
-</div>
-@endif
 
+        {{-- Period Breakdown (NBA Style) --}}
+        <h3 class="text-4xl md:text-6xl font-bold text-white text-center mb-6" style="font-family: 'Teko', sans-serif;">
+    Period Breakdown
+</h3>
+        <div class="w-full bg-gray-900 shadow-lg p-4 md:p-6">
+            <div class="flex flex-col gap-4">
 
-
-
-    {{-- ================= PERIOD / QUARTER SCORES ================= --}}
-    <div class="bg-white rounded-xl shadow p-6">
-
-        <h3 class="text-lg font-bold mb-4 text-gray-800 text-center">
-            Period Breakdown
-        </h3>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-center border-collapse">
-                <thead>
-                    <tr class="text-sm text-gray-500 border-b">
-                        <th class="py-2 text-left">Team</th>
-                        @foreach($periods as $p)
-                            <th class="py-2">{{ $p }}</th>
+                {{-- Team A --}}
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-white font-bold text-base text-2xl md:text-4xl" style="font-family: 'Teko', sans-serif;">
+                        <span>{{ $game->team_a }}</span>
+                        <span>{{ array_sum($scores['team_a'] ?? []) }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 h-12">
+                        @foreach($periods as $i => $p)
+                            <div class="flex-1 min-w-[30px] bg-gray-700 flex items-center justify-center text-white font-semibold text-sm" style="font-family: 'Teko', sans-serif;">
+                                {{ $scores['team_a'][$i] ?? 0 }}
+                            </div>
                         @endforeach
-                        <th class="py-2 font-bold">TOTAL</th>
-                    </tr>
-                </thead>
+                    </div>
+                </div>
 
-                <tbody class="text-sm">
-    {{-- TEAM A --}}
-    <tr class="border-b">
-        <td class="py-3 font-semibold text-left">
-            {{ $game->team_a }}
-        </td>
+                {{-- Team B --}}
+                <div class="flex flex-col gap-1">
+                    <div class="flex justify-between text-white font-bold text-base text-2xl md:text-4xl" style="font-family: 'Teko', sans-serif;">
+                        <span>{{ $game->team_b }}</span>
+                        <span>{{ array_sum($scores['team_b'] ?? []) }}</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1 h-12">
+                        @foreach($periods as $i => $p)
+                            <div class="flex-1 min-w-[30px] bg-gray-700 flex items-center justify-center text-white font-semibold text-sm" style="font-family: 'Teko', sans-serif;">
+                                {{ $scores['team_b'][$i] ?? 0 }}
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
 
-        @foreach($periods as $i => $p)
-            <td id="teamA-period-{{ $i }}">
-                {{ $scores['team_a'][$i] ?? 0 }}
-            </td>
-        @endforeach
-
-        <td id="teamA-total" class="font-bold">
-            {{ array_sum($scores['team_a'] ?? []) }}
-        </td>
-    </tr>
-
-    {{-- TEAM B --}}
-    <tr>
-        <td class="py-3 font-semibold text-left">
-            {{ $game->team_b }}
-        </td>
-
-        @foreach($periods as $i => $p)
-            <td id="teamB-period-{{ $i }}">
-                {{ $scores['team_b'][$i] ?? 0 }}
-            </td>
-        @endforeach
-
-        <td id="teamB-total" class="font-bold">
-            {{ array_sum($scores['team_b'] ?? []) }}
-        </td>
-    </tr>
-</tbody>
-
-            </table>
-        </div>
-    </div>
-
-    {{-- ================= ROSTERS ================= --}}
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-        {{-- TEAM A ROSTER --}}
-        <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="text-lg font-bold mb-4 text-gray-800">
-                {{ $game->team_a }}
-            </h3>
-
-            <ul class="space-y-2 text-sm text-gray-700">
-                @foreach($athletesA as $athlete)
-                    <li class="flex items-center gap-2">
-                        <span class="h-2 w-2 rounded-full bg-green-500"></span>
-                        {{ $athlete->name }}
-                    </li>
-                @endforeach
-            </ul>
-
-            <h4 class="mt-5 font-semibold text-gray-600">Coaches</h4>
-            @foreach($coachesA as $coach)
-                <p class="text-sm text-gray-700">
-                    {{ $coach->name }}
-                </p>
-            @endforeach
+            </div>
         </div>
 
-        {{-- TEAM B ROSTER --}}
-        <div class="bg-white rounded-xl shadow p-6">
-            <h3 class="text-lg font-bold mb-4 text-gray-800">
-                {{ $game->team_b }}
-            </h3>
+        {{-- Rosters --}}
+        <h3 class="text-4xl md:text-6xl font-bold text-white text-center mb-6" style="font-family: 'Teko', sans-serif;">
+    Rosters
+</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 w-full">
 
-            <ul class="space-y-2 text-sm text-gray-700">
-                @foreach($athletesB as $athlete)
-                    <li class="flex items-center gap-2">
-                        <span class="h-2 w-2 rounded-full bg-red-500"></span>
-                        {{ $athlete->name }}
-                    </li>
-                @endforeach
-            </ul>
+            {{-- Team A --}}
+            <div class="bg-gray-900 shadow-lg p-4 md:p-6">
+                <h3 class="text-white font-bold text-2xl md:text-6xl mb-6" style="font-family: 'Teko', sans-serif;">{{ $game->team_a }}</h3>
+                <div class="flex flex-col gap-4">
+                    @foreach($athletesA as $a)
+                        @php
+                            $fullName = $a->last_name . ', ' . $a->first_name;
+                            if($a->middle_initial) $fullName .= ' ' . strtoupper(substr($a->middle_initial,0,1)) . '.';
+                        @endphp
+                        <div class="flex items-center gap-4 text-white p-2 md:p-3">
+                            {{-- Profile --}}
+                            @if($a->profile_photo)
+                                <img src="{{ asset('storage/' . $a->profile_photo) }}"
+                                     alt="{{ $fullName }}"
+                                     class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover bg-gray-700">
+                            @else
+                                <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-700 flex items-center justify-center font-bold text-lg">
+                                    {{ strtoupper(substr($a->first_name,0,1) . substr($a->last_name,0,1)) }}
+                                </div>
+                            @endif
+                            {{-- Name --}}
+                            <span class="text-white font-semibold text-2xl md:text-2xl truncate" style="font-family: 'Teko', sans-serif;">
+                                {{ $fullName }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
 
-            <h4 class="mt-5 font-semibold text-gray-600">Coaches</h4>
-            @foreach($coachesB as $coach)
-                <p class="text-sm text-gray-700">
-                    {{ $coach->name }}
-                </p>
-            @endforeach
+            {{-- Team B --}}
+            <div class="bg-gray-900 shadow-lg p-4 md:p-6">
+                <h3 class="text-white font-bold text-2xl md:text-6xl mb-6" style="font-family: 'Teko', sans-serif;">{{ $game->team_b }}</h3>
+                <div class="flex flex-col gap-4">
+                    @foreach($athletesB as $a)
+                        @php
+                            $fullName = $a->last_name . ', ' . $a->first_name;
+                            if($a->middle_initial) $fullName .= ' ' . strtoupper(substr($a->middle_initial,0,1)) . '.';
+                        @endphp
+                        <div class="flex items-center gap-4 text-white p-2 md:p-3">
+                            {{-- Profile --}}
+                            @if($a->profile_photo)
+                                <img src="{{ asset('storage/' . $a->profile_photo) }}"
+                                     alt="{{ $fullName }}"
+                                     class="w-16 h-16 md:w-20 md:h-20 rounded-full object-cover bg-gray-700">
+                            @else
+                                <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-700 flex items-center justify-center font-bold text-lg">
+                                    {{ strtoupper(substr($a->first_name,0,1) . substr($a->last_name,0,1)) }}
+                                </div>
+                            @endif
+                            {{-- Name --}}
+                            <span class="text-white font-semibold text-2xl md:text-2xl truncate" style="font-family: 'Teko', sans-serif;">
+                                {{ $fullName }}
+                            </span>
+                        </div>
+                    @endforeach
+                </div>
+            </div>
+
         </div>
 
     </div>
 </div>
+
 <script>
 setInterval(async () => {
     try {
