@@ -230,9 +230,11 @@
     <div class="max-w-7xl mx-auto px-6">
 
         {{-- Section Title on Top --}}
-        <h3 class="text-3xl md:text-6xl font-bold text-gray-800 mb-12 text-center tracking-wide">
-            Gallery Highlights
-        </h3>
+        <div class="text-center mb-10">
+            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold" style="font-family: 'Poppins', sans-serif;">
+                Highlights
+            </h2>
+        </div>
 
         {{-- Spotlight Container --}}
         <div class="flex flex-col md:flex-row items-center gap-10">
@@ -255,7 +257,7 @@
 
             {{-- Right Side: Title + Description --}}
             <div class="flex-1 space-y-6">
-                <h2 class="text-5xl font-bold text-gray-800" style="font-family: 'Poppins', sans-serif;">
+                <h2 class="text-5xl text-gray-800" style="font-family: 'Poppins', sans-serif;">
                     {{ $latestPhoto->title ?? 'Gallery Highlight' }}
                 </h2>
                 <p class="text-gray-600 text-lg leading-relaxed">
@@ -341,96 +343,112 @@
 
 
 {{-- Upcoming Events & Games --}}
-<section class="bg-gray-50 py-12 border-t">
+<section class="bg-gray-200 py-12 border-t">
     <div class="max-w-7xl mx-auto px-6">
+        {{-- Section Header --}}
+        <div class="text-center mb-10">
+            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold" style="font-family: 'Poppins', sans-serif;">
+                Competitions Ahead
+            </h2>
+            <p class="text-gray-500 mt-2 text-sm md:text-lg">Check out the upcoming events and games</p>
+        </div>
 
         {{-- Upcoming Events --}}
-        <h3 class="text-3xl font-bold text-indigo-700 mb-6">Upcoming Events</h3>
+        <h3 class="text-2xl md:text-4xl font-bold text-gray-800 mb-6" style="font-family: 'Poppins', sans-serif;">Upcoming Events</h3>
         @if($upcomingEvents->isEmpty())
             <p class="text-gray-600 text-sm">No upcoming events.</p>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($upcomingEvents as $event)
-                    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 relative overflow-hidden group cursor-pointer">
-                        {{-- Decorative Accent --}}
-                        <div class="absolute top-0 left-0 w-2 h-full bg-indigo-400 rounded-l-xl"></div>
+                    <a href="{{ route('viewer.events') }}#event-{{ $event->id }}" 
+                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
 
-                        <div class="ml-4">
-                            <h4 class="font-semibold text-indigo-800 text-lg group-hover:text-indigo-600 transition">
+                        {{-- Content --}}
+                        <div>
+                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-indigo-600 transition" style="font-family: 'Poppins', sans-serif;">
                                 {{ $event->name }}
                             </h4>
-                            <p class="text-gray-500 text-sm mt-1">
+                            <p class="text-gray-400 text-xs mt-1">
                                 {{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}
                             </p>
                         </div>
 
-                        {{-- Hover effect: overlay --}}
-                        <div class="absolute inset-0 bg-indigo-50/30 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
-                    </div>
+                        {{-- Hover overlay --}}
+                        <div class="absolute inset-0 bg-indigo-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </a>
                 @endforeach
             </div>
         @endif
 
         {{-- Upcoming Games --}}
-        <h3 class="text-3xl font-bold text-teal-700 mt-12 mb-6">Upcoming Games</h3>
+        <h3 class="text-2xl md:text-4xl font-bold text-gray-800 mt-12 mb-6" style="font-family: 'Poppins', sans-serif;">Upcoming Games</h3>
         @if($upcomingGames->isEmpty())
             <p class="text-gray-600 text-sm">No upcoming games.</p>
         @else
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 @foreach($upcomingGames as $game)
-                    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 relative overflow-hidden group cursor-pointer">
-                        {{-- Decorative Accent --}}
-                        <div class="absolute top-0 left-0 w-2 h-full bg-teal-400 rounded-l-xl"></div>
+                    <a href="{{ route('viewer.games') }}#game-{{ $game->id }}" 
+                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
 
-                        <div class="ml-4">
-                            <h4 class="font-semibold text-teal-800 text-lg group-hover:text-teal-600 transition">
+                        {{-- Content --}}
+                        <div>
+                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-teal-600 transition" style="font-family: 'Poppins', sans-serif;">
                                 {{ $game->team_a }} vs {{ $game->team_b }}
                             </h4>
-                            <p class="text-gray-500 text-sm mt-1">
+                            <p class="text-gray-400 text-xs mt-1">
                                 {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}
                             </p>
                             <p class="text-gray-400 text-xs mt-1 italic">{{ $game->event->name ?? 'No Event' }}</p>
                         </div>
 
                         {{-- Hover overlay --}}
-                        <div class="absolute inset-0 bg-teal-50/30 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
-                    </div>
+                        <div class="absolute inset-0 bg-teal-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </a>
                 @endforeach
             </div>
         @endif
-
     </div>
 </section>
+
 
 {{-- Latest Announcements --}}
 <section class="bg-gray-50 py-12 border-t">
     <div class="max-w-7xl mx-auto px-6">
-        <h3 class="text-3xl font-bold text-pink-700 mb-6">Announcements</h3>
-        @if($latestAnnouncements->isEmpty())
-            <p class="text-gray-600 text-sm">No announcements available.</p>
-        @else
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($latestAnnouncements as $announcement)
-                    <div class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 relative overflow-hidden group cursor-pointer">
-                        {{-- Decorative Accent --}}
-                        <div class="absolute top-0 left-0 w-2 h-full bg-pink-400 rounded-l-xl"></div>
+        {{-- Section Header --}}
+        <div class="text-center mb-10">
+            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold" style="font-family: 'Poppins', sans-serif;">
+                Latest News & Updates
+            </h2>
+            <p class="text-gray-500 mt-2 text-sm md:text-lg">Stay informed with the latest announcements and results</p>
+        </div>
 
-                        <div class="ml-4">
-                            <h4 class="font-semibold text-pink-800 text-lg group-hover:text-pink-600 transition">
+        {{-- Announcements Grid --}}
+        @if($latestAnnouncements->isEmpty())
+            <p class="text-center text-gray-600 text-sm">No announcements available.</p>
+        @else
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($latestAnnouncements as $announcement)
+                    <a href="{{ route('viewer.announcements') }}#announcement-{{ $announcement->id }}" 
+                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between cursor-pointer group">
+
+                        {{-- Content --}}
+                        <div>
+                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-blue-600 transition mb-1" style="font-family: 'Poppins', sans-serif;">
                                 {{ $announcement->title }}
                             </h4>
-                            <p class="text-gray-400 text-xs mt-1">{{ $announcement->published_at->format('M d, Y') }}</p>
-                            <p class="text-gray-600 text-sm mt-2">{{ \Illuminate\Support\Str::limit($announcement->content, 120) }}</p>
+                            <p class="text-gray-400 text-xs mb-2">{{ $announcement->published_at->format('M d, Y') }}</p>
+                            <p class="text-gray-600 text-sm">{{ \Illuminate\Support\Str::limit($announcement->content, 120, '...') }}</p>
                         </div>
 
-                        {{-- Hover overlay --}}
-                        <div class="absolute inset-0 bg-pink-50/30 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
-                    </div>
+                        {{-- Hover overlay for NBA-style subtle effect --}}
+                        <div class="absolute inset-0 bg-blue-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </a>
                 @endforeach
             </div>
         @endif
     </div>
 </section>
+
 
 
 {{-- Banner Slideshow JS --}}
