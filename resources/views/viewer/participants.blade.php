@@ -7,7 +7,7 @@
 <section class="relative min-h-screen">
 
     {{-- Full-Page Background (covers entire page) --}}
-    <div class="fixed inset-0 -z-10">
+    <div class="absolute inset-0 -z-10">
         <img src="{{ asset('storage/court.jpeg') }}" 
              alt="Participants Background" 
              class="w-full h-full object-cover brightness-90 blur-sm">
