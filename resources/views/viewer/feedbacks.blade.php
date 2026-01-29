@@ -3,120 +3,115 @@
 @section('page-title', 'Feedbacks')
 
 @section('content')
-<div class="max-w-7xl mx-auto py-8 px-4">
+<div class="bg-black min-h-screen text-white py-12">
 
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">Feedback & System Information</h2>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
-      {{-- =======================
-     Developer Info / System Overview
-======================== --}}
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 flex flex-col items-center text-center">
+    {{-- =======================
+         Header / System Overview (from Developer Description)
+    ======================== --}}
     @php
-        // Fetch the first developer (or multiple if needed)
         $developer = \App\Models\SystemDeveloper::first();
+        $systemDescription = $developer && $developer->description
+            ? nl2br(e($developer->description))
+            : 'CEMS – CAVRAA Event Monitoring System is designed to streamline and automate the management of events, games, and participants for CAVRAA tournaments. Stay on top of schedules, winners, and all tournament details with ease.';
     @endphp
+    <div class="max-w-7xl mx-auto px-4 text-center mb-40">
+        <h1 class="text-7xl font-bold text-red-600 mb-4" style="font-family: 'Poppins', sans-serif;">CEMS – System Overview</h1>
+        <p class="text-gray-300 text-lg mx-auto max-w-3xl" style="font-family: 'Poppins', sans-serif;">{!! $systemDescription !!}</p>
+    </div>
 
-    {{-- Big title --}}
-    <h2 class="text-3xl font-bold text-gray-800 mb-6">System Developer</h2>
-
-    @if($developer)
-        <img src="{{ $developer->photo ? asset('storage/' . $developer->photo) : 'https://via.placeholder.com/150?text=Photo' }}" 
-             alt="{{ $developer->name }}" 
-             class="h-32 w-32 object-cover rounded-full border mb-4">
-
-        <h3 class="text-xl font-semibold text-gray-800">{{ $developer->name }}</h3>
-        <p class="text-gray-600 mb-1">{{ $developer->email }}</p>
-        <p class="text-gray-600 mb-2">{{ $developer->contact }}</p>
-
-        {{-- Role --}}
-        @if($developer->role)
-            <p class="text-sm text-white bg-blue-600 px-4 py-1 rounded">
-                {{ $developer->role }}
-            </p>
-        @endif
-
-    @else
-        <div class="h-32 w-32 rounded-full bg-gray-200 flex items-center justify-center mb-4 text-gray-500">
-            N/A
-        </div>
-        <p class="text-gray-600 mb-1">Developer Name</p>
-        <p class="text-gray-600 mb-2">Email / Contact</p>
-        <p class="text-sm text-white bg-blue-600 px-4 py-1 rounded">
-            Role
+    {{-- =======================
+     Developer Info & Feedback Side by Side (Maximized Space)
+======================== --}}
+<div class="max-w-7xl mx-auto px-4 text-center mb-16">
+        <h1 class="text-6xl font-bold text-white mb-4" style="font-family: 'Poppins', sans-serif;">Contact Us</h1>
+        <p class="mb-6 text-white" style="font-family: 'Poppins', sans-serif;">
+            Encountered a problem? Have a suggestion? Let us know by sending feedback below.
         </p>
-    @endif
+    </div>
+<div class="w-full mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 px-6 lg:px-16">
 
-    <hr class="my-4 border-gray-300 w-full">
+    {{-- Developer Info --}}
+    <div class="flex-1 bg-white border border-gray-300 rounded-xl shadow-lg p-8 flex flex-col items-center text-center text-black">
 
-    {{-- System Overview --}}
-    <h4 class="text-lg font-semibold text-gray-800 mb-2">System Overview</h4>
-    <p class="text-gray-600 text-sm text-justify">
-        @if($developer && $developer->description)
-            {!! nl2br(e($developer->description)) !!}
-        @else
-            CEMS – CAVRAA Event Monitoring System is designed to streamline and automate the management of events, games, and participants for CAVRAA tournaments.
-        @endif
-    </p>
-</div>
+        <h2 class="text-4xl font-bold text-black mb-6" style="font-family: 'Poppins', sans-serif;">System Developer</h2>
 
+        @if($developer)
+            <img src="{{ $developer->photo ? asset('storage/' . $developer->photo) : 'https://via.placeholder.com/150?text=Photo' }}" 
+                 alt="{{ $developer->name }}" 
+                 class="h-36 w-36 object-cover rounded-full border-4 border-black mb-4">
 
+            <h3 class="text-xl font-semibold">{{ $developer->name }}</h3>
+            <p class="mb-1">{{ $developer->email }}</p>
+            <p class="mb-2">{{ $developer->contact }}</p>
 
-
-        {{-- =======================
-             Feedback Form
-        ======================== --}}
-        <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6">
-            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Send Feedback</h3>
-            <p class="text-gray-500 mb-6">Encountered a problem? Want to share a suggestion? Send us your feedback below.</p>
-
-            @if(session('success'))
-                <div class="bg-green-100 text-green-800 p-4 rounded mb-4">
-                    {{ session('success') }}
-                </div>
+            @if($developer->role)
+                <p class="text-sm text-white bg-blue-600 px-4 py-1 rounded-full">
+                    {{ $developer->role }}
+                </p>
             @endif
 
-            <form action="{{ route('viewer.feedbacks.send') }}" method="POST" class="space-y-4">
-                @csrf
-
-                <div>
-                    <label class="block font-medium text-gray-700">Name</label>
-                    <input type="text" name="name" value="{{ old('name') }}"
-                           class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
-                    @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <label class="block font-medium text-gray-700">Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}"
-                           class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
-                    @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <label class="block font-medium text-gray-700">Subject</label>
-                    <input type="text" name="subject" value="{{ old('subject') }}"
-                           class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
-                    @error('subject') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <label class="block font-medium text-gray-700">Message</label>
-                    <textarea name="message" rows="5"
-                              class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">{{ old('message') }}</textarea>
-                    @error('message') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
-                </div>
-
-                <div>
-                    <button type="submit"
-                            class="px-6 py-3 bg-blue-600 text-white font-semibold rounded hover:bg-blue-700 transition">
-                        Send Feedback
-                    </button>
-                </div>
-            </form>
-        </div>
-
+        @else
+            <div class="h-36 w-36 rounded-full bg-gray-200 flex items-center justify-center mb-4 text-gray-500">
+                N/A
+            </div>
+            <p class="mb-1">Developer Name</p>
+            <p class="mb-2">Email / Contact</p>
+            <p class="text-sm text-white bg-red-600 px-4 py-1 rounded-full">
+                Role
+            </p>
+        @endif
     </div>
+
+    {{-- Feedback Form --}}
+    <div class="flex-1 bg-white border border-gray-300 rounded-xl shadow-lg p-8 text-black">
+        <h3 class="text-4xl font-bold text-black mb-4" style="font-family: 'Poppins', sans-serif;">Send Feedback</h3>
+
+        @if(session('success'))
+            <div class="bg-green-100 text-green-800 p-4 rounded mb-4">
+                {{ session('success') }}
+            </div>
+        @endif
+
+        <form action="{{ route('viewer.feedbacks.send') }}" method="POST" class="space-y-4 text-black">
+            @csrf
+
+            <div>
+                <label class="block font-medium">Name</label>
+                <input type="text" name="name" value="{{ old('name') }}"
+                       class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 bg-white text-black focus:ring focus:ring-red-500 focus:border-red-600">
+                @error('name') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <label class="block font-medium">Email</label>
+                <input type="email" name="email" value="{{ old('email') }}"
+                       class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 bg-white text-black focus:ring focus:ring-red-500 focus:border-red-600">
+                @error('email') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <label class="block font-medium">Subject</label>
+                <input type="text" name="subject" value="{{ old('subject') }}"
+                       class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 bg-white text-black focus:ring focus:ring-red-500 focus:border-red-600">
+                @error('subject') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <label class="block font-medium">Message</label>
+                <textarea name="message" rows="5"
+                          class="mt-1 block w-full border border-gray-300 rounded px-3 py-2 bg-white text-black focus:ring focus:ring-red-500 focus:border-red-600">{{ old('message') }}</textarea>
+                @error('message') <span class="text-red-500 text-sm">{{ $message }}</span> @enderror
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="w-full px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded transition">
+                    Send Feedback
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 </div>
 @endsection
