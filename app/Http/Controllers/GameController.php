@@ -262,6 +262,33 @@ public function updatePeriodScore(Request $request, Game $game, $periodIndex)
     return back()->with('success', 'Period finished. Scores locked.');
 }
 
+public function setWinner(Request $request, Game $game)
+{
+    $request->validate([
+        'winner' => 'required|in:team_a,team_b'
+    ]);
+
+    $oldValues = $game->toArray();
+
+    $winnerName = $request->winner === 'team_a'
+        ? $game->team_a
+        : $game->team_b;
+
+    $game->winner = $winnerName;
+    $game->status = 'Finished';
+    $game->save();
+
+    AuditLog::create([
+        'model_type' => 'Game',
+        'model_id'   => $game->id,
+        'user_id'    => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($game->toArray()),
+        'action'     => 'Set Winner: '.$winnerName.' ('.$game->team_a.' vs '.$game->team_b.')',
+    ]);
+
+    return back()->with('success', 'Winner set successfully!');
+}
 
 
     public function finishGame(Game $game)

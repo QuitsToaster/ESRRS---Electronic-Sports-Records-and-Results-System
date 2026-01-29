@@ -143,11 +143,11 @@ $currentScoreB = $game->score_b ?? 0;
 @endif
 
 {{-- WINNER BUTTONS --}}
-@if($game->status === 'Finished' && !$game->winner)
+@if(!$game->winner)
 <div class="grid grid-cols-2 gap-4 mb-6 text-center">
     <form action="{{ route('games.winner', $game->id) }}" method="POST">
         @csrf
-        <input type="hidden" name="winner" value="{{ $game->team_a }}">
+        <input type="hidden" name="winner" value="team_a">
         <button type="submit"
                 class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-lg font-semibold">
             {{ $game->team_a }} Wins
@@ -156,7 +156,7 @@ $currentScoreB = $game->score_b ?? 0;
 
     <form action="{{ route('games.winner', $game->id) }}" method="POST">
         @csrf
-        <input type="hidden" name="winner" value="{{ $game->team_b }}">
+        <input type="hidden" name="winner" value="team_b">
         <button type="submit"
                 class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white rounded-lg text-lg font-semibold">
             {{ $game->team_b }} Wins
@@ -164,6 +164,7 @@ $currentScoreB = $game->score_b ?? 0;
     </form>
 </div>
 @endif
+
 
 @if($game->winner)
 <div class="text-center mb-6">

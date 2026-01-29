@@ -160,12 +160,14 @@
     </div>
 </div>
 
-
 <script>
 let liveInterval = null;
 
-function openGame(gameId) {
+function openGame(gameId, persist = true) {
     document.getElementById('gameModal').classList.remove('hidden');
+
+    // optional localStorage for refresh restore (can remove if not needed)
+    if (persist) localStorage.setItem('openGameId', gameId);
 
     fetch(`/viewer/game/${gameId}`)
         .then(res => res.text())
@@ -173,28 +175,54 @@ function openGame(gameId) {
             document.getElementById('modalContent').innerHTML = html;
             startLive(gameId);
         });
+
+    // push to history if we want back button support
+    history.pushState({ gameId }, '', `/viewer/game/${gameId}`);
 }
 
 function closeGame() {
     document.getElementById('gameModal').classList.add('hidden');
     document.getElementById('modalContent').innerHTML = '';
-    clearInterval(liveInterval);
+
+    localStorage.removeItem('openGameId');
+
+    if (liveInterval) {
+        clearInterval(liveInterval);
+        liveInterval = null;
+    }
 }
 
+// handle browser back/forward buttons
+window.addEventListener('popstate', (event) => {
+    if (event.state && event.state.gameId) {
+        openGame(event.state.gameId, false);
+    } else {
+        closeGame();
+    }
+});
+
 function startLive(gameId) {
+    if (liveInterval) clearInterval(liveInterval);
+
     liveInterval = setInterval(() => {
         fetch(`/viewer/game/${gameId}/live`)
             .then(res => res.json())
             .then(data => {
-                if(document.getElementById('liveScoreA')) {
+                if (document.getElementById('liveScoreA')) {
                     document.getElementById('liveScoreA').innerText = data.score_a;
                 }
-                if(document.getElementById('liveScoreB')) {
+                if (document.getElementById('liveScoreB')) {
                     document.getElementById('liveScoreB').innerText = data.score_b;
                 }
-            });
+            })
+            .catch(() => {});
     }, 3000);
 }
+
+
 </script>
 
+
 @endsection
+
+

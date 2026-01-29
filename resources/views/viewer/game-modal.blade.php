@@ -8,24 +8,25 @@
     $scores = is_array($game->scores) ? $game->scores : (is_string($game->scores) ? json_decode($game->scores, true) : null);
     $scores = $scores ?? ['team_a' => [], 'team_b' => []];
 
-    $now = \Carbon\Carbon::now();
-    $gameStart = \Carbon\Carbon::parse($game->game_time);
-    $gameEnd = $gameStart->copy()->addHours(2);
-
-    if ($now->lt($gameStart)) {
-        $status = 'Upcoming';
-        $statusColor = 'bg-yellow-400';
-    } elseif ($now->between($gameStart, $gameEnd)) {
-        $status = 'Ongoing';
-        $statusColor = 'bg-green-500';
-    } else {
-        $status = 'Finished';
-        $statusColor = 'bg-gray-400';
-    }
+    // Use actual status from DB
+    $status = $game->status ?? 'Upcoming';
+    $statusColor = match($status) {
+        'Upcoming' => 'bg-yellow-400',
+        'Ongoing'  => 'bg-green-500',
+        'Finished' => 'bg-gray-400',
+        default    => 'bg-gray-400',
+    };
 
     $schoolA = \App\Models\School::where('name', $game->team_a)->first();
     $schoolB = \App\Models\School::where('name', $game->team_b)->first();
+
+    // Winner logic
+    $winner = $game->winner;
 @endphp
+
+<script>
+window.scrollTo(0, 0);
+</script>
 
 <div class="relative min-h-screen overflow-hidden">
 
@@ -36,31 +37,52 @@
     </div>
 
     {{-- Back Button --}}
-    <a href="{{ route('viewer.games') }}"
-       class="fixed top-6 left-4 md:left-6 z-50 inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
-              text-white font-bold rounded-full shadow-lg hover:scale-105 transition-transform">
-        ← Back to Games
-    </a>
+<button onclick="history.back()"
+   class="fixed top-20 left-4 md:left-6 z-[9999] inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
+          text-white font-bold rounded-full shadow-lg hover:scale-105 transition-transform">
+    ← Back to Games
+</button>
+
+
+<script>
+function closeGameAndGoBack() {
+    history.back(); // triggers popstate
+}
+
+
+
+</script>
+
 
     {{-- NBA Header Banner --}}
     <div class="w-full h-48 md:h-56 grid grid-cols-[1fr_1.5fr_1fr] relative">
-
         {{-- Team A Logo --}}
         <div class="relative overflow-hidden">
             @if($schoolA && $schoolA->logo)
-                <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('{{ asset('storage/'.$schoolA->logo) }}')"></div>
+                <div class="absolute inset-0 bg-cover bg-center {{ $winner === $game->team_a ? 'ring-4 ring-green-400' : '' }}"
+                     style="background-image:url('{{ asset('storage/'.$schoolA->logo) }}')"></div>
             @endif
             <div class="absolute inset-0 bg-black/30"></div>
         </div>
 
         {{-- Center Score --}}
         <div class="bg-black flex flex-col items-center justify-center text-white text-center px-4">
-            <span class="text-lg md:text-xl tracking-widest uppercase opacity-80" style="font-family: 'Teko', sans-serif;">{{ $game->event->name }}</span>
+            <span class="text-lg md:text-xl tracking-widest uppercase opacity-80" style="font-family: 'Teko', sans-serif;">
+                {{ $game->event->name }}
+            </span>
 
             <div class="flex items-center gap-4 md:gap-6 mt-2 text-6xl md:text-9xl font-extrabold">
-                <span id="liveScoreA" class="text-gray-100 flex-1" style="font-family: 'Teko', sans-serif;">{{ $game->score_a ?? 0 }}</span>
+                <span id="liveScoreA"
+                      class="flex-1 {{ $winner === $game->team_a ? 'text-green-400' : 'text-gray-100' }}"
+                      style="font-family: 'Teko', sans-serif;">
+                    {{ $game->score_a ?? 0 }}
+                </span>
                 <span class="text-2xl md:text-3xl font-bold tracking-widest opacity-80">—</span>
-                <span id="liveScoreB" class="text-gray-100 flex-1" style="font-family: 'Teko', sans-serif;">{{ $game->score_b ?? 0 }}</span>
+                <span id="liveScoreB"
+                      class="flex-1 {{ $winner === $game->team_b ? 'text-green-400' : 'text-gray-100' }}"
+                      style="font-family: 'Teko', sans-serif;">
+                    {{ $game->score_b ?? 0 }}
+                </span>
             </div>
 
             <span class="mt-2 px-3 py-1 rounded-full text-xs font-semibold {{ $statusColor }}">
@@ -72,12 +94,19 @@
                     ● LIVE
                 </span>
             @endif
+
+            @if($winner)
+                <span class="mt-1 text-sm font-bold text-green-400 tracking-wide">
+                    Winner: {{ $winner }}
+                </span>
+            @endif
         </div>
 
         {{-- Team B Logo --}}
         <div class="relative overflow-hidden">
             @if($schoolB && $schoolB->logo)
-                <div class="absolute inset-0 bg-cover bg-center" style="background-image:url('{{ asset('storage/'.$schoolB->logo) }}')"></div>
+                <div class="absolute inset-0 bg-cover bg-center {{ $winner === $game->team_b ? 'ring-4 ring-green-400' : '' }}"
+                     style="background-image:url('{{ asset('storage/'.$schoolB->logo) }}')"></div>
             @endif
             <div class="absolute inset-0 bg-black/30"></div>
         </div>
@@ -339,6 +368,7 @@ setInterval(async () => {
     }
 }, 1000); // every 1.5 seconds
 </script>
+
 
 
 @endsection
