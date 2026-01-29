@@ -298,30 +298,6 @@
             </div>
             @endif
 
-            @if(in_array('officials', $access))
-            {{-- Officials --}}
-            <div>
-                <button @click="openMenu = openMenu === 'officials' ? null : 'officials'"
-                        class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
-                        {{ request()->routeIs('officials.*') ? 'bg-blue-900 font-semibold' : '' }}">
-                    Officials
-                    <span x-text="openMenu === 'officials' ? '▾' : '▸'"></span>
-                </button>
-                <div x-show="openMenu === 'officials'" x-cloak class="pl-6 mt-1 space-y-1">
-                    <a href="{{ route('officials.index') }}"
-                    class="block px-4 py-2 rounded hover:bg-blue-600
-                    {{ request()->routeIs('officials.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                        All Officials
-                    </a>
-                    <a href="{{ route('officials.create') }}"
-                    class="block px-4 py-2 rounded hover:bg-blue-600
-                    {{ request()->routeIs('officials.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                        Add Official
-                    </a>
-                </div>
-            </div>
-            @endif
-
 
             @if(in_array('gallery', $access))
             {{-- Gallery --}}

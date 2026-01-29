@@ -91,7 +91,6 @@
                 'sports' => 'Sports',
                 'athletes' => 'Athletes',
                 'coaches' => 'Coaches',
-                'officials' => 'Officials',
                 'games' => 'Games',
                 'gallery' => 'Gallery',
                 'announcements' => 'Announcements',
