@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Athlete;
 use App\Models\Coach;
+use App\Models\LayoutSetting;
 use App\Models\Attendance;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -13,9 +14,10 @@ class AttendanceController extends Controller
 {
     // Show the attendance scanning page (this is what users see)
     public function index()
-    {
-        return view('attendance.check');
-    }
+{
+    $welcomeBg = LayoutSetting::where('key', 'welcome_image')->first();
+    return view('attendance.check', compact('welcomeBg'));
+}
 
     // Handle QR code submission from user self-scanning
     public function store(Request $request)

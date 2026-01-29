@@ -59,8 +59,15 @@
     {{-- ================= END PRIVACY MODAL ================= --}}
 
     {{-- ================= MAIN CONTENT ================= --}}
-    <div class="relative min-h-screen flex flex-col justify-center items-center px-4"
-         style="background-image: url('{{ asset('images/cavraa.jpg') }}'); background-size: cover; background-position: center;">
+@php
+use App\Models\LayoutSetting;
+$welcomeBg = LayoutSetting::where('key', 'welcome_image')->first();
+@endphp
+
+<div class="relative min-h-screen flex flex-col justify-center items-center px-4"
+     style="background-image: url('{{ $welcomeBg ? asset('storage/' . $welcomeBg->value) : asset('images/cavraa.jpg') }}'); 
+            background-size: cover; background-position: center;">
+
 
         {{-- Overlay --}}
         <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>

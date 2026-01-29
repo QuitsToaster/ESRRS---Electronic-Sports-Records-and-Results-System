@@ -40,9 +40,11 @@ body {
 
 {{-- Background --}}
 <div class="absolute inset-0">
-    <img src="{{ asset('images/cavraa.jpg') }}" class="w-full h-full object-cover">
+    <img src="{{ $welcomeBg ? asset('storage/' . $welcomeBg->value) : asset('images/cavraa.jpg') }}"
+         class="w-full h-full object-cover">
     <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
 </div>
+
 
 <div class="relative w-full max-w-7xl flex flex-col lg:flex-row gap-6 z-10">
 

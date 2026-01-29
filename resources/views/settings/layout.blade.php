@@ -187,6 +187,21 @@ function addDeveloperRow() {
             </div>
         </div>
 
+       {{-- =======================
+   WELCOME PAGE IMAGE
+========================--}}
+<div class="bg-white border rounded-lg p-6 shadow-sm">
+    <h2 class="text-xl font-semibold mb-4">Welcome Page Image</h2>
+
+    <img src="{{ $welcomeImage ? asset('storage/' . $welcomeImage->value) : 'https://via.placeholder.com/800x400?text=Welcome+Image' }}"
+         class="w-full h-64 object-cover mb-3 border rounded">
+
+    <input type="file" name="welcome_image" class="block text-sm text-gray-600">
+    <p class="text-sm text-gray-500 mt-1">Recommended: 1920x1080, JPG or PNG</p>
+</div>
+
+
+
         {{-- =======================
    FOOTER SETTINGS
 ========================--}}

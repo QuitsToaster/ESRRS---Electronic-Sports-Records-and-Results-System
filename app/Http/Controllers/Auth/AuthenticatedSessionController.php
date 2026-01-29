@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use App\Models\LayoutSetting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
@@ -15,9 +16,10 @@ class AuthenticatedSessionController extends Controller
      * Display the login view.
      */
     public function create(): View
-    {
-        return view('auth.login');
-    }
+{
+    $welcomeBg = LayoutSetting::where('key', 'welcome_image')->first();
+    return view('auth.login', compact('welcomeBg'));
+}
 
     /**
      * Handle an incoming authentication request.

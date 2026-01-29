@@ -7,68 +7,109 @@
 
     <title>Login - {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <style>
+        /* NBA-style fonts and shadows */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-nba {
+            background: linear-gradient(to right, #e63946, #f1faee);
+            color: white;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-nba:hover {
+            background: linear-gradient(to right, #d62828, #f1faee);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+        }
+
+        .input-nba {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+        }
+
+        .input-nba::placeholder {
+            color: rgba(255,255,255,0.7);
+        }
+
+        .overlay-dark {
+            background: rgba(0,0,0,0.5);
+        }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans antialiased">
+<body class="relative min-h-screen flex flex-col justify-center items-center bg-gray-900">
 
-    <div class="relative min-h-screen flex flex-col justify-center items-center px-4">
-        {{-- Background Image + Blur --}}
-        <div class="fixed inset-0 -z-10">
-            <img src="{{ asset('images/cavraa.jpg') }}" 
-                 alt="Background"
-                 class="w-full h-full object-cover filter brightness-75 blur-sm">
-            <div class="absolute inset-0 bg-black/40"></div> {{-- Dark overlay --}}
-        </div>
-
-        {{-- Form --}}
-        <div class="max-w-md w-full bg-white rounded-lg shadow-lg p-8 relative z-10">
-            <h1 class="text-2xl font-bold mb-6 text-center text-gray-800">Login to {{ config('app.name') }}</h1>
-
-            @if ($errors->any())
-                <div class="mb-4 text-red-600">
-                    <ul class="list-disc pl-5">
-                        @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-            @endif
-
-            <form method="POST" action="{{ route('login') }}">
-                @csrf
-
-                <div class="mb-4">
-                    <label for="email" class="block text-gray-700 font-semibold">Email</label>
-                    <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
-                        class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <div class="mb-4">
-                    <label for="password" class="block text-gray-700 font-semibold">Password</label>
-                    <input id="password" type="password" name="password" required
-                        class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                </div>
-
-                <div class="flex items-center justify-between mb-4">
-                    <label class="inline-flex items-center">
-                        <input type="checkbox" name="remember" class="rounded border-gray-300">
-                        <span class="ml-2 text-gray-600">Remember me</span>
-                    </label>
-                    @if (Route::has('password.request'))
-                        <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">Forgot password?</a>
-                    @endif
-                </div>
-
-                <button type="submit" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded shadow">
-                    Login
-                </button>
-            </form>
-
-            <p class="mt-6 text-center text-gray-600">
-                Don't have an account? 
-                <a href="{{ route('register') }}" class="text-blue-600 hover:underline">Register</a>
-            </p>
-        </div>
+    {{-- Background --}}
+    <div class="absolute inset-0"
+         style="background-image: url('{{ $welcomeBg ? asset('storage/' . $welcomeBg->value) : asset('images/cavraa.jpg') }}'); 
+                background-size: cover; background-position: center;">
+        <div class="absolute inset-0 overlay-dark backdrop-blur-sm"></div>
     </div>
 
+    {{-- Login Form Card --}}
+    <div class="max-w-md w-full p-8 rounded-xl shadow-xl glass-card relative z-10">
+        <h1 class="text-3xl font-bold mb-6 text-center text-white drop-shadow-lg" style="font-family: 'Poppins', sans-serif;">
+            {{ config('app.name') }} Login
+        </h1>
+
+        {{-- Errors --}}
+        @if ($errors->any())
+            <div class="mb-4 bg-red-800/50 text-red-100 p-3 rounded-lg border border-red-600">
+                <ul class="list-disc pl-5">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        <form method="POST" action="{{ route('login') }}" class="space-y-4">
+            @csrf
+
+            <div>
+                <label for="email" class="block text-white font-semibold mb-1" style="font-family: 'Poppins', sans-serif;">Email</label>
+                <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
+                    placeholder="you@example.com"
+                    class="input-nba block w-full p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div>
+                <label for="password" class="block text-white font-semibold mb-1" style="font-family: 'Poppins', sans-serif;">Password</label>
+                <input id="password" type="password" name="password" required
+                    placeholder="••••••••"
+                    class="input-nba block w-full p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            </div>
+
+            <div class="flex items-center justify-between text-white text-sm">
+                <label class="inline-flex items-center">
+                    <input type="checkbox" name="remember" class="rounded border-gray-300">
+                    <span class="ml-2">Remember me</span>
+                </label>
+                @if (Route::has('password.request'))
+                    <a href="{{ route('password.request') }}" class="hover:underline text-blue-400">Forgot password?</a>
+                @endif
+            </div>
+
+            <button type="submit" class="w-full py-3 rounded-md bg-green-600 hover:bg-green-700 text-lg text-white hover:text-gray-300 font-semibold" style="font-family: 'Poppins', sans-serif;">
+                Login
+            </button>
+        </form>
+
+        <p class="mt-6 text-center text-white/80">
+            Don't have an account? 
+            <a href="{{ route('register') }}" class="text-blue-400 hover:underline font-semibold">Register</a>
+        </p>
+    </div>
 </body>
 </html>

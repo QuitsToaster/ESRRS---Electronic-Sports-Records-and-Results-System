@@ -18,6 +18,7 @@ public function layout()
     $adminLogo  = LayoutSetting::where('key', 'admin_sidebar_logo')->first();
     $viewerLogo = LayoutSetting::where('key', 'viewer_top_logo')->first();
     $developers = SystemDeveloper::all();
+    $welcomeImage = LayoutSetting::where('key', 'welcome_image')->first();
     $footerSetting = FooterSetting::first(); // load footer
 
     return view('settings.layout', compact(
@@ -25,7 +26,8 @@ public function layout()
         'adminLogo',
         'viewerLogo',
         'developers',
-        'footerSetting'
+        'footerSetting',
+        'welcomeImage'
     ));
 }
 
@@ -42,7 +44,7 @@ public function saveLayout(Request $request)
         'developer_contact.*' => 'nullable|string|max:50',
         'developer_role.*' => 'nullable|string|max:255',
         'developer_description.*' => 'nullable|string|max:1000',
-
+        'welcome_image' => 'nullable|image|max:5120',
         'footer_logo' => 'nullable|image|max:2048',
         'footer_logo_name' => 'nullable|string|max:255',
         'social_name.*' => 'nullable|string|max:50',
@@ -166,6 +168,20 @@ if ($footer) {
 } else {
     FooterSetting::create($data);
 }
+
+/* =======================
+   Save Welcome Page Image
+=======================*/
+if ($request->hasFile('welcome_image')) {
+    $path = $request->file('welcome_image')->store('welcome', 'public');
+
+    LayoutSetting::updateOrCreate(
+        ['key' => 'welcome_image'],
+        ['value' => $path]
+    );
+}
+
+
 
 return back()->with('success', 'Layout settings saved successfully!');
 }
