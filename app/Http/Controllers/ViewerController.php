@@ -311,20 +311,28 @@ public function gallery(Request $request)
 
     public function medalTally()
 {
-    $medalTally = \DB::table('results')
-        ->selectRaw('school_id, SUM(medal="Gold") as gold, SUM(medal="Silver") as silver, SUM(medal="Bronze") as bronze')
-        ->groupBy('school_id')
-        ->get()
-        ->sortByDesc(function($school){
-            return [$school->gold, $school->silver, $school->bronze];
-        })
+    // Get all divisions with medal counts
+    $medalTally = \App\Models\Division::withCount([
+        'results as gold'   => fn($q) => $q->where('medal', 'Gold'),
+        'results as silver' => fn($q) => $q->where('medal', 'Silver'),
+        'results as bronze' => fn($q) => $q->where('medal', 'Bronze'),
+    ])->get();
+
+    // Calculate total medals per division
+    $medalTally->transform(function ($division) {
+        $division->total = $division->gold + $division->silver + $division->bronze;
+        return $division;
+    });
+
+    // Sort divisions by total, then gold, silver, bronze
+    $medalTally = $medalTally
+        ->sortByDesc(fn($d) => [$d->total, $d->gold, $d->silver, $d->bronze])
         ->values();
 
-    // Fetch schools names
-    $schools = \App\Models\School::whereIn('id', $medalTally->pluck('school_id'))->get()->keyBy('id');
-
-    return view('viewer.medal-tally', compact('medalTally', 'schools'));
+    return view('viewer.medal-tally', compact('medalTally'));
 }
+
+
 
 
 }
