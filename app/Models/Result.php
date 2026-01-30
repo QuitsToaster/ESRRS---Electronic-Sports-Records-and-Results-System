@@ -49,4 +49,12 @@ class Result extends Model
     {
         return $this->hasMany(Result::class);
     }
+
+    // Result.php
+public function division_model()
+{
+    return $this->belongsTo(\App\Models\Division::class, 'division', 'name'); 
+    // Assuming division in results table stores the division name
+}
+
 }

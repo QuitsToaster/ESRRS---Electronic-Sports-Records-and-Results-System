@@ -29,7 +29,7 @@
 {{-- Search Bar --}}
 <form method="GET" action="{{ route('results.index') }}" class="mb-6 flex items-center gap-2">
     <input type="text" name="search" value="{{ request('search') }}"
-           placeholder="Search event, school, sport, division, medal, athlete, or date..."
+           placeholder="Search event, division, sport, category, medal, or date..."
            class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
     <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
         Search
@@ -46,37 +46,37 @@
         <div class="text-gray-500 text-center py-6">No medals awarded yet.</div>
     @else
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            @foreach($medalTally as $school)
+            @foreach($medalTally as $division)
                 <div class="flex items-center bg-white border border-gray-200 rounded-lg shadow-sm p-4 hover:shadow-md transition">
-                    {{-- School Logo --}}
-                    @if($school->logo)
-                        <img src="{{ asset('storage/' . $school->logo) }}" alt="{{ $school->name }}" class="w-12 h-12 rounded-full object-cover mr-4">
+                    {{-- Division Logo --}}
+                    @if($division->logo)
+                        <img src="{{ asset('storage/' . $division->logo) }}" alt="{{ $division->name }}" class="w-12 h-12 rounded-full object-cover mr-4">
                     @else
                         <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold mr-4">
-                            {{ strtoupper(substr($school->name,0,2)) }}
+                            {{ strtoupper(substr($division->name,0,2)) }}
                         </div>
                     @endif
 
                     <div class="flex-1">
                         <div class="flex justify-between items-center mb-1">
-                            <span class="font-semibold text-gray-800">{{ $school->name }}</span>
-                            <span class="text-gray-500 font-medium">Rank: {{ $school->rank }}</span>
+                            <span class="font-semibold text-gray-800">{{ $division->name }}</span>
+                            <span class="text-gray-500 font-medium">Rank: {{ $division->rank }}</span>
                         </div>
                         <div class="flex items-center space-x-4 text-sm">
                             <div class="flex items-center space-x-1">
                                 <span class="w-4 h-4 bg-yellow-400 rounded-full inline-block"></span>
-                                <span class="font-semibold">{{ $school->gold }} Gold</span>
+                                <span class="font-semibold">{{ $division->gold }} Gold</span>
                             </div>
                             <div class="flex items-center space-x-1">
                                 <span class="w-4 h-4 bg-gray-400 rounded-full inline-block"></span>
-                                <span class="font-semibold">{{ $school->silver }} Silver</span>
+                                <span class="font-semibold">{{ $division->silver }} Silver</span>
                             </div>
                             <div class="flex items-center space-x-1">
                                 <span class="w-4 h-4 bg-orange-500 rounded-full inline-block"></span>
-                                <span class="font-semibold">{{ $school->bronze }} Bronze</span>
+                                <span class="font-semibold">{{ $division->bronze }} Bronze</span>
                             </div>
                         </div>
-                        <div class="text-sm text-gray-500 mt-1">Total Points: {{ $school->points }}</div>
+                        <div class="text-sm text-gray-500 mt-1">Total Points: {{ $division->points }}</div>
                     </div>
                 </div>
             @endforeach
@@ -85,15 +85,15 @@
 </div>
 
 {{-- Results Table by Division --}}
-@foreach(['Elementary','Secondary'] as $division)
-    <h2 class="text-lg font-semibold text-gray-800 mb-2">{{ $division }} Division</h2>
+@foreach(['Elementary','Secondary'] as $level)
+    <h2 class="text-lg font-semibold text-gray-800 mb-2">{{ $level }} Division</h2>
 
     @php
-        $divisionResults = $results->where('division', $division);
+        $divisionResults = $results->where('division', $level);
     @endphp
 
     @if($divisionResults->isEmpty())
-        <div class="text-gray-500 py-4">No results recorded for {{ $division }} Division.</div>
+        <div class="text-gray-500 py-4">No results recorded for {{ $level }} Division.</div>
     @else
         <div class="bg-white rounded shadow overflow-x-auto mb-6">
             <table class="w-full text-left table-auto">
@@ -101,7 +101,7 @@
                     <tr>
                         <th class="px-4 py-2">Event</th>
                         <th class="px-4 py-2">Sport</th>
-                        <th class="px-4 py-2">Team</th>
+                        <th class="px-4 py-2">Division</th>
                         <th class="px-4 py-2">Category</th>
                         <th class="px-4 py-2">Medal</th>
                         <th class="px-4 py-2">Awarded By</th>
@@ -111,28 +111,27 @@
                 <tbody>
                     @foreach($divisionResults as $result)
                         <tr class="border-b">
-                          
-<td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
-<td class="px-4 py-2">{{ $result->sport->name ?? '-' }}</td>
-<td class="px-4 py-2">{{ $result->school->name ?? '-' }}</td>
-<td class="px-4 py-2">{{ $result->category }}</td>
-<td class="px-4 py-2">
-    <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
-                  @elseif($result->medal==='Silver') text-gray-400 font-bold
-                  @else text-orange-500 font-bold @endif">
-        {{ $result->medal }}
-    </span>
-</td>
-<td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
-<td class="px-4 py-2">
-    {{ 
-        $result->created_at 
-            ? $result->created_at->format('M d, Y') 
-            : ($result->event?->award_date?->format('M d, Y') ?? '-') 
-    }}
-</td>
-
-
+                            <td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
+                            <td class="px-4 py-2">{{ $result->sport->name ?? '-' }}</td>
+                            <td class="px-4 py-2">
+                                {{ $result->division_model->name ?? $result->division }}
+                            </td>
+                            <td class="px-4 py-2">{{ $result->category }}</td>
+                            <td class="px-4 py-2">
+                                <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
+                                              @elseif($result->medal==='Silver') text-gray-400 font-bold
+                                              @else text-orange-500 font-bold @endif">
+                                    {{ $result->medal }}
+                                </span>
+                            </td>
+                            <td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
+                            <td class="px-4 py-2">
+                                {{ 
+                                    $result->created_at 
+                                        ? $result->created_at->format('M d, Y') 
+                                        : ($result->event?->award_date?->format('M d, Y') ?? '-') 
+                                }}
+                            </td>
                         </tr>
                     @endforeach
                 </tbody>
