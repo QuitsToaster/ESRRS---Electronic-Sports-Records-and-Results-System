@@ -9,6 +9,7 @@ use App\Models\AuditLog;
 use App\Models\GameTeam;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Validator;
 
 class GameController extends Controller
 {
@@ -288,6 +289,31 @@ public function setWinner(Request $request, Game $game)
     ]);
 
     return back()->with('success', 'Winner set successfully!');
+}
+
+
+public function updateLiveVideo(Request $request, Game $game)
+{
+    $request->validate([
+        'live_video_url' => 'nullable|url'
+    ]);
+
+    $oldValues = $game->toArray();
+
+    $game->update([
+        'live_video_url' => $request->live_video_url
+    ]);
+
+    AuditLog::create([
+        'model_type' => 'Game',
+        'model_id'   => $game->id,
+        'user_id'    => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($game->toArray()),
+        'action'     => 'Updated Live Video URL for '.$game->team_a.' vs '.$game->team_b,
+    ]);
+
+    return back()->with('success', 'Live video link updated successfully!');
 }
 
 

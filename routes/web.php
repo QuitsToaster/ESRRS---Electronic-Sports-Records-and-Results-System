@@ -158,6 +158,8 @@ Route::post('/games/{game}/update-period/{periodIndex}',
     [GameController::class, 'updatePeriodScore']
 )->name('games.updatePeriodScore');
 
+Route::post('/games/{game}/live-video', [GameController::class, 'updateLiveVideo'])
+    ->name('games.updateLiveVideo');
 
 
 // Viewer polling
