@@ -3,6 +3,63 @@
 @section('page-title', 'Home')
 
 @section('content')
+ {{-- ================= DATA PRIVACY SLIDE-UP ================= --}}
+<div id="privacyBanner"
+     class="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-2xl border-t border-gray-200
+            transform translate-y-full transition-transform duration-500 ease-out">
+
+    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+        <div class="text-sm text-gray-700 leading-relaxed">
+            <strong class="block text-gray-900 mb-1">Data Privacy Notice</strong>
+            In compliance with the Data Privacy Act of 2012 (RA 10173), this system collects and processes
+            data strictly for event monitoring and system operations. By continuing, you agree to this use.
+        </div>
+
+        <div class="flex gap-3 shrink-0">
+            <button onclick="declinePrivacy()"
+                    class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition">
+                Decline
+            </button>
+
+            <button onclick="acceptPrivacy()"
+                    class="px-4 py-2 rounded-md bg-indigo-600 hover:bg-indigo-700 text-white font-semibold transition">
+                Accept
+            </button>
+        </div>
+
+    </div>
+</div>
+{{-- ================= END DATA PRIVACY SLIDE-UP ================= --}}
+
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const banner = document.getElementById('privacyBanner');
+
+    // Show only once per browser session
+    if (!sessionStorage.getItem('privacyAccepted')) {
+        setTimeout(() => {
+            banner.classList.remove('translate-y-full');
+        }, 500);
+    }
+});
+
+function acceptPrivacy() {
+    sessionStorage.setItem('privacyAccepted', 'true');
+    closePrivacyBanner();
+}
+
+function declinePrivacy() {
+    window.location.href = 'about:blank';
+}
+
+function closePrivacyBanner() {
+    const banner = document.getElementById('privacyBanner');
+    banner.classList.add('translate-y-full');
+}
+</script>
+
 
 {{-- Banner Slideshow --}}
 <div class="relative w-full h-64 md:h-96 overflow-hidden -mt-16 z-0 banner-clip">

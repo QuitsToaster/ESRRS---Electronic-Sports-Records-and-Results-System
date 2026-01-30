@@ -38,14 +38,6 @@ body {
 </head>
 <body class="relative flex items-center justify-center p-4 bg-gray-100">
 
-{{-- Background --}}
-<div class="absolute inset-0">
-    <img src="{{ $welcomeBg ? asset('storage/' . $welcomeBg->value) : asset('images/cavraa.jpg') }}"
-         class="w-full h-full object-cover">
-    <div class="absolute inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
-</div>
-
-
 <div class="relative w-full max-w-7xl flex flex-col lg:flex-row gap-6 z-10">
 
     {{-- Scanner Card --}}
@@ -171,7 +163,7 @@ body {
 
 {{-- Back to Home (Bottom Center) --}}
 <div class="absolute bottom-6 left-1/2 transform -translate-x-1/2 z-20">
-    <a href="{{ route('welcome') }}" 
+    <a href="{{ route('viewer.home') }}" 
        class="bg-white/90 hover:bg-white text-black hover:text-black font-medium px-6 py-3 rounded-full shadow flex items-center gap-2 transition">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>

@@ -12,12 +12,13 @@ use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
-    // Show the attendance scanning page (this is what users see)
+    // Show the attendance scanning page
     public function index()
-{
-    $welcomeBg = LayoutSetting::where('key', 'welcome_image')->first();
-    return view('attendance.check', compact('welcomeBg'));
-}
+    {
+        // Welcome page removed — just load the scanner view
+        return view('attendance.check');
+    }
+
 
     // Handle QR code submission from user self-scanning
     public function store(Request $request)
