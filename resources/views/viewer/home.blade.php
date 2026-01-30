@@ -91,11 +91,11 @@ function closePrivacyBanner() {
     <div class="w-full">
 
         {{-- Desktop: Small | BIG | Small — Mobile: Stack --}}
-        <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-3 items-start">
+        <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-3 items-stretch">
 
             {{-- ================= LEFT SECTION: QUICK ACTIONS ================= --}}
-            <section class="bg-gray-200 p-6 order-2 lg:order-1">
-                <div class="space-y-6">
+            <section class="bg-gray-200 p-6 order-2 lg:order-1 h-full flex flex-col">
+                <div class="space-y-6 flex-1">
 
                     <h2 class="text-2xl font-bold text-gray-800 text-center lg:text-left"
                         style="font-family: 'Poppins', sans-serif;">
@@ -131,56 +131,135 @@ function closePrivacyBanner() {
                             </div>
                         </a>
                     </div>
-
                 </div>
             </section>
 
             {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
-            <section class="p-4 order-1 lg:order-2">
+            <section class="order-1 lg:order-2 flex flex-col justify-start h-full">
+                <div class="relative w-full h-full">
 
-                <div class="relative overflow-hidden shadow-2xl scale-105">
+                    {{-- Medal Tally Background & Scrollable Container --}}
+                    <div class="relative bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 overflow-hidden shadow-lg h-full">
 
-                    {{-- Background --}}
-                    <div class="absolute inset-0">
-                        <img src="{{ asset('storage/medalbg.jpg') }}"
-                             class="w-full h-full object-cover brightness-75">
-                        <div class="absolute inset-0 bg-black/50"></div>
-                    </div>
+                        {{-- Overlay for image --}}
+                        <div class="absolute inset-0">
+                            <img src="{{ asset('storage/medalbg.jpg') }}"
+                                 class="w-full h-full object-cover brightness-75 blur-sm">
+                            <div class="absolute inset-0 bg-black/30"></div>
+                        </div>
 
-                    {{-- Content --}}
-                    <div class="relative p-8 text-white">
-                        <h2 class="text-4xl font-extrabold mb-6 text-center tracking-wide">
-                            Medal Tally
-                        </h2>
+                        {{-- Scrollable Content --}}
+                        <div class="relative px-6 py-6 max-h-[600px] overflow-y-auto">
 
-                        @forelse($medalTally as $index => $school)
-                            @php
-                                $schoolModel = \App\Models\School::find($school->school_id);
-                            @endphp
+                            {{-- Medal Tally Header --}}
+                            <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white sticky top-0 bg-black/20 backdrop-blur-md z-10 px-4 py-2 rounded-md">
+                                <div></div>
+                                <h2 class="text-3xl font-bold">Medal Tally</h2>
 
-                            <div class="flex justify-between items-center py-3 px-2
-                                        border-b border-white/20 text-lg">
-                                <span class="font-semibold">
-                                    {{ $index + 1 }}. {{ $schoolModel->name ?? 'Unknown' }}
-                                </span>
+                                <div class="grid grid-cols-3 text-center font-semibold text-lg">
+                                    <span class="text-yellow-400">Gold</span>
+                                    <span class="text-gray-300">Silver</span>
+                                    <span class="text-orange-400">Bronze</span>
+                                </div>
 
-                                <span class="font-extrabold text-yellow-400 text-xl">
-                                    {{ $school->gold + $school->silver + $school->bronze }}
-                                </span>
+                                <div class="text-center font-semibold text-4xl text-red-600">Total</div>
                             </div>
-                        @empty
-                            <p class="text-center text-sm opacity-80">
-                                No medals awarded yet.
-                            </p>
-                        @endforelse
-                    </div>
 
+                            {{-- Mobile Header --}}
+                            <h2 class="md:hidden text-center text-3xl font-bold text-white mb-6">
+                                Medal Tally by Division
+                            </h2>
+
+                            @if($medalTally->isEmpty())
+                                <p class="text-gray-200 text-sm text-center">No divisions found.</p>
+                            @else
+                                <div class="grid gap-4 md:gap-6">
+
+                                    @foreach($medalTally as $index => $division)
+                                        {{-- Desktop Row --}}
+                                        <div class="hidden md:grid grid-cols-[40px_1fr_420px_70px]
+                                                    items-center p-4 md:p-6
+                                                    bg-white/10 backdrop-blur-md
+                                                    rounded-xl shadow-lg hover:shadow-2xl transition mx-auto">
+                                            <div class="text-white font-bold text-lg text-center">{{ $index + 1 }}</div>
+
+                                            <div class="flex items-center gap-4">
+                                                @if($division->logo)
+                                                    <img src="{{ asset('storage/' . $division->logo) }}"
+                                                         class="w-12 h-12 object-cover rounded-full border border-white/30">
+                                                @else
+                                                    <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold">
+                                                        {{ strtoupper(substr($division->name,0,2)) }}
+                                                    </div>
+                                                @endif
+                                                <span class="text-white font-semibold text-lg">{{ $division->name }}</span>
+                                            </div>
+
+                                            <div class="grid grid-cols-3 text-center font-extrabold text-4xl">
+                                                <span class="text-yellow-400">{{ $division->gold }}</span>
+                                                <span class="text-gray-300">{{ $division->silver }}</span>
+                                                <span class="text-orange-400">{{ $division->bronze }}</span>
+                                            </div>
+
+                                            <div class="relative h-full">
+                                                <div class="absolute top-0 bottom-0 left-0 w-[500px] -z-10
+                                                            bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
+                                                            opacity-90"></div>
+                                                <div class="relative text-center text-red-600 font-extrabold text-6xl py-4">
+                                                    {{ $division->total }}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Mobile Card --}}
+                                        <div class="md:hidden bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-4 space-y-4 mx-auto">
+                                            <div class="flex items-center gap-3">
+                                                <span class="text-white font-bold text-lg">#{{ $index + 1 }}</span>
+                                                @if($division->logo)
+                                                    <img src="{{ asset('storage/' . $division->logo) }}"
+                                                         class="w-10 h-10 object-cover rounded-full border border-white/30">
+                                                @endif
+                                                <span class="text-white font-semibold text-base truncate">
+                                                    {{ $division->name }}
+                                                </span>
+                                            </div>
+
+                                            <div class="grid grid-cols-3 text-center">
+                                                <div>
+                                                    <p class="text-xs text-yellow-300">Gold</p>
+                                                    <p class="text-3xl font-extrabold text-yellow-400">{{ $division->gold }}</p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs text-gray-300">Silver</p>
+                                                    <p class="text-3xl font-extrabold text-gray-300">{{ $division->silver }}</p>
+                                                </div>
+                                                <div>
+                                                    <p class="text-xs text-orange-300">Bronze</p>
+                                                    <p class="text-3xl font-extrabold text-orange-400">{{ $division->bronze }}</p>
+                                                </div>
+                                            </div>
+
+                                            <div class="relative rounded-lg overflow-hidden">
+                                                <div class="absolute inset-0
+                                                            bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
+                                                            opacity-90"></div>
+                                                <div class="relative text-center text-red-700 font-extrabold text-4xl py-2">
+                                                    Total: {{ $division->total }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endforeach
+
+                                </div>
+                            @endif
+                        </div>
+                    </div>
                 </div>
             </section>
 
             {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES ================= --}}
-            <section class="bg-gray-200 p-6 order-3 lg:order-3">
-                <div class="space-y-8">
+            <section class="bg-gray-200 p-6 order-3 lg:order-3 h-full flex flex-col">
+                <div class="space-y-8 flex-1">
 
                     {{-- Events --}}
                     <div>
@@ -233,6 +312,8 @@ function closePrivacyBanner() {
     </div>
 </section>
 {{-- ================= END DASHBOARD STRIP ================= --}}
+
+
 
 
 

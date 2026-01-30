@@ -27,17 +27,27 @@ class ViewerController extends Controller
     $announcementsCount = Announcement::count();
     $latestAnnouncements = Announcement::latest()->take(5)->get();
 
-    // Medal tally with rank sorting (Gold > Silver > Bronze)
-    $medalTally = \DB::table('results')
-        ->selectRaw('school_id, SUM(medal="Gold") as gold, SUM(medal="Silver") as silver, SUM(medal="Bronze") as bronze')
-        ->groupBy('school_id')
-        ->get()
-        ->sortByDesc(function($school){
-            return [$school->gold, $school->silver, $school->bronze];
-        })
-        ->values(); // reindex after sort
+    // -----------------------------
+    // Medal tally by Division
+    // -----------------------------
+    $medalTally = \App\Models\Division::withCount([
+        'results as gold'   => fn($q) => $q->where('medal', 'Gold'),
+        'results as silver' => fn($q) => $q->where('medal', 'Silver'),
+        'results as bronze' => fn($q) => $q->where('medal', 'Bronze'),
+    ])->get();
 
+    // Total medals per division
+    $medalTally->transform(function ($division) {
+        $division->total = $division->gold + $division->silver + $division->bronze;
+        return $division;
+    });
+
+    // Sort by total medals, then gold, silver, bronze
+    $medalTally = $medalTally->sortByDesc(fn($d) => [$d->total, $d->gold, $d->silver, $d->bronze])->values();
+
+    // -----------------------------
     // Fetch banners for the homepage slideshow
+    // -----------------------------
     $banners = Banner::orderBy('order')->get();
 
     return view('viewer.home', compact(
@@ -47,6 +57,7 @@ class ViewerController extends Controller
         'medalTally', 'banners'
     ));
 }
+
 
 
    public function participants(Request $request)
