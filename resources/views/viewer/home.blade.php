@@ -86,215 +86,224 @@ function closePrivacyBanner() {
     @endforeach
 </div>
 
-{{-- Quick Stats --}}
-<section class="relative -mt-8 py-12 quickstats-clip">
+{{-- ================= DASHBOARD STRIP ================= --}}
+<section class="relative py-12 bg-gray-100">
+    <div class="w-full">
 
-    {{-- Section Title --}}
-    <div class="text-center mb-6 sm:mb-8">
-        <h2 class="text-4xl sm:text-4xl md:text-6xl font-bold text-black"
-            style="font-family: 'Poppins', sans-serif;">
-            Quick Actions
-        </h2>
-    </div>
+        {{-- Desktop: Small | BIG | Small — Mobile: Stack --}}
+        <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-3 items-start">
 
-    {{-- Stats Grid --}}
-    <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {{-- ================= LEFT SECTION: QUICK ACTIONS ================= --}}
+            <section class="bg-gray-200 p-6 order-2 lg:order-1">
+                <div class="space-y-6">
 
-        {{-- Events --}}
-        <a href="{{ route('viewer.events') }}" class="transform hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <div class="bg-white rounded-xl shadow-md p-6 text-center border border-gray-100">
-                <div class="text-3xl font-bold text-gray-800">{{ $eventsCount }}</div>
-                <div class="text-sm text-gray-500 mt-1">Events</div>
-            </div>
-        </a>
+                    <h2 class="text-2xl font-bold text-gray-800 text-center lg:text-left"
+                        style="font-family: 'Poppins', sans-serif;">
+                        Quick Actions
+                    </h2>
 
-        {{-- Games --}}
-        <a href="{{ route('viewer.games') }}" class="transform hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <div class="bg-white rounded-xl shadow-md p-6 text-center border border-gray-100">
-                <div class="text-3xl font-bold text-gray-800">{{ $gamesCount }}</div>
-                <div class="text-sm text-gray-500 mt-1">Games</div>
-            </div>
-        </a>
+                    <div class="grid grid-cols-1 gap-4">
+                        <a href="{{ route('viewer.events') }}" class="hover:shadow-lg transition">
+                            <div class="bg-white p-4 text-center shadow">
+                                <div class="text-2xl font-bold">{{ $eventsCount }}</div>
+                                <div class="text-sm text-gray-500">Events</div>
+                            </div>
+                        </a>
 
-        {{-- Announcements --}}
-        <a href="{{ route('viewer.announcements') }}" class="transform hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <div class="bg-white rounded-xl shadow-md p-6 text-center border border-gray-100">
-                <div class="text-3xl font-bold text-gray-800">{{ $announcementsCount }}</div>
-                <div class="text-sm text-gray-500 mt-1">Announcements</div>
-            </div>
-        </a>
+                        <a href="{{ route('viewer.games') }}" class="hover:shadow-lg transition">
+                            <div class="bg-white p-4 text-center shadow">
+                                <div class="text-2xl font-bold">{{ $gamesCount }}</div>
+                                <div class="text-sm text-gray-500">Games</div>
+                            </div>
+                        </a>
 
-        {{-- Medal Participants --}}
-        <a href="{{ route('viewer.medalTally') }}" class="transform hover:-translate-y-1 hover:shadow-lg transition-all duration-300">
-            <div class="bg-white rounded-xl shadow-md p-6 text-center border border-gray-100">
-                <div class="text-3xl font-bold text-gray-800">{{ $medalTally->count() }}</div>
-                <div class="text-sm text-gray-500 mt-1">Teams with Medals</div>
-            </div>
-        </a>
+                        <a href="{{ route('viewer.announcements') }}" class="hover:shadow-lg transition">
+                            <div class="bg-white p-4 text-center shadow">
+                                <div class="text-2xl font-bold">{{ $announcementsCount }}</div>
+                                <div class="text-sm text-gray-500">Announcements</div>
+                            </div>
+                        </a>
 
+                        <a href="{{ route('viewer.medalTally') }}" class="hover:shadow-lg transition">
+                            <div class="bg-white p-4 text-center shadow">
+                                <div class="text-2xl font-bold">{{ $medalTally->count() }}</div>
+                                <div class="text-sm text-gray-500">Medals</div>
+                            </div>
+                        </a>
+                    </div>
+
+                </div>
+            </section>
+
+            {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
+            <section class="p-4 order-1 lg:order-2">
+
+                <div class="relative overflow-hidden shadow-2xl scale-105">
+
+                    {{-- Background --}}
+                    <div class="absolute inset-0">
+                        <img src="{{ asset('storage/medalbg.jpg') }}"
+                             class="w-full h-full object-cover brightness-75">
+                        <div class="absolute inset-0 bg-black/50"></div>
+                    </div>
+
+                    {{-- Content --}}
+                    <div class="relative p-8 text-white">
+                        <h2 class="text-4xl font-extrabold mb-6 text-center tracking-wide">
+                            Medal Tally
+                        </h2>
+
+                        @forelse($medalTally as $index => $school)
+                            @php
+                                $schoolModel = \App\Models\School::find($school->school_id);
+                            @endphp
+
+                            <div class="flex justify-between items-center py-3 px-2
+                                        border-b border-white/20 text-lg">
+                                <span class="font-semibold">
+                                    {{ $index + 1 }}. {{ $schoolModel->name ?? 'Unknown' }}
+                                </span>
+
+                                <span class="font-extrabold text-yellow-400 text-xl">
+                                    {{ $school->gold + $school->silver + $school->bronze }}
+                                </span>
+                            </div>
+                        @empty
+                            <p class="text-center text-sm opacity-80">
+                                No medals awarded yet.
+                            </p>
+                        @endforelse
+                    </div>
+
+                </div>
+            </section>
+
+            {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES ================= --}}
+            <section class="bg-gray-200 p-6 order-3 lg:order-3">
+                <div class="space-y-8">
+
+                    {{-- Events --}}
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4"
+                            style="font-family: 'Poppins', sans-serif;">
+                            Upcoming Events
+                        </h2>
+
+                        @forelse($upcomingEvents as $event)
+                            <a href="{{ route('viewer.events') }}#event-{{ $event->id }}"
+                               class="block bg-white rounded-xl p-3 shadow hover:shadow-lg transition mb-3">
+                                <div class="font-semibold text-gray-800">
+                                    {{ $event->name }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}
+                                </div>
+                            </a>
+                        @empty
+                            <p class="text-sm text-gray-500">No upcoming events.</p>
+                        @endforelse
+                    </div>
+
+                    {{-- Games --}}
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800 mb-4"
+                            style="font-family: 'Poppins', sans-serif;">
+                            Upcoming Games
+                        </h2>
+
+                        @forelse($upcomingGames as $game)
+                            <a href="{{ route('viewer.games') }}#game-{{ $game->id }}"
+                               class="block bg-white rounded-xl p-3 shadow hover:shadow-lg transition mb-3">
+                                <div class="font-semibold text-gray-800">
+                                    {{ $game->team_a }} vs {{ $game->team_b }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}
+                                </div>
+                            </a>
+                        @empty
+                            <p class="text-sm text-gray-500">No upcoming games.</p>
+                        @endforelse
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
     </div>
 </section>
-
-{{-- Responsive Clip-Path Styles --}}
-<style>
-    /* Default: MOBILE (straight edges) */
-    .banner-clip,
-    .quickstats-clip {
-        clip-path: none;
-    }
-
-    /* Desktop and up: SLANTED */
-    @media (min-width: 768px) {
-        .banner-clip {
-            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
-        }
-
-        .quickstats-clip {
-            clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
-        }
-    }
-</style>
+{{-- ================= END DASHBOARD STRIP ================= --}}
 
 
 
 
-
-{{-- Medal Tally --}}
-<section class="relative py-10">
-    {{-- Background Image --}}
-    <div class="absolute inset-0">
-        <img src="{{ asset('storage/medalbg.jpg') }}"
-             alt="Medal Background"
-             class="w-full h-full object-cover brightness-75 blur-sm">
-        <div class="absolute inset-0 bg-black/30"></div>
-    </div>
-
-    {{-- Content --}}
-    <div class="relative max-w-7xl mx-auto px-6">
-
-        {{-- Header (Desktop Only) --}}
-        <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white">
-            <div></div>
-            <h3 class="text-3xl font-bold">Medal Tally</h3>
-
-            <div class="grid grid-cols-3 text-center font-semibold text-lg">
-                <span class="text-yellow-400">Gold</span>
-                <span class="text-gray-300">Silver</span>
-                <span class="text-orange-400">Bronze</span>
-            </div>
-
-            <div class="text-center font-semibold text-4xl text-red-600">
-                Total
-            </div>
+{{-- Upcoming Events & Games --}}
+<section class="bg-gray-200 py-12 border-t">
+    <div class="max-w-7xl mx-auto px-6">
+        {{-- Section Header --}}
+        <div class="text-center mb-10">
+            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold" style="font-family: 'Poppins', sans-serif;">
+                Competitions Ahead
+            </h2>
+            <p class="text-gray-500 mt-2 text-sm md:text-lg">Check out the upcoming events and games</p>
         </div>
 
-        @if($medalTally->isEmpty())
-            <p class="text-gray-200 text-sm">No medals awarded yet.</p>
+        {{-- Upcoming Games --}}
+        <h3 class="text-2xl md:text-4xl font-bold text-gray-800 mt-12 mb-6" style="font-family: 'Poppins', sans-serif;">Upcoming Games</h3>
+        @if($upcomingGames->isEmpty())
+            <p class="text-gray-600 text-sm">No upcoming games.</p>
         @else
-            <div class="space-y-4 md:space-y-6">
-                @foreach($medalTally as $index => $school)
-                    @php
-                        $schoolModel = \App\Models\School::find($school->school_id);
-                        $total = $school->gold + $school->silver + $school->bronze;
-                    @endphp
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($upcomingGames as $game)
+                    <a href="{{ route('viewer.games') }}#game-{{ $game->id }}" 
+                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
 
-                    {{-- ================= DESKTOP ROW ================= --}}
-                    <div class="hidden md:grid
-                                grid-cols-[40px_1fr_420px_70px]
-                                items-center p-6
-                                bg-white/10 backdrop-blur-md
-                                rounded-xl shadow-lg hover:shadow-2xl transition">
-
-                        {{-- Rank --}}
-                        <div class="text-white font-bold text-lg text-center">
-                            {{ $index + 1 }}
+                        {{-- Content --}}
+                        <div>
+                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-teal-600 transition" style="font-family: 'Poppins', sans-serif;">
+                                {{ $game->team_a }} vs {{ $game->team_b }}
+                            </h4>
+                            <p class="text-gray-400 text-xs mt-1">
+                                {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}
+                            </p>
+                            <p class="text-gray-400 text-xs mt-1 italic">{{ $game->event->name ?? 'No Event' }}</p>
                         </div>
 
-                        {{-- School --}}
-                        <div class="flex items-center space-x-4">
-                            @if($schoolModel && $schoolModel->logo)
-                                <img src="{{ asset('storage/' . $schoolModel->logo) }}"
-                                     class="w-12 h-12 object-cover rounded-full border border-white/30">
-                            @endif
-                            <span class="text-white font-semibold text-lg">
-                                {{ $schoolModel->name ?? 'Unknown' }}
-                            </span>
+                        {{-- Hover overlay --}}
+                        <div class="absolute inset-0 bg-teal-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+
+        {{-- Upcoming Events --}}
+        <h3 class="text-2xl md:text-4xl font-bold text-gray-800 mb-6" style="font-family: 'Poppins', sans-serif;">Upcoming Events</h3>
+        @if($upcomingEvents->isEmpty())
+            <p class="text-gray-600 text-sm">No upcoming events.</p>
+        @else
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                @foreach($upcomingEvents as $event)
+                    <a href="{{ route('viewer.events') }}#event-{{ $event->id }}" 
+                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
+
+                        {{-- Content --}}
+                        <div>
+                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-indigo-600 transition" style="font-family: 'Poppins', sans-serif;">
+                                {{ $event->name }}
+                            </h4>
+                            <p class="text-gray-400 text-xs mt-1">
+                                {{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}
+                            </p>
                         </div>
 
-                        {{-- Medals --}}
-                        <div class="grid grid-cols-3 text-center font-extrabold text-4xl">
-                            <span class="text-yellow-400">{{ $school->gold }}</span>
-                            <span class="text-gray-300">{{ $school->silver }}</span>
-                            <span class="text-orange-400">{{ $school->bronze }}</span>
-                        </div>
-
-                        {{-- Total (UNCHANGED DESIGN) --}}
-                        <div class="relative h-full flex items-center justify-center">
-                            <div class="absolute inset-y-0 left-0 w-[500px] -z-10
-                                        bg-gradient-to-r
-                                        from-yellow-300 via-yellow-400 to-amber-500
-                                        opacity-90"></div>
-
-                            <div class="relative text-red-600 font-extrabold text-6xl">
-                                {{ $total }}
-                            </div>
-                        </div>
-                    </div>
-
-                    {{-- ================= MOBILE CARD ================= --}}
-                    <div class="md:hidden
-                                bg-white/10 backdrop-blur-md
-                                rounded-xl shadow-lg p-4 space-y-4">
-
-                        {{-- Header --}}
-                        <div class="flex items-center gap-3">
-                            <span class="text-white font-bold">#{{ $index + 1 }}</span>
-
-                            @if($schoolModel && $schoolModel->logo)
-                                <img src="{{ asset('storage/' . $schoolModel->logo) }}"
-                                     class="w-10 h-10 rounded-full border border-white/30 object-cover">
-                            @endif
-
-                            <span class="text-white font-semibold">
-                                {{ $schoolModel->name ?? 'Unknown' }}
-                            </span>
-                        </div>
-
-                        {{-- Medals --}}
-                        <div class="grid grid-cols-3 text-center">
-                            <div>
-                                <p class="text-xs text-yellow-300">Gold</p>
-                                <p class="text-3xl font-extrabold text-yellow-400">{{ $school->gold }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-300">Silver</p>
-                                <p class="text-3xl font-extrabold text-gray-300">{{ $school->silver }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-orange-300">Bronze</p>
-                                <p class="text-3xl font-extrabold text-orange-400">{{ $school->bronze }}</p>
-                            </div>
-                        </div>
-
-                        {{-- Total --}}
-                        <div class="relative overflow-hidden rounded-lg">
-                            <div class="absolute inset-0
-                                        bg-gradient-to-r
-                                        from-yellow-300 via-yellow-400 to-amber-500
-                                        opacity-90"></div>
-                            <div class="relative text-center text-red-700 font-extrabold text-4xl py-2">
-                                Total: {{ $total }}
-                            </div>
-                        </div>
-                    </div>
-
+                        {{-- Hover overlay --}}
+                        <div class="absolute inset-0 bg-indigo-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
+                    </a>
                 @endforeach
             </div>
         @endif
     </div>
 </section>
-
-
 
 
 
@@ -418,77 +427,6 @@ function closePrivacyBanner() {
     </div>
 </section>
 @endif
-
-
-
-
-{{-- Upcoming Events & Games --}}
-<section class="bg-gray-200 py-12 border-t">
-    <div class="max-w-7xl mx-auto px-6">
-        {{-- Section Header --}}
-        <div class="text-center mb-10">
-            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold" style="font-family: 'Poppins', sans-serif;">
-                Competitions Ahead
-            </h2>
-            <p class="text-gray-500 mt-2 text-sm md:text-lg">Check out the upcoming events and games</p>
-        </div>
-
-        {{-- Upcoming Events --}}
-        <h3 class="text-2xl md:text-4xl font-bold text-gray-800 mb-6" style="font-family: 'Poppins', sans-serif;">Upcoming Events</h3>
-        @if($upcomingEvents->isEmpty())
-            <p class="text-gray-600 text-sm">No upcoming events.</p>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($upcomingEvents as $event)
-                    <a href="{{ route('viewer.events') }}#event-{{ $event->id }}" 
-                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
-
-                        {{-- Content --}}
-                        <div>
-                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-indigo-600 transition" style="font-family: 'Poppins', sans-serif;">
-                                {{ $event->name }}
-                            </h4>
-                            <p class="text-gray-400 text-xs mt-1">
-                                {{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}
-                            </p>
-                        </div>
-
-                        {{-- Hover overlay --}}
-                        <div class="absolute inset-0 bg-indigo-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
-                    </a>
-                @endforeach
-            </div>
-        @endif
-
-        {{-- Upcoming Games --}}
-        <h3 class="text-2xl md:text-4xl font-bold text-gray-800 mt-12 mb-6" style="font-family: 'Poppins', sans-serif;">Upcoming Games</h3>
-        @if($upcomingGames->isEmpty())
-            <p class="text-gray-600 text-sm">No upcoming games.</p>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($upcomingGames as $game)
-                    <a href="{{ route('viewer.games') }}#game-{{ $game->id }}" 
-                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between group cursor-pointer relative overflow-hidden">
-
-                        {{-- Content --}}
-                        <div>
-                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-teal-600 transition" style="font-family: 'Poppins', sans-serif;">
-                                {{ $game->team_a }} vs {{ $game->team_b }}
-                            </h4>
-                            <p class="text-gray-400 text-xs mt-1">
-                                {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}
-                            </p>
-                            <p class="text-gray-400 text-xs mt-1 italic">{{ $game->event->name ?? 'No Event' }}</p>
-                        </div>
-
-                        {{-- Hover overlay --}}
-                        <div class="absolute inset-0 bg-teal-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
-                    </a>
-                @endforeach
-            </div>
-        @endif
-    </div>
-</section>
 
 
 {{-- Latest Announcements --}}
