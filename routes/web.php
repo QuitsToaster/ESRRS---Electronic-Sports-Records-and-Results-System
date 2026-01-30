@@ -43,20 +43,19 @@ Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')
     ->name('dashboard');
 
-// Viewer pages — no login required
 Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('home', [ViewerController::class, 'home'])->name('home');
     Route::get('participants', [ViewerController::class, 'participants'])->name('participants');
-    Route::get('participants/{school}', [ViewerController::class, 'participantShow'])->name('participants.show');
+    Route::get('participants/{division}', [ViewerController::class, 'participantShow'])->name('participants.show');
     Route::get('events', [ViewerController::class, 'events'])->name('events');
     Route::get('games', [ViewerController::class, 'games'])->name('games');
     Route::get('announcements', [ViewerController::class, 'announcements'])->name('announcements');
     Route::get('feedbacks', [ViewerController::class, 'feedbacks'])->name('feedbacks');
 
-        // Medal Tally
+    // Medal Tally
     Route::get('/medal-tally', [ViewerController::class, 'medalTally'])->name('medalTally');
-
 });
+
 
 Route::get('viewer/feedbacks', [App\Http\Controllers\ViewerController::class, 'feedbacks'])->name('viewer.feedbacks');
 Route::post('viewer/feedbacks/send', [App\Http\Controllers\ViewerController::class, 'sendFeedback'])->name('viewer.feedbacks.send');

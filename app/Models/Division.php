@@ -19,4 +19,18 @@ class Division extends Model
         return $this->hasMany(\App\Models\Result::class, 'division', 'name');
         // 'division' column in results table matches 'name' in divisions table
     }
+
+    // Division.php
+public function athletes()
+{
+    return $this->hasManyThrough(
+        \App\Models\Athlete::class,
+        \App\Models\Result::class,
+        'division', // results.division (matches divisions.name)
+        'id',       // athletes.id
+        'name',     // divisions.name
+        'athlete_id' // results.athlete_id
+    );
+}
+
 }
