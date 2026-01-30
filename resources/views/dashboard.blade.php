@@ -5,15 +5,14 @@
 @section('content')
 <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
 
-    {{-- Schools Card --}}
-    <a href="{{ route('schools.index') }}" class="block bg-blue-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
+    {{-- Divisions Card --}}
+    <a href="{{ route('divisions.index') }}" class="block bg-blue-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="text-lg font-semibold text-blue-800">Participants</h2>
-                    <p class="text-sm text-gray-700 mt-1">(Schools or Regions)</p>
-                <p class="text-gray-700 mt-2">Total number of participating schools or regions</p>
+                <h2 class="text-lg font-semibold text-blue-800">Divisions</h2>
+                <p class="text-gray-700 mt-2">Total number of participating divisions</p>
             </div>
-            <div class="text-3xl font-bold text-blue-800">{{ $schoolsCount }}</div>
+            <div class="text-3xl font-bold text-blue-800">{{ $divisionsCount }}</div>
         </div>
     </a>
 

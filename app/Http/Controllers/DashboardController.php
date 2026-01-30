@@ -11,6 +11,7 @@ use App\Models\Coach;
 use App\Models\Game;
 use App\Models\Official;
 use App\Models\Announcement;
+use App\Models\Division;
 use App\Models\Result; 
 
 class DashboardController extends Controller
@@ -24,6 +25,7 @@ class DashboardController extends Controller
         $sportsCount = Sport::count();
         $coachesCount = Coach::count();
         $gamesCount = Game::count();
+        $divisionsCount = Division::count();
 
         // ✅ Correct column: use 'status' for ongoing games
         $ongoingGamesCount = Game::where('status', 'Ongoing')->count();
@@ -70,7 +72,7 @@ $liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing', 'Finished'])
         return view('dashboard', compact(
             'schoolsCount', 'athletesCount', 'eventsCount', 'sportsCount',
             'coachesCount', 'officialsCount', 'gamesCount', 'ongoingGamesCount', 'liveGames',
-            'medalTally', 'latestAnnouncements'
+            'medalTally', 'latestAnnouncements', 'divisionsCount'
         ));
     }
 }
