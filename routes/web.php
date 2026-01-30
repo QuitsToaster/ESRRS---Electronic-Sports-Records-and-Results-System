@@ -15,6 +15,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResultController;
 use App\Http\Controllers\ViewerController;
+use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\BracketController;
@@ -65,6 +66,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     Route::get('attendance', [\App\Http\Controllers\AdminAttendanceController::class, 'index'])->name('attendance.index');
     Route::post('attendance/generate', [\App\Http\Controllers\AdminAttendanceController::class, 'generateQr'])->name('attendance.generate');
     Route::get('attendance/export', [\App\Http\Controllers\AdminAttendanceController::class, 'exportPdf'])->name('attendance.export');
+});
+
+Route::middleware(['auth'])->group(function () {
+    Route::resource('divisions', DivisionController::class);
 });
 
 Route::get('/check-attendance', [AttendanceController::class, 'index'])

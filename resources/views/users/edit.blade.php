@@ -86,6 +86,7 @@
                 'dashboard' => 'Dashboard',
                 'attendance' => 'Attendance',
                 'results' => 'Results',
+                'divisions' => 'Divisions',
                 'participants' => 'Teams',
                 'events' => 'Events',
                 'sports' => 'Sports',

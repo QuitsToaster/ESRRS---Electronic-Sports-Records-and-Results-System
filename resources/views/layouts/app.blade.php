@@ -185,6 +185,30 @@
     </div>
 @endif
 
+@if(in_array('divisions', $access))
+<div>
+    <button @click="openMenu = openMenu === 'divisions' ? null : 'divisions'"
+            class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
+            {{ request()->routeIs('divisions.*') ? 'bg-blue-900 font-semibold' : '' }}">
+        Divisions
+        <span x-text="openMenu === 'divisions' ? '▾' : '▸'"></span>
+    </button>
+    <div x-show="openMenu === 'divisions'" x-cloak class="pl-6 mt-1 space-y-1">
+        <a href="{{ route('divisions.index') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
+            All Divisions
+        </a>
+        <a href="{{ route('divisions.create') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('divisions.create') ? 'bg-blue-700 font-semibold' : '' }}">
+            Add Division
+        </a>
+    </div>
+</div>
+@endif
+
+
             @if(in_array('participants', $access))
 {{-- Teams / Schools --}}
 <div

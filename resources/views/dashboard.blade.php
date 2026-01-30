@@ -61,17 +61,6 @@
         </div>
     </a>
 
-    {{-- Officials Card --}}
-    <a href="{{ route('officials.index') }}" class="block bg-indigo-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
-        <div class="flex items-center justify-between">
-            <div>
-                <h2 class="text-lg font-semibold text-indigo-800">Officials</h2>
-                <p class="text-gray-700 mt-2">Total number of registered officials</p>
-            </div>
-            <div class="text-3xl font-bold text-indigo-800">{{ $officialsCount }}</div>
-        </div>
-    </a>
-
     {{-- Total Games Card --}}
     <a href="{{ route('games.index') }}" class="block bg-teal-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
         <div class="flex items-center justify-between">
