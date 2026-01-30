@@ -84,59 +84,63 @@
     @endif
 </div>
 
-{{-- Results Table by Division --}}
+{{-- Results Table by Sports --}}
+@php
+    use App\Models\Sport;
+    $allSports = Sport::orderBy('name')->get();
+@endphp
+
 @foreach(['Elementary','Secondary'] as $level)
-    <h2 class="text-lg font-semibold text-gray-800 mb-2">{{ $level }} Division</h2>
+    <h2 class="text-lg font-semibold text-gray-800 mt-6 mb-2">{{ $level }} Division</h2>
 
-    @php
-        $divisionResults = $results->where('division', $level);
-    @endphp
+    @foreach($allSports as $sport)
+        <h3 class="text-md font-medium text-gray-700 mt-4 mb-2">{{ $sport->name }}</h3>
 
-    @if($divisionResults->isEmpty())
-        <div class="text-gray-500 py-4">No results recorded for {{ $level }} Division.</div>
-    @else
-        <div class="bg-white rounded shadow overflow-x-auto mb-6">
-            <table class="w-full text-left table-auto">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-2">Event</th>
-                        <th class="px-4 py-2">Sport</th>
-                        <th class="px-4 py-2">Division</th>
-                        <th class="px-4 py-2">Category</th>
-                        <th class="px-4 py-2">Medal</th>
-                        <th class="px-4 py-2">Awarded By</th>
-                        <th class="px-4 py-2">Date</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($divisionResults as $result)
-                        <tr class="border-b">
-                            <td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
-                            <td class="px-4 py-2">{{ $result->sport->name ?? '-' }}</td>
-                            <td class="px-4 py-2">
-                                {{ $result->division_model->name ?? $result->division }}
-                            </td>
-                            <td class="px-4 py-2">{{ $result->category }}</td>
-                            <td class="px-4 py-2">
-                                <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
-                                              @elseif($result->medal==='Silver') text-gray-400 font-bold
-                                              @else text-orange-500 font-bold @endif">
-                                    {{ $result->medal }}
-                                </span>
-                            </td>
-                            <td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
-                            <td class="px-4 py-2">
-                                {{ 
-                                    $result->created_at 
-                                        ? $result->created_at->format('M d, Y') 
-                                        : ($result->event?->award_date?->format('M d, Y') ?? '-') 
-                                }}
-                            </td>
+        @php
+            $sportResults = $results->where('division', $level)
+                                    ->where('sport_id', $sport->id);
+        @endphp
+
+        @if($sportResults->isEmpty())
+            <div class="text-gray-500 py-2">No results recorded for {{ $sport->name }} in {{ $level }} Division.</div>
+        @else
+            <div class="bg-white rounded shadow overflow-x-auto mb-4">
+                <table class="w-full text-left table-auto">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="px-4 py-2">Event</th>
+                            <th class="px-4 py-2">Category</th>
+                            <th class="px-4 py-2">Medal</th>
+                            <th class="px-4 py-2">Awarded By</th>
+                            <th class="px-4 py-2">Date</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
+                    </thead>
+                    <tbody>
+                        @foreach($sportResults as $result)
+                            <tr class="border-b">
+                                <td class="px-4 py-2">{{ $result->event->name ?? '-' }}</td>
+                                <td class="px-4 py-2">{{ $result->category }}</td>
+                                <td class="px-4 py-2">
+                                    <span class="@if($result->medal==='Gold') text-yellow-500 font-bold
+                                                  @elseif($result->medal==='Silver') text-gray-400 font-bold
+                                                  @else text-orange-500 font-bold @endif">
+                                        {{ $result->medal }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-2">{{ $result->awardedBy->name ?? '-' }}</td>
+                                <td class="px-4 py-2">
+                                    {{ 
+                                        $result->created_at 
+                                            ? $result->created_at->format('M d, Y') 
+                                            : ($result->event?->award_date?->format('M d, Y') ?? '-') 
+                                    }}
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    @endforeach
 @endforeach
 @endsection
