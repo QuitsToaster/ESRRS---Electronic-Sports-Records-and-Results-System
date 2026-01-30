@@ -18,6 +18,7 @@ use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\GalleryController;
 use App\Http\Controllers\BracketController;
+use App\Http\Controllers\AccountRequestController;
 use Illuminate\Support\Facades\Route;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Athlete;
@@ -27,8 +28,15 @@ Route::get('/', function () {
 })->name('welcome');
 
 
+Route::post('/account-request', [AccountRequestController::class, 'store'])
+    ->name('account-request.store');
+
 Route::post('/switch-account', [SwitchAccountController::class, 'store'])
     ->name('switch.account');
+
+Route::post('/users/{user}/reset-password', [App\Http\Controllers\UserController::class, 'resetPassword'])
+    ->name('users.reset-password');
+
 
 Route::get('/dashboard', [DashboardController::class, 'index'])
     ->middleware('auth')

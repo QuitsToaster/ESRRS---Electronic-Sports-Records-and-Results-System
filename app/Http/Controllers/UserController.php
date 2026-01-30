@@ -5,13 +5,13 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
+use App\Models\AccountRequest;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    // Display all users with search filter
-public function index(Request $request)
+   public function index(Request $request)
 {
     $search = $request->input('search');
 
@@ -26,7 +26,13 @@ public function index(Request $request)
         ->orderBy('name', 'asc')
         ->get();
 
-    return view('users.index', compact('users'));
+    // Fetch account requests only for super admin
+    $accountRequests = collect(); // default empty collection
+    if (auth()->user()->role->name === 'Super Admin') {
+        $accountRequests = AccountRequest::orderBy('created_at', 'desc')->get();
+    }
+
+    return view('users.index', compact('users', 'accountRequests'));
 }
 
 
@@ -189,5 +195,16 @@ public function updateProfile(Request $request)
 
     return back()->with('success', 'Profile updated successfully!');
 }
+
+public function resetPassword(Request $request, User $user)
+{
+    $user->password = bcrypt($request->password); // default password
+    $user->save();
+
+    return response()->json([
+        'message' => "Password for {$user->email} has been reset to CEMS12345"
+    ]);
+}
+
 
 }

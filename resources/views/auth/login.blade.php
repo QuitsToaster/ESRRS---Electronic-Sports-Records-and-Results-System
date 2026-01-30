@@ -9,46 +9,17 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        /* NBA-style fonts and shadows */
-        body {
-            font-family: 'Inter', sans-serif;
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-
-        .btn-nba {
-            background: linear-gradient(to right, #e63946, #f1faee);
-            color: white;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .btn-nba:hover {
-            background: linear-gradient(to right, #d62828, #f1faee);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
-        }
-
-        .input-nba {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-        }
-
-        .input-nba::placeholder {
-            color: rgba(255,255,255,0.7);
-        }
-
-        .overlay-dark {
-            background: rgba(0,0,0,0.5);
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-nba { background: linear-gradient(to right, #e63946, #f1faee); color: white; font-weight: 600; transition: all 0.3s ease; }
+        .btn-nba:hover { background: linear-gradient(to right, #d62828, #f1faee); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); }
+        .input-nba { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; }
+        .input-nba::placeholder { color: rgba(255,255,255,0.7); }
+        .overlay-dark { background: rgba(0,0,0,0.5); }
     </style>
 </head>
-<body class="relative min-h-screen flex flex-col justify-center items-center bg-gray-900">
+<body class="relative min-h-screen flex flex-col justify-center items-center bg-gray-900"
+      x-data="accountRequests()">
 
     {{-- Background --}}
     <div class="absolute inset-0"
@@ -96,9 +67,7 @@
                     <input type="checkbox" name="remember" class="rounded border-gray-300">
                     <span class="ml-2">Remember me</span>
                 </label>
-                @if (Route::has('password.request'))
-                    <a href="{{ route('password.request') }}" class="hover:underline text-blue-400">Forgot password?</a>
-                @endif
+                <a href="#" @click.prevent="openModal('forgot_password')" class="hover:underline text-blue-400">Forgot password?</a>
             </div>
 
             <button type="submit" class="w-full py-3 rounded-md bg-green-600 hover:bg-green-700 text-lg text-white hover:text-gray-300 font-semibold" style="font-family: 'Poppins', sans-serif;">
@@ -108,8 +77,79 @@
 
         <p class="mt-6 text-center text-white/80">
             Don't have an account? 
-            <a href="{{ route('register') }}" class="text-blue-400 hover:underline font-semibold">Register</a>
+            <a href="#" @click.prevent="openModal('new_account')" class="text-blue-400 hover:underline font-semibold">Request Account</a>
         </p>
     </div>
+
+    {{-- Modal --}}
+    <div x-show="showModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+            <h2 class="text-xl font-bold mb-4" x-text="modalTitle"></h2>
+            <p class="mb-4" x-text="modalMessage"></p>
+            <form @submit.prevent="submitRequest">
+                <input type="email" x-model="email" placeholder="Enter your email" required
+                       class="w-full border border-gray-300 rounded px-3 py-2 mb-4">
+                <div class="flex justify-end gap-2">
+                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                        Submit
+                    </button>
+                    <button type="button" @click="showModal=false" class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">
+                        Cancel
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function accountRequests() {
+        return {
+            showModal: false,
+            modalType: '',
+            modalTitle: '',
+            modalMessage: '',
+            email: '',
+
+            openModal(type) {
+                this.modalType = type;
+                this.email = '';
+                if (type === 'forgot_password') {
+                    this.modalTitle = 'Password Reset Request';
+                    this.modalMessage = 'Enter your email to request a password reset:';
+                } else if (type === 'new_account') {
+                    this.modalTitle = 'Account Request';
+                    this.modalMessage = 'Enter your email to request a new account:';
+                }
+                this.showModal = true;
+            },
+
+            submitRequest() {
+                if (!this.email) return;
+
+                fetch("{{ route('account-request.store') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ email: this.email, type: this.modalType })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    this.modalTitle = this.modalType === 'forgot_password' ? 'Password Reset Request Sent' : 'Account Request Sent';
+                    this.modalMessage = data.message;
+                    this.showModal = true;
+                })
+                .catch(err => {
+                    this.modalTitle = 'Error';
+                    this.modalMessage = 'Something went wrong. Please try again.';
+                    this.showModal = true;
+                    console.error(err);
+                });
+            }
+        }
+    }
+    </script>
+
 </body>
 </html>
