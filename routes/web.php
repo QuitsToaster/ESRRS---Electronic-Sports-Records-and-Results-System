@@ -23,9 +23,9 @@ use Illuminate\Support\Facades\Route;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use App\Models\Athlete;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('welcome');
+Route::get('/', [ViewerController::class, 'home'])
+    ->name('landing');
+
 
 
 Route::post('/account-request', [AccountRequestController::class, 'store'])

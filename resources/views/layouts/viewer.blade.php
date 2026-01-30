@@ -64,10 +64,19 @@
                 <a href="{{ route('viewer.feedbacks') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.feedbacks') ? $active : '' }}">Feedbacks</a>
             </div>
 
-            {{-- Desktop Logout --}}
-            <div class="hidden md:flex items-center">
-                <a href="{{ url('/') }}" class="px-3 py-1 bg-red-600 hover:bg-red-700 rounded text-white font-semibold transition">Logout</a>
-            </div>
+           {{-- Desktop Actions (Viewer – always visible) --}}
+<div class="hidden md:flex items-center gap-3">
+    <a href="{{ route('login') }}"
+       class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition">
+        Login
+    </a>
+
+    <a href="{{ route('attendance.check') }}"
+       class="px-4 py-1.5 bg-yellow-600 hover:bg-yellow-700 rounded text-white font-semibold transition">
+        Attendance
+    </a>
+</div>
+
 
             {{-- Mobile Toggle --}}
             <button @click="open = !open" class="md:hidden focus:outline-none">
@@ -102,7 +111,18 @@
         <a href="{{ route('viewer.gallery') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Gallery</a>
         <a href="{{ route('viewer.announcements') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Announcements</a>
         <a href="{{ route('viewer.feedbacks') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Feedbacks</a>
-        <a href="{{ url('/') }}" class="block px-3 py-2 mt-2 rounded bg-red-600 text-white font-semibold">Logout</a>
+       {{-- Viewer Actions (Mobile – always visible) --}}
+<a href="{{ route('login') }}"
+   class="block px-3 py-2 mt-2 rounded bg-blue-600 text-white font-semibold">
+    Login
+</a>
+
+<a href="{{ route('attendance.check') }}"
+   class="block px-3 py-2 mt-2 rounded bg-yellow-600 text-white font-semibold">
+    Attendance
+</a>
+
+
     </div>
 </nav>
 
