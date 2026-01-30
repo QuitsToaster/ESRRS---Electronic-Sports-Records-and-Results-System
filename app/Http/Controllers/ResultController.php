@@ -65,6 +65,7 @@ foreach($medalTally as $school) {
 
     $sports = Sport::with('types')->orderBy('name')->get();
     $schools = School::orderBy('name')->get();
+    $divisions = \App\Models\Division::orderBy('name')->get();
 
     /**
      * 1️⃣ EXISTING RESULTS (manual or previously saved)
@@ -109,6 +110,7 @@ foreach($medalTally as $school) {
     return view('results.create', compact(
         'sports',
         'schools',
+        'divisions',
         'division',
         'category',
         'existingResults',
