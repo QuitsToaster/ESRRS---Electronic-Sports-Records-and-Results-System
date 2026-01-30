@@ -5,37 +5,40 @@
 @section('content')
 
 {{-- Banner Slideshow --}}
-<div class="relative w-full h-64 md:h-96 overflow-hidden -mt-16 z-0">
+<div class="relative w-full h-64 md:h-96 overflow-hidden -mt-16 z-0 banner-clip">
     @foreach($banners as $index => $banner)
         <div class="absolute inset-0 transition-opacity duration-1000 {{ $index === 0 ? 'opacity-100' : 'opacity-0' }}" data-slide>
-            <img src="{{ asset('storage/' . $banner->image) }}" class="w-full h-full object-cover" 
-                 style="clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);">
+
+            <img src="{{ asset('storage/' . $banner->image) }}"
+                 class="w-full h-full object-cover banner-clip">
+
             {{-- Gradient Overlay --}}
-            <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20"
-                 style="clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20 banner-clip"></div>
 
             {{-- Banner Text --}}
-            <div class="absolute left-6 top-1/3 max-w-lg text-white">
-                <h2 class="text-5xl md:text-6xl font-bold mb-2">Welcome to CEMS</h2>
-                <h2 class="text-2xl md:text-2xl font-bold mb-2">CAVRAA Event Monitoring System</h2>
-                <p class="text-white/90 text-sm md:text-base">Overview of events, games, announcements, and medal standings.</p>
+            <div class="absolute left-4 sm:left-6 top-1/3 max-w-lg text-white">
+                <h2 class="text-4xl sm:text-4xl md:text-6xl font-bold mb-1 sm:mb-2" style="font-family: 'Poppins', sans-serif;">
+                    Where Champions Are Made.
+                </h2>
+
+                <p class="text-xs sm:text-sm md:text-base text-white/90 leading-snug" style="font-family: 'Poppins', sans-serif;">
+                   Follow the action as it unfolds — from opening matches to championship moments.
+                </p>
             </div>
         </div>
     @endforeach
 </div>
 
-
 {{-- Quick Stats --}}
-<section class="relative -mt-8 py-12" 
-         style="clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);">
+<section class="relative -mt-8 py-12 quickstats-clip">
 
     {{-- Section Title --}}
-<div class="text-center mb-8">
-    <h2 class="text-5xl md:text-6xl text-black font-bold" style="font-family: 'Poppins', sans-serif;">
-        Quick Actions
-    </h2>
-</div>
-
+    <div class="text-center mb-6 sm:mb-8">
+        <h2 class="text-4xl sm:text-4xl md:text-6xl font-bold text-black"
+            style="font-family: 'Poppins', sans-serif;">
+            Quick Actions
+        </h2>
+    </div>
 
     {{-- Stats Grid --}}
     <div class="max-w-7xl mx-auto px-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -74,6 +77,26 @@
 
     </div>
 </section>
+
+{{-- Responsive Clip-Path Styles --}}
+<style>
+    /* Default: MOBILE (straight edges) */
+    .banner-clip,
+    .quickstats-clip {
+        clip-path: none;
+    }
+
+    /* Desktop and up: SLANTED */
+    @media (min-width: 768px) {
+        .banner-clip {
+            clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+        }
+
+        .quickstats-clip {
+            clip-path: polygon(0 15%, 100% 0, 100% 100%, 0 100%);
+        }
+    }
+</style>
 
 
 
