@@ -32,8 +32,9 @@
             @foreach($games as $game)
 
                 @php
-                    $schoolA = \App\Models\School::where('name', $game->team_a)->first();
-                    $schoolB = \App\Models\School::where('name', $game->team_b)->first();
+                    // Fetch divisions instead of schools
+                    $divisionA = \App\Models\Division::where('name', $game->team_a)->first();
+                    $divisionB = \App\Models\Division::where('name', $game->team_b)->first();
 
                     $status = $game->status ?? 'Upcoming';
 
@@ -71,10 +72,10 @@
 
                         {{-- TEAM A --}}
                         <div class="relative overflow-hidden bg-black h-32 md:h-full">
-                            @if($schoolA && $schoolA->logo)
+                            @if($divisionA && $divisionA->logo)
                                 <div class="absolute inset-0 bg-cover bg-center
                                             transition-transform duration-500 group-hover:scale-110"
-                                     style="background-image:url('{{ asset('storage/' . $schoolA->logo) }}')"></div>
+                                     style="background-image:url('{{ asset('storage/' . $divisionA->logo) }}')"></div>
                                 <div class="absolute inset-0 bg-black/20"></div>
                             @else
                                 <div class="absolute inset-0 flex items-center justify-center text-white text-sm">
@@ -110,10 +111,10 @@
 
                         {{-- TEAM B --}}
                         <div class="relative overflow-hidden bg-black h-32 md:h-full">
-                            @if($schoolB && $schoolB->logo)
+                            @if($divisionB && $divisionB->logo)
                                 <div class="absolute inset-0 bg-cover bg-center
                                             transition-transform duration-500 group-hover:scale-110"
-                                     style="background-image:url('{{ asset('storage/' . $schoolB->logo) }}')"></div>
+                                     style="background-image:url('{{ asset('storage/' . $divisionB->logo) }}')"></div>
                                 <div class="absolute inset-0 bg-black/20"></div>
                             @else
                                 <div class="absolute inset-0 flex items-center justify-center text-white text-sm">
@@ -166,7 +167,6 @@ let liveInterval = null;
 function openGame(gameId, persist = true) {
     document.getElementById('gameModal').classList.remove('hidden');
 
-    // optional localStorage for refresh restore (can remove if not needed)
     if (persist) localStorage.setItem('openGameId', gameId);
 
     fetch(`/viewer/game/${gameId}`)
@@ -176,7 +176,6 @@ function openGame(gameId, persist = true) {
             startLive(gameId);
         });
 
-    // push to history if we want back button support
     history.pushState({ gameId }, '', `/viewer/game/${gameId}`);
 }
 
@@ -192,7 +191,6 @@ function closeGame() {
     }
 }
 
-// handle browser back/forward buttons
 window.addEventListener('popstate', (event) => {
     if (event.state && event.state.gameId) {
         openGame(event.state.gameId, false);
@@ -218,11 +216,6 @@ function startLive(gameId) {
             .catch(() => {});
     }, 3000);
 }
-
-
 </script>
 
-
 @endsection
-
-

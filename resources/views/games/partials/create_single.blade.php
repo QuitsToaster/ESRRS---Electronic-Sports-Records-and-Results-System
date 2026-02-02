@@ -20,10 +20,10 @@
     <div class="mb-4">
         <label class="block text-gray-700 font-semibold mb-1">Team A</label>
         <select name="team_a" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500">
-            <option value="">Select School</option>
-            @foreach($schools as $school)
-                <option value="{{ $school->name }}" {{ old('team_a') == $school->name ? 'selected' : '' }}>
-                    {{ $school->name }}
+            <option value="">Select Division</option>
+            @foreach($divisions as $division)
+                <option value="{{ $division->name }}" {{ old('team_a') == $division->name ? 'selected' : '' }}>
+                    {{ $division->name }}
                 </option>
             @endforeach
         </select>
@@ -34,10 +34,10 @@
     <div class="mb-4">
         <label class="block text-gray-700 font-semibold mb-1">Team B</label>
         <select name="team_b" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500">
-            <option value="">Select School</option>
-            @foreach($schools as $school)
-                <option value="{{ $school->name }}" {{ old('team_b') == $school->name ? 'selected' : '' }}>
-                    {{ $school->name }}
+            <option value="">Select Division</option>
+            @foreach($divisions as $division)
+                <option value="{{ $division->name }}" {{ old('team_b') == $division->name ? 'selected' : '' }}>
+                    {{ $division->name }}
                 </option>
             @endforeach
         </select>
@@ -50,9 +50,9 @@
         <div id="additionalTeamsContainer">
             <div class="flex mb-2">
                 <select name="additional_teams[]" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select School</option>
-                    @foreach($schools as $school)
-                        <option value="{{ $school->name }}">{{ $school->name }}</option>
+                    <option value="">Select Division</option>
+                    @foreach($divisions as $division)
+                        <option value="{{ $division->name }}">{{ $division->name }}</option>
                     @endforeach
                 </select>
                 <button type="button" onclick="removeTeam(this)" class="ml-2 px-3 py-1 bg-red-500 text-white rounded">Remove</button>
@@ -68,9 +68,9 @@
             div.classList.add('flex', 'mb-2');
             div.innerHTML = `
                 <select name="additional_teams[]" class="w-full border border-gray-300 rounded px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                    <option value="">Select School</option>
-                    @foreach($schools as $school)
-                        <option value="{{ $school->name }}">{{ $school->name }}</option>
+                    <option value="">Select Division</option>
+                    @foreach($divisions as $division)
+                        <option value="{{ $division->name }}">{{ $division->name }}</option>
                     @endforeach
                 </select>
                 <button type="button" onclick="removeTeam(this)" class="ml-2 px-3 py-1 bg-red-500 text-white rounded">Remove</button>

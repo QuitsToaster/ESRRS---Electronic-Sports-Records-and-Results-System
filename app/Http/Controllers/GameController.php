@@ -34,12 +34,12 @@ class GameController extends Controller
     }
 
     public function create()
-    {
-        $events = Event::all();
-        $schools = School::orderBy('name')->get();
+{
+    $events = Event::all();
+    $divisions = \App\Models\Division::orderBy('name')->get(); // <-- Changed
 
-        return view('games.create', compact('events', 'schools'));
-    }
+    return view('games.create', compact('events', 'divisions'));
+}
 
     public function store(Request $request)
     {
@@ -73,13 +73,14 @@ class GameController extends Controller
             ->with('success', 'Game created successfully!');
     }
 
-    public function edit(Game $game)
-    {
-        $events = Event::all();
-        $schools = School::orderBy('name')->get();
+   public function edit(Game $game)
+{
+    $events = Event::all();
+    $divisions = \App\Models\Division::orderBy('name')->get(); // <-- Changed
 
-        return view('games.edit', compact('game', 'events', 'schools'));
-    }
+    return view('games.edit', compact('game', 'events', 'divisions'));
+}
+
 
     public function update(Request $request, Game $game)
     {
