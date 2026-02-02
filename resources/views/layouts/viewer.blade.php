@@ -20,9 +20,88 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+
+    <style>
+        html, body {
+    overflow: hidden; /* prevent scrolling when loader is visible */
+}
+
+[x-data][x-show="loading"] {
+    pointer-events: all; /* allow overlay to capture clicks */
+}
+
+    </style>
 </head>
 
 <body class="bg-gray-100 font-sans overflow-x-hidden">
+
+{{-- FULL PAGE LOADER --}}
+<div
+    x-data="{ loading: true }"
+    x-init="
+        window.addEventListener('load', () => {
+            setTimeout(() => loading = false, 500);
+        });
+    "
+    x-show="loading"
+    x-transition.opacity.duration.300ms
+    style="display: none"
+    class="fixed inset-0 z-[10000] flex items-center justify-center bg-white"
+>
+    <div class="flex flex-col items-center gap-4">
+    {{-- Spinner --}}
+    <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+
+    {{-- Dynamic Motivational Loading Text --}}
+    <p class="text-sm font-medium text-gray-600 tracking-wide">
+        <span id="loadingText">Gearing up for the action…</span>
+    </p>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const phrases = [
+            "Gearing up for the action…",
+            "Counting medals… 🏅",
+            "Warming up the teams…",
+            "Getting ready for the games…",
+            "CAVRAA Viewer loading… 💪",
+            "Checking the scoreboard…",
+            "Fueling the competitive spirit… 🏆"
+        ];
+
+        let index = 0;
+        const loadingText = document.getElementById('loadingText');
+
+        setInterval(() => {
+            index = (index + 1) % phrases.length;
+            loadingText.textContent = phrases[index];
+        }, 1500); // change every 1.5 seconds
+    });
+</script>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const loader = document.querySelector('[x-data="{ loading: true }"]') || document.querySelector('[x-data]');
+
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            const href = link.getAttribute('href');
+
+            // Ignore anchors, JS links, or links that open in a new tab
+            if (!href || href.startsWith('#') || href.startsWith('javascript') || link.target === '_blank') return;
+
+            // Show loader
+            if (loader && loader.__x) {
+                loader.__x.$data.loading = true;
+            }
+        });
+    });
+});
+</script>
+
 
 {{-- ================= NAVBAR ================= --}}
 <nav class="fixed top-0 inset-x-0 z-[60] pointer-events-auto bg-white/30 backdrop-blur-md shadow-md">
