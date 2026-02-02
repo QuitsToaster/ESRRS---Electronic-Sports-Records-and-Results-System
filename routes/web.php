@@ -179,7 +179,9 @@ Route::post('/games/{game}/live-video', [GameController::class, 'updateLiveVideo
 Route::get('/viewer/live-scores', [ViewerController::class, 'liveScores'])
     ->name('viewer.liveScores');
 
-Route::get('/viewer/game/{game}', [ViewerController::class, 'gameModal']);
+Route::get('/viewer/game/{game}', [ViewerController::class, 'gameModal'])
+    ->name('viewer.game.modal');
+
 Route::get('/viewer/game/{game}/live', [ViewerController::class, 'liveGame']);
 
 

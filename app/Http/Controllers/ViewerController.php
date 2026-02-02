@@ -22,47 +22,53 @@ class ViewerController extends Controller
     $upcomingEvents = Event::orderBy('start_date', 'asc')->take(5)->get();
 
     $gamesCount = Game::count();
-    $upcomingGames = Game::with('event')->orderBy('game_time', 'asc')->take(5)->get();
+    $upcomingGames = Game::with('event')
+        ->where('status', 'Upcoming')
+        ->orderBy('game_time', 'asc')
+        ->take(5)
+        ->get();
+
+    // 🔴 LIVE / ONGOING GAMES
+    $liveGames = Game::with('event')
+        ->where('status', 'Ongoing')
+        ->orderBy('game_time', 'asc')
+        ->get();
 
     $announcementsCount = Announcement::count();
     $latestAnnouncements = Announcement::latest()->take(5)->get();
 
-    // -----------------------------
-    // Medal tally by Division (from results_divisions)
-    // -----------------------------
+    // Medal tally
     $medalTally = \App\Models\Division::withCount([
         'resultsDivisions as gold'   => fn($q) => $q->where('medal', 'Gold'),
         'resultsDivisions as silver' => fn($q) => $q->where('medal', 'Silver'),
         'resultsDivisions as bronze' => fn($q) => $q->where('medal', 'Bronze'),
     ])->get();
 
-    // Calculate total medals per division
     $medalTally->transform(function ($division) {
         $division->total = $division->gold + $division->silver + $division->bronze;
-
-        // Load the actual ResultDivision rows for the modal (optional)
         $division->results = $division->resultsDivisions()->with(['sport', 'event'])->get();
-
         return $division;
     });
 
-    // Sort divisions by total medals, then gold, silver, bronze
     $medalTally = $medalTally
         ->sortByDesc(fn($d) => [$d->total, $d->gold, $d->silver, $d->bronze])
         ->values();
 
-    // -----------------------------
-    // Fetch banners for the homepage slideshow
-    // -----------------------------
     $banners = Banner::orderBy('order')->get();
 
     return view('viewer.home', compact(
-        'eventsCount', 'upcomingEvents',
-        'gamesCount', 'upcomingGames',
-        'announcementsCount', 'latestAnnouncements',
-        'medalTally', 'banners'
+        'eventsCount',
+        'upcomingEvents',
+        'gamesCount',
+        'upcomingGames',
+        'liveGames', // ✅ NEW
+        'announcementsCount',
+        'latestAnnouncements',
+        'medalTally',
+        'banners'
     ));
 }
+
 
 
 

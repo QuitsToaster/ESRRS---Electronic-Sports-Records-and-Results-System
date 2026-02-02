@@ -373,6 +373,118 @@ function closePrivacyBanner() {
 </section>
 {{-- ================= END DASHBOARD STRIP ================= --}}
 
+{{-- ================= LIVE GAMES ================= --}}
+<section class="relative py-16 overflow-hidden">
+
+    {{-- Background --}}
+    <div class="absolute inset-0 -z-10">
+        <img src="{{ asset('storage/game1.jpg') }}"
+             class="w-full h-full object-cover brightness-75 blur-sm">
+        <div class="absolute inset-0 bg-black/70"></div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-6 relative z-10">
+
+        {{-- Section Header --}}
+        <div class="text-center mb-12">
+            <h2 class="text-4xl md:text-7xl font-bold text-white tracking-widest uppercase"
+                style="font-family: 'Teko', sans-serif;">
+                Live Games
+            </h2>
+            <p class="text-gray-300 mt-2 text-sm md:text-lg">
+                Ongoing matches happening right now
+            </p>
+        </div>
+
+        @if ($liveGames->isEmpty())
+            <p class="text-center text-gray-300 text-sm">
+                No live games at the moment.
+            </p>
+        @else
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                @foreach ($liveGames as $game)
+
+                    @php
+                        $divisionA = \App\Models\Division::where('name', $game->team_a)->first();
+                        $divisionB = \App\Models\Division::where('name', $game->team_b)->first();
+                    @endphp
+
+                    {{-- GAME CARD --}}
+                    <a href="{{ route('viewer.game.modal', $game->id) }}"
+                       class="group block cursor-pointer bg-white shadow-xl overflow-hidden relative
+                              transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+
+                        {{-- LIVE BADGE --}}
+                        <span class="absolute top-3 right-3 z-20 px-3 py-1 rounded-full
+                                     text-xs font-bold bg-red-600 text-white animate-pulse">
+                            LIVE
+                        </span>
+
+                        {{-- MATCH LAYOUT --}}
+                        <div class="grid grid-cols-1 md:grid-cols-[1fr_1.6fr_1fr] h-auto md:h-40">
+
+                            {{-- TEAM A --}}
+                            <div class="relative overflow-hidden bg-black h-32 md:h-full">
+                                @if($divisionA && $divisionA->logo)
+                                    <div class="absolute inset-0 bg-cover bg-center
+                                                transition-transform duration-500 group-hover:scale-110"
+                                         style="background-image:url('{{ asset('storage/' . $divisionA->logo) }}')"></div>
+                                @else
+                                    <div class="absolute inset-0 flex items-center justify-center text-white">
+                                        {{ $game->team_a }}
+                                    </div>
+                                @endif
+                            </div>
+
+                            {{-- CENTER --}}
+                            <div class="bg-black text-white flex flex-col items-center justify-center
+                                        text-center px-4"
+                                 style="font-family: 'Teko', sans-serif;">
+
+                                <p class="text-xs tracking-widest uppercase opacity-80">
+                                    {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y') }}
+                                </p>
+
+                                <p class="text-4xl md:text-6xl font-bold tracking-wider">
+                                    {{ \Carbon\Carbon::parse($game->game_time)->format('h:i A') }}
+                                </p>
+
+                                <div class="w-12 h-[2px] bg-white my-2 opacity-80"></div>
+
+                                <p class="text-[10px] uppercase tracking-[0.25em] opacity-70">
+                                    {{ $game->event->name }}
+                                </p>
+                            </div>
+
+                            {{-- TEAM B --}}
+                            <div class="relative overflow-hidden bg-black h-32 md:h-full">
+                                @if($divisionB && $divisionB->logo)
+                                    <div class="absolute inset-0 bg-cover bg-center
+                                                transition-transform duration-500 group-hover:scale-110"
+                                         style="background-image:url('{{ asset('storage/' . $divisionB->logo) }}')"></div>
+                                @else
+                                    <div class="absolute inset-0 flex items-center justify-center text-white">
+                                        {{ $game->team_b }}
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- TEAM NAMES --}}
+                        <div class="grid grid-cols-3 text-center py-2 bg-gray-100"
+                             style="font-family: 'Teko', sans-serif;">
+                            <span class="font-semibold">{{ $game->team_a }}</span>
+                            <span class="text-gray-400 tracking-widest">VS</span>
+                            <span class="font-semibold">{{ $game->team_b }}</span>
+                        </div>
+
+                    </a>
+                @endforeach
+            </div>
+        @endif
+    </div>
+</section>
 
 
 
