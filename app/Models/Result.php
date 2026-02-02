@@ -8,17 +8,19 @@ class Result extends Model
 {
 
     protected $fillable = [
-        'school_id',
-        'athlete_id',
-        'event_id',
-        'type_id', 
-        'sport_id',
-        'division',
-        'category',
-        'team_name',
-        'medal',
-        'awarded_by',
-    ];
+    'school_id',
+    'athlete_id',
+    'event_id',
+    'type_id', 
+    'sport_id',
+    'division', // Elementary / Secondary
+    'sdo',      // New SDO column
+    'category',
+    'team_name',
+    'medal',
+    'awarded_by',
+];
+
 
     public function school()
     {

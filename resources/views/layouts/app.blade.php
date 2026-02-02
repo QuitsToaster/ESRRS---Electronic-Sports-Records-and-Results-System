@@ -115,28 +115,29 @@
 
         {{-- Results --}}
 @if(in_array('results', $access))
-    <div x-data="{ isOpen: {{ request()->routeIs('results.*') ? 'true' : 'false' }} }">
+    <div x-data="{ isOpen: {{ request()->routeIs('results_divisions.*') ? 'true' : 'false' }} }">
         <button @click="isOpen = !isOpen"
                 class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
-                {{ request()->routeIs('results.*') ? 'bg-blue-900 font-semibold' : '' }}">
+                {{ request()->routeIs('results_divisions.*') ? 'bg-blue-900 font-semibold' : '' }}">
             Results / Awards
             <span x-text="isOpen ? '▾' : '▸'"></span>
         </button>
 
         <div x-show="isOpen" x-cloak class="pl-6 mt-1 space-y-1">
-            <a href="{{ route('results.index') }}"
+            <a href="{{ route('results_divisions.index') }}"
                class="block px-4 py-2 rounded hover:bg-blue-600
-               {{ request()->routeIs('results.index') ? 'bg-blue-700 font-semibold' : '' }}">
+               {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
                 All Results
             </a>
-            <a href="{{ route('results.create') }}"
+            <a href="{{ route('results_divisions.create') }}"
                class="block px-4 py-2 rounded hover:bg-blue-600
-               {{ request()->routeIs('results.create') ? 'bg-blue-700 font-semibold' : '' }}">
+               {{ request()->routeIs('results_divisions.create') ? 'bg-blue-700 font-semibold' : '' }}">
                 Award Medal
             </a>
         </div>
     </div>
 @endif
+
 
 {{-- Competitions --}}
 @if(in_array('events', $access) || in_array('games', $access))

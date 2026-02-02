@@ -33,4 +33,9 @@ public function athletes()
     );
 }
 
+public function resultsDivisions()
+{
+    return $this->hasMany(\App\Models\ResultDivision::class, 'sdo', 'name');
+}
+
 }

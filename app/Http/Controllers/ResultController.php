@@ -62,108 +62,93 @@ class ResultController extends Controller
     // ✅ CREATE PAGE
     // -----------------------------
     public function create(Request $request)
-    {
-        $division = $request->get('division', 'Elementary');
-        $category = $request->get('category', 'Boys');
+{
+    $division = $request->get('division', 'Elementary'); // age group
+    $category = $request->get('category', 'Boys');
 
-        $sports = Sport::with('types')->orderBy('name')->get();
-        $divisions = \App\Models\Division::orderBy('name')->get();
+    $sports = Sport::with('types')->orderBy('name')->get();
+    $divisions = Division::orderBy('name')->get(); // SDOs
 
-        // Existing results
-        $existingResults = Result::where('division', $division)
-            ->where('category', $category)
-            ->get()
-            ->groupBy(fn ($r) =>
-                $r->sport_id . '-' .
-                ($r->type_id ?? 0) . '-' .
-                $r->division . '-' .
-                $r->medal
-            );
+    // ✅ FIXED: use SDO NAME as key
+    $existingResults = Result::where('category', $category)
+    ->whereHas('event', fn ($q) => $q->where('age_group', $division))
+    ->get()
+    ->groupBy(fn ($r) =>
+        $r->sport_id . '-' .
+        ($r->type_id ?? 0) . '-' .
+        ($r->sdo ?? 'Unknown') . '-' .
+        $r->medal
+    );
 
-        // Event-based results
-        $eventResults = [];
-        $events = \App\Models\Event::where('age_group', $division)
-            ->where('category', $category)
-            ->whereNotNull('gold_school_id')
-            ->get();
 
-        foreach ($events as $event) {
-            $map = [
-                'Gold'   => $event->gold_school_id,
-                'Silver' => $event->silver_school_id,
-                'Bronze' => $event->bronze_school_id,
-            ];
+    return view('results.create', compact(
+        'sports',
+        'divisions',
+        'division',
+        'category',
+        'existingResults'
+    ));
+}
 
-            foreach ($map as $medal => $schoolId) {
-                if (!$schoolId) continue;
-                $key = $event->sport_id . '-0-' . $schoolId . '-' . $medal;
-                $eventResults[$key] = 1;
-            }
-        }
-
-        return view('results.create', compact(
-            'sports',
-            'divisions',
-            'division',
-            'category',
-            'existingResults',
-            'eventResults'
-        ));
-    }
 
     // -----------------------------
     // ✅ STORE RESULTS
     // -----------------------------
-    public function store(Request $request)
-    {
-        $eventId = \App\Models\Event::where('is_active', 1)->value('id');
+   public function store(Request $request)
+{
+    $eventId = \App\Models\Event::where('is_active', 1)
+        ->where('age_group', $request->division)
+        ->value('id');
 
-        if (!$eventId) {
-            return back()->with('error', 'No active event found.');
-        }
-
-        foreach ($request->results ?? [] as $sportId => $types) {
-            foreach ($types as $typeId => $divisions) {
-                $typeId = $typeId == 0 ? null : $typeId;
-
-                foreach ($divisions as $divisionName => $medals) {
-                    foreach ($medals as $medal => $count) {
-
-                        // Delete existing
-                        Result::where('event_id', $eventId)
-                            ->where('sport_id', $sportId)
-                            ->where('type_id', $typeId)
-                            ->where('division', $divisionName)
-                            ->where('medal', $medal)
-                            ->where('category', $request->category)
-                            ->delete();
-
-                        // Insert new
-                        if ($count > 0) {
-                            for ($i = 0; $i < $count; $i++) {
-                                Result::create([
-                                    'event_id'   => $eventId,
-                                    'sport_id'   => $sportId,
-                                    'type_id'    => $typeId,
-                                    'division'   => $divisionName,
-                                    'category'   => $request->category,
-                                    'medal'      => $medal,
-                                    'awarded_by' => Auth::id(),
-                                ]);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return redirect()
-            ->route('results.create', [
-                'division' => $request->division,
-                'category' => $request->category
-            ])
-            ->with('success', 'Results saved successfully.');
+    if (!$eventId) {
+        return back()->with('error', "No active event found for division: {$request->division}");
     }
+
+    foreach ($request->results ?? [] as $sportId => $types) {
+        foreach ($types as $typeId => $divisions) {
+            $typeId = $typeId == 0 ? null : $typeId;
+
+            foreach ($divisions as $sdoName => $medals) { // renamed
+    foreach ($medals as $medal => $count) {
+
+        // Delete existing results for this sport/type/division/SDO/medal/category
+        Result::where([
+            'event_id' => $eventId,
+            'sport_id' => $sportId,
+            'type_id' => $typeId,
+            'division' => $request->division,
+            'sdo' => $sdoName,
+            'category' => $request->category,
+            'medal' => $medal,
+        ])->delete();
+
+        if ($count > 0) {
+            Result::insert(
+                array_fill(0, $count, [
+                    'event_id'   => $eventId,
+                    'sport_id'   => $sportId,
+                    'type_id'    => $typeId,
+                    'division'   => $request->division,
+                    'sdo'        => $sdoName,
+                    'category'   => $request->category,
+                    'medal'      => $medal,
+                    'awarded_by' => Auth::id(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ])
+            );
+        }
+    }
+}
+
+        }
+    }
+
+    return back()->with('success', 'Results saved successfully.');
+}
+
+
+
 
     // -----------------------------
     // ✅ EXPORT

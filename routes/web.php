@@ -14,6 +14,7 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResultController;
+use App\Http\Controllers\ResultDivisionController;
 use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\AttendanceController;
@@ -189,13 +190,27 @@ Route::middleware(['auth'])->group(function () {
     ]);
 });
 
-Route::middleware(['auth'])->group(function () {
-    Route::resource('results', ResultController::class)->only([
-        'index', 'create', 'store'
-    ]);
-});
-Route::get('/results/export', [ResultController::class, 'export'])->name('results.export');
+// Route::middleware(['auth'])->group(function () {
+//     Route::resource('results', ResultController::class)->only([
+//         'index', 'create', 'store'
+//     ]);
+// });
+// Route::get('/results/export', [ResultController::class, 'export'])->name('results.export');
 
+Route::middleware(['auth'])->prefix('results-divisions')->name('results_divisions.')->group(function () {
+
+    // List all results (optional, can reuse index later)
+    Route::get('/', [ResultDivisionController::class, 'index'])->name('index');
+
+    // Create page
+    Route::get('/create', [ResultDivisionController::class, 'create'])->name('create');
+
+    // Store results
+    Route::post('/store', [ResultDivisionController::class, 'store'])->name('store');
+
+    // Optional: Export PDF (if implemented)
+    Route::get('/export', [ResultDivisionController::class, 'export'])->name('export');
+});
 
 
 Route::resource('audit-logs', AuditLogController::class)->only(['index']);
