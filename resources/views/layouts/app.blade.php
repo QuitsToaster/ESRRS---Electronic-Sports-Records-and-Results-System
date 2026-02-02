@@ -174,12 +174,12 @@
                 <a href="{{ route('games.index') }}"
                    class="block px-4 py-2 rounded hover:bg-blue-600
                    {{ request()->routeIs('games.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                    All Games
+                    All Ball Games
                 </a>
                 <a href="{{ route('games.create') }}"
                    class="block px-4 py-2 rounded hover:bg-blue-600
                    {{ request()->routeIs('games.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                    Add Game
+                    Add Ball Games
                 </a>
             @endif
         </div>

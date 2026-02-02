@@ -1,11 +1,11 @@
 @extends('layouts.app')
 
-@section('page-title', 'Edit Game')
+@section('page-title', 'Edit Ball Game')
 
 @section('content')
 <div class="mb-6">
     <p class="text-sm text-gray-600 mt-1">
-        Update the details of the game below.
+        Update the details of the ball game below.
     </p>
 </div>
 

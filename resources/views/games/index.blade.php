@@ -1,17 +1,17 @@
 @extends('layouts.app')
 
-@section('page-title', 'Games')
+@section('page-title', 'Ball Games')
 
 @section('content')
 <div class="flex justify-between items-center mb-6">
     <div>
         <p class="text-sm text-gray-600 mt-1">
-            List of games registered in the system
+            List of ball games registered in the system
         </p>
     </div>
     <a href="{{ route('games.create') }}"
        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-        + Add Game
+        + Add Ball Game
     </a>
 </div>
 
@@ -26,7 +26,7 @@
     <input type="text"
            name="search"
            value="{{ request('search') }}"
-           placeholder="Search games..."
+           placeholder="Search ball games..."
            class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
 
     <button type="submit"
