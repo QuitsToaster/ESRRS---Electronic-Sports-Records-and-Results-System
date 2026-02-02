@@ -12,21 +12,34 @@
         <div class="absolute inset-0 bg-black/30"></div>
     </div>
 
-    {{-- Content --}}
-    <div class="relative max-w-7xl mx-auto pt-20 px-6">
+    {{-- Medal Tally Container --}}
+    <div class="relative max-w-7xl mx-auto pt-20 px-6"
+         x-data="{
+             open: false,
+             division: null,
+             medals: { gold: [], silver: [], bronze: [] },
+             openModal(div, results) {
+                 this.division = div;
+                 this.medals = {
+                     gold: results.filter(r => r.medal === 'Gold'),
+                     silver: results.filter(r => r.medal === 'Silver'),
+                     bronze: results.filter(r => r.medal === 'Bronze'),
+                 };
+                 this.open = true;
+             }
+         }">
 
         {{-- ================== MEDAL TALLY BY DIVISION ================== --}}
         {{-- Header --}}
-        <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white">
+        <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white sticky top-0
+                    bg-black/20 backdrop-blur-md px-6 py-3 rounded-xl z-10">
             <div></div>
             <h2 class="text-3xl font-bold">Medal Tally by Division</h2>
-
             <div class="grid grid-cols-3 text-center font-semibold text-lg">
                 <span class="text-yellow-400">Gold</span>
                 <span class="text-gray-300">Silver</span>
                 <span class="text-orange-400">Bronze</span>
             </div>
-
             <div class="text-center font-semibold text-4xl text-red-600">Total</div>
         </div>
 
@@ -38,13 +51,15 @@
         @if($medalTally->isEmpty())
             <p class="text-gray-200 text-sm text-center">No divisions found.</p>
         @else
-            <div class="grid gap-4 md:gap-6">
+            <div class="space-y-4 md:space-y-6">
                 @foreach($medalTally as $index => $division)
                     {{-- Desktop Row --}}
-                    <div class="hidden md:grid grid-cols-[40px_1fr_420px_70px]
-                                items-center p-4 md:p-6
-                                bg-white/10 backdrop-blur-md
-                                rounded-xl shadow-lg hover:shadow-2xl transition">
+                    <div
+                        @click="openModal(@json($division->only(['id','name'])), @json($division->results))"
+                        class="hidden md:grid grid-cols-[40px_1fr_420px_96px]
+                               items-center p-6 bg-white/10 backdrop-blur-md
+                               rounded-xl shadow-lg cursor-pointer
+                               hover:scale-[1.01] hover:shadow-2xl transition">
                         <div class="text-white font-bold text-lg text-center">{{ $index + 1 }}</div>
 
                         <div class="flex items-center gap-4">
@@ -65,18 +80,22 @@
                             <span class="text-orange-400">{{ $division->bronze }}</span>
                         </div>
 
-                        <div class="relative h-full">
+                        <div class="relative text-center">
                             <div class="absolute top-0 bottom-0 left-0 w-[500px] -z-10
                                         bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
                                         opacity-90"></div>
-                            <div class="relative text-center text-red-600 font-extrabold text-6xl py-4">
+                            <div class="relative text-red-700 font-extrabold text-6xl">
                                 {{ $division->total }}
                             </div>
                         </div>
                     </div>
 
                     {{-- Mobile Card --}}
-                    <div class="md:hidden bg-white/10 backdrop-blur-md rounded-xl shadow-lg p-4 space-y-4">
+                    <div
+                        @click="openModal(@json($division->only(['id','name'])), @json($division->results))"
+                        class="md:hidden bg-white/10 backdrop-blur-md
+                               rounded-xl shadow-lg p-4 space-y-4
+                               cursor-pointer hover:shadow-xl transition">
                         <div class="flex items-center gap-3">
                             <span class="text-white font-bold text-lg">#{{ $index + 1 }}</span>
                             @if($division->logo)
@@ -89,18 +108,9 @@
                         </div>
 
                         <div class="grid grid-cols-3 text-center">
-                            <div>
-                                <p class="text-xs text-yellow-300">Gold</p>
-                                <p class="text-3xl font-extrabold text-yellow-400">{{ $division->gold }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-gray-300">Silver</p>
-                                <p class="text-3xl font-extrabold text-gray-300">{{ $division->silver }}</p>
-                            </div>
-                            <div>
-                                <p class="text-xs text-orange-300">Bronze</p>
-                                <p class="text-3xl font-extrabold text-orange-400">{{ $division->bronze }}</p>
-                            </div>
+                            <div class="text-yellow-400 text-2xl font-bold">{{ $division->gold }}</div>
+                            <div class="text-gray-300 text-2xl font-bold">{{ $division->silver }}</div>
+                            <div class="text-orange-400 text-2xl font-bold">{{ $division->bronze }}</div>
                         </div>
 
                         <div class="relative rounded-lg overflow-hidden">
@@ -116,16 +126,57 @@
             </div>
         @endif
 
-        {{-- ================== ALL MEDALS AWARDED BY SPORTS ================== --}}
+          {{-- ================= MODAL ================= --}}
+    <div
+        x-show="open"
+        x-transition
+        @keydown.escape.window="open = false"
+        class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
+    >
+        <div
+            @click.away="open = false"
+            class="bg-white rounded-2xl shadow-2xl
+                   max-w-4xl w-full max-h-[80vh]
+                   overflow-y-auto p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-2xl font-bold text-gray-800"
+                    x-text="division?.name + ' — Medal Details'"></h3>
+                <button @click="open = false" class="text-3xl text-gray-400 hover:text-black">&times;</button>
+            </div>
+
+            <template x-for="(list, type) in medals" :key="type">
+                <div class="mb-6">
+                    <h4 class="text-xl font-bold mb-2"
+                        :class="{
+                            'text-yellow-600': type === 'gold',
+                            'text-gray-600': type === 'silver',
+                            'text-orange-600': type === 'bronze'
+                        }"
+                        x-text="type.toUpperCase()"></h4>
+
+                    <div class="space-y-2">
+                        <template x-for="m in list" :key="m.id">
+                            <div class="p-3 bg-gray-100 rounded-lg text-sm">
+                                <strong x-text="m.event?.name ?? 'Event'"></strong>
+                                — <span x-text="m.sport?.name ?? 'Sport'"></span>
+                            </div>
+                        </template>
+
+                        <p x-show="list.length === 0" class="text-gray-400 italic text-sm">
+                            No medals
+                        </p>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+        {{-- ================== ALL MEDALS AWARDED ================== --}}
         @php
-            use App\Models\ResultDivision; // <-- correct table
+            use App\Models\ResultDivision;
             use App\Models\Sport;
 
-            // Fetch all awarded medals
-            $results = ResultDivision::with(['event','sport','awardedBy'])
-                        ->latest()
-                        ->get();
-
+            $allResults = ResultDivision::with(['event','sport'])->latest()->get();
             $allSports = Sport::orderBy('name')->get();
         @endphp
 
@@ -143,8 +194,8 @@
 
                 @foreach($allSports as $sport)
                     @php
-                        $sportResults = $results->where('division', $level)
-                                                ->where('sport_id', $sport->id);
+                        $sportResults = $allResults->where('division', $level)
+                                                    ->where('sport_id', $sport->id);
                     @endphp
 
                     @if($sportResults->isEmpty())
