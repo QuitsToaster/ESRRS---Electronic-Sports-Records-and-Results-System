@@ -492,10 +492,12 @@ function closePrivacyBanner() {
                 <p class="text-gray-600 text-lg leading-relaxed">
                     {{ $latestPhoto->description ?? 'No description available for this gallery item.' }}
                 </p>
-                <button onclick="openPhotoModal({{ $latestPhoto->id }})"
-                        class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg transition">
-                    View Gallery
-                </button>
+                <button
+    onclick="window.location='{{ route('viewer.gallery') }}'"
+    class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg transition">
+    View Gallery
+</button>
+
             </div>
 
         </div>
@@ -570,7 +572,7 @@ function closePrivacyBanner() {
 
 
 {{-- Latest Announcements --}}
-<section class="bg-gray-50 py-12 border-t">
+<section class="bg-gray-200 py-12 border-t">
     <div class="max-w-7xl mx-auto px-6">
         {{-- Section Header --}}
         <div class="text-center mb-10">
