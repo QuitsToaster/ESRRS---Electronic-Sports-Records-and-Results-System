@@ -91,38 +91,58 @@ function closePrivacyBanner() {
     <div class="w-full">
 
         {{-- Desktop: Small | BIG | Small — Mobile: Stack --}}
-        <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-3 items-stretch">
+        <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-4 items-stretch">
 
-            {{-- ================= LEFT SECTION: QUICK ACTIONS ================= --}}
-            <section class="bg-gray-200 p-6 order-2 lg:order-1 h-full flex flex-col">
-                <div class="space-y-6 flex-1">
+            {{-- ================= LEFT SECTION: QUICK ACTIONS (NBA STYLE) ================= --}}
+            <section class="order-2 lg:order-1 h-full">
+                <div class="h-full rounded-2xl bg-white p-6 shadow-2xl flex flex-col">
 
-                    <h2 class="text-2xl font-bold text-gray-800 text-center lg:text-left"
-                        style="font-family: 'Poppins', sans-serif;">
-                        Quick Actions
+                    <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
+                            style="font-family: 'Poppins', sans-serif;">
+                        Quick Stats
                     </h2>
 
-                    <div class="grid grid-cols-1 gap-4">
-                        <a href="{{ route('viewer.events') }}" class="hover:shadow-lg transition">
-                            <div class="bg-white p-4 text-center shadow">
-                                <div class="text-2xl font-bold">{{ $eventsCount }}</div>
-                                <div class="text-sm text-gray-500">Events</div>
+                    <div class="grid grid-cols-1 gap-5 flex-1">
+
+                        {{-- Events --}}
+                        <a href="{{ route('viewer.events') }}"
+                           class="group bg-black rounded-xl p-5 flex items-center justify-between
+                                  hover:bg-black/90 transition shadow-lg">
+                            <div>
+                                <p class="text-sm uppercase tracking-widest text-gray-400">Events</p>
+                                <p class="text-4xl font-extrabold text-white">{{ $eventsCount }}</p>
+                            </div>
+                            <div class="text-gray-500 group-hover:text-yellow-400 text-3xl font-black">
+                                ▸
                             </div>
                         </a>
 
-                        <a href="{{ route('viewer.games') }}" class="hover:shadow-lg transition">
-                            <div class="bg-white p-4 text-center shadow">
-                                <div class="text-2xl font-bold">{{ $gamesCount }}</div>
-                                <div class="text-sm text-gray-500">Games</div>
+                        {{-- Games --}}
+                        <a href="{{ route('viewer.games') }}"
+                           class="group bg-black rounded-xl p-5 flex items-center justify-between
+                                  hover:bg-black/90 transition shadow-lg">
+                            <div>
+                                <p class="text-sm uppercase tracking-widest text-gray-400">Games</p>
+                                <p class="text-4xl font-extrabold text-white">{{ $gamesCount }}</p>
+                            </div>
+                            <div class="text-gray-500 group-hover:text-green-400 text-3xl font-black">
+                                ▸
                             </div>
                         </a>
 
-                        <a href="{{ route('viewer.announcements') }}" class="hover:shadow-lg transition">
-                            <div class="bg-white p-4 text-center shadow">
-                                <div class="text-2xl font-bold">{{ $announcementsCount }}</div>
-                                <div class="text-sm text-gray-500">Announcements</div>
+                        {{-- Announcements --}}
+                        <a href="{{ route('viewer.announcements') }}"
+                           class="group bg-black rounded-xl p-5 flex items-center justify-between
+                                  hover:bg-black/90 transition shadow-lg">
+                            <div>
+                                <p class="text-sm uppercase tracking-widest text-gray-400">News</p>
+                                <p class="text-4xl font-extrabold text-white">{{ $announcementsCount }}</p>
+                            </div>
+                            <div class="text-gray-500 group-hover:text-blue-400 text-3xl font-black">
+                                ▸
                             </div>
                         </a>
+
                     </div>
                 </div>
             </section>
@@ -317,52 +337,60 @@ function closePrivacyBanner() {
 
 
 
-            {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES ================= --}}
-            <section class="bg-gray-200 p-6 order-3 lg:order-3 h-full flex flex-col">
-                <div class="space-y-8 flex-1">
+            {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES (NBA STYLE) ================= --}}
+            <section class="order-3 h-full">
+                <div class="h-full rounded-2xl bg-white p-6 shadow-2xl flex flex-col">
 
-                    {{-- Events --}}
-                    <div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4"
+                    {{-- Upcoming Events --}}
+                    <div class="mb-8">
+                        <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
                             style="font-family: 'Poppins', sans-serif;">
                             Upcoming Events
                         </h2>
 
-                        @forelse($upcomingEvents as $event)
-                            <a href="{{ route('viewer.events') }}#event-{{ $event->id }}"
-                               class="block bg-white rounded-xl p-3 shadow hover:shadow-lg transition mb-3">
-                                <div class="font-semibold text-gray-800">
-                                    {{ $event->name }}
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    {{ \Carbon\Carbon::parse($event->start_date)->format('M d, Y') }}
-                                </div>
-                            </a>
-                        @empty
-                            <p class="text-sm text-gray-500">No upcoming events.</p>
-                        @endforelse
+                        <div class="space-y-3">
+                            @forelse($upcomingEvents as $event)
+                                <a href="{{ route('viewer.events') }}#event-{{ $event->id }}"
+                                   class="block p-4 rounded-xl bg-gray-50 border
+                                          hover:bg-gray-100 hover:shadow transition">
+                                    <div class="flex justify-between items-center">
+                                        <span class="font-semibold text-gray-800 truncate">
+                                            {{ $event->name }}
+                                        </span>
+                                        <span class="text-xs font-bold text-gray-500">
+                                            {{ \Carbon\Carbon::parse($event->start_date)->format('M d') }}
+                                        </span>
+                                    </div>
+                                </a>
+                            @empty
+                                <p class="text-sm text-gray-500">No upcoming events.</p>
+                            @endforelse
+                        </div>
                     </div>
 
-                    {{-- Games --}}
+                    {{-- Upcoming Games --}}
                     <div>
-                        <h2 class="text-2xl font-bold text-gray-800 mb-4"
+                        <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
                             style="font-family: 'Poppins', sans-serif;">
                             Upcoming Games
                         </h2>
 
-                        @forelse($upcomingGames as $game)
-                            <a href="{{ route('viewer.games') }}#game-{{ $game->id }}"
-                               class="block bg-white rounded-xl p-3 shadow hover:shadow-lg transition mb-3">
-                                <div class="font-semibold text-gray-800">
-                                    {{ $game->team_a }} vs {{ $game->team_b }}
-                                </div>
-                                <div class="text-xs text-gray-500">
-                                    {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y h:i A') }}
-                                </div>
-                            </a>
-                        @empty
-                            <p class="text-sm text-gray-500">No upcoming games.</p>
-                        @endforelse
+                        <div class="space-y-3">
+                            @forelse($upcomingGames as $game)
+                                <a href="{{ route('viewer.games') }}#game-{{ $game->id }}"
+                                   class="block p-4 rounded-xl bg-gray-50 border
+                                          hover:bg-gray-100 hover:shadow transition">
+                                    <div class="font-semibold text-gray-800 truncate">
+                                        {{ $game->team_a }} <span class="text-gray-400">vs</span> {{ $game->team_b }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-1">
+                                        {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y · h:i A') }}
+                                    </div>
+                                </a>
+                            @empty
+                                <p class="text-sm text-gray-500">No upcoming games.</p>
+                            @endforelse
+                        </div>
                     </div>
 
                 </div>
