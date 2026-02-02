@@ -32,10 +32,9 @@
             <div>
                 <label class="block font-medium">Sport *</label>
                 <select name="sport_id" class="w-full border rounded px-3 py-2" required>
-                    <option value="">Select Sport</option>
                     @foreach($sports as $sport)
                         <option value="{{ $sport->id }}"
-                            {{ old('sport_id', $event->sport_id) == $sport->id ? 'selected' : '' }}>
+                            {{ $event->sport_id == $sport->id ? 'selected' : '' }}>
                             {{ $sport->name }}
                         </option>
                     @endforeach
@@ -46,29 +45,22 @@
             <div>
                 <label class="block font-medium">Sport Type *</label>
                 <select name="sport_type_id" class="w-full border rounded px-3 py-2" required>
-                    <option value="">Select Type</option>
-
                     @foreach($event->sport->sportTypes as $type)
                         <option value="{{ $type->id }}"
-                            {{ old('sport_type_id', $event->sport_type_id) == $type->id ? 'selected' : '' }}>
+                            {{ $event->sport_type_id == $type->id ? 'selected' : '' }}>
                             {{ $type->type_name }}
                         </option>
                     @endforeach
                 </select>
-
-                <p class="text-xs text-gray-500 mt-1">
-                    Event = multi-player (Swimming, Athletics) • Game = team vs team
-                </p>
             </div>
 
             {{-- Age Group --}}
             <div>
                 <label class="block font-medium">Age Group</label>
                 <select name="age_group" class="w-full border rounded px-3 py-2">
-                    <option value="">Select Age Group</option>
                     @foreach(['Elementary','Secondary'] as $group)
                         <option value="{{ $group }}"
-                            {{ old('age_group', $event->age_group) == $group ? 'selected' : '' }}>
+                            {{ $event->age_group == $group ? 'selected' : '' }}>
                             {{ $group }}
                         </option>
                     @endforeach
@@ -79,10 +71,9 @@
             <div>
                 <label class="block font-medium">Category</label>
                 <select name="category" class="w-full border rounded px-3 py-2">
-                    <option value="">Select Category</option>
                     @foreach(['Boys','Girls','Mixed'] as $cat)
                         <option value="{{ $cat }}"
-                            {{ old('category', $event->category) == $cat ? 'selected' : '' }}>
+                            {{ $event->category == $cat ? 'selected' : '' }}>
                             {{ $cat }}
                         </option>
                     @endforeach
@@ -92,50 +83,48 @@
             {{-- Venue --}}
             <div>
                 <label class="block font-medium">Venue</label>
-                <input type="text"
-                       name="venue"
-                       value="{{ old('venue', $event->venue) }}"
+                <input type="text" name="venue"
+                       value="{{ $event->venue }}"
                        class="w-full border rounded px-3 py-2">
             </div>
 
             {{-- Start Date --}}
             <div>
                 <label class="block font-medium">Start Date</label>
-                <input type="date"
-                       name="start_date"
-                       value="{{ old('start_date', optional($event->start_date)->format('Y-m-d')) }}"
+                <input type="date" name="start_date"
+                       value="{{ optional($event->start_date)->format('Y-m-d') }}"
                        class="w-full border rounded px-3 py-2">
             </div>
-
         </div>
 
-        {{-- PARTICIPATING SCHOOLS --}}
-        <div x-data="{
-                schools: {{ json_encode(old('schools', $event->schools->pluck('id')->toArray())) }}
+        {{-- PARTICIPATING DIVISIONS --}}
+        <div
+            x-data="{
+                divisions: {{ json_encode(old('divisions', $event->divisions->pluck('id')->toArray())) }}
             }"
             class="mt-6">
 
             <label class="block font-semibold mb-2">
-                Participating Schools / Teams *
+                Participating Divisions *
             </label>
 
-            <template x-for="(school, index) in schools" :key="index">
+            <template x-for="(division, index) in divisions" :key="index">
                 <div class="flex gap-2 mb-2">
-                    <select name="schools[]"
-                            x-model="schools[index]"
+                    <select name="divisions[]"
+                            x-model="divisions[index]"
                             class="flex-1 border rounded px-3 py-2"
                             required>
-                        <option value="">Select School</option>
-                        @foreach($schools as $school)
-                            <option value="{{ $school->id }}">
-                                {{ $school->name }}
+                        <option value="">Select Division</option>
+                        @foreach($divisions as $division)
+                            <option value="{{ $division->id }}">
+                                {{ $division->name }}
                             </option>
                         @endforeach
                     </select>
 
                     <button type="button"
-                            x-show="schools.length > 1"
-                            @click="schools.splice(index, 1)"
+                            x-show="divisions.length > 1"
+                            @click="divisions.splice(index, 1)"
                             class="px-3 bg-red-500 text-white rounded">
                         ✕
                     </button>
@@ -143,9 +132,9 @@
             </template>
 
             <button type="button"
-                    @click="schools.push('')"
+                    @click="divisions.push('')"
                     class="mt-2 px-4 py-2 bg-green-600 text-white rounded">
-                + Add Another School
+                + Add Another Division
             </button>
         </div>
 
@@ -160,7 +149,6 @@
                 Update Competition
             </button>
         </div>
-
     </form>
 </div>
 

@@ -28,7 +28,7 @@
 {{-- Search Bar --}}
 <form method="GET" action="{{ route('events.index') }}" class="mb-4 flex items-center gap-2">
     <input type="text" name="search" value="{{ request('search') }}"
-           placeholder="Search competition, sport, venue..."
+           placeholder="Search competition, sport, division, venue..."
            class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
 
     <button type="submit"
@@ -58,10 +58,9 @@
             <tr>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Competition</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Sport</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Type</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Participants</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Participants (SDOs)</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Start Date</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Venue</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Winners</th>
@@ -73,7 +72,7 @@
             @foreach($events as $event)
                 <tr class="hover:bg-gray-50 transition align-top">
 
-                    {{-- Competition Name --}}
+                    {{-- Competition --}}
                     <td class="px-4 py-3 font-medium text-gray-800">
                         {{ $event->name }}
                     </td>
@@ -81,19 +80,6 @@
                     {{-- Sport --}}
                     <td class="px-4 py-3 text-gray-700">
                         {{ $event->sport->name ?? 'TBA' }}
-                    </td>
-
-                    {{-- Sport Type --}}
-                    <td class="px-4 py-3">
-                        @if($event->sport_type === 'game')
-                            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-2 py-1 rounded-full">
-                                Game (Ball Sport)
-                            </span>
-                        @else
-                            <span class="bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
-                                Event (Multi-player)
-                            </span>
-                        @endif
                     </td>
 
                     {{-- Level --}}
@@ -106,18 +92,18 @@
                         {{ $event->category ?? 'TBA' }}
                     </td>
 
-                    {{-- Participants --}}
+                    {{-- Participants (DIVISIONS / SDOs) --}}
                     <td class="px-4 py-3 text-gray-700">
-                        @if($event->schools->isNotEmpty())
+                        @if($event->divisions->isNotEmpty())
                             <div class="flex flex-wrap gap-1">
-                                @foreach($event->schools as $school)
-                                    <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
-                                        {{ $school->name }}
+                                @foreach($event->divisions as $division)
+                                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full font-medium">
+                                        {{ $division->name }}
                                     </span>
                                 @endforeach
                             </div>
                         @else
-                            <span class="text-gray-400 italic">No participants</span>
+                            <span class="text-gray-400 italic">No divisions assigned</span>
                         @endif
                     </td>
 
@@ -132,8 +118,8 @@
                     </td>
 
                     {{-- Winners --}}
-                    <td class="px-4 py-3 text-gray-700 text-sm">
-                        @if($event->gold_school_id || $event->silver_school_id || $event->bronze_school_id)
+                    <td class="px-4 py-3 text-sm">
+                        @if($event->goldWinner || $event->silverWinner || $event->bronzeWinner)
                             <div class="flex flex-col gap-1">
                                 @if($event->goldWinner)
                                     <span class="text-yellow-500 font-semibold">🥇 {{ $event->goldWinner->name }}</span>
@@ -152,8 +138,7 @@
 
                     {{-- Actions --}}
                     <td class="px-4 py-3 text-right">
-                        <div class="flex justify-end items-center gap-4 text-sm font-medium">
-
+                        <div class="flex justify-end gap-4 text-sm font-medium">
                             <a href="{{ route('events.manage', $event->id) }}"
                                class="text-blue-600 hover:text-blue-800">
                                 Manage
@@ -173,7 +158,6 @@
                                     Delete
                                 </button>
                             </form>
-
                         </div>
                     </td>
 

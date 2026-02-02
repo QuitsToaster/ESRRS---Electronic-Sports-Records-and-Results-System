@@ -9,7 +9,7 @@ class Event extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
+   protected $fillable = [
     'name',
     'sport_id',
     'sport_type_id',
@@ -17,9 +17,9 @@ class Event extends Model
     'venue',
     'age_group',
     'category',
-    'gold_school_id',
-    'silver_school_id',
-    'bronze_school_id',
+    'gold_division_id',
+    'silver_division_id',
+    'bronze_division_id',
     'award_date',
 ];
 
@@ -47,17 +47,29 @@ class Event extends Model
 
 public function goldWinner()
 {
-    return $this->belongsTo(School::class, 'gold_school_id');
+    return $this->belongsTo(Division::class, 'gold_division_id');
 }
 
 public function silverWinner()
 {
-    return $this->belongsTo(School::class, 'silver_school_id');
+    return $this->belongsTo(Division::class, 'silver_division_id');
 }
 
 public function bronzeWinner()
 {
-    return $this->belongsTo(School::class, 'bronze_school_id');
+    return $this->belongsTo(Division::class, 'bronze_division_id');
 }
+
+
+// app/Models/Event.php
+
+public function divisions()
+{
+    return $this->belongsToMany(
+        \App\Models\Division::class,
+        'division_event' // pivot table
+    );
+}
+
 
 }

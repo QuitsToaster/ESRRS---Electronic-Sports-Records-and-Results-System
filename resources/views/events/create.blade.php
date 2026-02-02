@@ -92,23 +92,23 @@
            class="w-full border rounded px-3 py-2">
 </div>
 
-{{-- SCHOOLS --}}
-<div x-data="{ teams: [0] }">
-    <label class="block font-semibold mb-2">Participating Schools *</label>
+{{-- DIVISIONS --}}
+<div x-data="{ divisionsList: [0] }">
+    <label class="block font-semibold mb-2">Participating Divisions *</label>
 
-    <template x-for="(team, index) in teams" :key="index">
+    <template x-for="(division, index) in divisionsList" :key="index">
         <div class="flex gap-2 mb-2">
-            <select name="schools[]" required
+            <select name="divisions[]" required
                     class="flex-1 border rounded px-3 py-2">
-                <option value="">Select School</option>
-                @foreach($schools as $school)
-                    <option value="{{ $school->id }}">{{ $school->name }}</option>
+                <option value="">Select Division</option>
+                @foreach($divisions as $division)
+                    <option value="{{ $division->id }}">{{ $division->name }}</option>
                 @endforeach
             </select>
 
             <button type="button"
-                    x-show="teams.length > 1"
-                    @click="teams.splice(index, 1)"
+                    x-show="divisionsList.length > 1"
+                    @click="divisionsList.splice(index, 1)"
                     class="bg-red-500 text-white px-3 rounded">
                 ✕
             </button>
@@ -116,9 +116,9 @@
     </template>
 
     <button type="button"
-            @click="teams.push(teams.length)"
+            @click="divisionsList.push(divisionsList.length)"
             class="mt-2 bg-green-600 text-white px-4 py-2 rounded">
-        + Add School
+        + Add Division
     </button>
 </div>
 

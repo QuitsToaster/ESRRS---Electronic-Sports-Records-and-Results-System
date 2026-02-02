@@ -49,48 +49,57 @@
     </div>
 </div>
 
-{{-- PARTICIPATING SCHOOLS --}}
+{{-- PARTICIPATING DIVISIONS --}}
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 mb-6">
-    <h3 class="text-lg font-semibold mb-3">Participating Schools</h3>
+    <h3 class="text-lg font-semibold mb-3">
+        Participating Divisions (SDOs)
+    </h3>
 
     <div class="flex flex-wrap gap-2">
-        @foreach($event->schools as $school)
+        @forelse($event->divisions as $division)
             <span class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                {{ $school->name }}
+                {{ $division->name }}
             </span>
-        @endforeach
+        @empty
+            <p class="text-sm text-gray-500">No divisions assigned to this event.</p>
+        @endforelse
     </div>
 </div>
 
-{{-- 🏅 WINNERS --}}
+{{-- 🏅 MEDAL WINNERS --}}
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6">
     <h3 class="text-lg font-semibold mb-4">
         Medal Winners
     </h3>
 
-    <form method="POST" action="{{ route('events.winners', $event->id) }}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <form method="POST"
+          action="{{ route('events.winners', $event->id) }}"
+          class="grid grid-cols-1 md:grid-cols-3 gap-4">
         @csrf
 
         @foreach(['Gold','Silver','Bronze'] as $medal)
-            @php
-                $field = strtolower($medal).'_school_id';
-            @endphp
+    @php $field = strtolower($medal) . '_division_id'; @endphp
 
-            <div>
-                <label class="block font-medium text-{{ strtolower($medal) == 'gold' ? 'yellow' : (strtolower($medal) == 'silver' ? 'gray' : 'amber') }}-700">
-                    {{ $medal }} Medal
-                </label>
-                <select name="{{ $field }}" required class="w-full border rounded px-3 py-2">
-                    <option value="">Select School</option>
-                    @foreach($event->schools as $school)
-                        <option value="{{ $school->id }}"
-                            {{ old($field, $event->$field) == $school->id ? 'selected' : '' }}>
-                            {{ $school->name }}
-                        </option>
-                    @endforeach
-                </select>
-            </div>
-        @endforeach
+    <div>
+        <label class="block font-medium mb-1
+            {{ strtolower($medal) === 'gold' ? 'text-yellow-700' :
+               (strtolower($medal) === 'silver' ? 'text-gray-700' : 'text-amber-700') }}">
+            {{ $medal }} Medal
+        </label>
+
+        <select name="{{ $field }}" required
+                class="w-full border rounded px-3 py-2">
+            <option value="">Select Division (SDO)</option>
+            @foreach($event->divisions as $division)
+                <option value="{{ $division->id }}"
+                    {{ old($field, $event->$field) == $division->id ? 'selected' : '' }}>
+                    {{ $division->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+@endforeach
+
 
         <div class="md:col-span-3 flex justify-end mt-4">
             <button type="submit"
