@@ -118,7 +118,7 @@ class ViewerController extends Controller
     $search = $request->input('search');
 
     // Fetch events with related data
-    $events = Event::with(['schools', 'goldWinner', 'silverWinner', 'bronzeWinner', 'sport'])
+    $events = Event::with(['divisions', 'goldWinner', 'silverWinner', 'bronzeWinner', 'sport'])
         ->when($search, function($query, $search) {
             $query->where('name', 'like', "%{$search}%");
         })
@@ -135,7 +135,7 @@ class ViewerController extends Controller
             'age_group' => $event->age_group,
             'category' => $event->category,
             'sport' => $event->sport ? ['name' => $event->sport->name] : null,
-            'schools' => $event->schools->map(fn($s) => ['id' => $s->id, 'name' => $s->name])->toArray(),
+            'divisions' => $event->divisions->map(fn($d) => ['id' => $d->id, 'name' => $d->name])->toArray(),
             'goldWinner' => $event->goldWinner ? ['id' => $event->goldWinner->id, 'name' => $event->goldWinner->name] : null,
             'silverWinner' => $event->silverWinner ? ['id' => $event->silverWinner->id, 'name' => $event->silverWinner->name] : null,
             'bronzeWinner' => $event->bronzeWinner ? ['id' => $event->bronzeWinner->id, 'name' => $event->bronzeWinner->name] : null,
@@ -147,6 +147,7 @@ class ViewerController extends Controller
 
     return view('viewer.events', compact('events', 'eventsJson', 'gallery_photos'));
 }
+
 
 
 

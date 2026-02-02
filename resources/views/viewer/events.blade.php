@@ -97,16 +97,17 @@
                                     </div>
                                 </div>
 
-                                {{-- Participating Schools --}}
-                                <div>
-                                    <h4 class="text-xl font-semibold text-white mb-3">Participating Schools</h4>
-                                    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc list-inside">
-                                        <template x-for="school in event.schools" :key="school.id">
-                                            <li class="text-gray-200 font-medium" x-text="school.name"></li>
-                                        </template>
-                                        <li x-show="!event.schools.length" class="text-gray-400 italic">No schools assigned.</li>
-                                    </ul>
-                                </div>
+                                {{-- Participating Divisions (SDOs) --}}
+<div>
+    <h4 class="text-xl font-semibold text-white mb-3">Participating SDOs</h4>
+    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc list-inside">
+        <template x-for="division in event.divisions" :key="division.id">
+            <li class="text-gray-200 font-medium" x-text="division.name"></li>
+        </template>
+        <li x-show="!event.divisions.length" class="text-gray-400 italic">No divisions assigned.</li>
+    </ul>
+</div>
+
 
                                 {{-- Winners --}}
                                 <div>
