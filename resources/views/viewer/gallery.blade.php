@@ -72,9 +72,13 @@
 </div>
 
 {{-- PHOTO MODAL --}}
-<div id="photoModal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-50 flex flex-col items-center justify-center overflow-auto p-4">
+<div id="photoModal" class="fixed inset-0 bg-black bg-opacity-90 hidden z-[9999] flex flex-col items-center justify-center overflow-auto pt-20 md:pt-24 px-4">
+
+    {{-- Top-right Close button --}}
     <button onclick="closePhotoModal()"
-            class="absolute top-6 right-6 text-white text-4xl font-bold z-50 hover:text-gray-300 transition">&times;</button>
+            class="absolute top-6 md:top-10 right-6 md:right-10 text-white text-3xl md:text-4xl font-bold z-[10000] hover:text-gray-300 transition p-2 md:p-3 rounded-full bg-black bg-opacity-50 md:hover:bg-opacity-70">
+        &times;
+    </button>
 
     <div id="modalMain" class="w-full max-w-6xl flex flex-col items-center gap-4 relative">
         <button id="prevBtn" class="absolute left-2 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white text-3xl px-4 py-2 rounded hover:bg-opacity-70 z-50">&larr;</button>
@@ -84,13 +88,18 @@
             <img id="modalImage" src="" class="w-full max-h-[80vh] object-contain transition-all duration-300 rounded">
         </div>
 
+        {{-- Extra Close button for mobile below image --}}
+        <button onclick="closePhotoModal()"
+                class="mt-4 px-6 py-2 bg-red-600 text-white font-semibold rounded-lg hover:bg-red-700 transition md:hidden">
+            Close
+        </button>
+
         <button id="showThumbnailsBtn" class="px-6 py-2 bg-gray-700 text-white font-semibold hover:bg-gray-600 rounded transition">
             Show Thumbnails
         </button>
         <div id="thumbnailsContainer" class="hidden w-full overflow-x-auto flex gap-2 mt-2 p-2 bg-black/50 rounded"></div>
     </div>
 </div>
-
 <script>
 const photosData = @json($photos);
 const foldersData = @json($photos->groupBy('folder'));
