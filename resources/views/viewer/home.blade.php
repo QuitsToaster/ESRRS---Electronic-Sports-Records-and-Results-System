@@ -214,9 +214,10 @@ function closePrivacyBanner() {
                                 <span class="text-orange-400">{{ $division->bronze }}</span>
                             </div>
 
-                            <div class="relative text-center overflow-hidden">
-                                <div class="absolute inset-y-0 left-0 w-[500px]
-                                            bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 opacity-90"></div>
+                            <div class="relative text-center">
+                                <div class="absolute top-0 bottom-0 left-0 w-[500px] -z-10
+                                        bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
+                                        opacity-90"></div>
                                 <div class="relative text-red-700 font-extrabold text-6xl">
                                     {{ $division->total }}
                                 </div>
