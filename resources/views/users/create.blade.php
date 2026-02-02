@@ -12,7 +12,19 @@
 
 <div class="bg-white shadow rounded-lg p-6 w-full">
 
-<form action="{{ route('users.store') }}" method="POST" class="space-y-6" x-data="{ allAccess: false }">
+<form
+    action="{{ route('users.store') }}"
+    method="POST"
+    class="space-y-6"
+    x-data="{
+        allAccess: false,
+        toggleAll() {
+            this.$refs.modules
+                .querySelectorAll('input[type=checkbox]')
+                .forEach(cb => cb.checked = this.allAccess);
+        }
+    }"
+>
 @csrf
 
 {{-- Name --}}
@@ -61,8 +73,10 @@
     </label>
 
     {{-- Select All --}}
-    <label class="flex items-center gap-2 mb-2">
-        <input type="checkbox" x-model="allAccess" @click="$refs.modules.querySelectorAll('[data-module=true]').forEach(cb => cb.checked = allAccess)">
+    <label class="flex items-center gap-2 mb-3">
+        <input type="checkbox"
+               x-model="allAccess"
+               @change="toggleAll">
         Select All Access
     </label>
 
@@ -89,8 +103,12 @@
 
         @foreach($modules as $key => $label)
             <label class="flex items-center gap-2">
-                <input type="checkbox" name="access[]" value="{{ $key }}" data-module="true"
-                       {{ in_array($key, old('access', [])) ? 'checked' : '' }}>
+                <input
+                    type="checkbox"
+                    name="access[]"
+                    value="{{ $key }}"
+                    {{ in_array($key, old('access', [])) ? 'checked' : '' }}
+                >
                 {{ $label }}
             </label>
         @endforeach
@@ -107,6 +125,7 @@
        class="px-4 py-2 rounded border border-gray-400 text-gray-700">
         Cancel
     </a>
+
     <button type="submit"
             class="px-5 py-2 rounded bg-green-600 text-white font-semibold">
         Create User
