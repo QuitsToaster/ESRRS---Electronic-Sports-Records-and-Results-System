@@ -28,22 +28,28 @@ class ViewerController extends Controller
     $latestAnnouncements = Announcement::latest()->take(5)->get();
 
     // -----------------------------
-    // Medal tally by Division
+    // Medal tally by Division (from results_divisions)
     // -----------------------------
     $medalTally = \App\Models\Division::withCount([
-        'results as gold'   => fn($q) => $q->where('medal', 'Gold'),
-        'results as silver' => fn($q) => $q->where('medal', 'Silver'),
-        'results as bronze' => fn($q) => $q->where('medal', 'Bronze'),
+        'resultsDivisions as gold'   => fn($q) => $q->where('medal', 'Gold'),
+        'resultsDivisions as silver' => fn($q) => $q->where('medal', 'Silver'),
+        'resultsDivisions as bronze' => fn($q) => $q->where('medal', 'Bronze'),
     ])->get();
 
-    // Total medals per division
+    // Calculate total medals per division
     $medalTally->transform(function ($division) {
         $division->total = $division->gold + $division->silver + $division->bronze;
+
+        // Load the actual ResultDivision rows for the modal (optional)
+        $division->results = $division->resultsDivisions()->with(['sport', 'event'])->get();
+
         return $division;
     });
 
-    // Sort by total medals, then gold, silver, bronze
-    $medalTally = $medalTally->sortByDesc(fn($d) => [$d->total, $d->gold, $d->silver, $d->bronze])->values();
+    // Sort divisions by total medals, then gold, silver, bronze
+    $medalTally = $medalTally
+        ->sortByDesc(fn($d) => [$d->total, $d->gold, $d->silver, $d->bronze])
+        ->values();
 
     // -----------------------------
     // Fetch banners for the homepage slideshow
@@ -57,6 +63,7 @@ class ViewerController extends Controller
         'medalTally', 'banners'
     ));
 }
+
 
 
 
@@ -309,28 +316,39 @@ public function gallery(Request $request)
         ]);
     }
 
-    public function medalTally()
+   public function medalTally()
 {
-    // Get all divisions with medal counts
+    // -----------------------------
+    // Medal tally by Division (from results_divisions)
+    // -----------------------------
     $medalTally = \App\Models\Division::withCount([
-        'results as gold'   => fn($q) => $q->where('medal', 'Gold'),
-        'results as silver' => fn($q) => $q->where('medal', 'Silver'),
-        'results as bronze' => fn($q) => $q->where('medal', 'Bronze'),
+        'resultsDivisions as gold'   => fn($q) => $q->where('medal', 'Gold'),
+        'resultsDivisions as silver' => fn($q) => $q->where('medal', 'Silver'),
+        'resultsDivisions as bronze' => fn($q) => $q->where('medal', 'Bronze'),
     ])->get();
 
     // Calculate total medals per division
     $medalTally->transform(function ($division) {
         $division->total = $division->gold + $division->silver + $division->bronze;
+
+        // Load the actual ResultDivision rows for the modal
+        $division->results = $division->resultsDivisions()->with(['sport', 'event'])->get();
+
         return $division;
     });
 
-    // Sort divisions by total, then gold, silver, bronze
+    // Sort divisions by total medals, then gold, silver, bronze
     $medalTally = $medalTally
         ->sortByDesc(fn($d) => [$d->total, $d->gold, $d->silver, $d->bronze])
         ->values();
 
-    return view('viewer.medal-tally', compact('medalTally'));
+    // Fetch upcoming events & games (optional if you want sidebar)
+    $upcomingEvents = \App\Models\Event::orderBy('start_date', 'asc')->take(5)->get();
+    $upcomingGames = \App\Models\Game::with('event')->orderBy('game_time', 'asc')->take(5)->get();
+
+    return view('viewer.medal-tally', compact('medalTally', 'upcomingEvents', 'upcomingGames'));
 }
+
 
 
 
