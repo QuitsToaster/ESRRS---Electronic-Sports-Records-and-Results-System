@@ -447,110 +447,165 @@ function closePrivacyBanner() {
 </section>
 
 
-
 {{-- Latest Gallery Highlight --}}
 @php
     use App\Models\GalleryPhoto;
+
     $latestPhoto = GalleryPhoto::latest()->first();
-    $remainingPhotos = GalleryPhoto::latest()->skip(1)->take(5)->get(); // remaining photos for carousel
+
+    $remainingPhotos = GalleryPhoto::when($latestPhoto, function ($query) use ($latestPhoto) {
+        $query->where('id', '!=', $latestPhoto->id);
+    })
+    ->latest()
+    ->take(10)
+    ->get();
 @endphp
 
+{{-- =======================
+     HIGHLIGHTS / SPOTLIGHT
+======================== --}}
 @if($latestPhoto)
-<section class="bg-gray-50 py-16 border-t">
-    <div class="max-w-7xl mx-auto px-6">
+<section class="bg-gray-50 py-12 md:py-16 border-t">
+    <div class="max-w-7xl mx-auto px-4 md:px-6">
 
-        {{-- Section Title on Top --}}
-        <div class="text-center mb-10">
-            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold" style="font-family: 'Poppins', sans-serif;">
+        {{-- Section Title --}}
+        <div class="text-center mb-8 md:mb-10">
+            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold"
+                style="font-family: 'Poppins', sans-serif;">
                 Highlights
             </h2>
         </div>
 
         {{-- Spotlight Container --}}
-        <div class="flex flex-col md:flex-row items-center gap-10">
+        <div class="flex flex-col md:flex-row items-center gap-8 md:gap-10">
 
-            {{-- Left Side: Latest Photo --}}
-            <div class="flex-1">
-                @php
-                    $firstImage = $latestPhoto->photos[0] ?? null;
-                @endphp
-                @if($firstImage)
-                    <img src="{{ asset('storage/' . $firstImage) }}" 
-                         alt="{{ $latestPhoto->title ?? 'Gallery Image' }}"
-                         class="w-full h-96 object-cover rounded-3xl shadow-2xl hover:scale-105 transition-transform duration-500">
+            {{-- LEFT: Slideshow --}}
+            <div class="w-full md:flex-1 relative overflow-hidden rounded-2xl md:rounded-3xl shadow-2xl
+                        h-64 sm:h-80 md:h-96">
+
+                @if(!empty($latestPhoto->photos))
+                    @foreach($latestPhoto->photos as $index => $image)
+                        <img
+                            src="{{ asset('storage/' . $image) }}"
+                            alt="Gallery Image {{ $index + 1 }}"
+                            class="absolute inset-0 w-full h-full object-cover transition-opacity duration-1000
+                                   {{ $index === 0 ? 'opacity-100' : 'opacity-0' }}"
+                            data-slide
+                        >
+                    @endforeach
+
+                    {{-- Overlay --}}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                 @else
-                    <div class="w-full h-96 bg-gray-300 flex items-center justify-center text-gray-600 text-xl font-semibold rounded-3xl">
-                        No Image
+                    <div class="w-full h-full bg-gray-300 flex items-center justify-center
+                                text-gray-600 text-lg font-semibold">
+                        No Images Found
                     </div>
                 @endif
             </div>
 
-            {{-- Right Side: Title + Description --}}
-            <div class="flex-1 space-y-6">
-                <h2 class="text-5xl text-gray-800" style="font-family: 'Poppins', sans-serif;">
+            {{-- RIGHT: Title + Description --}}
+            <div class="w-full md:flex-1 space-y-4 md:space-y-6
+                        text-center md:text-left">
+
+                <h2 class="text-3xl sm:text-4xl md:text-5xl text-gray-800 font-semibold"
+                    style="font-family: 'Poppins', sans-serif;">
                     {{ $latestPhoto->title ?? 'Gallery Highlight' }}
                 </h2>
-                <p class="text-gray-600 text-lg leading-relaxed">
+
+                <p class="text-gray-600 text-base md:text-lg leading-relaxed">
                     {{ $latestPhoto->description ?? 'No description available for this gallery item.' }}
                 </p>
-                <button
-    onclick="window.location='{{ route('viewer.gallery') }}'"
-    class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg transition">
-    View Gallery
-</button>
 
+                <div class="pt-2 flex justify-center md:justify-start">
+                    <button
+                        onclick="window.location='{{ route('viewer.gallery') }}'"
+                        class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white
+                               font-semibold rounded-xl shadow-lg transition">
+                        View Gallery
+                    </button>
+                </div>
             </div>
 
         </div>
     </div>
 </section>
 
+{{-- Slideshow Script --}}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const slides = document.querySelectorAll('[data-slide]');
+        let current = 0;
+
+        if (slides.length > 1) {
+            setInterval(() => {
+                slides[current].classList.remove('opacity-100');
+                slides[current].classList.add('opacity-0');
+
+                current = (current + 1) % slides.length;
+
+                slides[current].classList.remove('opacity-0');
+                slides[current].classList.add('opacity-100');
+            }, 4000);
+        }
+    });
+</script>
 @endif
 
-{{-- Remaining Gallery Carousel --}}
+
+{{-- =======================
+     REMAINING GALLERY CAROUSEL
+======================== --}}
 @if($remainingPhotos->isNotEmpty())
 <section class="bg-gray-50 py-12 border-t relative overflow-hidden">
-    <div class="max-w-7xl mx-auto px-6">
-        {{-- Carousel Wrapper --}}
+    <div class="max-w-7xl mx-auto px-4 md:px-6">
+
         <div class="relative">
 
-            {{-- Left Arrow --}}
-            <button 
-                class="absolute left-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/100 text-gray-800 rounded-full p-3 shadow-lg z-20"
-                onclick="document.getElementById('gallery-carousel').scrollBy({left: -300, behavior: 'smooth'})"
-            >
+            {{-- Left Arrow (hidden on mobile) --}}
+            <button
+                class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2
+                       bg-white/80 hover:bg-white text-gray-800
+                       rounded-full p-3 shadow-lg z-20"
+                onclick="document.getElementById('gallery-carousel')
+                    .scrollBy({ left: -300, behavior: 'smooth' })">
                 &#8592;
             </button>
 
-            {{-- Right Arrow --}}
-            <button 
-                class="absolute right-0 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white/100 text-gray-800 rounded-full p-3 shadow-lg z-20"
-                onclick="document.getElementById('gallery-carousel').scrollBy({left: 300, behavior: 'smooth'})"
-            >
+            {{-- Right Arrow (hidden on mobile) --}}
+            <button
+                class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2
+                       bg-white/80 hover:bg-white text-gray-800
+                       rounded-full p-3 shadow-lg z-20"
+                onclick="document.getElementById('gallery-carousel')
+                    .scrollBy({ left: 300, behavior: 'smooth' })">
                 &#8594;
             </button>
 
             {{-- Carousel --}}
-            <div id="gallery-carousel" class="flex space-x-6 overflow-x-auto scrollbar-hide scroll-smooth py-2">
+            <div id="gallery-carousel"
+                 class="flex space-x-6 overflow-x-auto scroll-smooth py-2">
+
                 @foreach($remainingPhotos as $photo)
                     @php
                         $firstImage = $photo->photos[0] ?? null;
-                        $extraCount = count($photo->photos) - 1;
+                        $extraCount = max(count($photo->photos) - 1, 0);
                     @endphp
 
-                    {{-- Photo Card --}}
-                    <div 
-                        class="relative flex-shrink-0 w-64 md:w-72 rounded-2xl shadow-lg cursor-pointer transform hover:scale-105 transition-all duration-500 group"
-                        onclick="openPhotoModal({{ $photo->id }})"
-                    >
-                        @if($firstImage)
-                            <img src="{{ asset('storage/' . $firstImage) }}" 
-                                 class="w-full h-64 md:h-72 object-cover rounded-2xl group-hover:scale-110 transition-transform duration-500">
+                    <div
+                        class="relative flex-shrink-0 w-64 md:w-72 rounded-2xl shadow-lg cursor-pointer
+                               transform hover:scale-105 transition-all duration-500 group"
+                        onclick="openPhotoModal({{ $photo->id }})">
 
-                            {{-- Overlay --}}
-                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col justify-center items-center rounded-2xl">
+                        @if($firstImage)
+                            <img src="{{ asset('storage/' . $firstImage) }}"
+                                 class="w-full h-64 md:h-72 object-cover rounded-2xl">
+
+                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100
+                                        transition-opacity duration-500 flex flex-col justify-center items-center rounded-2xl">
                                 @if($extraCount > 0)
-                                    <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-white font-semibold text-sm mb-2">
+                                    <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full
+                                                text-white font-semibold text-sm mb-2">
                                         +{{ $extraCount }} More
                                     </div>
                                 @endif
@@ -559,17 +614,21 @@ function closePrivacyBanner() {
                                 </div>
                             </div>
                         @else
-                            <div class="h-64 md:h-72 bg-gray-200 flex items-center justify-center text-gray-500 text-lg font-semibold rounded-2xl">
+                            <div class="h-64 md:h-72 bg-gray-200 flex items-center justify-center
+                                        text-gray-500 text-lg font-semibold rounded-2xl">
                                 No Image
                             </div>
                         @endif
                     </div>
                 @endforeach
+
             </div>
         </div>
     </div>
 </section>
 @endif
+
+
 
 
 {{-- Latest Announcements --}}
