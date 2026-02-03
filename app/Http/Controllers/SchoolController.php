@@ -11,24 +11,29 @@ use Illuminate\Support\Facades\Auth;
 class SchoolController extends Controller
 {
     public function index(Request $request)
-    {
-        $query = School::query();
+{
+    $query = School::query();
 
-        // Search functionality
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                ->orWhere('division', 'like', "%{$search}%")
-                ->orWhere('province', 'like', "%{$search}%")
-                ->orWhere('city', 'like', "%{$search}%");
-            });
-        }
-
-        $schools = $query->orderBy('name')->get();
-
-        return view('schools.index', compact('schools'));
+    // Search functionality
+    if ($request->filled('search')) {
+        $search = $request->search;
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('division', 'like', "%{$search}%")
+              ->orWhere('province', 'like', "%{$search}%")
+              ->orWhere('city', 'like', "%{$search}%");
+        });
     }
+
+    // ✅ PAGINATION (adjust 10 if needed)
+    $schools = $query
+        ->orderBy('name')
+        ->paginate(10)
+        ->withQueryString(); // keeps search when changing page
+
+    return view('schools.index', compact('schools'));
+}
+
 
 
     public function create()

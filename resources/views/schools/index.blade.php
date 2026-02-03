@@ -30,21 +30,27 @@
     <input type="text" name="search" value="{{ request('search') }}"
            placeholder="Search schools..."
            class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
-    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
+    <button type="submit"
+            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
         Search
     </button>
+
     @if(request('search'))
-        <a href="{{ route('schools.index') }}" class="text-gray-500 hover:text-gray-700 ml-2">Clear</a>
+        <a href="{{ route('schools.index') }}"
+           class="text-gray-500 hover:text-gray-700 ml-2">
+            Clear
+        </a>
     @endif
 </form>
 
 {{-- Empty State --}}
-@if($schools->isEmpty())
+@if($schools->count() === 0)
     <div class="bg-white border border-gray-300 rounded-lg p-8 text-center text-gray-500 shadow-sm">
         No schools found.
     </div>
 @else
-{{-- Schools Table Card --}}
+
+{{-- Schools Table --}}
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm overflow-x-auto">
 
     <table class="min-w-full border-collapse">
@@ -95,7 +101,6 @@
                         {{ $school->school_address ?? '-' }}
                     </td>
 
-
                     {{-- School Code --}}
                     <td class="px-4 py-3 text-gray-700">
                         {{ $school->school_code ?? '-' }}
@@ -125,8 +130,13 @@
             @endforeach
         </tbody>
     </table>
-
 </div>
+
+{{-- ✅ PAGINATION --}}
+<div class="mt-6">
+    {{ $schools->links() }}
+</div>
+
 @endif
 
 @endsection
