@@ -20,17 +20,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
-
-    <style>
-        html, body {
-    overflow: hidden; /* prevent scrolling when loader is visible */
-}
-
-[x-data][x-show="loading"] {
-    pointer-events: all; /* allow overlay to capture clicks */
-}
-
-    </style>
 </head>
 
 <body class="bg-gray-100 font-sans overflow-x-hidden">
