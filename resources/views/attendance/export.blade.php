@@ -79,7 +79,7 @@
             <tr>
                 <th width="30%">Name</th>
                 <th width="20%">Role</th>
-                <th width="30%">Team</th>
+                <th width="30%">School</th>
                 <th width="20%">Time In</th>
             </tr>
         </thead>
@@ -87,7 +87,7 @@
             @foreach($attended as $record)
                 @php
                     $role = $record->athlete ? 'Athlete' : ($record->coach ? 'Coach' : '-');
-                    $name = $record->athlete->name ?? $record->coach->name ?? '-';
+                    $name = $record->athlete->full_name ?? $record->coach->name ?? '-';
                     $team = $record->athlete->school->name ?? $record->coach->school->name ?? 'N/A';
                     $timeIn = $record->time_in ? \Carbon\Carbon::parse($record->time_in)
                                 ->setTimezone('Asia/Manila')->format('h:i A') : '—';
@@ -108,13 +108,13 @@
         <thead>
             <tr>
                 <th width="50%">Name</th>
-                <th width="50%">Team</th>
+                <th width="50%">School</th>
             </tr>
         </thead>
         <tbody>
             @foreach($notAttended as $athlete)
                 <tr>
-                    <td>{{ $athlete->name }}</td>
+                    <td>{{ $athlete->full_name }}</td>
                     <td>{{ $athlete->school->name ?? 'N/A' }}</td>
                 </tr>
             @endforeach
@@ -127,7 +127,7 @@
         <thead>
             <tr>
                 <th width="50%">Name</th>
-                <th width="50%">Team</th>
+                <th width="50%">School</th>
             </tr>
         </thead>
         <tbody>

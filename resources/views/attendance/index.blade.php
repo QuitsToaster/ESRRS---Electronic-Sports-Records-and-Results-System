@@ -30,7 +30,7 @@
                     <tr>
                         <th class="px-2 py-1 text-left">Name</th>
                         <th class="px-2 py-1 text-left">Role</th>
-                        <th class="px-2 py-1 text-left">Team</th>
+                        <th class="px-2 py-1 text-left">School</th>
                         <th class="px-2 py-1 text-left">Time In</th>
                         <th class="px-2 py-1 text-left">Time Out</th>
                     </tr>
@@ -74,7 +74,7 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="px-2 py-1 text-left">Name</th>
-                        <th class="px-2 py-1 text-left">Team</th>
+                        <th class="px-2 py-1 text-left">School</th>
                     </tr>
                 </thead>
                 <tbody>
