@@ -44,7 +44,7 @@ Route::post('/users/{user}/reset-password', [UserController::class, 'resetPasswo
 
 /*
 |--------------------------------------------------------------------------
-| Viewer Routes
+| Viewer Routes (Public / No Auth)
 |--------------------------------------------------------------------------
 */
 Route::prefix('viewer')->name('viewer.')->group(function() {
@@ -58,18 +58,18 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::post('feedbacks/send', [ViewerController::class, 'sendFeedback'])->name('feedbacks.send');
 
     // Medal Tally
-    Route::get('/medal-tally', [ViewerController::class, 'medalTally'])->name('medalTally');
+    Route::get('medal-tally', [ViewerController::class, 'medalTally'])->name('medalTally');
 
-    // Live scores and game modals
-    Route::get('/live-scores', [ViewerController::class, 'liveScores'])->name('liveScores');
-    Route::get('/game/{game}/live', [ViewerController::class, 'liveGame']);
-    Route::get('/game/{game}/live-score', [ViewerController::class, 'liveGame'])->name('liveGame');
-    Route::get('/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
-    Route::get('/game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);
-    Route::get('/game/{game}', [ViewerController::class, 'gameModal'])->name('game.modal');
+    // Live scores & modals
+    Route::get('live-scores', [ViewerController::class, 'liveScores'])->name('liveScores');
+    Route::get('game/{game}/live', [ViewerController::class, 'liveGame']);
+    Route::get('game/{game}/live-score', [ViewerController::class, 'liveGame'])->name('liveGame');
+    Route::get('game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
+    Route::get('game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);
+    Route::get('game/{game}', [ViewerController::class, 'gameModal'])->name('game.modal');
 
-    // Viewer gallery
-    Route::get('/gallery', [ViewerController::class, 'gallery'])->name('gallery');
+    // Gallery
+    Route::get('gallery', [ViewerController::class, 'gallery'])->name('gallery');
 });
 
 /*
@@ -77,26 +77,24 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
 | Authenticated Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware(['auth'])->group(function () {
+Route::middleware('auth')->group(function() {
 
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
     /*
     |--------------------------------------------------------------------------
-    | Profile Routes
+    | Profile
     |--------------------------------------------------------------------------
     */
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // Logged-in user profile update
     Route::put('/profile/update', [UserController::class, 'updateProfile'])->name('users.updateProfile');
 
     /*
     |--------------------------------------------------------------------------
-    | Admin Attendance Routes
+    | Admin Attendance
     |--------------------------------------------------------------------------
     */
     Route::prefix('admin')->group(function () {
@@ -111,68 +109,43 @@ Route::middleware(['auth'])->group(function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Resource Routes
+    | Resources
     |--------------------------------------------------------------------------
     */
     Route::resource('divisions', DivisionController::class);
     Route::resource('schools', SchoolController::class);
     Route::resource('sports', SportController::class);
     Route::resource('events', EventController::class);
-
-    // Coaches
     Route::resource('coaches', CoachController::class);
     Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
-
-    // Officials (limited)
-    Route::resource('officials', OfficialController::class)->only([
-        'index', 'create', 'store', 'destroy', 'edit', 'update'
-    ]);
-
-    // Announcements
+    Route::resource('officials', OfficialController::class)->only(['index','create','store','destroy','edit','update']);
     Route::resource('announcements', AnnouncementController::class);
 
     /*
     |--------------------------------------------------------------------------
-    | Athletes Routes
+    | Athletes
     |--------------------------------------------------------------------------
     */
-    Route::prefix('athletes')->group(function () {
-
-        // CRUD (exclude show)
-        Route::resource('/', AthleteController::class)->except(['show'])->names([
-            'index' => 'athletes.index',
-            'create' => 'athletes.create',
-            'store' => 'athletes.store',
-            'edit' => 'athletes.edit',
-            'update' => 'athletes.update',
-            'destroy' => 'athletes.destroy',
-        ]);
-
-        // QR code
-        Route::get('{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
-
-        // Bulk upload
-        Route::post('bulk-upload', [AthleteController::class, 'bulkUpload'])->name('athletes.bulkUpload');
-
-        // Print PDF
-        Route::get('print', [AthleteController::class, 'print'])->name('athletes.print');
-    });
+    Route::resource('athletes', AthleteController::class)->except(['show']);
+    Route::get('athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
+    Route::post('athletes/bulk-upload', [AthleteController::class, 'bulkUpload'])->name('athletes.bulkUpload');
+    Route::get('athletes/print', [AthleteController::class, 'print'])->name('athletes.print');
 
     /*
     |--------------------------------------------------------------------------
-    | Game Routes
+    | Games
     |--------------------------------------------------------------------------
     */
     Route::resource('games', GameController::class);
-    Route::get('/games/{game}/manage', [GameController::class, 'manage'])->name('games.manage');
-    Route::post('/games/{game}/update-score', [GameController::class, 'updateScore'])->name('games.updateScore');
-    Route::post('/games/{game}/update-period/{periodIndex}', [GameController::class, 'updatePeriodScore'])->name('games.updatePeriodScore');
-    Route::post('/games/{game}/live-score', [GameController::class, 'liveScore'])->name('games.liveScore');
-    Route::post('/games/{game}/update-timer', [GameController::class, 'updateTimer'])->name('games.updateTimer');
-    Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLiveVideo'])->name('games.updateLiveVideo');
-    Route::post('/games/{game}/start', [GameController::class, 'startGame'])->name('games.start');
-    Route::post('/games/{game}/winner', [GameController::class, 'setWinner'])->name('games.winner');
-    Route::post('/games/{game}/finish', [GameController::class, 'finishGame'])->name('games.finish');
+    Route::get('games/{game}/manage', [GameController::class, 'manage'])->name('games.manage');
+    Route::post('games/{game}/update-score', [GameController::class, 'updateScore'])->name('games.updateScore');
+    Route::post('games/{game}/update-period/{periodIndex}', [GameController::class, 'updatePeriodScore'])->name('games.updatePeriodScore');
+    Route::post('games/{game}/live-score', [GameController::class, 'liveScore'])->name('games.liveScore');
+    Route::post('games/{game}/update-timer', [GameController::class, 'updateTimer'])->name('games.updateTimer');
+    Route::post('games/{game}/update-live-video', [GameController::class, 'updateLiveVideo'])->name('games.updateLiveVideo');
+    Route::post('games/{game}/start', [GameController::class, 'startGame'])->name('games.start');
+    Route::post('games/{game}/winner', [GameController::class, 'setWinner'])->name('games.winner');
+    Route::post('games/{game}/finish', [GameController::class, 'finishGame'])->name('games.finish');
 
     /*
     |--------------------------------------------------------------------------
@@ -191,6 +164,8 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/', [ResultDivisionController::class, 'index'])->name('index');
         Route::get('/create', [ResultDivisionController::class, 'create'])->name('create');
         Route::post('/store', [ResultDivisionController::class, 'store'])->name('store');
+
+        // PDF export - add export() method to controller
         Route::get('/export', [ResultDivisionController::class, 'export'])->name('export');
     });
 
@@ -239,7 +214,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/layout', [\App\Http\Controllers\SettingsController::class, 'layout'])->name('layout');
         Route::post('/layout', [\App\Http\Controllers\SettingsController::class, 'saveLayout'])->name('layout.save');
     });
-
 });
 
 require __DIR__.'/auth.php';

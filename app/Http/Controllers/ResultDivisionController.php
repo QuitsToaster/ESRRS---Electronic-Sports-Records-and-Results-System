@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\ResultDivision;
 use App\Models\Division;
 use App\Models\Sport;
+use PDF; // Add at the top
+use App\Models\Event;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -136,4 +138,41 @@ class ResultDivisionController extends Controller
 
         return back()->with('success', 'Results saved successfully.');
     }
+
+    public function export()
+{
+    // Get all results with relations
+    $results = ResultDivision::with(['sport', 'division_model', 'awardedBy', 'event'])
+                ->latest()->get();
+
+    // Medal tally
+    $divisions = Division::withCount([
+        'resultsDivisions as gold'   => fn($q) => $q->where('medal', 'Gold'),
+        'resultsDivisions as silver' => fn($q) => $q->where('medal', 'Silver'),
+        'resultsDivisions as bronze' => fn($q) => $q->where('medal', 'Bronze'),
+    ])->get();
+
+    $divisions->transform(function ($division) {
+        $division->points = ($division->gold * 3) + ($division->silver * 2) + ($division->bronze * 1);
+        return $division;
+    });
+
+    $divisions = $divisions->sortByDesc(fn($d) => [$d->points, $d->gold, $d->silver, $d->bronze])->values();
+
+    $rank = 1;
+    foreach ($divisions as $division) {
+        $division->rank = $rank++;
+    }
+
+    // Load Blade view for PDF
+    $pdf = PDF::loadView('results_divisions.export', [
+        'results' => $results,
+        'medalTally' => $divisions,
+        'allSports' => \App\Models\Sport::orderBy('name')->get(),
+    ])->setPaper('a4', 'landscape');
+
+    // Download PDF
+    return $pdf->download('awarded_medals.pdf');
+}
+
 }
