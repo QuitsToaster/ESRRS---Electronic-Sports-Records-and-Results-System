@@ -9,6 +9,7 @@ use App\Models\Sport;
 use App\Models\AuditLog;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\AthletesImport;
+use Barryvdh\DomPDF\Facade\Pdf;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,6 +44,7 @@ class AthleteController extends Controller
 
     return view('athletes.index', compact('athletes'));
 }
+
 
 
     public function create()
@@ -244,6 +246,17 @@ class AthleteController extends Controller
 
     return redirect()->route('athletes.index')
         ->with('success', 'Athletes uploaded successfully!');
+}
+
+public function print()
+{
+    $athletes = Athlete::with(['school', 'sport'])->orderBy('last_name')->get();
+
+    $pdf = Pdf::loadView('athletes.print', compact('athletes'))
+              ->setPaper('a4', 'portrait');
+
+    return $pdf->stream('athletes.pdf'); // opens in browser
+    // or use ->download('athletes.pdf') to force download
 }
 
 }

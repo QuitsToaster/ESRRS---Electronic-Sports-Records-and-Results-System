@@ -38,10 +38,12 @@
         </form>
 
         {{-- PRINT --}}
-        <button onclick="printAthletes()"
-                class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
-            <span>Print</span>
-        </button>
+        <a href="{{ route('athletes.print') }}"
+   target="_blank"
+   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
+    <span>Print</span>
+</a>
+
 
     </div>
 </div>

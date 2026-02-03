@@ -13,7 +13,6 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OfficialController;
-use App\Http\Controllers\ResultController;
 use App\Http\Controllers\ResultDivisionController;
 use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\DivisionController;
@@ -23,27 +22,31 @@ use App\Http\Controllers\BracketController;
 use App\Http\Controllers\AccountRequestController;
 use Illuminate\Support\Facades\Route;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use App\Models\Athlete;
 
-Route::get('/', [ViewerController::class, 'home'])
-    ->name('landing');
+/*
+|--------------------------------------------------------------------------
+| Public Routes
+|--------------------------------------------------------------------------
+*/
 
+// Landing page
+Route::get('/', [ViewerController::class, 'home'])->name('landing');
 
+// Account requests
+Route::post('/account-request', [AccountRequestController::class, 'store'])->name('account-request.store');
 
-Route::post('/account-request', [AccountRequestController::class, 'store'])
-    ->name('account-request.store');
+// Switch account
+Route::post('/switch-account', [SwitchAccountController::class, 'store'])->name('switch.account');
 
-Route::post('/switch-account', [SwitchAccountController::class, 'store'])
-    ->name('switch.account');
-
-Route::post('/users/{user}/reset-password', [App\Http\Controllers\UserController::class, 'resetPassword'])
+// Reset user password
+Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])
     ->name('users.reset-password');
 
-
-Route::get('/dashboard', [DashboardController::class, 'index'])
-    ->middleware('auth')
-    ->name('dashboard');
-
+/*
+|--------------------------------------------------------------------------
+| Viewer Routes
+|--------------------------------------------------------------------------
+*/
 Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('home', [ViewerController::class, 'home'])->name('home');
     Route::get('participants', [ViewerController::class, 'participants'])->name('participants');
@@ -52,215 +55,191 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('games', [ViewerController::class, 'games'])->name('games');
     Route::get('announcements', [ViewerController::class, 'announcements'])->name('announcements');
     Route::get('feedbacks', [ViewerController::class, 'feedbacks'])->name('feedbacks');
+    Route::post('feedbacks/send', [ViewerController::class, 'sendFeedback'])->name('feedbacks.send');
 
     // Medal Tally
     Route::get('/medal-tally', [ViewerController::class, 'medalTally'])->name('medalTally');
+
+    // Live scores and game modals
+    Route::get('/live-scores', [ViewerController::class, 'liveScores'])->name('liveScores');
+    Route::get('/game/{game}/live', [ViewerController::class, 'liveGame']);
+    Route::get('/game/{game}/live-score', [ViewerController::class, 'liveGame'])->name('liveGame');
+    Route::get('/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
+    Route::get('/game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);
+    Route::get('/game/{game}', [ViewerController::class, 'gameModal'])->name('game.modal');
+
+    // Viewer gallery
+    Route::get('/gallery', [ViewerController::class, 'gallery'])->name('gallery');
 });
 
-
-Route::get('viewer/feedbacks', [App\Http\Controllers\ViewerController::class, 'feedbacks'])->name('viewer.feedbacks');
-Route::post('viewer/feedbacks/send', [App\Http\Controllers\ViewerController::class, 'sendFeedback'])->name('viewer.feedbacks.send');
-
-
-Route::middleware(['auth'])->prefix('admin')->group(function () {
-    Route::get('attendance', [\App\Http\Controllers\AdminAttendanceController::class, 'index'])->name('attendance.index');
-    Route::post('attendance/generate', [\App\Http\Controllers\AdminAttendanceController::class, 'generateQr'])->name('attendance.generate');
-    Route::get('attendance/export', [\App\Http\Controllers\AdminAttendanceController::class, 'exportPdf'])->name('attendance.export');
-});
-
-Route::middleware(['auth'])->group(function () {
-    Route::resource('divisions', DivisionController::class);
-});
-
-Route::get('/check-attendance', [AttendanceController::class, 'index'])
-    ->name('attendance.check');
-
-Route::post('/check-attendance', [AttendanceController::class, 'store'])
-    ->name('attendance.store');
-
-Route::get('/athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
+/*
+|--------------------------------------------------------------------------
+| Authenticated Routes
+|--------------------------------------------------------------------------
+*/
 Route::middleware(['auth'])->group(function () {
 
-    Route::resource('athletes', AthleteController::class);
+    // Dashboard
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
 
-    Route::post('/athletes/bulk-upload', 
-        [AthleteController::class, 'bulkUpload']
-    )->name('athletes.bulkUpload');
-
-});
-
-
-
-Route::middleware('auth')->group(function () {
+    /*
+    |--------------------------------------------------------------------------
+    | Profile Routes
+    |--------------------------------------------------------------------------
+    */
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
 
-// Logged-in user profile update
-Route::put('/profile/update', [UserController::class, 'updateProfile'])
-     ->name('users.updateProfile')
-     ->middleware('auth');
+    // Logged-in user profile update
+    Route::put('/profile/update', [UserController::class, 'updateProfile'])->name('users.updateProfile');
 
+    /*
+    |--------------------------------------------------------------------------
+    | Admin Attendance Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('admin')->group(function () {
+        Route::get('attendance', [\App\Http\Controllers\AdminAttendanceController::class, 'index'])->name('attendance.index');
+        Route::post('attendance/generate', [\App\Http\Controllers\AdminAttendanceController::class, 'generateQr'])->name('attendance.generate');
+        Route::get('attendance/export', [\App\Http\Controllers\AdminAttendanceController::class, 'exportPdf'])->name('attendance.export');
+    });
 
-Route::middleware('auth')->group(function () {
+    // Check attendance
+    Route::get('/check-attendance', [AttendanceController::class, 'index'])->name('attendance.check');
+    Route::post('/check-attendance', [AttendanceController::class, 'store'])->name('attendance.store');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resource Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('divisions', DivisionController::class);
     Route::resource('schools', SchoolController::class);
     Route::resource('sports', SportController::class);
     Route::resource('events', EventController::class);
-    Route::resource('athletes', AthleteController::class);
-});
 
-Route::resource('athletes', AthleteController::class)->middleware('auth');
+    // Coaches
+    Route::resource('coaches', CoachController::class);
+    Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
 
-
-
-Route::get('athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
-Route::get('/athletes/{athlete}/qr', function (Athlete $athlete) {
-
-    $data = json_encode([
-        'type' => 'athlete',
-        'qr_code' => $athlete->qr_code,
-    ]);
-
-    return response(
-        QrCode::format('png')->size(150)->generate($data)
-    )->header('Content-Type', 'image/png');
-
-})->name('athletes.qr');
-Route::resource('coaches', CoachController::class)->middleware('auth');
-Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
-
-Route::resource('games', GameController::class)->middleware('auth');
-Route::get('/games/{game}/manage', [GameController::class, 'manage'])->name('games.manage');
-Route::post('/games/{game}/update-score', [GameController::class, 'updateScore'])->name('games.updateScore');
-Route::post('/games/{game}/update-period/{periodIndex}', [GameController::class, 'updatePeriodScore'])
-    ->name('games.updatePeriodScore');
-
-    // Admin live update
-Route::post('/games/{game}/live-score', [GameController::class, 'liveScore'])
-    ->name('games.liveScore');
-
-Route::post('/games/{game}/update-timer', [GameController::class, 'updateTimer'])->name('games.updateTimer');
-
-Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLiveVideo'])
-    ->name('games.updateLiveVideo');
-
-Route::post('games/{game}/start', [GameController::class, 'startGame'])->name('games.start');
-Route::post('games/{game}/winner', [GameController::class, 'setWinner'])->name('games.winner');
-
-
-Route::post('/games/{game}/finish', [GameController::class, 'finishGame'])
-     ->name('games.finish');
-
-Route::middleware(['auth'])->group(function () {
-    Route::get('brackets/create', [BracketController::class, 'create'])->name('brackets.create');
-    Route::post('brackets', [BracketController::class, 'store'])->name('brackets.store');
-});
-
-Route::get('/events/{event}/manage', [EventController::class, 'manage'])
-    ->name('events.manage');
-Route::post('/events/{event}/winners', [EventController::class, 'saveWinners'])
-    ->name('events.winners');
-
-
-// Route::get('/viewer/game/{game}/live-timer', [GameController::class, 'liveTimer'])->name('viewer.liveTimer');
-Route::get('/viewer/game/{game}/live-timer', [ViewerController::class, 'liveTimer']);
-Route::get('/viewer/game/{game}/live-periods', [ViewerController::class, 'livePeriodScores']);
-
-Route::get('/viewer/game/{game}/live-score',
-    [ViewerController::class, 'liveGame']
-)->name('viewer.liveGame');
-
-Route::post('/games/{game}/live-score',
-    [GameController::class, 'liveScore']
-)->name('games.liveScore');
-
-Route::post('/games/{game}/update-period/{periodIndex}',
-    [GameController::class, 'updatePeriodScore']
-)->name('games.updatePeriodScore');
-
-Route::post('/games/{game}/live-video', [GameController::class, 'updateLiveVideo'])
-    ->name('games.updateLiveVideo');
-
-
-// Viewer polling
-Route::get('/viewer/live-scores', [ViewerController::class, 'liveScores'])
-    ->name('viewer.liveScores');
-
-Route::get('/viewer/game/{game}', [ViewerController::class, 'gameModal'])
-    ->name('viewer.game.modal');
-
-Route::get('/viewer/game/{game}/live', [ViewerController::class, 'liveGame']);
-
-
-
-Route::middleware(['auth'])->group(function () {
+    // Officials (limited)
     Route::resource('officials', OfficialController::class)->only([
         'index', 'create', 'store', 'destroy', 'edit', 'update'
     ]);
+
+    // Announcements
+    Route::resource('announcements', AnnouncementController::class);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Athletes Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('athletes')->group(function () {
+
+        // CRUD (exclude show)
+        Route::resource('/', AthleteController::class)->except(['show'])->names([
+            'index' => 'athletes.index',
+            'create' => 'athletes.create',
+            'store' => 'athletes.store',
+            'edit' => 'athletes.edit',
+            'update' => 'athletes.update',
+            'destroy' => 'athletes.destroy',
+        ]);
+
+        // QR code
+        Route::get('{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
+
+        // Bulk upload
+        Route::post('bulk-upload', [AthleteController::class, 'bulkUpload'])->name('athletes.bulkUpload');
+
+        // Print PDF
+        Route::get('print', [AthleteController::class, 'print'])->name('athletes.print');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Game Routes
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('games', GameController::class);
+    Route::get('/games/{game}/manage', [GameController::class, 'manage'])->name('games.manage');
+    Route::post('/games/{game}/update-score', [GameController::class, 'updateScore'])->name('games.updateScore');
+    Route::post('/games/{game}/update-period/{periodIndex}', [GameController::class, 'updatePeriodScore'])->name('games.updatePeriodScore');
+    Route::post('/games/{game}/live-score', [GameController::class, 'liveScore'])->name('games.liveScore');
+    Route::post('/games/{game}/update-timer', [GameController::class, 'updateTimer'])->name('games.updateTimer');
+    Route::post('/games/{game}/update-live-video', [GameController::class, 'updateLiveVideo'])->name('games.updateLiveVideo');
+    Route::post('/games/{game}/start', [GameController::class, 'startGame'])->name('games.start');
+    Route::post('/games/{game}/winner', [GameController::class, 'setWinner'])->name('games.winner');
+    Route::post('/games/{game}/finish', [GameController::class, 'finishGame'])->name('games.finish');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Brackets
+    |--------------------------------------------------------------------------
+    */
+    Route::get('brackets/create', [BracketController::class, 'create'])->name('brackets.create');
+    Route::post('brackets', [BracketController::class, 'store'])->name('brackets.store');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Result Divisions
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('results-divisions')->name('results_divisions.')->group(function () {
+        Route::get('/', [ResultDivisionController::class, 'index'])->name('index');
+        Route::get('/create', [ResultDivisionController::class, 'create'])->name('create');
+        Route::post('/store', [ResultDivisionController::class, 'store'])->name('store');
+        Route::get('/export', [ResultDivisionController::class, 'export'])->name('export');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Audit Logs
+    |--------------------------------------------------------------------------
+    */
+    Route::resource('audit-logs', AuditLogController::class)->only(['index']);
+    Route::get('audit-logs/export/pdf', [AuditLogController::class, 'exportPdf'])->name('audit-logs.export');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Users
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('users')->group(function() {
+        Route::get('/', [UserController::class, 'index'])->name('users.index');
+        Route::get('/create', [UserController::class, 'create'])->name('users.create');
+        Route::post('/', [UserController::class, 'store'])->name('users.store');
+        Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gallery
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('gallery')->group(function() {
+        Route::get('/', [GalleryController::class, 'index'])->name('gallery.index');
+        Route::get('/create', [GalleryController::class, 'create'])->name('gallery.create');
+        Route::post('/', [GalleryController::class, 'store'])->name('gallery.store');
+        Route::get('/{photo}/edit', [GalleryController::class, 'edit'])->name('gallery.edit');
+        Route::put('/{photo}', [GalleryController::class, 'update'])->name('gallery.update');
+        Route::delete('/{photo}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
+    });
+
+    /*
+    |--------------------------------------------------------------------------
+    | Settings
+    |--------------------------------------------------------------------------
+    */
+    Route::prefix('settings')->name('settings.')->group(function () {
+        Route::get('/layout', [\App\Http\Controllers\SettingsController::class, 'layout'])->name('layout');
+        Route::post('/layout', [\App\Http\Controllers\SettingsController::class, 'saveLayout'])->name('layout.save');
+    });
+
 });
-
-// Route::middleware(['auth'])->group(function () {
-//     Route::resource('results', ResultController::class)->only([
-//         'index', 'create', 'store'
-//     ]);
-// });
-// Route::get('/results/export', [ResultController::class, 'export'])->name('results.export');
-
-Route::middleware(['auth'])->prefix('results-divisions')->name('results_divisions.')->group(function () {
-
-    // List all results (optional, can reuse index later)
-    Route::get('/', [ResultDivisionController::class, 'index'])->name('index');
-
-    // Create page
-    Route::get('/create', [ResultDivisionController::class, 'create'])->name('create');
-
-    // Store results
-    Route::post('/store', [ResultDivisionController::class, 'store'])->name('store');
-
-    // Optional: Export PDF (if implemented)
-    Route::get('/export', [ResultDivisionController::class, 'export'])->name('export');
-});
-
-
-Route::resource('audit-logs', AuditLogController::class)->only(['index']);
-Route::get('audit-logs/export/pdf', [AuditLogController::class, 'exportPdf'])
-    ->name('audit-logs.export')
-    ->middleware('auth');
-
-Route::prefix('users')->group(function() {
-    Route::get('/', [UserController::class, 'index'])->name('users.index');
-    Route::get('/create', [UserController::class, 'create'])->name('users.create');
-    Route::post('/', [UserController::class, 'store'])->name('users.store');
-    Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-    Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
-    Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-});
-
-Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
-
-Route::prefix('gallery')->group(function() {
-    Route::get('/', [GalleryController::class, 'index'])->name('gallery.index');
-    Route::get('/create', [GalleryController::class, 'create'])->name('gallery.create');
-    Route::post('/', [GalleryController::class, 'store'])->name('gallery.store');
-    Route::get('/{photo}/edit', [GalleryController::class, 'edit'])->name('gallery.edit');
-    Route::put('/{photo}', [GalleryController::class, 'update'])->name('gallery.update');
-    Route::delete('/{photo}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
-});
-
-// Viewer Gallery
-Route::get('/viewer/gallery', [ViewerController::class, 'gallery'])->name('viewer.gallery');
-
-
-
-Route::resource('announcements', AnnouncementController::class);
-
-
-Route::prefix('settings')->name('settings.')->middleware('auth')->group(function () {
-    Route::get('/layout', [\App\Http\Controllers\SettingsController::class, 'layout'])->name('layout');
-    Route::post('/layout', [\App\Http\Controllers\SettingsController::class, 'saveLayout'])->name('layout.save');
-});
-
-
 
 require __DIR__.'/auth.php';
