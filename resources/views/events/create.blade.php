@@ -26,16 +26,12 @@
     <label class="block font-semibold">Sport *</label>
     <select name="sport_id"
             x-model="selectedSport"
-            @change="
-                sportTypes = sports.find(s => s.id == selectedSport)?.sport_types || []
-            "
+            @change="sportTypes = sports.find(s => s.id == selectedSport)?.sport_types || []"
             required
             class="w-full border rounded px-3 py-2">
         <option value="">Select Sport</option>
         <template x-for="sport in sports" :key="sport.id">
-            <option :value="sport.id">
-                <span x-text="sport.name"></span>
-            </option>
+            <option :value="sport.id" x-text="sport.name"></option>
         </template>
     </select>
 </div>
@@ -52,8 +48,17 @@
             <option :value="type.id" x-text="type.type_name"></option>
         </template>
     </select>
+</div>
+
+{{-- 🔥 BALL GAME FLAG --}}
+<div class="border rounded p-4 bg-gray-50">
+    <label class="flex items-center gap-2">
+        <input type="checkbox" name="is_ball_game" value="1"
+               class="rounded border-gray-300">
+        <span class="font-semibold">This is a Ball Game</span>
+    </label>
     <p class="text-xs text-gray-500 mt-1">
-        Loaded automatically based on selected sport.
+        If checked, this event will automatically be added to the Games module.
     </p>
 </div>
 
@@ -81,15 +86,13 @@
 {{-- VENUE --}}
 <div>
     <label class="block font-semibold">Venue</label>
-    <input type="text" name="venue"
-           class="w-full border rounded px-3 py-2">
+    <input type="text" name="venue" class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- DATE --}}
 <div>
     <label class="block font-semibold">Start Date</label>
-    <input type="date" name="start_date"
-           class="w-full border rounded px-3 py-2">
+    <input type="date" name="start_date" class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- DIVISIONS --}}
@@ -98,8 +101,7 @@
 
     <template x-for="(division, index) in divisionsList" :key="index">
         <div class="flex gap-2 mb-2">
-            <select name="divisions[]" required
-                    class="flex-1 border rounded px-3 py-2">
+            <select name="divisions[]" required class="flex-1 border rounded px-3 py-2">
                 <option value="">Select Division</option>
                 @foreach($divisions as $division)
                     <option value="{{ $division->id }}">{{ $division->name }}</option>

@@ -8,6 +8,7 @@ use App\Models\Division;
 use App\Models\AuditLog;
 use App\Models\Result;
 use App\Models\ResultDivision;
+use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -52,44 +53,67 @@ class EventController extends Controller
         return view('events.create', compact('sports', 'divisions'));
     }
 
-    public function store(Request $request)
-    {
-        $request->validate([
-            'sport_id'      => 'required|exists:sports,id',
-            'sport_type_id' => 'required|exists:sport_types,id',
-            'age_group'     => 'nullable|string',
-            'category'      => 'nullable|string',
-            'venue'         => 'nullable|string|max:255',
-            'start_date'    => 'nullable|date',
-            'divisions'     => 'required|array|min:1',
-            'divisions.*'   => 'exists:divisions,id',
+   public function store(Request $request)
+{
+    $request->validate([
+        'sport_id'      => 'required|exists:sports,id',
+        'sport_type_id' => 'required|exists:sport_types,id',
+        'age_group'     => 'nullable|string',
+        'category'      => 'nullable|string',
+        'venue'         => 'nullable|string|max:255',
+        'start_date'    => 'nullable|date',
+        'divisions'     => 'required|array|min:1',
+        'divisions.*'   => 'exists:divisions,id',
+        'is_ball_game'  => 'nullable|boolean',
+    ]);
+
+    $sportType = \App\Models\SportType::findOrFail($request->sport_type_id);
+
+    $event = Event::create([
+        'sport_id'      => $request->sport_id,
+        'sport_type_id' => $request->sport_type_id,
+        'name'          => $sportType->type_name,
+        'age_group'     => $request->age_group,
+        'category'      => $request->category,
+        'venue'         => $request->venue,
+        'start_date'    => $request->start_date,
+    ]);
+
+    // Sync divisions
+    $event->divisions()->sync($request->divisions);
+
+    // 🔥 AUTO-CREATE GAME USING DIVISIONS AS TEAMS
+    if ($request->boolean('is_ball_game')) {
+
+        $divisionNames = Division::whereIn('id', $request->divisions)
+            ->orderBy('name')
+            ->pluck('name')
+            ->values();
+
+        Game::create([
+            'event_id'  => $event->id,
+            'team_a'    => $divisionNames[0] ?? 'TBD',
+            'team_b'    => $divisionNames[1] ?? 'TBD',
+            'status'    => 'Upcoming',
+            'game_time' => $request->start_date
+                ? $request->start_date . ' 08:00:00'
+                : now(),
+            'venue'     => $request->venue ?? 'TBA',
         ]);
-
-        $sportType = \App\Models\SportType::findOrFail($request->sport_type_id);
-
-        $event = Event::create([
-            'sport_id'      => $request->sport_id,
-            'sport_type_id' => $request->sport_type_id,
-            'name'          => $sportType->type_name,
-            'age_group'     => $request->age_group,
-            'category'      => $request->category,
-            'venue'         => $request->venue,
-            'start_date'    => $request->start_date,
-        ]);
-
-        $event->divisions()->sync($request->divisions);
-
-        AuditLog::create([
-            'model_type' => 'Event',
-            'model_id'   => $event->id,
-            'user_id'    => Auth::id(),
-            'old_values' => null,
-            'new_values' => json_encode($event->load('divisions')->toArray()),
-            'action'     => 'Created Event: ' . $event->name,
-        ]);
-
-        return redirect()->route('events.index')->with('success', 'Event created successfully!');
     }
+
+    AuditLog::create([
+        'model_type' => 'Event',
+        'model_id'   => $event->id,
+        'user_id'    => Auth::id(),
+        'old_values' => null,
+        'new_values' => json_encode($event->load('divisions')->toArray()),
+        'action'     => 'Created Event: ' . $event->name,
+    ]);
+
+    return redirect()->route('events.index')
+        ->with('success', 'Event created successfully!');
+}
 
     /* =========================
        EDIT

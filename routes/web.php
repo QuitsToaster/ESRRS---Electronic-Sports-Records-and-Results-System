@@ -216,4 +216,8 @@ Route::middleware('auth')->group(function() {
     });
 });
 
+Route::get('events/{event}/manage', [EventController::class, 'manage'])
+    ->name('events.manage');
+
+
 require __DIR__.'/auth.php';
