@@ -10,6 +10,8 @@ use App\Models\Banner;
 use App\Models\GalleryPhoto;
 use App\Models\Game;
 use App\Models\School;
+use App\Models\ResultDivision;
+use App\Models\Sport;
 use App\Models\Athlete;
 use App\Models\Coach;
 use App\Models\Announcement;
@@ -91,32 +93,35 @@ class ViewerController extends Controller
 
     public function participantShow(\App\Models\Division $division, Request $request)
 {
-    $search   = $request->input('search');
-    $sportId  = $request->input('sport');
+    $sportId = $request->input('sport');
 
-    // Load athletes via results relation
-    $division->athletes = $division->results()
-        ->with('athlete.sport')
-        ->when($search, function ($q) use ($search) {
-            $q->whereHas('athlete', function($query) use ($search) {
-                $query->where('name', 'like', "%{$search}%");
-            });
-        })
+    // ✅ CORRECT: use the relationship
+    $awards = $division->resultsDivisions()
+        ->with(['event', 'sport'])
         ->when($sportId, function ($q) use ($sportId) {
-            $q->whereHas('athlete', function($query) use ($sportId) {
-                $query->where('sport_id', $sportId);
-            });
+            $q->where('sport_id', $sportId);
         })
-        ->get()
-        ->pluck('athlete')
-        ->filter();
+        ->orderByRaw("FIELD(medal, 'Gold', 'Silver', 'Bronze')")
+        ->get();
 
-    $sports = \App\Models\Sport::orderBy('name')->get();
+    // Medal counts
+    $medalCounts = [
+        'Gold'   => $awards->where('medal', 'Gold')->count(),
+        'Silver' => $awards->where('medal', 'Silver')->count(),
+        'Bronze' => $awards->where('medal', 'Bronze')->count(),
+    ];
+
+    $sports = Sport::orderBy('name')->get();
 
     return view('viewer.participants-show', compact(
-        'division', 'search', 'sportId', 'sports'
+        'division',
+        'awards',
+        'medalCounts',
+        'sportId',
+        'sports'
     ));
 }
+
 
 
     public function events(Request $request)
