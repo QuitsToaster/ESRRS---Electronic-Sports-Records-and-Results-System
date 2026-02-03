@@ -248,15 +248,20 @@ class AthleteController extends Controller
         ->with('success', 'Athletes uploaded successfully!');
 }
 
-public function print()
+public function exportIdPdf()
 {
-    $athletes = Athlete::with(['school', 'sport'])->orderBy('last_name')->get();
+    $athletes = Athlete::with(['school', 'sport'])
+        ->orderBy('last_name')
+        ->orderBy('first_name')
+        ->limit(25)   // 👈 ONLY FIRST 25 (for testing)
+        ->get();
 
-    $pdf = Pdf::loadView('athletes.print', compact('athletes'))
-              ->setPaper('a4', 'portrait');
+    $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
+        ->setPaper('a4', 'portrait');
 
-    return $pdf->stream('athletes.pdf'); // opens in browser
-    // or use ->download('athletes.pdf') to force download
+    return $pdf->download('athlete-id-cards.pdf');
 }
+
+
 
 }

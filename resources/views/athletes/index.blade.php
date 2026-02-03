@@ -37,12 +37,12 @@
             </button>
         </form>
 
-        {{-- PRINT --}}
-        <a href="{{ route('athletes.print') }}"
-   target="_blank"
+        {{-- EXPORT ID PDF --}}
+<a href="{{ route('athletes.exportIdPdf') }}"
    class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
-    <span>Print</span>
+    <span>Export ID PDF</span>
 </a>
+
 
 
     </div>

@@ -129,7 +129,9 @@ Route::middleware('auth')->group(function() {
     Route::resource('athletes', AthleteController::class)->except(['show']);
     Route::get('athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
     Route::post('athletes/bulk-upload', [AthleteController::class, 'bulkUpload'])->name('athletes.bulkUpload');
-    Route::get('athletes/print', [AthleteController::class, 'print'])->name('athletes.print');
+    Route::get('/athletes/export-id-pdf', [AthleteController::class, 'exportIdPdf'])
+    ->name('athletes.exportIdPdf');
+
 
     /*
     |--------------------------------------------------------------------------
