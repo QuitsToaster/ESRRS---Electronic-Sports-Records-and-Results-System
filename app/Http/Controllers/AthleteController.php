@@ -15,31 +15,35 @@ use Illuminate\Support\Facades\Auth;
 class AthleteController extends Controller
 {
     public function index(Request $request)
-    {
-        $search = $request->input('search');
+{
+    $search = $request->input('search');
 
-        $athletes = Athlete::with(['school', 'sport'])
-            ->when($search, function ($query, $search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
-                      ->orWhere('last_name', 'like', "%{$search}%")
-                      ->orWhere('middle_initial', 'like', "%{$search}%")
-                      ->orWhere('region', 'like', "%{$search}%")
-                      ->orWhere('school_type', 'like', "%{$search}%")
-                      ->orWhere('lrn', 'like', "%{$search}%")
-                      ->orWhereHas('school', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
-                      ->orWhereHas('sport', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
-                      ->orWhere('division', 'like', "%{$search}%")
-                      ->orWhere('category', 'like', "%{$search}%")
-                      ->orWhere('status', 'like', "%{$search}%");
-                });
-            })
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->get();
+    $athletes = Athlete::with(['school', 'sport'])
+        ->when($search, function ($query, $search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                  ->orWhere('last_name', 'like', "%{$search}%")
+                  ->orWhere('middle_initial', 'like', "%{$search}%")
+                  ->orWhere('region', 'like', "%{$search}%")
+                  ->orWhere('school_type', 'like', "%{$search}%")
+                  ->orWhere('lrn', 'like', "%{$search}%")
+                  ->orWhereHas('school', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
+                  ->orWhereHas('sport', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
+                  ->orWhere('division', 'like', "%{$search}%")
+                  ->orWhere('category', 'like', "%{$search}%")
+                  ->orWhere('status', 'like', "%{$search}%");
+            });
+        })
+        ->orderBy('last_name')
+        ->orderBy('first_name')
+        ->paginate(25); // <-- Use pagination (25 per page)
 
-        return view('athletes.index', compact('athletes'));
-    }
+    // Keep the search parameter in pagination links
+    $athletes->appends($request->all());
+
+    return view('athletes.index', compact('athletes'));
+}
+
 
     public function create()
     {
@@ -231,11 +235,15 @@ class AthleteController extends Controller
     }
 
     public function bulkUpload(Request $request)
-    {
-        $request->validate(['file' => 'required|mimes:xlsx,csv']);
-        Excel::import(new AthletesImport, $request->file('file'));
+{
+    $request->validate([
+        'file' => 'required|mimes:csv,xlsx'
+    ]);
 
-        return redirect()->route('athletes.index')
-            ->with('success', 'Athletes uploaded successfully!');
-    }
+    Excel::import(new AthletesImport, $request->file('file'));
+
+    return redirect()->route('athletes.index')
+        ->with('success', 'Athletes uploaded successfully!');
+}
+
 }

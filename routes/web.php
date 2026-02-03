@@ -79,6 +79,15 @@ Route::post('/check-attendance', [AttendanceController::class, 'store'])
     ->name('attendance.store');
 
 Route::get('/athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');
+Route::middleware(['auth'])->group(function () {
+
+    Route::resource('athletes', AthleteController::class);
+
+    Route::post('/athletes/bulk-upload', 
+        [AthleteController::class, 'bulkUpload']
+    )->name('athletes.bulkUpload');
+
+});
 
 
 
@@ -102,8 +111,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::resource('athletes', AthleteController::class)->middleware('auth');
-Route::post('/athletes/bulk-upload', [AthleteController::class, 'bulkUpload'])
-     ->name('athletes.bulk-upload');
+
 
 
 Route::get('athletes/{athlete}/qr', [AthleteController::class, 'qr'])->name('athletes.qr');

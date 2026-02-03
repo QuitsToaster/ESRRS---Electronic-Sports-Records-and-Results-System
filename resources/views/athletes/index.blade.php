@@ -10,24 +10,42 @@
         </p>
     </div>
 
-    <div class="flex gap-2">
+    <div class="flex gap-2 items-center">
+
+        {{-- ADD ATHLETE --}}
         <a href="{{ route('athletes.create') }}"
            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
             + Add Athlete
         </a>
 
+        {{-- BULK CSV UPLOAD --}}
+        <form action="{{ route('athletes.bulkUpload') }}"
+              method="POST"
+              enctype="multipart/form-data"
+              class="flex items-center gap-2">
+            @csrf
+
+            <input type="file"
+                   name="file"
+                   accept=".csv,.xlsx"
+                   required
+                   class="border rounded px-2 py-1 text-sm">
+
+            <button type="submit"
+                    class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded shadow">
+                Upload CSV
+            </button>
+        </form>
+
+        {{-- PRINT --}}
         <button onclick="printAthletes()"
                 class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                 viewBox="0 0 16 16">
-                <path d="M5 1a2 2 0 0 0-2 2v1h10V3a2 2 0 0 0-2-2z"/>
-                <path d="M11 9H5a1 1 0 0 0-1 1v3a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1"/>
-                <path d="M0 7a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-1v-2a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v2H2a2 2 0 0 1-2-2z"/>
-            </svg>
-            <span>Print All Athletes</span>
+            <span>Print</span>
         </button>
+
     </div>
 </div>
+
 
 {{-- SEARCH --}}
 <form method="GET" action="{{ route('athletes.index') }}" class="mb-4 flex gap-2">
@@ -95,7 +113,6 @@
     <td class="px-4 py-2">{{ $athlete->category }}</td>
     <td class="px-4 py-2">{{ $athlete->lrn ?? '—' }}</td>
     <td class="px-4 py-2 font-semibold">{{ $athlete->status }}</td>
-    
 
     {{-- QR --}}
     <td class="px-4 py-2">
@@ -134,6 +151,11 @@
 </table>
 </div>
 
+{{-- Pagination links --}}
+<div class="mt-4">
+    {{ $athletes->links() }}
+</div>
+
 {{-- QR MODAL --}}
 <div id="qrModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
 <div class="bg-white p-6 rounded w-80 relative">
@@ -159,4 +181,5 @@ function closeQrModal(){
     qrModal.classList.remove('flex');
 }
 </script>
+
 @endsection
