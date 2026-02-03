@@ -48,10 +48,11 @@
                 @endphp
 
                 {{-- GAME CARD --}}
-                <div onclick="openGame({{ $game->id }})"
-                     class="group cursor-pointer bg-white overflow-hidden relative
-                     shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl
-                     {{ $winner ? 'ring-2 ring-yellow-400' : '' }}">
+<div onclick="window.location.href='{{ route('viewer.game.modal', $game->id) }}'"
+     class="group cursor-pointer bg-white overflow-hidden relative
+     shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl
+     {{ $winner ? 'ring-2 ring-yellow-400' : '' }}">
+
 
                     {{-- STATUS --}}
                     <span class="absolute top-3 right-3 z-20 px-3 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
@@ -129,45 +130,6 @@
     </div>
 </div>
 
-{{-- MODAL --}}
-<div id="gameModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-black/70">
-    <div class="relative w-full min-h-screen p-0">
-        <button onclick="closeGame()" class="absolute top-4 right-4 text-xl font-bold z-50">✕</button>
-        <div id="modalContent" class="w-full h-full"></div>
-    </div>
-</div>
 
-<script>
-let liveInterval = null;
-
-function openGame(gameId) {
-    document.getElementById('gameModal').classList.remove('hidden');
-
-    fetch(`/viewer/game/${gameId}`)
-        .then(res => res.text())
-        .then(html => {
-            document.getElementById('modalContent').innerHTML = html;
-            startLive(gameId);
-        });
-}
-
-function closeGame() {
-    document.getElementById('gameModal').classList.add('hidden');
-    document.getElementById('modalContent').innerHTML = '';
-    if (liveInterval) clearInterval(liveInterval);
-}
-
-function startLive(gameId) {
-    if (liveInterval) clearInterval(liveInterval);
-    liveInterval = setInterval(() => {
-        fetch(`/viewer/game/${gameId}/live`)
-            .then(res => res.json())
-            .then(data => {
-                document.getElementById('liveScoreA')?.innerText = data.score_a;
-                document.getElementById('liveScoreB')?.innerText = data.score_b;
-            });
-    }, 3000);
-}
-</script>
 
 @endsection
