@@ -17,62 +17,62 @@ use App\Models\Result;
 class DashboardController extends Controller
 {
     public function index()
-    {
-        $schoolsCount = School::count();
-        $athletesCount = Athlete::count();
-        $eventsCount = Event::count();
-        $officialsCount = Official::count();
-        $sportsCount = Sport::count();
-        $coachesCount = Coach::count();
-        $gamesCount = Game::count();
-        $divisionsCount = Division::count();
+{
+    $athletesCount = Athlete::count();
+    $eventsCount = Event::count();
+    $sportsCount = Sport::count();
+    $coachesCount = Coach::count();
+    $gamesCount = Game::count();
+    $divisionsCount = Division::count();
 
-        // ✅ Correct column: use 'status' for ongoing games
-        $ongoingGamesCount = Game::where('status', 'Ongoing')->count();
+    // Live Games (Upcoming + Ongoing) - LIMIT 3
+    $liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing', 'Finished'])
+                     ->orderBy('game_time', 'asc')
+                     ->take(3)
+                     ->get();
 
-        // Live Games (Upcoming + Ongoing) - LIMIT 3
-$liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing', 'Finished'])
-                 ->orderBy('game_time', 'asc')
-                 ->take(3) // <- limit to first 3 games
-                 ->get();
+    // Medal Tally per Division using results_divisions table
+    $medalTally = Division::withCount([
+        'resultsDivisions as gold' => function ($query) {
+            $query->where('medal', 'Gold');
+        },
+        'resultsDivisions as silver' => function ($query) {
+            $query->where('medal', 'Silver');
+        },
+        'resultsDivisions as bronze' => function ($query) {
+            $query->where('medal', 'Bronze');
+        },
+    ])->get()
+    ->map(function ($division) {
+        $division->total = $division->gold + $division->silver + $division->bronze;
+        return $division;
+    })
+    ->sort(function ($a, $b) {
+        // Sort by Gold > Silver > Bronze
+        if ($b->gold !== $a->gold) {
+            return $b->gold <=> $a->gold;
+        }
+        if ($b->silver !== $a->silver) {
+            return $b->silver <=> $a->silver;
+        }
+        return $b->bronze <=> $a->bronze;
+    })
+    ->values()
+    ->map(function ($division, $index) {
+        $division->rank = $index + 1;
+        return $division;
+    });
 
+    // Latest 3 Announcements
+    $latestAnnouncements = Announcement::with('event', 'user')
+                                        ->latest('published_at')
+                                        ->take(3)
+                                        ->get();
 
-        // Medal Tally per school
-        $medalTally = School::withCount([
-            'results as gold' => function ($query) { $query->where('medal', 'Gold'); },
-            'results as silver' => function ($query) { $query->where('medal', 'Silver'); },
-            'results as bronze' => function ($query) { $query->where('medal', 'Bronze'); },
-        ])->get()
-        ->map(function ($school) {
-            $school->total = $school->gold + $school->silver + $school->bronze;
-            return $school;
-        })
-        ->sort(function ($a, $b) {
-            // Sort by Gold first, then Silver, then Bronze
-            if ($b->gold !== $a->gold) {
-                return $b->gold <=> $a->gold;
-            }
-            if ($b->silver !== $a->silver) {
-                return $b->silver <=> $a->silver;
-            }
-            return $b->bronze <=> $a->bronze;
-        })
-        ->values()
-        ->map(function ($school, $index) {
-            $school->rank = $index + 1;
-            return $school;
-        });
-
-        // Latest 2 Announcements
-        $latestAnnouncements = Announcement::with('event', 'user')
-                                    ->latest('published_at')
-                                    ->take(3)
-                                    ->get();
-
-        return view('dashboard', compact(
-            'schoolsCount', 'athletesCount', 'eventsCount', 'sportsCount',
-            'coachesCount', 'officialsCount', 'gamesCount', 'ongoingGamesCount', 'liveGames',
-            'medalTally', 'latestAnnouncements', 'divisionsCount'
-        ));
-    }
+    return view('dashboard', compact(
+        'athletesCount', 'eventsCount', 'sportsCount',
+        'coachesCount', 'gamesCount', 'divisionsCount', 'liveGames',
+        'medalTally', 'latestAnnouncements'
+    ));
+}
 }

@@ -176,7 +176,7 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Gold</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Silver</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Bronze</th>
@@ -184,37 +184,37 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($medalTally as $school)
+                    @foreach($medalTally as $division)
                         <tr class="hover:bg-gray-50 transition">
                             {{-- Rank --}}
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
-                                {{ $school->rank }}
+                                {{ $division->rank }}
                             </td>
 
-                            {{-- School --}}
+                            {{-- Division --}}
                             <td class="px-6 py-4 flex items-center space-x-3">
-                                @if($school->logo)
-                                    <img src="{{ asset('storage/' . $school->logo) }}" alt="{{ $school->name }} Logo"
+                                @if($division->logo)
+                                    <img src="{{ asset('storage/' . $division->logo) }}" alt="{{ $division->name }} Logo"
                                          class="w-10 h-10 object-cover rounded-full border">
                                 @else
                                     <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 font-bold">
-                                        {{ strtoupper(substr($school->name, 0, 2)) }}
+                                        {{ strtoupper(substr($division->name, 0, 2)) }}
                                     </div>
                                 @endif
-                                <span class="text-sm font-semibold text-gray-800">{{ $school->name }}</span>
+                                <span class="text-sm font-semibold text-gray-800">{{ $division->name }}</span>
                             </td>
 
                             {{-- Gold --}}
-                            <td class="px-6 py-4 text-center text-yellow-500 font-bold">{{ $school->gold }}</td>
+                            <td class="px-6 py-4 text-center text-yellow-500 font-bold">{{ $division->gold }}</td>
 
                             {{-- Silver --}}
-                            <td class="px-6 py-4 text-center text-gray-400 font-bold">{{ $school->silver }}</td>
+                            <td class="px-6 py-4 text-center text-gray-400 font-bold">{{ $division->silver }}</td>
 
                             {{-- Bronze --}}
-                            <td class="px-6 py-4 text-center text-orange-500 font-bold">{{ $school->bronze }}</td>
+                            <td class="px-6 py-4 text-center text-orange-500 font-bold">{{ $division->bronze }}</td>
 
                             {{-- Total --}}
-                            <td class="px-6 py-4 text-center text-gray-700 font-bold">{{ $school->total }}</td>
+                            <td class="px-6 py-4 text-center text-gray-700 font-bold">{{ $division->total }}</td>
                         </tr>
                     @endforeach
                 </tbody>
@@ -222,6 +222,7 @@
         </div>
     @endif
 </div>
+
 
 
 
