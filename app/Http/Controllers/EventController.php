@@ -62,6 +62,7 @@ class EventController extends Controller
         'category'      => 'nullable|string',
         'venue'         => 'nullable|string|max:255',
         'start_date'    => 'nullable|date',
+        'game_time'     => 'nullable|date_format:H:i',
         'divisions'     => 'required|array|min:1',
         'divisions.*'   => 'exists:divisions,id',
         'is_ball_game'  => 'nullable|boolean',
@@ -77,13 +78,12 @@ class EventController extends Controller
         'category'      => $request->category,
         'venue'         => $request->venue,
         'start_date'    => $request->start_date,
-        'is_ball_game'  => $request->boolean('is_ball_game'), // 🔥 SAVE FLAG
+        'is_ball_game'  => $request->boolean('is_ball_game'),
     ]);
 
-    // Sync divisions
     $event->divisions()->sync($request->divisions);
 
-    // 🔥 AUTO-CREATE GAME IF BALL GAME
+    /** 🔥 CREATE GAME WITH CORRECT TIME */
     if ($event->is_ball_game) {
 
         $divisionNames = Division::whereIn('id', $request->divisions)
@@ -91,30 +91,26 @@ class EventController extends Controller
             ->pluck('name')
             ->values();
 
+        $gameDateTime = null;
+
+        if ($request->start_date && $request->game_time) {
+            $gameDateTime = $request->start_date . ' ' . $request->game_time . ':00';
+        }
+
         Game::create([
             'event_id'  => $event->id,
             'team_a'    => $divisionNames[0] ?? 'TBD',
             'team_b'    => $divisionNames[1] ?? 'TBD',
             'status'    => 'Upcoming',
-            'game_time' => $request->start_date
-                ? $request->start_date . ' 08:00:00'
-                : now(),
+            'game_time' => $gameDateTime,
             'venue'     => $request->venue ?? 'TBA',
         ]);
     }
 
-    AuditLog::create([
-        'model_type' => 'Event',
-        'model_id'   => $event->id,
-        'user_id'    => Auth::id(),
-        'old_values' => null,
-        'new_values' => json_encode($event->load('divisions')->toArray()),
-        'action'     => 'Created Event: ' . $event->name,
-    ]);
-
     return redirect()->route('events.index')
         ->with('success', 'Event created successfully!');
 }
+
 
 
     /* =========================

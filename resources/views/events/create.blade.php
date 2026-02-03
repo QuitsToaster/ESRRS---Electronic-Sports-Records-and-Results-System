@@ -16,7 +16,8 @@
       x-data="{
         sports: @js($sports),
         selectedSport: null,
-        sportTypes: []
+        sportTypes: [],
+        isBallGame: false
       }"
       class="space-y-4">
 @csrf
@@ -50,15 +51,18 @@
     </select>
 </div>
 
-{{-- 🔥 BALL GAME FLAG --}}
+{{-- BALL GAME --}}
 <div class="border rounded p-4 bg-gray-50">
     <label class="flex items-center gap-2">
-        <input type="checkbox" name="is_ball_game" value="1"
+        <input type="checkbox"
+               name="is_ball_game"
+               value="1"
+               x-model="isBallGame"
                class="rounded border-gray-300">
         <span class="font-semibold">This is a Ball Game</span>
     </label>
     <p class="text-xs text-gray-500 mt-1">
-        If checked, this event will automatically be added to the Games module.
+        Automatically creates a game schedule.
     </p>
 </div>
 
@@ -91,8 +95,19 @@
 
 {{-- DATE --}}
 <div>
-    <label class="block font-semibold">Start Date</label>
+    <label class="block font-semibold">Event Date</label>
     <input type="date" name="start_date" class="w-full border rounded px-3 py-2">
+</div>
+
+{{-- GAME TIME (BALL GAME ONLY) --}}
+<div x-show="isBallGame">
+    <label class="block font-semibold">Game Time</label>
+    <input type="time"
+           name="game_time"
+           class="w-full border rounded px-3 py-2">
+    <p class="text-xs text-gray-500 mt-1">
+        Used for live games and schedules.
+    </p>
 </div>
 
 {{-- DIVISIONS --}}
