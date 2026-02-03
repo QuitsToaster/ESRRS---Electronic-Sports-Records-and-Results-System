@@ -124,40 +124,51 @@ class ViewerController extends Controller
 
 
 
-    public function events(Request $request)
+   public function events(Request $request)
 {
     $search = $request->input('search');
 
-    // Fetch events with related data
-    $events = Event::with(['divisions', 'goldWinner', 'silverWinner', 'bronzeWinner', 'sport'])
-        ->when($search, function($query, $search) {
+    $events = Event::with([
+            'divisions',
+            'goldWinner',
+            'silverWinner',
+            'bronzeWinner',
+            'sport',
+            'games' // 👈 relationship
+        ])
+        ->when($search, function ($query, $search) {
             $query->where('name', 'like', "%{$search}%");
         })
         ->orderBy('start_date', 'asc')
         ->get();
 
     // JSON for AlpineJS modal
-    $eventsJson = $events->map(function($event) {
+    $eventsJson = $events->map(function ($event) {
         return [
-            'id' => $event->id,
-            'name' => $event->name,
-            'start_date' => $event->start_date?->toDateString(),
-            'venue' => $event->venue,
-            'age_group' => $event->age_group,
-            'category' => $event->category,
-            'sport' => $event->sport ? ['name' => $event->sport->name] : null,
-            'divisions' => $event->divisions->map(fn($d) => ['id' => $d->id, 'name' => $d->name])->toArray(),
-            'goldWinner' => $event->goldWinner ? ['id' => $event->goldWinner->id, 'name' => $event->goldWinner->name] : null,
-            'silverWinner' => $event->silverWinner ? ['id' => $event->silverWinner->id, 'name' => $event->silverWinner->name] : null,
-            'bronzeWinner' => $event->bronzeWinner ? ['id' => $event->bronzeWinner->id, 'name' => $event->bronzeWinner->name] : null,
+            'id'           => $event->id,
+            'name'         => $event->name,
+            'start_date'   => $event->start_date?->toDateString(),
+            'venue'        => $event->venue,
+            'age_group'    => $event->age_group,
+            'category'     => $event->category,
+            'is_ball_game' => (bool) $event->is_ball_game, // ✅
+            'game_id'      => $event->games->first()?->id, // ✅
+            'sport'        => $event->sport ? ['name' => $event->sport->name] : null,
+            'divisions'    => $event->divisions->map(fn ($d) => [
+                'id' => $d->id,
+                'name' => $d->name
+            ])->toArray(),
+            'goldWinner'   => $event->goldWinner ? ['name' => $event->goldWinner->name] : null,
+            'silverWinner' => $event->silverWinner ? ['name' => $event->silverWinner->name] : null,
+            'bronzeWinner' => $event->bronzeWinner ? ['name' => $event->bronzeWinner->name] : null,
         ];
     });
 
-    // Fetch gallery photos
     $gallery_photos = GalleryPhoto::orderBy('created_at', 'desc')->get();
 
     return view('viewer.events', compact('events', 'eventsJson', 'gallery_photos'));
 }
+
 
 
 

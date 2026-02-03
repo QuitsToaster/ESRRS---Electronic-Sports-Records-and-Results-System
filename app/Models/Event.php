@@ -17,6 +17,7 @@ class Event extends Model
     'venue',
     'age_group',
     'category',
+    'is_ball_game', 
     'gold_division_id',
     'silver_division_id',
     'bronze_division_id',
@@ -26,6 +27,7 @@ class Event extends Model
     protected $casts = [
         'start_date' => 'date',
         'award_date' => 'datetime',
+        'is_ball_game'  => 'boolean',
     ];
 
     public function sport()
@@ -70,6 +72,12 @@ public function divisions()
         'division_event' // pivot table
     );
 }
+
+public function games()
+{
+    return $this->hasMany(\App\Models\Game::class);
+}
+
 
 
 }

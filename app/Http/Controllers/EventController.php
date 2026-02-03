@@ -77,13 +77,14 @@ class EventController extends Controller
         'category'      => $request->category,
         'venue'         => $request->venue,
         'start_date'    => $request->start_date,
+        'is_ball_game'  => $request->boolean('is_ball_game'), // 🔥 SAVE FLAG
     ]);
 
     // Sync divisions
     $event->divisions()->sync($request->divisions);
 
-    // 🔥 AUTO-CREATE GAME USING DIVISIONS AS TEAMS
-    if ($request->boolean('is_ball_game')) {
+    // 🔥 AUTO-CREATE GAME IF BALL GAME
+    if ($event->is_ball_game) {
 
         $divisionNames = Division::whereIn('id', $request->divisions)
             ->orderBy('name')
@@ -115,6 +116,7 @@ class EventController extends Controller
         ->with('success', 'Event created successfully!');
 }
 
+
     /* =========================
        EDIT
     ========================= */
@@ -139,6 +141,7 @@ class EventController extends Controller
             'sport_type_id' => 'required|exists:sport_types,id',
             'age_group'     => 'nullable|string',
             'category'      => 'nullable|string',
+            'is_ball_game' => 'nullable|boolean',
             'venue'         => 'nullable|string|max:255',
             'start_date'    => 'nullable|date',
             'divisions'     => 'required|array|min:1',
@@ -152,6 +155,7 @@ class EventController extends Controller
             'sport_type_id' => $request->sport_type_id,
             'age_group'     => $request->age_group,
             'category'      => $request->category,
+            'is_ball_game' => $request->boolean('is_ball_game'),
             'venue'         => $request->venue,
             'start_date'    => $request->start_date,
         ]);

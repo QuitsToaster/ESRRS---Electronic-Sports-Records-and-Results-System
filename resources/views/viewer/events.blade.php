@@ -5,22 +5,21 @@
 @section('content')
 <div class="bg-black min-h-screen text-white">
 
-    {{-- ====== Page Header & Events Section ====== --}}
     <div class="max-w-7xl mx-auto px-4 py-12 space-y-12">
 
-        {{-- Page Header --}}
+        {{-- Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-4xl md:text-5xl font-bold text-white" style="font-family: 'Poppins', sans-serif;">Don't miss the action.</h1>
-                <p class="text-gray-400 mt-1 text-sm md:text-base" style="font-family: 'Poppins', sans-serif;">Events. Competitions. Champions. Explore it all.</p>
+                <h1 class="text-4xl md:text-5xl font-bold">Don't miss the action.</h1>
+                <p class="text-gray-400 mt-1">Events. Competitions. Champions.</p>
             </div>
 
             {{-- Search Form --}}
-            <form method="GET" action="{{ route('viewer.events') }}" class="flex flex-wrap gap-2 items-center">
+            <form method="GET" action="{{ route('viewer.events') }}" class="flex gap-2 flex-wrap">
                 <input type="text" name="search" value="{{ request('search') ?? '' }}"
                        placeholder="Search events..."
-                       class="w-full sm:w-64 border border-gray-700 rounded-md px-4 py-2 bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
-                <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
+                       class="border border-gray-700 rounded px-4 py-2 bg-black text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button type="submit" class="bg-red-600 px-4 py-2 rounded font-semibold hover:bg-red-700 transition">
                     Search
                 </button>
                 @if(request('search'))
@@ -40,27 +39,37 @@
                     <div class="bg-gray-900 rounded-2xl shadow-md hover:shadow-2xl transition transform hover:-translate-y-1 p-6 flex flex-col justify-between relative group cursor-pointer border border-gray-800">
 
                         {{-- Event Info --}}
-                        <div class="ml-4">
-                            <h3 class="text-2xl font-bold text-white group-hover:text-red-600 transition text-center mb-4">
+                        <div>
+                            <h3 class="text-2xl font-bold text-center mb-4">
                                 {{ $event->name }}
                             </h3>
-                            <div class="flex flex-wrap gap-2 mt-2 mb-2">
-                                <span class="bg-blue-800 text-blue-100 text-xs md:text-sm font-medium px-2 py-1 rounded-full">{{ $event->sport->name ?? '-' }}</span>
-                                <span class="bg-green-800 text-green-100 text-xs md:text-sm font-medium px-2 py-1 rounded-full">{{ $event->age_group ?? '-' }}</span>
-                                <span class="bg-purple-800 text-purple-100 text-xs md:text-sm font-medium px-2 py-1 rounded-full">{{ $event->category ?? '-' }}</span>
+
+                            <div class="flex flex-wrap gap-2 mb-2 justify-center">
+                                <span class="bg-blue-800 px-2 py-1 rounded text-xs">{{ $event->sport->name ?? '-' }}</span>
+                                <span class="bg-green-800 px-2 py-1 rounded text-xs">{{ $event->age_group ?? '-' }}</span>
+                                <span class="bg-purple-800 px-2 py-1 rounded text-xs">{{ $event->category ?? '-' }}</span>
                             </div>
-                            <p class="text-gray-400 text-sm"><span class="font-semibold">Date:</span> 
-                                {{ $event->start_date ? \Carbon\Carbon::parse($event->start_date)->format('M d, Y') : 'TBA' }}
-                                @if($event->end_date) - {{ \Carbon\Carbon::parse($event->end_date)->format('M d, Y') }} @endif
+
+                            <p class="text-gray-400 text-sm text-center">
+                                <b>Date:</b> {{ $event->start_date?->format('M d, Y') ?? 'TBA' }}
                             </p>
-                            <p class="text-gray-400 text-sm"><span class="font-semibold">Venue:</span> {{ $event->venue ?? 'TBA' }}</p>
+                            <p class="text-gray-400 text-sm text-center">
+                                <b>Venue:</b> {{ $event->venue ?? 'TBA' }}
+                            </p>
                         </div>
 
-                        {{-- View Details Button --}}
-                        <button @click="activeEvent = {{ $event->id }}"
-                                class="mt-4 w-full px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-md transition">
-                            View Details
-                        </button>
+                        {{-- Action Button --}}
+                        @if($event->is_ball_game && $event->games->first())
+                            <a href="{{ route('viewer.game.modal', $event->games->first()->id) }}"
+                               class="mt-4 text-center px-4 py-2 bg-green-600 hover:bg-green-700 rounded font-bold">
+                                ▶ Watch Live Game
+                            </a>
+                        @else
+                            <button @click="activeEvent = {{ $event->id }}"
+                                    class="mt-4 px-4 py-2 bg-red-600 hover:bg-red-700 rounded font-semibold w-full">
+                                View Details
+                            </button>
+                        @endif
 
                         {{-- Hover overlay --}}
                         <div class="absolute inset-0 bg-blue-50/10 opacity-0 group-hover:opacity-30 transition rounded-2xl pointer-events-none"></div>
@@ -97,17 +106,16 @@
                                     </div>
                                 </div>
 
-                                {{-- Participating Divisions (SDOs) --}}
-<div>
-    <h4 class="text-xl font-semibold text-white mb-3">Participating SDOs</h4>
-    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc list-inside">
-        <template x-for="division in event.divisions" :key="division.id">
-            <li class="text-gray-200 font-medium" x-text="division.name"></li>
-        </template>
-        <li x-show="!event.divisions.length" class="text-gray-400 italic">No divisions assigned.</li>
-    </ul>
-</div>
-
+                                {{-- Participating Divisions --}}
+                                <div>
+                                    <h4 class="text-xl font-semibold text-white mb-3">Participating SDOs</h4>
+                                    <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 list-disc list-inside">
+                                        <template x-for="division in event.divisions" :key="division.id">
+                                            <li class="text-gray-200 font-medium" x-text="division.name"></li>
+                                        </template>
+                                        <li x-show="!event.divisions.length" class="text-gray-400 italic">No divisions assigned.</li>
+                                    </ul>
+                                </div>
 
                                 {{-- Winners --}}
                                 <div>
@@ -144,7 +152,7 @@
         @endif
     </div>
 
-    {{-- ====== Gallery Slider (FULL WIDTH) ====== --}}
+    {{-- ====== Gallery Slider (Bottom) ====== --}}
     @if(isset($gallery_photos) && $gallery_photos->count() > 0)
         <div class="mt-40 space-y-6 overflow-hidden w-full">
 
