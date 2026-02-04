@@ -93,59 +93,45 @@ function closePrivacyBanner() {
         {{-- Desktop: Small | BIG | Small — Mobile: Stack --}}
         <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-4 items-stretch">
 
-            {{-- ================= LEFT SECTION: QUICK ACTIONS (NBA STYLE) ================= --}}
-            <section class="order-2 lg:order-1 h-full">
-                <div class="h-full rounded-2xl bg-white p-6 shadow-2xl flex flex-col">
+            {{-- ================= LEFT: LATEST NEWS & ANNOUNCEMENTS ================= --}}
+<section class="order-2 lg:order-1 h-full">
+    <div class="h-full rounded-2xl bg-white p-6 shadow-2xl flex flex-col">
 
-                    <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
+        <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
+            style="font-family: 'Poppins', sans-serif;">
+            Latest News
+        </h2>
+
+        @if($latestAnnouncements->isEmpty())
+            <p class="text-sm text-gray-500">No announcements yet.</p>
+        @else
+            <div class="space-y-4 overflow-y-auto pr-1 flex-1">
+                @foreach($latestAnnouncements as $announcement)
+                    <a href="{{ route('viewer.announcements') }}#announcement-{{ $announcement->id }}"
+                       class="group block rounded-xl border bg-gray-50 p-4 hover:bg-gray-100 hover:shadow transition relative">
+
+                        <h4 class="font-semibold text-gray-800 group-hover:text-blue-600 transition"
                             style="font-family: 'Poppins', sans-serif;">
-                        Quick Stats
-                    </h2>
+                            {{ $announcement->title }}
+                        </h4>
 
-                    <div class="grid grid-cols-1 gap-5 flex-1">
+                        <p class="text-xs text-gray-400 mt-1">
+                            {{ $announcement->published_at?->format('M d, Y') }}
+                        </p>
 
-                        {{-- Events --}}
-                        <a href="{{ route('viewer.events') }}"
-                           class="group bg-black rounded-xl p-5 flex items-center justify-between
-                                  hover:bg-black/90 transition shadow-lg">
-                            <div>
-                                <p class="text-sm uppercase tracking-widest text-gray-400">Events</p>
-                                <p class="text-4xl font-extrabold text-white">{{ $eventsCount }}</p>
-                            </div>
-                            <div class="text-gray-500 group-hover:text-yellow-400 text-3xl font-black">
-                                ▸
-                            </div>
-                        </a>
+                        <p class="text-sm text-gray-600 mt-2">
+                            {{ \Illuminate\Support\Str::limit($announcement->content, 100, '...') }}
+                        </p>
 
-                        {{-- Games --}}
-                        <a href="{{ route('viewer.games') }}"
-                           class="group bg-black rounded-xl p-5 flex items-center justify-between
-                                  hover:bg-black/90 transition shadow-lg">
-                            <div>
-                                <p class="text-sm uppercase tracking-widest text-gray-400">Games</p>
-                                <p class="text-4xl font-extrabold text-white">{{ $gamesCount }}</p>
-                            </div>
-                            <div class="text-gray-500 group-hover:text-green-400 text-3xl font-black">
-                                ▸
-                            </div>
-                        </a>
+                        <div class="absolute inset-0 bg-blue-50/20 opacity-0 group-hover:opacity-100
+                                    transition rounded-xl pointer-events-none"></div>
+                    </a>
+                @endforeach
+            </div>
+        @endif
+    </div>
+</section>
 
-                        {{-- Announcements --}}
-                        <a href="{{ route('viewer.announcements') }}"
-                           class="group bg-black rounded-xl p-5 flex items-center justify-between
-                                  hover:bg-black/90 transition shadow-lg">
-                            <div>
-                                <p class="text-sm uppercase tracking-widest text-gray-400">News</p>
-                                <p class="text-4xl font-extrabold text-white">{{ $announcementsCount }}</p>
-                            </div>
-                            <div class="text-gray-500 group-hover:text-blue-400 text-3xl font-black">
-                                ▸
-                            </div>
-                        </a>
-
-                    </div>
-                </div>
-            </section>
 
             {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
 <section
@@ -342,31 +328,39 @@ function closePrivacyBanner() {
                 <div class="h-full rounded-2xl bg-white p-6 shadow-2xl flex flex-col">
 
                     {{-- Upcoming Events --}}
-                    <div class="mb-8">
-                        <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
-                            style="font-family: 'Poppins', sans-serif;">
-                            Upcoming Events
-                        </h2>
+<div class="mb-8">
+    <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
+        style="font-family: 'Poppins', sans-serif;">
+        Upcoming Events
+    </h2>
 
-                        <div class="space-y-3">
-                            @forelse($upcomingEvents as $event)
-                                <a href="{{ route('viewer.events') }}#event-{{ $event->id }}"
-                                   class="block p-4 rounded-xl bg-gray-50 border
-                                          hover:bg-gray-100 hover:shadow transition">
-                                    <div class="flex justify-between items-center">
-                                        <span class="font-semibold text-gray-800 truncate">
-                                            {{ $event->name }}
-                                        </span>
-                                        <span class="text-xs font-bold text-gray-500">
-                                            {{ \Carbon\Carbon::parse($event->start_date)->format('M d') }}
-                                        </span>
-                                    </div>
-                                </a>
-                            @empty
-                                <p class="text-sm text-gray-500">No upcoming events.</p>
-                            @endforelse
-                        </div>
-                    </div>
+    <div class="space-y-3">
+        @forelse($upcomingEvents as $event)
+            <a href="{{ route('viewer.events') }}#event-{{ $event->id }}"
+               class="block p-4 rounded-xl bg-gray-50 border
+                      hover:bg-gray-100 hover:shadow transition">
+                <div class="flex justify-between items-center">
+                    <span class="font-semibold text-gray-800 truncate">
+                        {{ $event->name }}
+                    </span>
+                    <span class="text-xs font-bold text-gray-500">
+                        {{ \Carbon\Carbon::parse($event->start_date)->format('M d') }}
+                    </span>
+                </div>
+
+                {{-- Additional Details --}}
+                <div class="mt-1 text-xs text-gray-500 space-y-1">
+                    <p>Sport: {{ $event->sport?->name ?? 'N/A' }}</p>
+                    <p>Age Group: {{ ucfirst($event->age_group ?? 'N/A') }}</p>
+                    <p>Category: {{ ucfirst($event->category ?? 'N/A') }}</p>
+                </div>
+            </a>
+        @empty
+            <p class="text-sm text-gray-500">No upcoming events.</p>
+        @endforelse
+    </div>
+</div>
+
 
                     {{-- Upcoming Games --}}
                     <div>
@@ -695,48 +689,6 @@ function closePrivacyBanner() {
     </div>
 </section>
 @endif
-
-
-
-
-{{-- Latest Announcements --}}
-<section class="bg-gray-200 py-12 border-t">
-    <div class="max-w-7xl mx-auto px-6">
-        {{-- Section Header --}}
-        <div class="text-center mb-10">
-            <h2 class="text-4xl md:text-7xl text-gray-800 font-bold" style="font-family: 'Poppins', sans-serif;">
-                Latest News & Updates
-            </h2>
-            <p class="text-gray-500 mt-2 text-sm md:text-lg">Stay informed with the latest announcements and results</p>
-        </div>
-
-        {{-- Announcements Grid --}}
-        @if($latestAnnouncements->isEmpty())
-            <p class="text-center text-gray-600 text-sm">No announcements available.</p>
-        @else
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                @foreach($latestAnnouncements as $announcement)
-                    <a href="{{ route('viewer.announcements') }}#announcement-{{ $announcement->id }}" 
-                       class="bg-white rounded-2xl shadow-md hover:shadow-xl transition p-5 flex flex-col justify-between cursor-pointer group">
-
-                        {{-- Content --}}
-                        <div>
-                            <h4 class="text-lg md:text-xl text-gray-800 group-hover:text-blue-600 transition mb-1" style="font-family: 'Poppins', sans-serif;">
-                                {{ $announcement->title }}
-                            </h4>
-                            <p class="text-gray-400 text-xs mb-2">{{ $announcement->published_at->format('M d, Y') }}</p>
-                            <p class="text-gray-600 text-sm">{{ \Illuminate\Support\Str::limit($announcement->content, 120, '...') }}</p>
-                        </div>
-
-                        {{-- Hover overlay for NBA-style subtle effect --}}
-                        <div class="absolute inset-0 bg-blue-50/20 opacity-0 group-hover:opacity-100 transition rounded-2xl pointer-events-none"></div>
-                    </a>
-                @endforeach
-            </div>
-        @endif
-    </div>
-</section>
-
 
 
 {{-- Banner Slideshow JS --}}
