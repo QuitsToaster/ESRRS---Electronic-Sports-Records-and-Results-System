@@ -12,6 +12,7 @@ class GalleryPhoto extends Model
     protected $fillable = [
         'title',
         'description',
+        'folder',   
         'photos',
         'uploaded_by',
     ];

@@ -53,7 +53,7 @@
                     <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent opacity-60"></div>
                     <div class="absolute bottom-4 left-4 text-white" style="font-family: 'Poppins', sans-serif;">
                         <h3 class="text-xl font-semibold">{{ $folder }}</h3>
-                        <p class="text-sm">{{ $photoCount }} photos</p>
+                        <p class="text-sm">{{ $photoCount }} folder</p>
                     </div>
                 </div>
             @endforeach

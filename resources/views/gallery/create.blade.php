@@ -24,61 +24,65 @@
 <form method="POST" action="{{ route('gallery.store') }}" enctype="multipart/form-data">
     @csrf
 
+    {{-- Title --}}
     <div class="mb-3">
         <label class="block text-sm font-medium text-gray-700">Title</label>
         <input type="text" name="title" value="{{ old('title') }}" required
-               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500">
+               class="mt-1 block w-full border-gray-300 rounded shadow-sm">
     </div>
 
+    {{-- Description --}}
     <div class="mb-3">
         <label class="block text-sm font-medium text-gray-700">Description</label>
         <textarea name="description" rows="3"
-                  class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500">{{ old('description') }}</textarea>
+                  class="mt-1 block w-full border-gray-300 rounded shadow-sm">{{ old('description') }}</textarea>
     </div>
 
+    {{-- Photos --}}
     <div class="mb-3">
         <label class="block text-sm font-medium text-gray-700">Upload Photos</label>
         <input type="file" name="photos[]" multiple required
-               class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500">
-        <p class="text-xs text-gray-500 mt-1">You can upload multiple images at once.</p>
+               class="mt-1 block w-full border-gray-300 rounded shadow-sm">
     </div>
 
+    {{-- Folder --}}
     <div class="mb-3">
         <label class="block text-sm font-medium text-gray-700">Folder</label>
 
         <select name="folder" id="folderSelect"
-                class="mt-1 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500">
+                class="mt-1 block w-full border-gray-300 rounded shadow-sm">
             <option value="">-- Select Existing Folder --</option>
+
             @foreach($existingFolders as $folder)
-                <option value="{{ $folder }}" {{ old('folder') == $folder ? 'selected' : '' }}>{{ $folder }}</option>
+                <option value="{{ $folder }}" {{ old('folder') === $folder ? 'selected' : '' }}>
+                    {{ $folder }}
+                </option>
             @endforeach
-            <option value="new" {{ old('folder') == 'new' ? 'selected' : '' }}>+ Create New Folder</option>
+
+            <option value="new" {{ old('folder') === 'new' ? 'selected' : '' }}>
+                + Create New Folder
+            </option>
         </select>
 
-        <input type="text" name="new_folder" id="newFolderInput"
+        <input type="text"
+               name="new_folder"
+               id="newFolderInput"
                placeholder="Enter new folder name"
-               class="mt-2 block w-full border-gray-300 rounded shadow-sm focus:ring focus:ring-blue-200 focus:border-blue-500 {{ old('folder') == 'new' ? '' : 'hidden' }}"
-               value="{{ old('new_folder') }}">
-
-        <p class="text-xs text-gray-500 mt-1">
-            Choose an existing folder or create a new one.
-        </p>
+               value="{{ old('new_folder') }}"
+               class="mt-2 block w-full border-gray-300 rounded shadow-sm {{ old('folder') === 'new' ? '' : 'hidden' }}">
     </div>
 
-    <script>
-    document.getElementById('folderSelect').addEventListener('change', function() {
-        const newFolderInput = document.getElementById('newFolderInput');
-        if(this.value === 'new') {
-            newFolderInput.style.display = 'block';
-        } else {
-            newFolderInput.style.display = 'none';
-        }
-    });
-    </script>
-
-    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+    <button type="submit"
+            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
         Upload
     </button>
 </form>
 </div>
+
+<script>
+document.getElementById('folderSelect').addEventListener('change', function () {
+    document.getElementById('newFolderInput')
+        .classList.toggle('hidden', this.value !== 'new');
+});
+</script>
 @endsection

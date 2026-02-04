@@ -28,44 +28,63 @@ class GalleryController extends Controller
     public function store(Request $request)
 {
     $request->validate([
-        'title' => 'required|string|max:255',
+        'title'       => 'required|string|max:255',
         'description' => 'nullable|string',
-        'photos.*' => 'required|image|mimes:jpg,jpeg,png|max:4096',
-        'folder' => 'nullable|string',
-        'new_folder' => 'nullable|string|max:255',
+        'photos'      => 'required',
+        'photos.*'    => 'image|mimes:jpg,jpeg,png|max:4096',
+        'folder'      => 'nullable|string',
+        'new_folder'  => 'required_if:folder,new|max:255',
     ]);
 
     // Determine folder
-    $folder = trim($request->folder === 'new' ? $request->new_folder : $request->folder);
-    $folder = $folder ?: 'default'; // fallback folder
+    if ($request->folder === 'new') {
+        $folder = trim($request->new_folder);
+    } else {
+        $folder = trim($request->folder);
+    }
+
+    // Fallback
+    $folder = $folder ?: 'default';
+
+    // Sanitize folder name
+    $folder = preg_replace('/[^a-zA-Z0-9_\- ]/', '', $folder);
+
+    $folderPath = "gallery/{$folder}";
+
+    // ✅ Force directory creation
+    if (!Storage::disk('public')->exists($folderPath)) {
+        Storage::disk('public')->makeDirectory($folderPath);
+    }
 
     $uploadedPhotos = [];
-    if($request->hasFile('photos')) {
-        foreach($request->file('photos') as $photo) {
-            $uploadedPhotos[] = $photo->store("gallery/{$folder}", 'public');
-        }
+
+    foreach ($request->file('photos') as $photo) {
+        $uploadedPhotos[] = $photo->store($folderPath, 'public');
     }
 
     $gallery = GalleryPhoto::create([
-        'title' => $request->title,
-        'folder' => $folder,
+        'title'       => $request->title,
+        'folder'      => $folder,
         'description' => $request->description,
-        'photos' => $uploadedPhotos,
+        'photos'      => $uploadedPhotos,
         'uploaded_by' => Auth::id(),
     ]);
 
-    // Audit log
     AuditLog::create([
         'model_type' => 'GalleryPhoto',
-        'model_id' => $gallery->id,
-        'user_id' => Auth::id(),
-        'action' => 'Created Gallery Photo',
+        'model_id'   => $gallery->id,
+        'user_id'    => Auth::id(),
+        'action'     => 'Created Gallery Photo',
         'old_values' => null,
         'new_values' => json_encode($gallery->toArray()),
     ]);
 
-    return redirect()->route('gallery.index')->with('success', 'Photos uploaded successfully!');
+    return redirect()
+        ->route('gallery.index')
+        ->with('success', 'Photos uploaded successfully!');
 }
+
+
 
 
 
@@ -93,6 +112,13 @@ class GalleryController extends Controller
     $folder = $request->folder === 'new' ? $request->new_folder : $request->folder;
     $folder = $folder ?: 'default';
     $photo->folder = $folder;
+
+    $folderPath = "gallery/{$folder}";
+
+if (!Storage::disk('public')->exists($folderPath)) {
+    Storage::disk('public')->makeDirectory($folderPath);
+}
+
 
     // Delete selected photos
     if($request->filled('delete_photos')) {
