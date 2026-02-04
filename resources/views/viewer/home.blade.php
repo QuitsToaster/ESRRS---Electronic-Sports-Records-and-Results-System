@@ -93,42 +93,82 @@ function closePrivacyBanner() {
         {{-- Desktop: Small | BIG | Small — Mobile: Stack --}}
         <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-4 items-stretch">
 
-            {{-- ================= LEFT: LATEST NEWS & ANNOUNCEMENTS ================= --}}
-<section class="order-2 lg:order-1 h-full">
-    <div class="h-full rounded-2xl bg-white p-6 shadow-2xl flex flex-col">
+          {{-- ================= LEFT: LATEST NEWS & ANNOUNCEMENTS ================= --}}
+<section
+    class="order-2 lg:order-1 h-full"
+    x-data="{
+        search: '',
+        allAnnouncements: {{ $allAnnouncements->toJson() }},
+        latestAnnouncements: {{ $latestAnnouncements->toJson() }},
+    }"
+>
+    <div class="h-full bg-white p-6 shadow-2xl flex flex-col">
 
         <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
             style="font-family: 'Poppins', sans-serif;">
             Latest News
         </h2>
 
-        @if($latestAnnouncements->isEmpty())
-            <p class="text-sm text-gray-500">No announcements yet.</p>
-        @else
-            <div class="space-y-4 overflow-y-auto pr-1 flex-1">
-                @foreach($latestAnnouncements as $announcement)
-                    <a href="{{ route('viewer.announcements') }}#announcement-{{ $announcement->id }}"
-                       class="group block rounded-xl border bg-gray-50 p-4 hover:bg-gray-100 hover:shadow transition relative">
+        {{-- Search Bar --}}
+        <input
+            type="text"
+            placeholder="Search announcements..."
+            x-model="search"
+            class="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm
+                   focus:outline-none focus:ring-2 focus:ring-blue-400"
+        >
 
-                        <h4 class="font-semibold text-gray-800 group-hover:text-blue-600 transition"
-                            style="font-family: 'Poppins', sans-serif;">
-                            {{ $announcement->title }}
-                        </h4>
+        <div class="space-y-4 overflow-y-auto pr-1 flex-1">
 
-                        <p class="text-xs text-gray-400 mt-1">
-                            {{ $announcement->published_at?->format('M d, Y') }}
-                        </p>
+            <template
+                x-for="announcement in (
+                    search
+                        ? allAnnouncements.filter(a =>
+                            a.title.toLowerCase().includes(search.toLowerCase()) ||
+                            a.content.toLowerCase().includes(search.toLowerCase())
+                          )
+                        : latestAnnouncements
+                ).slice(0, 2)"
+                :key="announcement.id"
+            >
+                <a
+                    :href="'{{ route('viewer.announcements') }}#announcement-' + announcement.id"
+                    class="group block rounded-xl border bg-gray-50 p-4
+                           hover:bg-gray-100 hover:shadow transition relative"
+                >
+                    <h4 class="font-semibold text-gray-800 group-hover:text-blue-600 transition"
+                        style="font-family: 'Poppins', sans-serif;"
+                        x-text="announcement.title">
+                    </h4>
 
-                        <p class="text-sm text-gray-600 mt-2">
-                            {{ \Illuminate\Support\Str::limit($announcement->content, 100, '...') }}
-                        </p>
+                    <p class="text-xs text-gray-400 mt-1"
+                       x-text="new Date(announcement.published_at)
+                           .toLocaleDateString('en-US', {
+                               month: 'short',
+                               day: '2-digit',
+                               year: 'numeric'
+                           })">
+                    </p>
 
-                        <div class="absolute inset-0 bg-blue-50/20 opacity-0 group-hover:opacity-100
-                                    transition rounded-xl pointer-events-none"></div>
-                    </a>
-                @endforeach
-            </div>
-        @endif
+                    <p class="text-sm text-gray-600 mt-2"
+                       x-text="
+                           announcement.content.length > 100
+                               ? announcement.content.substring(0,100) + '...'
+                               : announcement.content
+                       ">
+                    </p>
+
+                    <div class="absolute inset-0 bg-blue-50/20 opacity-0
+                                group-hover:opacity-100 transition
+                                rounded-xl pointer-events-none"></div>
+                </a>
+            </template>
+
+            <template x-if="search && allAnnouncements.length === 0">
+                <p class="text-sm text-gray-500">No announcements found.</p>
+            </template>
+
+        </div>
     </div>
 </section>
 
@@ -275,125 +315,236 @@ function closePrivacyBanner() {
     </div>
 
     {{-- ================= MODAL ================= --}}
+<div
+    x-show="open"
+    x-transition
+    @keydown.escape.window="open = false"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+>
     <div
-        x-show="open"
-        x-transition
-        @keydown.escape.window="open = false"
-        class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 px-4"
+        @click.away="open = false"
+        class="bg-white rounded-xl shadow-xl
+               max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6
+               border border-gray-200"
     >
-        <div
-            @click.away="open = false"
-            class="bg-white rounded-2xl shadow-2xl
-                   max-w-4xl w-full max-h-[80vh]
-                   overflow-y-auto p-6"
-        >
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-gray-800"
-                    x-text="division?.name + ' — Medal Details'"></h3>
-                <button @click="open = false" class="text-3xl text-gray-400 hover:text-black">&times;</button>
-            </div>
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
+            <h3 class="text-2xl font-semibold text-gray-800"
+                x-text="division?.name + ' — Medal Details'"></h3>
+            <button @click="open = false" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+        </div>
 
-            <template x-for="(list, type) in medals" :key="type">
-                <div class="mb-6">
-                    <h4 class="text-xl font-bold mb-2"
-                        :class="{
-                            'text-yellow-600': type === 'gold',
-                            'text-gray-600': type === 'silver',
-                            'text-orange-600': type === 'bronze'
-                        }"
-                        x-text="type.toUpperCase()"></h4>
+        {{-- Medal Sections --}}
+<template x-for="(list, type) in medals" :key="type">
+    <div class="mb-6">
+        <h4 class="text-lg font-semibold mb-3 flex items-center gap-2"
+            :class="{
+                'text-yellow-600': type === 'gold',
+                'text-gray-600': type === 'silver',
+                'text-orange-500': type === 'bronze'
+            }">
+            <span x-text="type.toUpperCase()"></span>
+            <span class="text-sm text-gray-400" x-text="list.length + ' medals'"></span>
+        </h4>
 
-                    <div class="space-y-2">
-                        <template x-for="m in list" :key="m.id">
-                            <div class="p-3 bg-gray-100 rounded-lg text-sm">
-                                <strong x-text="m.event?.name ?? 'Event'"></strong>
-                                — <span x-text="m.sport?.name ?? 'Sport'"></span>
-                            </div>
-                        </template>
+        <div class="space-y-2">
+            <template x-for="m in list" :key="m.id">
+                <div
+                    class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
 
-                        <p x-show="list.length === 0" class="text-gray-400 italic text-sm">
-                            No medals
-                        </p>
+                    {{-- Header --}}
+                    <div class="flex justify-between items-center">
+                        <strong class="text-gray-800"
+                                x-text="m.event?.name ?? 'Event'"></strong>
+
+                        <span class="text-gray-500 text-sm font-bold"
+                              x-text="m.sport?.name ?? 'Sport'"></span>
+                    </div>
+
+                    {{-- Details --}}
+                    <div class="flex flex-wrap text-xs text-gray-500 gap-3 mt-1">
+                        <span>
+                            Level:
+                            <strong x-text="m.event?.age_group ?? 'N/A'"></strong>
+                        </span>
+
+                        <span>
+                            Category:
+                            <strong x-text="m.event?.category ?? 'N/A'"></strong>
+                        </span>
+
+                        <span>
+                            Schedule:
+                            <strong
+                                x-text="m.event?.start_date
+                                    ? new Date(m.event.start_date)
+                                        .toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: '2-digit',
+                                            year: 'numeric'
+                                        })
+                                    : 'N/A'">
+                            </strong>
+                        </span>
+
+                        <span>
+                            Award Date:
+                            <strong
+                                x-text="m.event?.award_date
+                                    ? new Date(m.event.award_date)
+                                        .toLocaleDateString('en-US', {
+                                            month: 'short',
+                                            day: '2-digit',
+                                            year: 'numeric'
+                                        })
+                                    : 'N/A'">
+                            </strong>
+                        </span>
                     </div>
                 </div>
             </template>
+
+            <p x-show="list.length === 0"
+               class="text-gray-400 italic text-sm">
+                No medals
+            </p>
         </div>
     </div>
-</section>
+</template>
 
-
-
-            {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES (NBA STYLE) ================= --}}
-            <section class="order-3 h-full">
-                <div class="h-full rounded-2xl bg-white p-6 shadow-2xl flex flex-col">
-
-                    {{-- Upcoming Events --}}
-<div class="mb-8">
-    <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
-        style="font-family: 'Poppins', sans-serif;">
-        Upcoming Events
-    </h2>
-
-    <div class="space-y-3">
-        @forelse($upcomingEvents as $event)
-            <a href="{{ route('viewer.events') }}#event-{{ $event->id }}"
-               class="block p-4 rounded-xl bg-gray-50 border
-                      hover:bg-gray-100 hover:shadow transition">
-                <div class="flex justify-between items-center">
-                    <span class="font-semibold text-gray-800 truncate">
-                        {{ $event->name }}
-                    </span>
-                    <span class="text-xs font-bold text-gray-500">
-                        {{ \Carbon\Carbon::parse($event->start_date)->format('M d') }}
-                    </span>
-                </div>
-
-                {{-- Additional Details --}}
-                <div class="mt-1 text-xs text-gray-500 space-y-1">
-                    <p>Sport: {{ $event->sport?->name ?? 'N/A' }}</p>
-                    <p>Age Group: {{ ucfirst($event->age_group ?? 'N/A') }}</p>
-                    <p>Category: {{ ucfirst($event->category ?? 'N/A') }}</p>
-                </div>
-            </a>
-        @empty
-            <p class="text-sm text-gray-500">No upcoming events.</p>
-        @endforelse
     </div>
 </div>
 
+</section>
 
-                    {{-- Upcoming Games --}}
-                    <div>
-                        <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
-                            style="font-family: 'Poppins', sans-serif;">
-                            Upcoming Games
-                        </h2>
+            {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES ================= --}}
+<section
+    class="order-3 h-full"
+    x-data="{
+        eventSearch: '',
+        gameSearch: '',
 
-                        <div class="space-y-3">
-                            @forelse($upcomingGames as $game)
-                                <a href="{{ route('viewer.games') }}#game-{{ $game->id }}"
-                                   class="block p-4 rounded-xl bg-gray-50 border
-                                          hover:bg-gray-100 hover:shadow transition">
-                                    <div class="font-semibold text-gray-800 truncate">
-                                        {{ $game->team_a }} <span class="text-gray-400">vs</span> {{ $game->team_b }}
-                                    </div>
-                                    <div class="text-xs text-gray-500 mt-1">
-                                        {{ \Carbon\Carbon::parse($game->game_time)->format('M d, Y · h:i A') }}
-                                    </div>
-                                </a>
-                            @empty
-                                <p class="text-sm text-gray-500">No upcoming games.</p>
-                            @endforelse
+        allEvents: {{ $allUpcomingEvents->toJson() }},
+        latestEvents: {{ $latestUpcomingEvents->toJson() }},
+
+        allGames: {{ $allUpcomingGames->toJson() }},
+        latestGames: {{ $latestUpcomingGames->toJson() }},
+    }"
+>
+    <div class="h-full bg-white p-6 shadow-2xl flex flex-col">
+
+        {{-- ================= UPCOMING EVENTS ================= --}}
+        <div class="mb-8">
+            <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4">
+                Upcoming Events
+            </h2>
+
+            <input
+                type="text"
+                placeholder="Search events..."
+                x-model="eventSearch"
+                class="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+
+            <div class="space-y-3">
+                <template
+                    x-for="event in (
+                        eventSearch
+                            ? allEvents.filter(e =>
+                                e.name.toLowerCase().includes(eventSearch.toLowerCase())
+                              )
+                            : latestEvents
+                    ).slice(0, 2)"
+                    :key="event.id"
+                >
+                    <a
+                        :href="'{{ route('viewer.events') }}#event-' + event.id"
+                        class="block p-4 rounded-xl bg-gray-50 border
+                               hover:bg-gray-100 hover:shadow transition"
+                    >
+                        <div class="flex justify-between items-center">
+                            <span class="font-semibold text-gray-800 truncate"
+                                  x-text="event.name"></span>
+
+                            <span class="text-xs font-bold text-gray-500"
+                                  x-text="new Date(event.start_date)
+                                      .toLocaleDateString('en-US', {
+                                          month: 'short',
+                                          day: '2-digit'
+                                      })"></span>
                         </div>
-                    </div>
 
-                </div>
-            </section>
+                        <div class="mt-1 text-xs text-gray-500 space-y-1">
+                            <p>Sport: <span x-text="event.sport?.name ?? 'N/A'"></span></p>
+                            <p>Level: <span x-text="event.age_group ?? 'N/A'"></span></p>
+                            <p>Category: <span x-text="event.category ?? 'N/A'"></span></p>
+                        </div>
+                    </a>
+                </template>
+            </div>
+        </div>
 
+        {{-- ================= UPCOMING GAMES ================= --}}
+        <div>
+            <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4">
+                Upcoming Games
+            </h2>
+
+            <input
+                type="text"
+                placeholder="Search games..."
+                x-model="gameSearch"
+                class="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-400"
+            >
+
+            <div class="space-y-3">
+                <template
+                    x-for="game in (
+                        gameSearch
+                            ? allGames.filter(g =>
+                                g.team_a.toLowerCase().includes(gameSearch.toLowerCase()) ||
+                                g.team_b.toLowerCase().includes(gameSearch.toLowerCase())
+                              )
+                            : latestGames
+                    ).slice(0, 2)"
+                    :key="game.id"
+                >
+                    <a
+                        :href="'{{ route('viewer.games') }}#game-' + game.id"
+                        class="block p-4 rounded-xl bg-gray-50 border
+                               hover:bg-gray-100 hover:shadow transition"
+                    >
+                        <div class="font-semibold text-gray-800 truncate"
+                             x-text="game.team_a + ' vs ' + game.team_b"></div>
+
+                        <div class="text-xs text-gray-500 mt-1"
+                             x-text="
+                                new Date(game.game_time).toLocaleDateString('en-US', {
+                                    month: 'short',
+                                    day: '2-digit',
+                                    year: 'numeric'
+                                }) + ' · ' +
+                                new Date(game.game_time).toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                    hour12: true
+                                })
+                             ">
+                        </div>
+                    </a>
+                </template>
+            </div>
+        </div>
+
+    </div>
+</section>
         </div>
     </div>
 </section>
 {{-- ================= END DASHBOARD STRIP ================= --}}
+
 
 {{-- ================= LIVE GAMES ================= --}}
 <section class="relative py-16 overflow-hidden">
@@ -530,7 +681,6 @@ function closePrivacyBanner() {
 <section class="bg-gray-50 py-12 md:py-16 border-t">
     <div class="max-w-7xl mx-auto px-4 md:px-6">
 
-        {{-- Section Title --}}
         <div class="text-center mb-8 md:mb-10">
             <h2 class="text-4xl md:text-7xl text-gray-800 font-bold"
                 style="font-family: 'Poppins', sans-serif;">
@@ -538,7 +688,6 @@ function closePrivacyBanner() {
             </h2>
         </div>
 
-        {{-- Spotlight Container --}}
         <div class="flex flex-col md:flex-row items-center gap-8 md:gap-10">
 
             {{-- LEFT: Slideshow --}}
@@ -556,7 +705,6 @@ function closePrivacyBanner() {
                         >
                     @endforeach
 
-                    {{-- Overlay --}}
                     <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
                 @else
                     <div class="w-full h-full bg-gray-300 flex items-center justify-center
@@ -566,9 +714,8 @@ function closePrivacyBanner() {
                 @endif
             </div>
 
-            {{-- RIGHT: Title + Description --}}
-            <div class="w-full md:flex-1 space-y-4 md:space-y-6
-                        text-center md:text-left">
+            {{-- RIGHT --}}
+            <div class="w-full md:flex-1 space-y-4 md:space-y-6 text-center md:text-left">
 
                 <h2 class="text-3xl sm:text-4xl md:text-5xl text-gray-800 font-semibold"
                     style="font-family: 'Poppins', sans-serif;">
@@ -580,12 +727,12 @@ function closePrivacyBanner() {
                 </p>
 
                 <div class="pt-2 flex justify-center md:justify-start">
-                    <button
-                        onclick="window.location='{{ route('viewer.gallery') }}'"
+                    <a
+                        href="{{ route('viewer.gallery') }}"
                         class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white
                                font-semibold rounded-xl shadow-lg transition">
                         View Gallery
-                    </button>
+                    </a>
                 </div>
             </div>
 
@@ -601,13 +748,9 @@ function closePrivacyBanner() {
 
         if (slides.length > 1) {
             setInterval(() => {
-                slides[current].classList.remove('opacity-100');
-                slides[current].classList.add('opacity-0');
-
+                slides[current].classList.replace('opacity-100', 'opacity-0');
                 current = (current + 1) % slides.length;
-
-                slides[current].classList.remove('opacity-0');
-                slides[current].classList.add('opacity-100');
+                slides[current].classList.replace('opacity-0', 'opacity-100');
             }, 4000);
         }
     });
@@ -616,7 +759,7 @@ function closePrivacyBanner() {
 
 
 {{-- =======================
-     REMAINING GALLERY CAROUSEL
+     REMAINING GALLERY CAROUSEL (CLICKABLE)
 ======================== --}}
 @if($remainingPhotos->isNotEmpty())
 <section class="bg-gray-50 py-12 border-t relative overflow-hidden">
@@ -624,7 +767,7 @@ function closePrivacyBanner() {
 
         <div class="relative">
 
-            {{-- Left Arrow (hidden on mobile) --}}
+            {{-- Left Arrow --}}
             <button
                 class="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2
                        bg-white/80 hover:bg-white text-gray-800
@@ -634,7 +777,7 @@ function closePrivacyBanner() {
                 &#8592;
             </button>
 
-            {{-- Right Arrow (hidden on mobile) --}}
+            {{-- Right Arrow --}}
             <button
                 class="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2
                        bg-white/80 hover:bg-white text-gray-800
@@ -654,24 +797,29 @@ function closePrivacyBanner() {
                         $extraCount = max(count($photo->photos) - 1, 0);
                     @endphp
 
-                    <div
-                        class="relative flex-shrink-0 w-64 md:w-72 rounded-2xl shadow-lg cursor-pointer
+                    <a
+                        href="{{ route('viewer.gallery') }}"
+                        class="relative flex-shrink-0 w-64 md:w-72 rounded-2xl shadow-lg
                                transform hover:scale-105 transition-all duration-500 group"
-                        onclick="openPhotoModal({{ $photo->id }})">
-
+                    >
                         @if($firstImage)
-                            <img src="{{ asset('storage/' . $firstImage) }}"
-                                 class="w-full h-64 md:h-72 object-cover rounded-2xl">
+                            <img
+                                src="{{ asset('storage/' . $firstImage) }}"
+                                class="w-full h-64 md:h-72 object-cover rounded-2xl"
+                            >
 
-                            <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100
-                                        transition-opacity duration-500 flex flex-col justify-center items-center rounded-2xl">
+                            <div class="absolute inset-0 bg-black/30 opacity-0
+                                        group-hover:opacity-100 transition-opacity duration-500
+                                        flex flex-col justify-center items-center rounded-2xl">
+
                                 @if($extraCount > 0)
                                     <div class="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full
                                                 text-white font-semibold text-sm mb-2">
                                         +{{ $extraCount }} More
                                     </div>
                                 @endif
-                                <div class="text-white text-lg font-bold text-center">
+
+                                <div class="text-white text-lg font-bold text-center px-2">
                                     {{ $photo->title ?? 'Gallery Item' }}
                                 </div>
                             </div>
@@ -681,7 +829,8 @@ function closePrivacyBanner() {
                                 No Image
                             </div>
                         @endif
-                    </div>
+                    </a>
+
                 @endforeach
 
             </div>
@@ -689,6 +838,7 @@ function closePrivacyBanner() {
     </div>
 </section>
 @endif
+
 
 
 {{-- Banner Slideshow JS --}}

@@ -54,7 +54,6 @@
             "Counting medals… 🏅",
             "Warming up the teams…",
             "Getting ready for the games…",
-            "CAVRAA Viewer loading… 💪",
             "Checking the scoreboard…",
             "Fueling the competitive spirit… 🏆"
         ];
