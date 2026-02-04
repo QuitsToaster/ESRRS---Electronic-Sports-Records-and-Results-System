@@ -106,7 +106,7 @@ function closePrivacyBanner() {
 
         <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
             style="font-family: 'Poppins', sans-serif;">
-            Latest News
+            Latest News & Announcements
         </h2>
 
         {{-- Search Bar --}}
