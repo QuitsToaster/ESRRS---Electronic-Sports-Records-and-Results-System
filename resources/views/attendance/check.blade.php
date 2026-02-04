@@ -162,16 +162,26 @@ if (!isSecure) {
 }
 
 /* External Scanner */
-qrInput.addEventListener('input', () => {
-    if (qrInput.value.trim()) {
-        setTimeout(() => qrForm.submit(), 150);
+function submitQR() {
+    const value = qrInput.value.trim();
+    if (value) {
+        qrForm.submit();
+    }
+}
+
+// Trigger on input (for some scanners) and on Enter key
+qrInput.addEventListener('input', submitQR);
+qrInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitQR();
     }
 });
+qrInput.addEventListener('change', submitQR);
 
 /* Camera Scanner */
 cameraBtn.onclick = () => {
     if (!isSecure) return;
-
     cameraBox.classList.remove('hidden');
     qrInput.blur();
     startCamera();
@@ -207,6 +217,7 @@ function stopCamera() {
     }
 }
 </script>
+
 
 </body>
 </html>
