@@ -77,6 +77,16 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('gallery', [ViewerController::class, 'gallery'])->name('gallery');
 });
 
+    /*
+|--------------------------------------------------------------------------
+| Attendance Scanner (PUBLIC)
+|--------------------------------------------------------------------------
+*/
+Route::get('/check-attendance', [AttendanceController::class, 'index'])
+    ->name('attendance.check');
+
+Route::post('/check-attendance', [AttendanceController::class, 'store'])
+    ->name('attendance.store');
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
@@ -108,9 +118,6 @@ Route::middleware('auth')->group(function() {
         Route::get('attendance/export', [\App\Http\Controllers\AdminAttendanceController::class, 'exportPdf'])->name('attendance.export');
     });
 
-    // Check attendance
-    Route::get('/check-attendance', [AttendanceController::class, 'index'])->name('attendance.check');
-    Route::post('/check-attendance', [AttendanceController::class, 'store'])->name('attendance.store');
 
     /*
     |--------------------------------------------------------------------------
