@@ -44,45 +44,52 @@ class UserController extends Controller
     }
 
     // Store new user
-    public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required',
-            'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed|min:6',
-            'role_id' => 'required|exists:roles,id',
-            'access' => 'nullable|array',
+   public function store(Request $request)
+{
+    $request->validate([
+        'name'      => 'required|string|max:255',
+        'email'     => 'required|email|unique:users',
+        'password'  => 'required|confirmed|min:6',
+        'role_id'   => 'nullable|exists:roles,id',
+        'new_role'  => 'nullable|string|max:50',
+        'access'    => 'nullable|array',
+    ]);
+
+    // Determine role
+    if ($request->filled('new_role')) {
+        $role = Role::firstOrCreate([
+            'name' => trim($request->new_role)
         ]);
-
-
-        // Determine the role
-        if (!empty($request->new_role)) {
-            $role = Role::firstOrCreate(['name' => $request->new_role]);
-        } elseif (!empty($request->role_id)) {
-            $role = Role::find($request->role_id);
-        } else {
-            return back()->withErrors(['role_id' => 'Please select a role or enter a new role.'])->withInput();
-        }
-
-        $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role_id' => $request->role_id,
-            'access' => $request->access ?? [],
-        ]);
-
-        AuditLog::create([
-            'model_type' => 'User',
-            'model_id'   => $user->id,
-            'user_id'    => auth()->id(),
-            'action'     => 'Created User',
-            'old_values' => null,
-            'new_values' => json_encode($user->toArray()),
-        ]);
-
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+    } elseif ($request->filled('role_id')) {
+        $role = Role::find($request->role_id);
+    } else {
+        return back()
+            ->withErrors(['role_id' => 'Please select a role or add a new one.'])
+            ->withInput();
     }
+
+    $user = User::create([
+        'name'     => $request->name,
+        'email'    => $request->email,
+        'password' => Hash::make($request->password),
+        'role_id'  => $role->id, // ✅ FIXED
+        'access'   => $request->access ?? [],
+    ]);
+
+    AuditLog::create([
+        'model_type' => 'User',
+        'model_id'   => $user->id,
+        'user_id'    => auth()->id(),
+        'action'     => 'Created User',
+        'old_values' => null,
+        'new_values' => json_encode($user->toArray()),
+    ]);
+
+    return redirect()
+        ->route('users.index')
+        ->with('success', 'User created successfully.');
+}
+
 
     // Show form to edit user
     public function edit(User $user)

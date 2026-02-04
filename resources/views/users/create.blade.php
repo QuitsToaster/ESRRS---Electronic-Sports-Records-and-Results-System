@@ -58,12 +58,26 @@
 {{-- Role --}}
 <div>
     <label class="block text-sm font-semibold text-gray-700 mb-1">Role *</label>
-    <select name="role_id" required class="w-full border border-gray-300 rounded px-3 py-2">
+    <select name="role_id" class="w-full border border-gray-300 rounded px-3 py-2">
         <option value="">-- Select Role --</option>
         @foreach($roles as $role)
-            <option value="{{ $role->id }}">{{ $role->name }}</option>
+            <option value="{{ $role->id }}" {{ old('role_id') == $role->id ? 'selected' : '' }}>
+                {{ $role->name }}
+            </option>
         @endforeach
     </select>
+</div>
+
+{{-- New Role --}}
+<div>
+    <label class="block text-sm font-semibold text-gray-700 mb-1">
+        Or Add New Role
+    </label>
+    <input type="text"
+           name="new_role"
+           value="{{ old('new_role') }}"
+           class="w-full border border-gray-300 rounded px-3 py-2"
+           placeholder="Enter new role name">
 </div>
 
 {{-- ACCESS CONTROL --}}
@@ -103,12 +117,10 @@
 
         @foreach($modules as $key => $label)
             <label class="flex items-center gap-2">
-                <input
-                    type="checkbox"
-                    name="access[]"
-                    value="{{ $key }}"
-                    {{ in_array($key, old('access', [])) ? 'checked' : '' }}
-                >
+                <input type="checkbox"
+                       name="access[]"
+                       value="{{ $key }}"
+                       {{ in_array($key, old('access', [])) ? 'checked' : '' }}>
                 {{ $label }}
             </label>
         @endforeach
