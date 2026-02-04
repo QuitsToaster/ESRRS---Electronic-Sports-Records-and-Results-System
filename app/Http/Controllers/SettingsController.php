@@ -27,7 +27,7 @@ public function layout()
         'viewerLogo',
         'developers',
         'footerSetting',
-        'welcomeImage'
+        'welcomeImage',
     ));
 }
 
