@@ -35,6 +35,11 @@ Route::get('/', [ViewerController::class, 'home'])->name('landing');
 // Account requests
 Route::post('/account-request', [AccountRequestController::class, 'store'])->name('account-request.store');
 
+Route::post('/account-requests/{accountRequest}/done', 
+    [UserController::class, 'markAccountRequestDone']
+)->name('account-requests.done');
+
+
 // Switch account
 Route::post('/switch-account', [SwitchAccountController::class, 'store'])->name('switch.account');
 

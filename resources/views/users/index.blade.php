@@ -110,7 +110,7 @@
 
 {{-- Account Requests Section for Super Admin --}}
 @if(auth()->user()->role->name === 'Super Admin')
-    <div class="mt-10">
+    <div class="mt-10" x-data="accountRequestModal()">
         <h2 class="text-2xl font-bold mb-4">Account Requests</h2>
 
         @if($accountRequests->isEmpty())
@@ -126,23 +126,119 @@
                             <th class="px-4 py-2 text-left text-gray-700">Type</th>
                             <th class="px-4 py-2 text-left text-gray-700">Status</th>
                             <th class="px-4 py-2 text-left text-gray-700">Requested At</th>
+                            <th class="px-4 py-2 text-left text-gray-700">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach($accountRequests as $request)
                         <tr class="{{ $loop->even ? 'bg-gray-50' : 'bg-white' }} hover:bg-gray-100 transition">
                             <td class="px-4 py-2 text-gray-700">{{ $request->email }}</td>
-                            <td class="px-4 py-2 text-gray-700">{{ $request->type === 'forgot_password' ? 'Password Reset' : 'New Account' }}</td>
-                            <td class="px-4 py-2 text-gray-700">{{ ucfirst($request->status) }}</td>
-                            <td class="px-4 py-2 text-gray-700">{{ $request->created_at->format('Y-m-d H:i') }}</td>
+
+                            <td class="px-4 py-2 text-gray-700">
+                                {{ $request->type === 'forgot_password' ? 'Password Reset' : 'New Account' }}
+                            </td>
+
+                            <td class="px-4 py-2">
+                                @if($request->status === 'done')
+                                    <span class="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-700">
+                                        Done
+                                    </span>
+                                @else
+                                    <span class="px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-700">
+                                        Pending
+                                    </span>
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-2 text-gray-700">
+                                {{ $request->created_at->format('Y-m-d H:i') }}
+                            </td>
+
+                            <td class="px-4 py-2">
+                                @if($request->status !== 'done')
+                                    <button
+                                        @click="openModal({{ $request->id }}, '{{ $request->email }}')"
+                                        class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm font-semibold"
+                                    >
+                                        Done
+                                    </button>
+                                @else
+                                    <span class="text-gray-400 text-sm">—</span>
+                                @endif
+                            </td>
                         </tr>
                         @endforeach
                     </tbody>
                 </table>
             </div>
         @endif
+
+        {{-- CONFIRMATION MODAL --}}
+        <div
+            x-show="showModal"
+            x-cloak
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+        >
+            <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
+                <h3 class="text-lg font-bold mb-2">Confirm Action</h3>
+
+                <p class="text-gray-700">
+                    Mark account request for
+                    <span class="font-semibold" x-text="email"></span>
+                    as <strong>DONE</strong>?
+                </p>
+
+                <div class="mt-6 flex justify-end gap-2">
+                    <button
+                        @click="confirmDone"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold"
+                    >
+                        Yes, Mark Done
+                    </button>
+
+                    <button
+                        @click="showModal = false"
+                        class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 @endif
+
+<script>
+function accountRequestModal() {
+    return {
+        showModal: false,
+        requestId: null,
+        email: '',
+
+        openModal(id, email) {
+            this.requestId = id;
+            this.email = email;
+            this.showModal = true;
+        },
+
+        confirmDone() {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/account-requests/${this.requestId}/done`;
+
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = '_token';
+            csrf.value = '{{ csrf_token() }}';
+
+            form.appendChild(csrf);
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+}
+</script>
+
 
 <script>
 function passwordReset() {

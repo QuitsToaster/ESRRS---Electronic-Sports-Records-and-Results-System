@@ -214,4 +214,31 @@ public function resetPassword(Request $request, User $user)
 }
 
 
+public function markAccountRequestDone(AccountRequest $accountRequest)
+{
+    // Only super admin protection (extra safety)
+    if (auth()->user()->role->name !== 'Super Admin') {
+        abort(403);
+    }
+
+    $oldValues = $accountRequest->toArray();
+
+    $accountRequest->status = 'done';
+    $accountRequest->save();
+
+    AuditLog::create([
+        'model_type' => 'AccountRequest',
+        'model_id'   => $accountRequest->id,
+        'user_id'    => auth()->id(),
+        'action'     => 'Marked Account Request as Done',
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($accountRequest->toArray()),
+    ]);
+
+    return redirect()
+        ->route('users.index')
+        ->with('success', 'Account request marked as done.');
+}
+
+
 }
