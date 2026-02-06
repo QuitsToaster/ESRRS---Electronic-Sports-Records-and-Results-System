@@ -141,10 +141,11 @@
 {{-- DIVISION & CATEGORY --}}
 <div class="grid grid-cols-2 gap-4 mb-4">
     <div>
-        <label class="font-medium">Division</label>
+        <label class="font-medium">Level</label>
         <select name="division" class="w-full border rounded px-3 py-2">
             <option value="Elementary" {{ $athlete->division=='Elementary'?'selected':'' }}>Elementary</option>
             <option value="Secondary" {{ $athlete->division=='Secondary'?'selected':'' }}>Secondary</option>
+            <option value="Paragames" {{ $athlete->division=='Paragames'?'selected':'' }}>ParaGames</option>
         </select>
     </div>
 

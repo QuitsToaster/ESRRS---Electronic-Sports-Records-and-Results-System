@@ -70,7 +70,7 @@ class AthleteController extends Controller
             'sport_id'        => 'nullable|exists:sports,id',
             'sport_name'      => 'nullable|string|max:255',
 
-            'division'        => 'required|in:Elementary,Secondary',
+            'division'        => 'required|in:Elementary,Secondary,Paragames',
             'category'        => 'required|in:Boys,Girls',
             'status'          => 'required|in:Active,Injured,Disqualified',
 
@@ -89,7 +89,7 @@ class AthleteController extends Controller
             $school = School::firstOrCreate(
                 ['name' => $request->school_name],
                 [
-                    'division'       => $request->division,          // Elementary/Secondary
+                    'division'       => $request->division,          // Elementary/Secondary/Paragames
                     'school_division'=> $request->school_division,   // City/Region
                     'school_type'    => $request->school_type,
                     'school_address' => $request->school_address,
@@ -168,7 +168,7 @@ class AthleteController extends Controller
             'birthdate'        => 'nullable|date',
             'school_id'        => 'required|exists:schools,id',
             'sport_id'         => 'required|exists:sports,id',
-            'division'         => 'required|in:Elementary,Secondary',
+            'division'         => 'required|in:Elementary,Secondary,Paragames',
             'category'         => 'required|in:Boys,Girls',
             'status'           => 'required|in:Active,Disqualified,Injured',
             'profile_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
