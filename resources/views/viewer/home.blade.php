@@ -5,13 +5,13 @@
 @section('content')
  {{-- ================= DATA PRIVACY SLIDE-UP ================= --}}
 <div id="privacyBanner"
-     class="fixed bottom-0 left-0 right-0 z-50 bg-white shadow-2xl border-t border-gray-200
+     class="fixed bottom-0 left-0 right-0 z-50 bg-black shadow-2xl border-t border-black
             transform translate-y-full transition-transform duration-500 ease-out">
 
     <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
 
-        <div class="text-sm text-gray-700 leading-relaxed">
-            <strong class="block text-gray-900 mb-1">Data Privacy Notice</strong>
+        <div class="text-sm text-gray-100 leading-relaxed">
+            <strong class="block text-white mb-1">Data Privacy Notice</strong>
             In compliance with the Data Privacy Act of 2012 (RA 10173), this system collects and processes
             data strictly for event monitoring and system operations. By continuing, you agree to this use.
         </div>

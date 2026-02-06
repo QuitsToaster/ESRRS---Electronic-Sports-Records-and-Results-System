@@ -113,7 +113,10 @@
     </td>
 
     <td class="px-4 py-2">{{ $athlete->sex ?? '—' }}</td>
-    <td class="px-4 py-2">{{ $athlete->birthdate ?? '—' }}</td>
+    <td class="px-4 py-2">
+    {{ $athlete->birthdate ? \Carbon\Carbon::parse($athlete->birthdate)->format('M. d, Y') : '—' }}
+</td>
+
     <td class="px-4 py-2">{{ $athlete->division }}</td>
     <td class="px-4 py-2">{{ $athlete->category }}</td>
     <td class="px-4 py-2">{{ $athlete->region ?? '—' }}</td>
