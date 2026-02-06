@@ -376,31 +376,6 @@ document.addEventListener('DOMContentLoaded', () => {
             @endif
 
 
-            @if(in_array('gallery', $access))
-    {{-- Gallery --}}
-    <div x-data="{ isOpen: {{ request()->routeIs('gallery.*') ? 'true' : 'false' }} }">
-        <button @click="isOpen = !isOpen"
-                class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
-                {{ request()->routeIs('gallery.*') ? 'bg-blue-900 font-semibold' : '' }}">
-            Gallery
-            <span x-text="isOpen ? '▾' : '▸'"></span>
-        </button>
-
-        <div x-show="isOpen" x-cloak class="pl-6 space-y-1">
-            <a href="{{ route('gallery.index') }}"
-               class="block px-4 py-2 rounded hover:bg-blue-600
-               {{ request()->routeIs('gallery.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                All Photos
-            </a>
-            <a href="{{ route('gallery.create') }}"
-               class="block px-4 py-2 rounded hover:bg-blue-600
-               {{ request()->routeIs('gallery.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                Add Photos
-            </a>
-        </div>
-    </div>
-@endif
-
 
             @if(in_array('announcements', $access))
             {{-- Announcements --}}

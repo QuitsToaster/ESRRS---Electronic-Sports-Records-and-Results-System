@@ -107,7 +107,6 @@
                 'athletes' => 'Athletes',
                 'coaches' => 'Coaches',
                 'games' => 'Games',
-                'gallery' => 'Gallery',
                 'announcements' => 'Announcements',
                 'users' => 'User Management',
                 'logs' => 'Audit Logs',

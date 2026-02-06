@@ -210,14 +210,14 @@ Route::middleware('auth')->group(function() {
     | Gallery
     |--------------------------------------------------------------------------
     */
-    Route::prefix('gallery')->group(function() {
-        Route::get('/', [GalleryController::class, 'index'])->name('gallery.index');
-        Route::get('/create', [GalleryController::class, 'create'])->name('gallery.create');
-        Route::post('/', [GalleryController::class, 'store'])->name('gallery.store');
-        Route::get('/{photo}/edit', [GalleryController::class, 'edit'])->name('gallery.edit');
-        Route::put('/{photo}', [GalleryController::class, 'update'])->name('gallery.update');
-        Route::delete('/{photo}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
-    });
+    // Route::prefix('gallery')->group(function() {
+    //     Route::get('/', [GalleryController::class, 'index'])->name('gallery.index');
+    //     Route::get('/create', [GalleryController::class, 'create'])->name('gallery.create');
+    //     Route::post('/', [GalleryController::class, 'store'])->name('gallery.store');
+    //     Route::get('/{photo}/edit', [GalleryController::class, 'edit'])->name('gallery.edit');
+    //     Route::put('/{photo}', [GalleryController::class, 'update'])->name('gallery.update');
+    //     Route::delete('/{photo}', [GalleryController::class, 'destroy'])->name('gallery.destroy');
+    // });
 
     /*
     |--------------------------------------------------------------------------
