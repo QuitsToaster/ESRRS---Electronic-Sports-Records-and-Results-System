@@ -47,12 +47,11 @@
                     }
                 @endphp
 
-                {{-- GAME CARD --}}
-<div onclick="window.location.href='{{ route('viewer.game.modal', $game->id) }}'"
-     class="group cursor-pointer bg-white overflow-hidden relative
-     shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl
-     {{ $winner ? 'ring-2 ring-yellow-400' : '' }}">
-
+                {{-- GAME CARD (NO CLICK / NO REDIRECT) --}}
+                <div
+                    class="bg-white overflow-hidden relative
+                           shadow-md transition-all duration-300
+                           {{ $winner ? 'ring-2 ring-yellow-400' : '' }}">
 
                     {{-- STATUS --}}
                     <span class="absolute top-3 right-3 z-20 px-3 py-1 rounded-full text-xs font-semibold {{ $statusClass }}">
@@ -66,8 +65,7 @@
                         <div class="relative overflow-hidden bg-black h-32 md:h-full
                             {{ $isWinnerA ? 'ring-4 ring-yellow-400' : '' }}">
                             @if($divisionA && $divisionA->logo)
-                                <div class="absolute inset-0 bg-cover bg-center
-                                    transition-transform duration-500 group-hover:scale-110"
+                                <div class="absolute inset-0 bg-cover bg-center"
                                      style="background-image:url('{{ asset('storage/' . $divisionA->logo) }}')"></div>
                             @endif
 
@@ -97,8 +95,7 @@
                         <div class="relative overflow-hidden bg-black h-32 md:h-full
                             {{ $isWinnerB ? 'ring-4 ring-yellow-400' : '' }}">
                             @if($divisionB && $divisionB->logo)
-                                <div class="absolute inset-0 bg-cover bg-center
-                                    transition-transform duration-500 group-hover:scale-110"
+                                <div class="absolute inset-0 bg-cover bg-center"
                                      style="background-image:url('{{ asset('storage/' . $divisionB->logo) }}')"></div>
                             @endif
 
@@ -113,7 +110,6 @@
                     {{-- TEAM NAMES --}}
                     <div class="grid grid-cols-3 text-center py-2 bg-gray-100"
                          style="font-family: 'Teko', sans-serif;">
-
                         <span class="font-semibold {{ $isWinnerA ? 'text-yellow-600' : '' }}">
                             {{ $game->team_a }}
                         </span>
@@ -129,7 +125,5 @@
         </div>
     </div>
 </div>
-
-
 
 @endsection

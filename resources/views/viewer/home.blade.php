@@ -562,7 +562,7 @@ function closePrivacyBanner() {
         <div class="text-center mb-12">
             <h2 class="text-4xl md:text-7xl font-bold text-white tracking-widest uppercase"
                 style="font-family: 'Teko', sans-serif;">
-                Live Games
+                Ongoing Games
             </h2>
             <p class="text-gray-300 mt-2 text-sm md:text-lg">
                 Ongoing matches happening right now
@@ -571,7 +571,7 @@ function closePrivacyBanner() {
 
         @if ($liveGames->isEmpty())
             <p class="text-center text-gray-300 text-sm">
-                No live games at the moment.
+                No ongoing games at the moment.
             </p>
         @else
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -583,15 +583,15 @@ function closePrivacyBanner() {
                         $divisionB = \App\Models\Division::where('name', $game->team_b)->first();
                     @endphp
 
-                    {{-- GAME CARD --}}
-                    <a href="{{ route('viewer.game.modal', $game->id) }}"
-                       class="group block cursor-pointer bg-white shadow-xl overflow-hidden relative
-                              transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
+                    {{-- GAME CARD (NO CLICK / NO REDIRECT) --}}
+                    <div
+                        class="group bg-white shadow-xl overflow-hidden relative
+                               transition-all duration-300">
 
                         {{-- LIVE BADGE --}}
                         <span class="absolute top-3 right-3 z-20 px-3 py-1 rounded-full
                                      text-xs font-bold bg-red-600 text-white animate-pulse">
-                            LIVE
+                            Ongoing
                         </span>
 
                         {{-- MATCH LAYOUT --}}
@@ -600,8 +600,7 @@ function closePrivacyBanner() {
                             {{-- TEAM A --}}
                             <div class="relative overflow-hidden bg-black h-32 md:h-full">
                                 @if($divisionA && $divisionA->logo)
-                                    <div class="absolute inset-0 bg-cover bg-center
-                                                transition-transform duration-500 group-hover:scale-110"
+                                    <div class="absolute inset-0 bg-cover bg-center"
                                          style="background-image:url('{{ asset('storage/' . $divisionA->logo) }}')"></div>
                                 @else
                                     <div class="absolute inset-0 flex items-center justify-center text-white">
@@ -633,8 +632,7 @@ function closePrivacyBanner() {
                             {{-- TEAM B --}}
                             <div class="relative overflow-hidden bg-black h-32 md:h-full">
                                 @if($divisionB && $divisionB->logo)
-                                    <div class="absolute inset-0 bg-cover bg-center
-                                                transition-transform duration-500 group-hover:scale-110"
+                                    <div class="absolute inset-0 bg-cover bg-center"
                                          style="background-image:url('{{ asset('storage/' . $divisionB->logo) }}')"></div>
                                 @else
                                     <div class="absolute inset-0 flex items-center justify-center text-white">
@@ -652,7 +650,7 @@ function closePrivacyBanner() {
                             <span class="font-semibold">{{ $game->team_b }}</span>
                         </div>
 
-                    </a>
+                    </div>
                 @endforeach
             </div>
         @endif
@@ -660,7 +658,8 @@ function closePrivacyBanner() {
 </section>
 
 
-{{-- Latest Gallery Highlight --}}
+
+<!-- {{-- Latest Gallery Highlight --}}
 @php
     use App\Models\GalleryPhoto;
 
@@ -837,7 +836,7 @@ function closePrivacyBanner() {
         </div>
     </div>
 </section>
-@endif
+@endif -->
 
 
 
@@ -851,7 +850,7 @@ function showSlide(index){
 setInterval(()=>{ current=(current+1)%slides.length; showSlide(current); },5000);
 </script>
 
-{{-- Gallery Modal JS --}}
+<!-- {{-- Gallery Modal JS --}}
 <script>
 const photosData = @json($photos ?? []);
 let currentPhotoIndex = 0;
@@ -895,6 +894,6 @@ function closePhotoModal(){
     currentPhotoIndex=0;
     currentPhotoSet=null;
 }
-</script>
+</script> -->
 
 @endsection
