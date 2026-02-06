@@ -173,13 +173,15 @@ function closePrivacyBanner() {
 </section>
 
 
-            {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
+          {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
 <section
     x-data="{
+        activeTab: 'regular',
         open: false,
         division: null,
         medals: { gold: [], silver: [], bronze: [] },
 
+        switchTab(tab) { this.activeTab = tab },
         openModal(div, results) {
             this.division = div;
             this.medals = {
@@ -193,229 +195,106 @@ function closePrivacyBanner() {
     class="order-1 lg:order-2 flex flex-col justify-start h-full"
 >
     <div class="relative w-full h-full">
-
         {{-- Medal Tally Background --}}
         <div class="relative bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 overflow-hidden shadow-lg h-full">
-
-            {{-- Background Image --}}
             <div class="absolute inset-0">
-                <img src="{{ asset('storage/medalbg.jpg') }}"
-                     class="w-full h-full object-cover brightness-75 blur-sm">
+                <img src="{{ asset('storage/medalbg.jpg') }}" class="w-full h-full object-cover brightness-75 blur-sm">
                 <div class="absolute inset-0 bg-black/30"></div>
             </div>
 
-            {{-- Scrollable Content --}}
             <div class="relative px-6 py-6 max-h-[600px] overflow-y-auto overflow-x-hidden">
 
-                {{-- Header --}}
-                <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px]
-                            items-center mb-6 text-white sticky top-0
-                            bg-black/20 backdrop-blur-md px-6 py-3
-                            rounded-xl max-w-6xl mx-auto z-10">
-                    <div></div>
-                    <h2 class="text-3xl font-bold">Medal Tally</h2>
-                    <div class="grid grid-cols-3 text-center font-semibold text-lg">
-                        <span class="text-yellow-400">Gold</span>
-                        <span class="text-gray-300">Silver</span>
-                        <span class="text-orange-400">Bronze</span>
-                    </div>
-                    <div class="text-center text-4xl font-bold text-red-600">Total</div>
+                {{-- Tabs --}}
+                <div class="flex gap-4 mb-6 text-white font-semibold">
+                    <button
+                        :class="{'bg-black/40': activeTab==='regular','bg-black/20': activeTab!=='regular'}"
+                        class="px-4 py-2 rounded"
+                        @click="switchTab('regular')">Regular</button>
+                    <button
+                        :class="{'bg-black/40': activeTab==='para','bg-black/20': activeTab!=='para'}"
+                        class="px-4 py-2 rounded"
+                        @click="switchTab('para')">Para Games</button>
                 </div>
 
-                {{-- Rows --}}
+                {{-- Medal Rows --}}
                 <div class="space-y-4 md:space-y-6">
-                    @foreach($medalTally as $index => $division)
 
-                        {{-- DESKTOP ROW --}}
-                        <div
-                            @click='openModal(
-                                @json($division->only(["id","name"])),
-                                @json($division->results)
-                            )'
-                            class="hidden md:grid grid-cols-[40px_1fr_420px_96px]
-                                   items-center p-6 bg-white/10 backdrop-blur-md
-                                   rounded-xl shadow-lg cursor-pointer
-                                   hover:scale-[1.01] hover:shadow-2xl transition
-                                   max-w-6xl mx-auto"
-                        >
-                            <div class="text-white font-bold text-lg text-center">
-                                {{ $index + 1 }}
-                            </div>
-
-                            <div class="flex items-center gap-4">
-                            @if($division->logo)
-                                <img src="{{ asset('storage/' . $division->logo) }}"
-                                     class="w-12 h-12 object-cover rounded-full border border-white/30">
-                            @else
-                                <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold">
-                                    {{ strtoupper(substr($division->name ?? 'NA',0,2)) }}
-                                </div>
-                            @endif
-                            <span class="text-white font-semibold text-lg">{{ $division->name ?? 'Unknown' }}</span>
+                    {{-- Regular Medal Tally --}}
+                    <template x-if="activeTab === 'regular'">
+                        <div>
+                            @foreach($medalTally as $index => $division)
+                                @include('viewer.partials.medal-row', ['division' => $division, 'index' => $index])
+                            @endforeach
                         </div>
+                    </template>
 
-                            <div class="grid grid-cols-3 text-center font-extrabold text-4xl">
-                                <span class="text-yellow-400">{{ $division->gold }}</span>
-                                <span class="text-gray-300">{{ $division->silver }}</span>
-                                <span class="text-orange-400">{{ $division->bronze }}</span>
-                            </div>
-
-                            <div class="relative text-center">
-                                <div class="absolute top-0 bottom-0 left-0 w-[500px] -z-10
-                                        bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
-                                        opacity-90"></div>
-                                <div class="relative text-red-700 font-extrabold text-6xl">
-                                    {{ $division->total }}
-                                </div>
-                            </div>
+                    {{-- Para Medal Tally --}}
+                    <template x-if="activeTab === 'para'">
+                        <div>
+                            @foreach($medalTallyPara as $index => $division)
+                                @include('viewer.partials.medal-row', ['division' => $division, 'index' => $index])
+                            @endforeach
                         </div>
+                    </template>
 
-                        {{-- MOBILE CARD --}}
-                        <div
-                            @click='openModal(
-                                @json($division->only(["id","name"])),
-                                @json($division->results)
-                            )'
-                            class="md:hidden bg-white/10 backdrop-blur-md
-                                   rounded-xl shadow-lg p-4 space-y-4
-                                   cursor-pointer hover:shadow-xl transition
-                                   max-w-md mx-auto"
-                        >
-                            <div class="flex items-center gap-3">
-                            <span class="text-white font-bold text-lg">#{{ $index + 1 }}</span>
-                            @if($division->logo)
-                                <img src="{{ asset('storage/' . $division->logo) }}"
-                                     class="w-10 h-10 object-cover rounded-full border border-white/30">
-                            @endif
-                            <span class="text-white font-semibold text-base truncate">
-                                {{ $division->name ?? 'Unknown' }}
-                            </span>
-                        </div>
-
-                            <div class="grid grid-cols-3 text-center">
-                                <div class="text-yellow-400 text-2xl font-bold">{{ $division->gold }}</div>
-                                <div class="text-gray-300 text-2xl font-bold">{{ $division->silver }}</div>
-                                <div class="text-orange-400 text-2xl font-bold">{{ $division->bronze }}</div>
-                            </div>
-
-                            <div class="relative rounded-lg overflow-hidden">
-                            <div class="absolute inset-0
-                                        bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500
-                                        opacity-90"></div>
-                            <div class="relative text-center text-red-700 font-extrabold text-4xl py-2">
-                                Total: {{ $division->total }}
-                            </div>
-                        </div>
-                        </div>
-
-                    @endforeach
                 </div>
+
             </div>
         </div>
     </div>
 
     {{-- ================= MODAL ================= --}}
-<div
-    x-show="open"
-    x-transition
-    @keydown.escape.window="open = false"
-    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
->
     <div
-        @click.away="open = false"
-        class="bg-white rounded-xl shadow-xl
-               max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6
-               border border-gray-200"
+        x-show="open"
+        x-transition
+        @keydown.escape.window="open = false"
+        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
     >
-        {{-- Header --}}
-        <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
-            <h3 class="text-2xl font-semibold text-gray-800"
-                x-text="division?.name + ' — Medal Details'"></h3>
-            <button @click="open = false" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
-        </div>
+        <div @click.away="open = false"
+             class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-200">
+             {{-- Header --}}
+             <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
+                <h3 class="text-2xl font-semibold text-gray-800" x-text="division?.name + ' — Medal Details'"></h3>
+                <button @click="open = false" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
+             </div>
 
-        {{-- Medal Sections --}}
-<template x-for="(list, type) in medals" :key="type">
-    <div class="mb-6">
-        <h4 class="text-lg font-semibold mb-3 flex items-center gap-2"
-            :class="{
-                'text-yellow-600': type === 'gold',
-                'text-gray-600': type === 'silver',
-                'text-orange-500': type === 'bronze'
-            }">
-            <span x-text="type.toUpperCase()"></span>
-            <span class="text-sm text-gray-400" x-text="list.length + ' medals'"></span>
-        </h4>
+             {{-- Medal Sections --}}
+             <template x-for="(list, type) in medals" :key="type">
+                <div class="mb-6">
+                    <h4 class="text-lg font-semibold mb-3 flex items-center gap-2"
+                        :class="{
+                            'text-yellow-600': type === 'gold',
+                            'text-gray-600': type === 'silver',
+                            'text-orange-500': type === 'bronze'
+                        }">
+                        <span x-text="type.toUpperCase()"></span>
+                        <span class="text-sm text-gray-400" x-text="list.length + ' medals'"></span>
+                    </h4>
 
-        <div class="space-y-2">
-            <template x-for="m in list" :key="m.id">
-                <div
-                    class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
+                    <div class="space-y-2">
+                        <template x-for="m in list" :key="m.id">
+                            <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
+                                <div class="flex justify-between items-center">
+                                    <strong class="text-gray-800" x-text="m.event?.name ?? 'Event'"></strong>
+                                    <span class="text-gray-500 text-sm font-bold" x-text="m.sport?.name ?? 'Sport'"></span>
+                                </div>
+                                <div class="flex flex-wrap text-xs text-gray-500 gap-3 mt-1">
+                                    <span>Level: <strong x-text="m.event?.age_group ?? 'N/A'"></strong></span>
+                                    <span>Category: <strong x-text="m.event?.category ?? 'N/A'"></strong></span>
+                                    <span>Schedule: <strong x-text="m.event?.start_date ? new Date(m.event.start_date).toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}) : 'N/A'"></strong></span>
+                                    <span>Award Date: <strong x-text="m.event?.award_date ? new Date(m.event.award_date).toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}) : 'N/A'"></strong></span>
+                                </div>
+                            </div>
+                        </template>
 
-                    {{-- Header --}}
-                    <div class="flex justify-between items-center">
-                        <strong class="text-gray-800"
-                                x-text="m.event?.name ?? 'Event'"></strong>
-
-                        <span class="text-gray-500 text-sm font-bold"
-                              x-text="m.sport?.name ?? 'Sport'"></span>
-                    </div>
-
-                    {{-- Details --}}
-                    <div class="flex flex-wrap text-xs text-gray-500 gap-3 mt-1">
-                        <span>
-                            Level:
-                            <strong x-text="m.event?.age_group ?? 'N/A'"></strong>
-                        </span>
-
-                        <span>
-                            Category:
-                            <strong x-text="m.event?.category ?? 'N/A'"></strong>
-                        </span>
-
-                        <span>
-                            Schedule:
-                            <strong
-                                x-text="m.event?.start_date
-                                    ? new Date(m.event.start_date)
-                                        .toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: '2-digit',
-                                            year: 'numeric'
-                                        })
-                                    : 'N/A'">
-                            </strong>
-                        </span>
-
-                        <span>
-                            Award Date:
-                            <strong
-                                x-text="m.event?.award_date
-                                    ? new Date(m.event.award_date)
-                                        .toLocaleDateString('en-US', {
-                                            month: 'short',
-                                            day: '2-digit',
-                                            year: 'numeric'
-                                        })
-                                    : 'N/A'">
-                            </strong>
-                        </span>
+                        <p x-show="list.length === 0" class="text-gray-400 italic text-sm">No medals</p>
                     </div>
                 </div>
-            </template>
-
-            <p x-show="list.length === 0"
-               class="text-gray-400 italic text-sm">
-                No medals
-            </p>
+             </template>
         </div>
     </div>
-</template>
-
-    </div>
-</div>
-
 </section>
+
 
             {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES ================= --}}
 <section

@@ -21,66 +21,46 @@ class ViewerController extends Controller
 public function home()
 {
     // ================= EVENTS =================
-    $allUpcomingEvents = Event::with('sport')
-        ->orderBy('start_date')
-        ->get();
-
-    $latestUpcomingEvents = Event::with('sport')
-        ->orderBy('start_date')
-        ->take(2)
-        ->get();
+    $allUpcomingEvents = Event::with('sport')->orderBy('start_date')->get();
+    $latestUpcomingEvents = Event::with('sport')->orderBy('start_date')->take(2)->get();
 
     // ================= GAMES =================
-    $allUpcomingGames = Game::with('event')
-        ->where('status', 'Upcoming')
-        ->orderBy('game_time')
-        ->get();
-
-    $latestUpcomingGames = Game::with('event')
-        ->where('status', 'Upcoming')
-        ->orderBy('game_time')
-        ->take(2)
-        ->get();
-
-    $liveGames = Game::with('event')
-        ->where('status', 'Ongoing')
-        ->orderBy('game_time')
-        ->get();
+    $allUpcomingGames = Game::with('event')->where('status', 'Upcoming')->orderBy('game_time')->get();
+    $latestUpcomingGames = Game::with('event')->where('status', 'Upcoming')->orderBy('game_time')->take(2)->get();
+    $liveGames = Game::with('event')->where('status', 'Ongoing')->orderBy('game_time')->get();
 
     // ================= ANNOUNCEMENTS =================
-    $allAnnouncements = Announcement::latest()->get();     // 🔍 for search
-    $latestAnnouncements = Announcement::latest()->take(2)->get(); // 👀 display
+    $allAnnouncements = Announcement::latest()->get();
+    $latestAnnouncements = Announcement::latest()->take(2)->get();
 
     // ================= MEDAL TALLY =================
     $medalTally = \App\Models\Division::withCount([
-        'resultsDivisions as gold'   => fn ($q) => $q->where('medal', 'Gold'),
-        'resultsDivisions as silver' => fn ($q) => $q->where('medal', 'Silver'),
-        'resultsDivisions as bronze' => fn ($q) => $q->where('medal', 'Bronze'),
+        'resultsDivisions as gold'   => fn ($q) => $q->where('medal', 'Gold')->whereHas('sport', fn($s) => $s->where('type','regular')),
+        'resultsDivisions as silver' => fn ($q) => $q->where('medal', 'Silver')->whereHas('sport', fn($s) => $s->where('type','regular')),
+        'resultsDivisions as bronze' => fn ($q) => $q->where('medal', 'Bronze')->whereHas('sport', fn($s) => $s->where('type','regular')),
     ])->get();
 
-    $medalTally->transform(function ($division) {
-        $division->total = $division->gold + $division->silver + $division->bronze;
+    $medalTallyPara = \App\Models\Division::withCount([
+        'resultsDivisions as gold'   => fn ($q) => $q->where('medal', 'Gold')->whereHas('sport', fn($s) => $s->where('type','para')),
+        'resultsDivisions as silver' => fn ($q) => $q->where('medal', 'Silver')->whereHas('sport', fn($s) => $s->where('type','para')),
+        'resultsDivisions as bronze' => fn ($q) => $q->where('medal', 'Bronze')->whereHas('sport', fn($s) => $s->where('type','para')),
+    ])->get();
 
-        $division->results = $division->resultsDivisions()
-            ->with([
-                'sport',
-                'event' => fn ($q) => $q->select(
-                    'id',
-                    'name',
-                    'age_group',
-                    'category',
-                    'award_date',
-                    'start_date'
-                )
-            ])
-            ->get();
-
-        return $division;
-    });
-
-    $medalTally = $medalTally
-        ->sortByDesc(fn ($d) => [$d->total, $d->gold, $d->silver, $d->bronze])
-        ->values();
+    // Transform results
+    foreach ([$medalTally, $medalTallyPara] as $collection) {
+        $collection->transform(function ($division) {
+            $division->total = $division->gold + $division->silver + $division->bronze;
+            $division->results = $division->resultsDivisions()
+                ->with([
+                    'sport',
+                    'event' => fn ($q) => $q->select(
+                        'id','name','age_group','category','award_date','start_date'
+                    )
+                ])->get();
+            return $division;
+        });
+        $collection = $collection->sortByDesc(fn ($d) => [$d->total, $d->gold, $d->silver, $d->bronze])->values();
+    }
 
     $banners = Banner::orderBy('order')->get();
 
@@ -93,6 +73,7 @@ public function home()
         'allAnnouncements',
         'latestAnnouncements',
         'medalTally',
+        'medalTallyPara',
         'banners'
     ));
 }
