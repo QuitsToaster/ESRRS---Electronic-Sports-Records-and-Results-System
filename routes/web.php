@@ -161,6 +161,19 @@ Route::middleware('auth')->group(function() {
     Route::post('games/{game}/winner', [GameController::class, 'setWinner'])->name('games.winner');
     Route::post('games/{game}/finish', [GameController::class, 'finishGame'])->name('games.finish');
 
+
+   Route::prefix('para-sports')->name('para-sports.')->group(function () {
+    Route::get('/', [SportController::class, 'paraIndex'])->name('index');
+    Route::get('/create', [SportController::class, 'paraCreate'])->name('create');
+    Route::post('/', [SportController::class, 'paraStore'])->name('store');
+    Route::get('/{sport}/edit', [SportController::class, 'paraEdit'])->name('edit');
+    Route::put('/{sport}', [SportController::class, 'paraUpdate'])->name('update');
+
+    // ✅ ADD THIS
+    Route::delete('/{sport}', [SportController::class, 'paraDestroy'])->name('destroy');
+});
+
+
     /*
     |--------------------------------------------------------------------------
     | Brackets

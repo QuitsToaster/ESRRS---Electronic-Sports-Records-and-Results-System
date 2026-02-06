@@ -304,28 +304,49 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
             @if(in_array('sports', $access))
-            {{-- Sports --}}
-            <div>
-                <button @click="openMenu = openMenu === 'sports' ? null : 'sports'"
-                        class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
-                        {{ request()->routeIs('sports.*') ? 'bg-blue-900 font-semibold' : '' }}">
-                    Sports
-                    <span x-text="openMenu === 'sports' ? '▾' : '▸'"></span>
-                </button>
-                <div x-show="openMenu === 'sports'" x-cloak class="pl-6 mt-1 space-y-1">
-                    <a href="{{ route('sports.index') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('sports.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                        All Sports
-                    </a>
-                    <a href="{{ route('sports.create') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('sports.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                        Add Sport
-                    </a>
-                </div>
-            </div>
-            @endif
+<div>
+    <button @click="openMenu = openMenu === 'sports' ? null : 'sports'"
+            class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
+            {{ request()->routeIs('sports.*') || request()->routeIs('para-sports.*') ? 'bg-blue-900 font-semibold' : '' }}">
+        Sports
+        <span x-text="openMenu === 'sports' ? '▾' : '▸'"></span>
+    </button>
+
+    <div x-show="openMenu === 'sports'" x-cloak class="pl-6 mt-1 space-y-1">
+
+        {{-- REGULAR SPORTS --}}
+        <p class="text-xs text-blue-300 uppercase px-4 mt-2">Regular Sports</p>
+
+        <a href="{{ route('sports.index') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('sports.index') ? 'bg-blue-700 font-semibold' : '' }}">
+            All Sports
+        </a>
+
+        <a href="{{ route('sports.create') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('sports.create') ? 'bg-blue-700 font-semibold' : '' }}">
+            Add Sport
+        </a>
+
+        {{-- PARA GAMES --}}
+        <p class="text-xs text-blue-300 uppercase px-4 mt-3">Para Games</p>
+
+        <a href="{{ route('para-sports.index') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('para-sports.index') ? 'bg-blue-700 font-semibold' : '' }}">
+            All Para Games
+        </a>
+
+        <a href="{{ route('para-sports.create') }}"
+           class="block px-4 py-2 rounded hover:bg-blue-600
+           {{ request()->routeIs('para-sports.create') ? 'bg-blue-700 font-semibold' : '' }}">
+            Add Para Game
+        </a>
+    </div>
+</div>
+@endif
+
 
             @if(in_array('athletes', $access))
             {{-- Athletes --}}
