@@ -58,6 +58,7 @@ class EventController extends Controller
     $request->validate([
         'sport_id'      => 'required|exists:sports,id',
         'sport_type_id' => 'required|exists:sport_types,id',
+        'status'        => 'required|in:Upcoming,Ongoing,Delayed,Finished',
         'age_group'     => 'nullable|string',
         'category'      => 'nullable|string',
         'venue'         => 'nullable|string|max:255',
@@ -74,6 +75,7 @@ class EventController extends Controller
         'sport_id'      => $request->sport_id,
         'sport_type_id' => $request->sport_type_id,
         'name'          => $sportType->type_name,
+        'status'        => $request->status,
         'age_group'     => $request->age_group,
         'category'      => $request->category,
         'venue'         => $request->venue,
@@ -135,6 +137,7 @@ class EventController extends Controller
         $request->validate([
             'sport_id'      => 'required|exists:sports,id',
             'sport_type_id' => 'required|exists:sport_types,id',
+            'status'        => 'required|in:Upcoming,Ongoing,Delayed,Finished',
             'age_group'     => 'nullable|string',
             'category'      => 'nullable|string',
             'is_ball_game' => 'nullable|boolean',
@@ -149,6 +152,7 @@ class EventController extends Controller
         $event->update([
             'sport_id'      => $request->sport_id,
             'sport_type_id' => $request->sport_type_id,
+            'status'        => $request->status,
             'age_group'     => $request->age_group,
             'category'      => $request->category,
             'is_ball_game' => $request->boolean('is_ball_game'),

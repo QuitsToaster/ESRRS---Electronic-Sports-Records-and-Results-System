@@ -51,6 +51,17 @@
     </select>
 </div>
 
+{{-- EVENT STATUS --}}
+<div>
+    <label class="block font-semibold">Event Status *</label>
+    <select name="status" required class="w-full border rounded px-3 py-2">
+        <option value="Upcoming">Upcoming</option>
+        <option value="Ongoing">Ongoing</option>
+        <option value="Delayed">Delayed</option>
+        <option value="Finished">Finished</option>
+    </select>
+</div>
+
 {{-- BALL GAME --}}
 <div class="border rounded p-4 bg-gray-50">
     <label class="flex items-center gap-2">
@@ -61,9 +72,6 @@
                class="rounded border-gray-300">
         <span class="font-semibold">This is a Ball Game</span>
     </label>
-    <p class="text-xs text-gray-500 mt-1">
-        Automatically creates a game schedule.
-    </p>
 </div>
 
 {{-- LEVEL --}}
@@ -99,15 +107,10 @@
     <input type="date" name="start_date" class="w-full border rounded px-3 py-2">
 </div>
 
-{{-- GAME TIME (BALL GAME ONLY) --}}
+{{-- GAME TIME --}}
 <div x-show="isBallGame">
     <label class="block font-semibold">Game Time</label>
-    <input type="time"
-           name="game_time"
-           class="w-full border rounded px-3 py-2">
-    <p class="text-xs text-gray-500 mt-1">
-        Used for live games and schedules.
-    </p>
+    <input type="time" name="game_time" class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- DIVISIONS --}}
