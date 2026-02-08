@@ -24,12 +24,14 @@ class Event extends Model
     'silver_division_id',
     'bronze_division_id',
     'award_date',
+    'games', 
 ];
 
     protected $casts = [
         'start_date' => 'date',
         'award_date' => 'datetime',
         'is_ball_game'  => 'boolean',
+        'games' => 'array',
     ];
 
     public function sport()

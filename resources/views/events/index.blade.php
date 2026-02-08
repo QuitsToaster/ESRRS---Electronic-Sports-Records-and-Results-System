@@ -57,12 +57,12 @@
         <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Event</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Event Type</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Participants (SDOs)</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Start Date</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Matches</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Venue</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Winners</th>
                 <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Actions</th>
@@ -73,11 +73,17 @@
             @foreach($events as $event)
                 <tr class="hover:bg-gray-50 transition align-top">
                     {{-- Status --}}
-<td class="px-4 py-3 font-semibold">
-    <form method="POST" action="{{ route('events.updateStatus', $event->id) }}">
+<td class="px-4 py-3 font-semibold" x-data="{
+        status: '{{ $event->status }}',
+        reason: '{{ $event->status_reason ?? '' }}',
+        submitForm() { $refs.statusForm.submit(); }
+    }"
+>
+    <form method="POST" action="{{ route('events.updateStatus', $event->id) }}" x-ref="statusForm">
         @csrf
 
-        <select name="status" onchange="this.form.submit()"
+        {{-- Status Dropdown --}}
+        <select name="status" x-model="status" @change="submitForm()"
                 class="px-3 py-1 rounded-full text-sm font-semibold
                     @php
                         echo match($event->status) {
@@ -88,19 +94,26 @@
                             default    => 'bg-gray-100 text-gray-600',
                         };
                     @endphp">
-            @foreach(['Upcoming','Ongoing','Delayed','Finished'] as $status)
-                <option value="{{ $status }}" {{ $event->status === $status ? 'selected' : '' }}>
-                    {{ $status }}
-                </option>
+            @foreach(['Upcoming','Ongoing','Delayed','Finished'] as $s)
+                <option value="{{ $s }}" :selected="status === '{{ $s }}'">{{ $s }}</option>
             @endforeach
         </select>
 
-        {{-- Hidden reason field for Delayed --}}
-        @if($event->status === 'Delayed')
-            <input type="hidden" name="status_reason" value="{{ $event->status_reason }}">
-        @endif
+        {{-- Reason Text Field (only when Delayed) --}}
+        <template x-if="status === 'Delayed'">
+            <input type="text" name="status_reason" x-model="reason" 
+                   placeholder="Enter reason for delay"
+                   class="ml-2 px-2 py-1 rounded border border-yellow-300 text-sm"
+                   @change="submitForm()">
+        </template>
     </form>
 </td>
+
+
+{{-- Start Date --}}
+                    <td class="px-4 py-3 text-gray-700">
+                        {{ $event->start_date ? $event->start_date->format('M d, Y') : 'TBA' }}
+                    </td>
 
 
                     {{-- Sport --}}
@@ -123,25 +136,20 @@
                         {{ $event->category ?? 'TBA' }}
                     </td>
 
-                    {{-- Participants (DIVISIONS / SDOs) --}}
-                    <td class="px-4 py-3 text-gray-700">
-                        @if($event->divisions->isNotEmpty())
-                            <div class="flex flex-wrap gap-1">
-                                @foreach($event->divisions as $division)
-                                    <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full font-medium">
-                                        {{ $division->name }}
-                                    </span>
-                                @endforeach
-                            </div>
-                        @else
-                            <span class="text-gray-400 italic">No divisions assigned</span>
-                        @endif
-                    </td>
+                   {{-- Match --}}
+<td class="px-4 py-3 text-gray-700">
+    @if(!empty($event->games) && is_array($event->games))
+        <ul class="list-none p-0 m-0">
+            @foreach($event->games as $game)
+                <li><strong>Game {{ $loop->iteration }}:</strong> {{ $game }}</li>
+            @endforeach
+        </ul>
+    @else
+        TBA
+    @endif
+</td>
 
-                    {{-- Start Date --}}
-                    <td class="px-4 py-3 text-gray-700">
-                        {{ $event->start_date ? $event->start_date->format('M d, Y') : 'TBA' }}
-                    </td>
+
 
                     {{-- Venue --}}
                     <td class="px-4 py-3 text-gray-700">

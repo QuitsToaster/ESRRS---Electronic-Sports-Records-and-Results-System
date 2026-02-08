@@ -157,25 +157,26 @@ public function home()
 
     // JSON for AlpineJS modal
     $eventsJson = $events->map(function ($event) {
-        return [
-            'id'           => $event->id,
-            'name'         => $event->name,
-            'start_date'   => $event->start_date?->toDateString(),
-            'venue'        => $event->venue,
-            'age_group'    => $event->age_group,
-            'category'     => $event->category,
-            'is_ball_game' => (bool) $event->is_ball_game, // ✅
-            'game_id'      => $event->games->first()?->id, // ✅
-            'sport'        => $event->sport ? ['name' => $event->sport->name] : null,
-            'divisions'    => $event->divisions->map(fn ($d) => [
-                'id' => $d->id,
-                'name' => $d->name
-            ])->toArray(),
-            'goldWinner'   => $event->goldWinner ? ['name' => $event->goldWinner->name] : null,
-            'silverWinner' => $event->silverWinner ? ['name' => $event->silverWinner->name] : null,
-            'bronzeWinner' => $event->bronzeWinner ? ['name' => $event->bronzeWinner->name] : null,
-        ];
-    });
+    return [
+        'id'           => $event->id,
+        'name'         => $event->name,
+        'start_date'   => $event->start_date?->toDateString(),
+        'venue'        => $event->venue,
+        'age_group'    => $event->age_group,
+        'category'     => $event->category,
+        'is_ball_game' => (bool) $event->is_ball_game,
+        'games'        => $event->games ?? [], // ✅ treat as array
+        'sport'        => $event->sport ? ['name' => $event->sport->name] : null,
+        'divisions'    => $event->divisions->map(fn ($d) => [
+            'id' => $d->id,
+            'name' => $d->name
+        ])->toArray(),
+        'goldWinner'   => $event->goldWinner ? ['name' => $event->goldWinner->name] : null,
+        'silverWinner' => $event->silverWinner ? ['name' => $event->silverWinner->name] : null,
+        'bronzeWinner' => $event->bronzeWinner ? ['name' => $event->bronzeWinner->name] : null,
+    ];
+});
+
 
     $gallery_photos = GalleryPhoto::orderBy('created_at', 'desc')->get();
 

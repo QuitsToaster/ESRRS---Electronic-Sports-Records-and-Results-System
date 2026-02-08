@@ -65,6 +65,8 @@ class EventController extends Controller
         'start_date'    => 'nullable|date',
         'divisions'     => 'required|array|min:1',
         'divisions.*'   => 'exists:divisions,id',
+        'games'   => 'nullable|array',
+        'games.*' => 'nullable|string|max:255',
     ]);
 
     $sport     = Sport::findOrFail($request->sport_id);
@@ -84,6 +86,7 @@ class EventController extends Controller
         'category'      => $request->category,
         'venue'         => $request->venue,
         'start_date'    => $request->start_date,
+        'games'         => array_values(array_filter($request->games ?? [])),
     ]);
 
     $event->divisions()->sync($request->divisions);
@@ -120,11 +123,13 @@ class EventController extends Controller
             'status'        => 'required|in:Upcoming,Ongoing,Delayed,Finished',
             'age_group'     => 'nullable|string',
             'category'      => 'nullable|string',
-            'is_ball_game' => 'nullable|boolean',
+            'is_ball_game'  => 'nullable|boolean',
             'venue'         => 'nullable|string|max:255',
             'start_date'    => 'nullable|date',
             'divisions'     => 'required|array|min:1',
             'divisions.*'   => 'exists:divisions,id',
+            'games'         => 'nullable|array',
+            'games.*'       => 'nullable|string|max:255',
         ]);
 
         $oldValues = $event->load('divisions')->toArray();
@@ -135,9 +140,10 @@ class EventController extends Controller
             'status'        => $request->status,
             'age_group'     => $request->age_group,
             'category'      => $request->category,
-            'is_ball_game' => $request->boolean('is_ball_game'),
+            'is_ball_game'  => $request->boolean('is_ball_game'),
             'venue'         => $request->venue,
             'start_date'    => $request->start_date,
+            'games'         => array_values(array_filter($request->games ?? [])), // 🔥 Save games here
         ]);
 
         $event->divisions()->sync($request->divisions);
