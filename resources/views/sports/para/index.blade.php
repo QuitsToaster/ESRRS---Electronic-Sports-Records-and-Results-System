@@ -3,12 +3,28 @@
 @section('page-title', 'Para Games')
 
 @section('content')
+
+{{-- Tabs --}}
+<div class="mb-6 border-b border-gray-200">
+    <nav class="flex gap-6">
+        <a href="{{ route('sports.index') }}"
+           class="pb-3 border-b-2 font-semibold
+                  border-transparent text-gray-500 hover:text-gray-700">
+            Regular Sports
+        </a>
+
+        <a href="{{ route('para-sports.index') }}"
+           class="pb-3 border-b-2 font-semibold
+                  border-blue-600 text-blue-600">
+            Para Games
+        </a>
+    </nav>
+</div>
+
 <div class="flex justify-between items-center mb-4">
-    <div>
-        <p class="text-sm text-gray-600 mt-1">
-            List of para games available in the system.
-        </p>
-    </div>
+    <p class="text-sm text-gray-600">
+        List of para games available in the system.
+    </p>
 
     <a href="{{ route('para-sports.create') }}"
        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
@@ -27,13 +43,13 @@
     <table class="min-w-full border-collapse">
         <thead class="bg-gray-100 border-b border-gray-200">
             <tr>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
                     Para Game Name
                 </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-600 uppercase">
+                <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
                     Type of Game
                 </th>
-                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-600 uppercase">
+                <th class="px-6 py-3 text-right text-xs font-semibold uppercase">
                     Actions
                 </th>
             </tr>
@@ -42,13 +58,12 @@
         <tbody class="divide-y divide-gray-100">
             @forelse($sports as $sport)
                 <tr class="hover:bg-gray-50 transition">
-
-                    <!-- Para Game Name -->
+                    {{-- Para Game Name --}}
                     <td class="px-6 py-4 font-medium text-gray-800">
                         {{ $sport->name }}
                     </td>
 
-                    <!-- Type of Game -->
+                    {{-- Type of Game --}}
                     <td class="px-6 py-4">
                         @if($sport->types->count())
                             <div class="flex flex-wrap gap-2">
@@ -67,7 +82,7 @@
                         @endif
                     </td>
 
-                    <!-- Actions -->
+                    {{-- Actions --}}
                     <td class="px-6 py-4 text-right whitespace-nowrap">
                         <a href="{{ route('para-sports.edit', $sport->id) }}"
                            class="text-blue-600 hover:text-blue-800 font-medium mr-3">
@@ -86,7 +101,6 @@
                             </button>
                         </form>
                     </td>
-
                 </tr>
             @empty
                 <tr>

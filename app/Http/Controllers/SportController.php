@@ -10,16 +10,20 @@ use Illuminate\Support\Facades\Auth;
 class SportController extends Controller
 {
     /**
-     * Display a listing of the sports.
+     * Display Regular Sports (Elementary + Secondary)
      */
-    public function index()
+    public function index(Request $request)
     {
-        $sports = Sport::with('types')->orderBy('name')->get();
+        $sports = Sport::with('types')
+            ->whereIn('division', ['Elementary', 'Secondary'])
+            ->orderBy('name')
+            ->get();
+
         return view('sports.index', compact('sports'));
     }
 
     /**
-     * Show the form for creating a new sport.
+     * Show the form for creating a new regular sport
      */
     public function create()
     {
@@ -27,17 +31,19 @@ class SportController extends Controller
     }
 
     /**
-     * Store a newly created sport in the database.
+     * Store a newly created regular sport
      */
     public function store(Request $request)
     {
         $request->validate([
             'name' => 'required|string|unique:sports,name',
-            'type_of_game.*' => 'nullable|string', // validate array items
+            'division' => 'required|in:Elementary,Secondary',
+            'type_of_game.*' => 'nullable|string',
         ]);
 
         $sport = Sport::create([
-            'name' => $request->name,
+            'name'     => $request->name,
+            'division' => $request->division,
         ]);
 
         if ($request->type_of_game) {
@@ -48,21 +54,21 @@ class SportController extends Controller
             }
         }
 
-        // Audit log
         AuditLog::create([
             'model_type' => 'Sport',
-            'model_id' => $sport->id,
-            'user_id' => Auth::id(),
+            'model_id'   => $sport->id,
+            'user_id'    => Auth::id(),
             'old_values' => null,
             'new_values' => json_encode($sport->toArray()),
-            'action' => 'Created Sport: ' . $sport->name,
+            'action'     => 'Created Sport: ' . $sport->name,
         ]);
 
-        return redirect()->route('sports.index')->with('success', 'Sport added successfully!');
+        return redirect()->route('sports.index')
+            ->with('success', 'Sport added successfully!');
     }
 
     /**
-     * Show the form for editing the specified sport.
+     * Edit regular sport
      */
     public function edit($id)
     {
@@ -71,7 +77,7 @@ class SportController extends Controller
     }
 
     /**
-     * Update the specified sport in the database.
+     * Update regular sport
      */
     public function update(Request $request, $id)
     {
@@ -79,16 +85,17 @@ class SportController extends Controller
 
         $request->validate([
             'name' => 'required|string|unique:sports,name,' . $sport->id,
+            'division' => 'required|in:Elementary,Secondary',
             'type_of_game.*' => 'nullable|string',
         ]);
 
         $oldValues = $sport->toArray();
 
         $sport->update([
-            'name' => $request->name,
+            'name'     => $request->name,
+            'division' => $request->division,
         ]);
 
-        // Delete old types and add new
         $sport->types()->delete();
         if ($request->type_of_game) {
             foreach ($request->type_of_game as $type) {
@@ -98,144 +105,128 @@ class SportController extends Controller
             }
         }
 
-        // Audit log
         AuditLog::create([
             'model_type' => 'Sport',
-            'model_id' => $sport->id,
-            'user_id' => Auth::id(),
+            'model_id'   => $sport->id,
+            'user_id'    => Auth::id(),
             'old_values' => json_encode($oldValues),
             'new_values' => json_encode($sport->toArray()),
-            'action' => 'Updated Sport: ' . $sport->name,
+            'action'     => 'Updated Sport: ' . $sport->name,
         ]);
 
-        return redirect()->route('sports.index')->with('success', 'Sport updated successfully!');
+        return redirect()->route('sports.index')
+            ->with('success', 'Sport updated successfully!');
     }
 
     /**
-     * Remove the specified sport from the database.
+     * Delete regular sport
      */
     public function destroy($id)
     {
         $sport = Sport::findOrFail($id);
-        $oldValues = $sport->toArray();
 
+        if ($sport->division === 'Paragames') {
+            abort(403, 'Use Para Games module to delete this sport.');
+        }
+
+        $oldValues = $sport->toArray();
         $sport->delete();
 
-        // Audit log for deletion
         AuditLog::create([
             'model_type' => 'Sport',
-            'model_id' => $sport->id,
-            'user_id' => Auth::id(),
+            'model_id'   => $sport->id,
+            'user_id'    => Auth::id(),
             'old_values' => json_encode($oldValues),
             'new_values' => null,
-            'action' => 'Deleted Sport: '.$sport->name,
+            'action'     => 'Deleted Sport: ' . $sport->name,
         ]);
 
-        return redirect()->route('sports.index')->with('success', 'Sport deleted successfully!');
+        return redirect()->route('sports.index')
+            ->with('success', 'Sport deleted successfully!');
     }
 
-     /*
+    /*
     |--------------------------------------------------------------------------
-    | Para Games
+    | Para Games (REUSED AS-IS)
     |--------------------------------------------------------------------------
     */
 
     public function paraIndex()
-{
-    $sports = Sport::with('types')
-        ->where('type', 'para')
-        ->orderBy('name')
-        ->get();
+    {
+        $sports = Sport::with('types')
+            ->where('division', 'Paragames')
+            ->orderBy('name')
+            ->get();
 
-    return view('sports.para.index', compact('sports'));
-}
+        return view('sports.para.index', compact('sports'));
+    }
 
+    public function paraCreate()
+    {
+        return view('sports.para.create');
+    }
 
-public function paraCreate()
-{
-    return view('sports.para.create');
-}
+    public function paraStore(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|unique:sports,name',
+            'type_of_game.*' => 'nullable|string',
+        ]);
 
-public function paraStore(Request $request)
-{
-    $request->validate([
-        'name' => 'required|string|max:255|unique:sports,name',
-        'type_of_game.*' => 'nullable|string|max:255',
-    ]);
+        $sport = Sport::create([
+            'name'     => $request->name,
+            'division' => 'Paragames',
+        ]);
 
-    $sport = Sport::create([
-        'name' => $request->name,
-        'type' => 'para',
-    ]);
-
-    // Save types of game
-    if ($request->type_of_game) {
-        foreach ($request->type_of_game as $type) {
-            if ($type) {
-                $sport->types()->create([
-                    'type_name' => $type,
-                ]);
+        if ($request->type_of_game) {
+            foreach ($request->type_of_game as $type) {
+                if ($type) {
+                    $sport->types()->create(['type_name' => $type]);
+                }
             }
         }
+
+        return redirect()->route('para-sports.index')
+            ->with('success', 'Para Game added successfully.');
     }
 
-    return redirect()->route('para-sports.index')
-        ->with('success', 'Para Game added successfully.');
-}
+    public function paraEdit(Sport $sport)
+    {
+        return view('sports.para.edit', compact('sport'));
+    }
 
+    public function paraUpdate(Request $request, Sport $sport)
+    {
+        $request->validate([
+            'name' => 'required|string|unique:sports,name,' . $sport->id,
+            'type_of_game.*' => 'nullable|string',
+        ]);
 
+        $sport->update(['name' => $request->name]);
 
-public function paraEdit(Sport $sport)
-{
-    return view('sports.para.edit', compact('sport'));
-}
-
-public function paraUpdate(Request $request, Sport $sport)
-{
-    $request->validate([
-        'name' => 'required|string|max:255|unique:sports,name,' . $sport->id,
-        'type_of_game.*' => 'nullable|string|max:255',
-    ]);
-
-    $sport->update([
-        'name' => $request->name,
-    ]);
-
-    // Reset old types
-    $sport->types()->delete();
-
-    // Save new types
-    if ($request->type_of_game) {
-        foreach ($request->type_of_game as $type) {
-            if ($type) {
-                $sport->types()->create([
-                    'type_name' => $type,
-                ]);
+        $sport->types()->delete();
+        if ($request->type_of_game) {
+            foreach ($request->type_of_game as $type) {
+                if ($type) {
+                    $sport->types()->create(['type_name' => $type]);
+                }
             }
         }
+
+        return redirect()->route('para-sports.index')
+            ->with('success', 'Para Game updated successfully.');
     }
 
-    return redirect()->route('para-sports.index')
-        ->with('success', 'Para Game updated successfully.');
-}
+    public function paraDestroy(Sport $sport)
+    {
+        if ($sport->division !== 'Paragames') {
+            abort(403);
+        }
 
-public function paraDestroy(Sport $sport)
-{
-    // Safety check (optional but recommended)
-    if ($sport->type !== 'para') {
-        abort(403, 'Unauthorized action.');
+        $sport->types()->delete();
+        $sport->delete();
+
+        return redirect()->route('para-sports.index')
+            ->with('success', 'Para Game deleted successfully.');
     }
-
-    // Delete related types first
-    $sport->types()->delete();
-
-    // Delete the para sport
-    $sport->delete();
-
-    return redirect()->route('para-sports.index')
-        ->with('success', 'Para Game deleted successfully.');
-}
-
-
-
 }
