@@ -247,6 +247,31 @@ public function saveWinners(Request $request, Event $event)
     return back()->with('success', 'Winners saved successfully.');
 }
 
+public function updateStatus(Request $request, Event $event)
+{
+    $request->validate([
+        'status' => 'required|in:Upcoming,Ongoing,Delayed,Finished',
+        'status_reason' => 'nullable|string|max:500',
+    ]);
+
+    $oldValues = $event->toArray();
+
+    $event->update([
+        'status' => $request->status,
+        'status_reason' => $request->status === 'Delayed' ? $request->status_reason : null,
+    ]);
+
+    AuditLog::create([
+        'model_type' => 'Event',
+        'model_id'   => $event->id,
+        'user_id'    => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($event->toArray()),
+        'action'     => 'Updated Event Status: ' . $event->name,
+    ]);
+
+    return back()->with('success', 'Event status updated successfully.');
+}
 
 
 }

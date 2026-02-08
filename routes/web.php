@@ -128,6 +128,11 @@ Route::middleware('auth')->group(function() {
     Route::resource('schools', SchoolController::class);
     Route::resource('sports', SportController::class);
     Route::resource('events', EventController::class);
+    // Manage event winners
+    Route::post('events/{event}/winners', [EventController::class, 'saveWinners'])
+        ->name('events.winners');
+    Route::post('events/{event}/status', [EventController::class, 'updateStatus'])
+    ->name('events.updateStatus');
     Route::resource('coaches', CoachController::class);
     Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
     Route::resource('officials', OfficialController::class)->only(['index','create','store','destroy','edit','update']);

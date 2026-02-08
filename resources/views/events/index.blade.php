@@ -56,6 +56,7 @@
     <table class="min-w-full border-collapse">
         <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Competition</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Sport</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
@@ -71,6 +72,36 @@
         <tbody class="divide-y divide-gray-200">
             @foreach($events as $event)
                 <tr class="hover:bg-gray-50 transition align-top">
+                    {{-- Status --}}
+<td class="px-4 py-3 font-semibold">
+    <form method="POST" action="{{ route('events.updateStatus', $event->id) }}">
+        @csrf
+
+        <select name="status" onchange="this.form.submit()"
+                class="px-3 py-1 rounded-full text-sm font-semibold
+                    @php
+                        echo match($event->status) {
+                            'Upcoming' => 'bg-blue-100 text-blue-700',
+                            'Ongoing'  => 'bg-green-100 text-green-700',
+                            'Delayed'  => 'bg-yellow-100 text-yellow-700',
+                            'Finished' => 'bg-gray-200 text-gray-700',
+                            default    => 'bg-gray-100 text-gray-600',
+                        };
+                    @endphp">
+            @foreach(['Upcoming','Ongoing','Delayed','Finished'] as $status)
+                <option value="{{ $status }}" {{ $event->status === $status ? 'selected' : '' }}>
+                    {{ $status }}
+                </option>
+            @endforeach
+        </select>
+
+        {{-- Hidden reason field for Delayed --}}
+        @if($event->status === 'Delayed')
+            <input type="hidden" name="status_reason" value="{{ $event->status_reason }}">
+        @endif
+    </form>
+</td>
+
 
                     {{-- Competition --}}
                     <td class="px-4 py-3 font-medium text-gray-800">

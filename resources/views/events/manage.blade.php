@@ -66,6 +66,54 @@
     </div>
 </div>
 
+{{-- EVENT STATUS MANAGEMENT --}}
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 mb-6">
+    <h3 class="text-lg font-semibold mb-4">Update Event Status</h3>
+
+    <form method="POST" action="{{ route('events.updateStatus', $event->id) }}" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        @csrf
+
+        <div>
+            <label class="block font-medium mb-1">Status</label>
+            <select name="status" id="statusSelect" class="w-full border rounded px-3 py-2" required>
+                @foreach(['Upcoming','Ongoing','Delayed','Finished'] as $status)
+                    <option value="{{ $status }}" {{ $event->status === $status ? 'selected' : '' }}>
+                        {{ $status }}
+                    </option>
+                @endforeach
+            </select>
+        </div>
+
+        <div id="reasonDiv" class="{{ $event->status !== 'Delayed' ? 'hidden' : '' }}">
+            <label class="block font-medium mb-1">Reason for Delay</label>
+            <textarea name="status_reason" rows="3" class="w-full border rounded px-3 py-2" placeholder="Provide reason for delay">{{ $event->status_reason }}</textarea>
+        </div>
+
+        <div class="md:col-span-2 flex justify-end mt-4">
+            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded font-semibold">
+                Save Status
+            </button>
+        </div>
+    </form>
+</div>
+
+{{-- Add JS to toggle reason field --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const statusSelect = document.getElementById('statusSelect');
+    const reasonDiv = document.getElementById('reasonDiv');
+
+    statusSelect.addEventListener('change', function () {
+        if (this.value === 'Delayed') {
+            reasonDiv.classList.remove('hidden');
+        } else {
+            reasonDiv.classList.add('hidden');
+        }
+    });
+});
+</script>
+
+
 {{-- 🏅 MEDAL WINNERS --}}
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6">
     <h3 class="text-lg font-semibold mb-4">

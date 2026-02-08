@@ -19,12 +19,18 @@
         sportTypes: [],
         level: '',
         isPara: false,
+        divisionsList: @js($divisions->pluck('id')),
       }"
-      @change="
-        let sport = sports.find(s => s.id == selectedSportId);
-        sportTypes = sport ? sport.sport_types : [];
-        isPara = sport && sport.division === 'Paragames';
-        level = isPara ? 'ParaGames' : '';
+      x-init="
+        $watch('selectedSportId', value => {
+            let sport = sports.find(s => s.id == value);
+
+            sportTypes = sport ? sport.sport_types : [];
+            isPara = sport && sport.division === 'Paragames';
+
+            // Reset level ONLY when sport changes
+            level = isPara ? 'Para Games' : '';
+        });
       "
       class="space-y-4">
 
@@ -58,11 +64,11 @@
     </select>
 </div>
 
-{{-- LEVEL (AUTO SWITCHING) --}}
+{{-- LEVEL --}}
 <div>
     <label class="block font-semibold">Level *</label>
 
-    {{-- PARA GAMES --}}
+    {{-- PARA --}}
     <template x-if="isPara">
         <input type="text"
                name="age_group"
@@ -71,7 +77,7 @@
                class="w-full border rounded px-3 py-2 bg-gray-100">
     </template>
 
-    {{-- REGULAR SPORTS --}}
+    {{-- REGULAR --}}
     <template x-if="!isPara">
         <select name="age_group"
                 x-model="level"
@@ -108,13 +114,18 @@
 </div>
 
 {{-- PARTICIPATING DIVISIONS --}}
-<div x-data="{ divisionsList: [0] }">
-    <label class="block font-semibold mb-2">Participating Divisions *</label>
+<div>
+    <label class="block font-semibold mb-2">
+        Participating Divisions *
+        <span class="text-sm text-gray-500">(All included by default — remove if needed)</span>
+    </label>
 
-    <template x-for="(item, index) in divisionsList" :key="index">
-        <div class="flex gap-2 mb-2">
-            <select name="divisions[]" required class="flex-1 border rounded px-3 py-2">
-                <option value="">Select Division</option>
+    <template x-for="(divisionId, index) in divisionsList" :key="divisionId">
+        <div class="flex gap-2 mb-2 items-center">
+            <select name="divisions[]"
+                    required
+                    class="flex-1 border rounded px-3 py-2"
+                    x-model="divisionsList[index]">
                 @foreach($divisions as $division)
                     <option value="{{ $division->id }}">{{ $division->name }}</option>
                 @endforeach
@@ -123,17 +134,15 @@
             <button type="button"
                     x-show="divisionsList.length > 1"
                     @click="divisionsList.splice(index, 1)"
-                    class="bg-red-500 text-white px-3 rounded">
+                    class="bg-red-500 hover:bg-red-600 text-white px-3 py-2 rounded">
                 ✕
             </button>
         </div>
     </template>
 
-    <button type="button"
-            @click="divisionsList.push(divisionsList.length)"
-            class="mt-2 bg-green-600 text-white px-4 py-2 rounded">
-        + Add Division
-    </button>
+    <p class="text-xs text-gray-500 mt-1">
+        For ball games, remove extra divisions until only two remain.
+    </p>
 </div>
 
 {{-- ACTIONS --}}
@@ -141,7 +150,7 @@
     <a href="{{ route('events.index') }}" class="px-4 py-2 bg-gray-300 rounded">
         Cancel
     </a>
-    <button class="px-4 py-2 bg-blue-600 text-white rounded">
+    <button class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded">
         Save Event
     </button>
 </div>
