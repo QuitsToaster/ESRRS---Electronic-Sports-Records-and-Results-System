@@ -96,9 +96,9 @@ function closePrivacyBanner() {
     ];
 @endphp
 
-<div x-data="{ activeStatus: null }" class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+<div x-data="{ activeStatus: null }" class="max-w-full mx-auto px-4 py-8 space-y-6 bg-gray-100">
 
-    <h2 class="text-xl sm:text-2xl font-bold text-black">Event Counts</h2>
+    <h2 class="text-xl sm:text-4xl font-bold text-black" style="font-family: 'Poppins', sans-serif;">Event Stats</h2>
 
     {{-- ====== Status Cards ====== --}}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -106,7 +106,7 @@ function closePrivacyBanner() {
             <div @click="activeStatus = '{{ $status }}'"
                  class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center justify-center text-black cursor-pointer transition hover:scale-105">
                 <div class="text-2xl sm:text-3xl font-bold">{{ $events->count() }}</div>
-                <div class="mt-1 text-sm sm:text-base font-semibold">{{ $status }}</div>
+                <div class="mt-1 text-sm sm:text-base font-semibold">{{ $status }} Event</div>
             </div>
         @endforeach
     </div>
@@ -149,11 +149,38 @@ function closePrivacyBanner() {
 </div>
 
 
+<style>
+    .gold-shimmer {
+    background: linear-gradient(
+        90deg,
+        #a16207,
+        #fde047,
+        #facc15,
+        #fde047,
+        #a16207
+    );
+    background-size: 200% auto;
+    color: transparent;
+    background-clip: text;
+    -webkit-background-clip: text;
+    animation: shimmer 2.5s linear infinite;
+}
 
+@keyframes shimmer {
+    to {
+        background-position: 200% center;
+    }
+}
+
+</style>
 
 {{-- ================= DASHBOARD STRIP ================= --}}
 <section class="relative py-12 bg-gray-100">
     <div class="w-full">
+        <h1 class="text-7xl font-extrabold text-center gold-shimmer uppercase tracking-wide mb-4"
+            style="font-family: 'Poppins', sans-serif;">
+            Medal Tally
+        </h1>
 
         {{-- Desktop: Small | BIG | Small — Mobile: Stack --}}
         <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-4 items-stretch">
