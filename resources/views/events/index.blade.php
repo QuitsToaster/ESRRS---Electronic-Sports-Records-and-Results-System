@@ -57,8 +57,8 @@
         <thead class="bg-gray-100 border-b border-gray-300">
             <tr>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Competition</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Sport</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Event</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Event Type</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Participants (SDOs)</th>
@@ -103,14 +103,14 @@
 </td>
 
 
-                    {{-- Competition --}}
-                    <td class="px-4 py-3 font-medium text-gray-800">
-                        {{ $event->name }}
-                    </td>
-
                     {{-- Sport --}}
                     <td class="px-4 py-3 text-gray-700">
                         {{ $event->sport->name ?? 'TBA' }}
+                    </td>
+
+                    {{-- Competition --}}
+                    <td class="px-4 py-3 font-medium text-gray-800">
+                        {{ $event->name }}
                     </td>
 
                     {{-- Level --}}

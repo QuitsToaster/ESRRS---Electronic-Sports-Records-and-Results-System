@@ -112,19 +112,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 <a href="{{ route('viewer.participants') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $active : '' }}">Teams</a>
                 <a href="{{ route('viewer.medalTally') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.medalTally') ? $active : '' }}">Medals</a>
 
-                <div x-data="{ openComp: false }" class="relative">
-                    <button @click="openComp = !openComp" class="flex items-center gap-1 {{ request()->routeIs('viewer.events','viewer.games') ? $active : '' }}">
-                        Competitions
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
-                    </button>
-
-                    <div x-show="openComp" x-transition @click.away="openComp = false" class="absolute mt-2 w-36 bg-white rounded shadow-lg text-gray-800 z-[70]">
-                        <a href="{{ route('viewer.events') }}" class="block px-4 py-2 hover:bg-gray-100">Events</a>
-                        <a href="{{ route('viewer.games') }}" class="block px-4 py-2 hover:bg-gray-100">Games</a>
-                    </div>
-                </div>
+                <a href="{{ route('viewer.events') }}" 
+   class="px-3 py-2 {{ request()->routeIs('viewer.events') ? 'underline font-semibold' : 'hover:text-gray-600' }}">
+    Events
+</a>
 
                 <!-- <a href="{{ route('viewer.gallery') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.gallery') ? $active : '' }}">Gallery</a> -->
                 <a href="{{ route('viewer.announcements') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.announcements') ? $active : '' }}">Announcements</a>
@@ -161,19 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="{{ route('viewer.participants') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Teams</a>
         <a href="{{ route('viewer.medalTally') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Medals</a>
 
-        <div x-data="{ openComp: false }">
-            <button @click="openComp = !openComp" class="w-full flex justify-between items-center px-3 py-2 rounded hover:bg-gray-200">
-                Competitions
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                </svg>
-            </button>
-
-            <div x-show="openComp" x-transition class="pl-4">
-                <a href="{{ route('viewer.events') }}" class="block px-3 py-2 hover:bg-gray-100 rounded">Events</a>
-                <a href="{{ route('viewer.games') }}" class="block px-3 py-2 hover:bg-gray-100 rounded">Games</a>
-            </div>
-        </div>
+        <a href="{{ route('viewer.events') }}" 
+   class="block px-3 py-2 rounded hover:bg-gray-200 {{ request()->routeIs('viewer.events') ? 'font-semibold underline' : '' }}">
+    Events
+</a>
 
         <!-- <a href="{{ route('viewer.gallery') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Gallery</a> -->
         <a href="{{ route('viewer.announcements') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Announcements</a>
@@ -227,19 +209,10 @@ document.addEventListener('DOMContentLoaded', () => {
             <a href="{{ route('viewer.home') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Home</a>
             <a href="{{ route('viewer.participants') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Teams</a>
             <a href="{{ route('viewer.medalTally') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Medals</a>
-            <div x-data="{ openComp: false }" class="relative" style="font-family: 'Poppins', sans-serif;">
-                <button @click="openComp = !openComp" class="flex items-center gap-1 {{ request()->routeIs('viewer.events','viewer.games') ? $active : '' }}">
-                    Competitions
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                    </svg>
-                </button>
-
-                <div x-show="openComp" x-transition @click.away="openComp = false" class="absolute mt-2 w-36 bg-white rounded shadow-lg text-gray-800 z-[70]">
-                    <a href="{{ route('viewer.events') }}" class="block px-4 py-2 hover:bg-gray-100" style="font-family: 'Poppins', sans-serif;">Events</a>
-                    <a href="{{ route('viewer.games') }}" class="block px-4 py-2 hover:bg-gray-100" style="font-family: 'Poppins', sans-serif;">Games</a>
-                </div>
-            </div>
+            <a href="{{ route('viewer.events') }}" 
+            class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">
+                Events
+            </a>
             <a href="{{ route('viewer.gallery') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Gallery</a>
             <a href="{{ route('viewer.announcements') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Announcements</a>
             <a href="{{ route('viewer.feedbacks') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Feedbacks</a>

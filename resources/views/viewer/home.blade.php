@@ -86,6 +86,71 @@ function closePrivacyBanner() {
     @endforeach
 </div>
 
+{{-- ====== Event Status Cards ====== --}}
+@php
+    $statusCounts = [
+        'Upcoming' => $allUpcomingEvents->where('status', 'Upcoming'),
+        'Ongoing'  => $allUpcomingEvents->where('status', 'Ongoing'),
+        'Finished' => $allUpcomingEvents->where('status', 'Completed'),
+        'Delayed'  => $allUpcomingEvents->where('status', 'Delayed'),
+    ];
+@endphp
+
+<div x-data="{ activeStatus: null }" class="max-w-7xl mx-auto px-4 py-8 space-y-6">
+
+    <h2 class="text-xl sm:text-2xl font-bold text-black">Event Counts</h2>
+
+    {{-- ====== Status Cards ====== --}}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        @foreach($statusCounts as $status => $events)
+            <div @click="activeStatus = '{{ $status }}'"
+                 class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center justify-center text-black cursor-pointer transition hover:scale-105">
+                <div class="text-2xl sm:text-3xl font-bold">{{ $events->count() }}</div>
+                <div class="mt-1 text-sm sm:text-base font-semibold">{{ $status }}</div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- ===== Modal for Events by Status ===== --}}
+    <div x-show="activeStatus" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4" style="display: none;">
+        <div @click.away="activeStatus = null" class="bg-white w-full max-w-3xl rounded-xl shadow-xl overflow-auto max-h-[80vh]">
+            {{-- Modal Header --}}
+            <div class="flex justify-between items-center p-4 border-b border-gray-300">
+                <h3 class="text-xl font-bold text-black" x-text="activeStatus + ' Events'"></h3>
+                <button @click="activeStatus = null" class="text-black text-2xl hover:text-gray-600">&times;</button>
+            </div>
+
+            {{-- Modal Body --}}
+            <div class="p-4 space-y-3 text-black">
+                @foreach($statusCounts as $status => $events)
+                    <template x-if="activeStatus === '{{ $status }}'">
+                        <div class="space-y-2">
+                            @forelse($events as $event)
+                                <div class="p-3 bg-gray-100 rounded shadow flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                                    <div>
+                                        <div class="font-semibold">{{ $event->name }}</div>
+                                        <div class="text-sm text-gray-700">{{ $event->start_date?->format('M d, Y') ?? 'TBA' }} | {{ $event->venue ?? 'TBA' }}</div>
+                                        @if($event->status_reason)
+                                            <div class="text-xs text-red-600 mt-1">Reason: {{ $event->status_reason }}</div>
+                                        @endif
+                                    </div>
+                                    <div class="mt-2 sm:mt-0 text-sm font-medium text-gray-800">{{ $status }}</div>
+                                </div>
+                            @empty
+                                <div class="text-gray-500 italic text-center py-4">No events available.</div>
+                            @endforelse
+                        </div>
+                    </template>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+</div>
+
+
+
+
 {{-- ================= DASHBOARD STRIP ================= --}}
 <section class="relative py-12 bg-gray-100">
     <div class="w-full">

@@ -12,6 +12,7 @@
             <div>
                 <h1 class="text-4xl md:text-5xl font-bold">Don't miss the action.</h1>
                 <p class="text-gray-400 mt-1">Events. Competitions. Champions.</p>
+                <p class="text-gray-400 mt-1">View Event Schedule and Venue here.</p>
             </div>
 
             {{-- Search Form --}}
@@ -56,6 +57,29 @@
                             <p class="text-gray-400 text-sm text-center">
                                 <b>Venue:</b> {{ $event->venue ?? 'TBA' }}
                             </p>
+
+                            {{-- Status Label --}}
+                            @if($event->status)
+                                @php
+                                    $statusColor = match($event->status) {
+                                        'Upcoming' => 'bg-green-600',
+                                        'Ongoing'   => 'bg-blue-600',
+                                        'Finished'  => 'bg-gray-600',
+                                        'Delayed'   => 'bg-red-600',
+                                        default     => 'bg-gray-700',
+                                    };
+                                @endphp
+                                <p class="text-center mt-2">
+                                    <span class="{{ $statusColor }} text-white px-3 py-1 rounded text-sm font-semibold">
+                                        {{ ucfirst($event->status) }}
+                                    </span>
+
+                                    {{-- Show status_reason only if Delayed --}}
+                                    @if(strtolower($event->status) === 'delayed' && $event->status_reason)
+                                        <span class="text-red-400 italic text-xs block mt-1"><span class="text-red-400 italic font-bold text-xs block mt-1">Reason:</span>{{ $event->status_reason }}</span>
+                                    @endif
+                                </p>
+                            @endif
                         </div>
 
                         {{-- Action Button --}}
@@ -104,6 +128,11 @@
                                         <span x-text="event.start_date ? new Date(event.start_date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' }) : 'TBA'"></span>
                                         <span x-show="event.end_date"> - <span x-text="new Date(event.end_date).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' })"></span></span>
                                     </div>
+
+                                    {{-- Status Reason in Modal (only for Delayed) --}}
+                                    <div x-show="event.status.toLowerCase() === 'delayed' && event.status_reason" class="text-red-400 text-sm italic col-span-full">
+                                        <span x-text="'Reason: ' + event.status_reason"></span>
+                                    </div>
                                 </div>
 
                                 {{-- Participating Divisions --}}
@@ -151,63 +180,8 @@
             </div>
         @endif
     </div>
-
-    {{-- ====== Gallery Slider (Bottom) ====== --}}
-    @if(isset($gallery_photos) && $gallery_photos->count() > 0)
-        <div class="mt-40 space-y-6 overflow-hidden w-full">
-
-            {{-- Upper row: slide right --}}
-            <div class="relative overflow-hidden w-screen -mx-0">
-                <div class="flex animate-slide-right space-x-6">
-                    @foreach($gallery_photos as $photo)
-                        @foreach($photo->photos as $file)
-                            <div class="min-w-[200px] flex-shrink-0 rounded-lg overflow-hidden shadow-lg">
-                                <img src="{{ asset('storage/' . $file) }}" class="w-full h-40 object-cover" alt="{{ $photo->title }}">
-                            </div>
-                        @endforeach
-                    @endforeach
-                </div>
-            </div>
-
-            {{-- Lower row: slide left --}}
-            <div class="relative overflow-hidden w-screen -mx-0">
-                <div class="flex animate-slide-left space-x-6">
-                    @foreach($gallery_photos as $photo)
-                        @foreach($photo->photos as $file)
-                            <div class="min-w-[200px] flex-shrink-0 rounded-lg overflow-hidden shadow-lg">
-                                <img src="{{ asset('storage/' . $file) }}" class="w-full h-40 object-cover" alt="{{ $photo->title }}">
-                            </div>
-                        @endforeach
-                    @endforeach
-                </div>
-            </div>
-
-        </div>
-    @endif
-
 </div>
 
 {{-- Alpine.js --}}
 <script src="//unpkg.com/alpinejs" defer></script>
-
-{{-- Tailwind Animations --}}
-<style>
-    @keyframes slide-right {
-        0% { transform: translateX(0); }
-        100% { transform: translateX(calc(-100%)); }
-    }
-    @keyframes slide-left {
-        0% { transform: translateX(calc(-100%)); }
-        100% { transform: translateX(0); }
-    }
-
-    .animate-slide-right {
-        display: flex;
-        animation: slide-right 40s linear infinite;
-    }
-    .animate-slide-left {
-        display: flex;
-        animation: slide-left 40s linear infinite;
-    }
-</style>
 @endsection

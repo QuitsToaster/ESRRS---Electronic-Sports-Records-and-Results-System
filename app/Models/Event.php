@@ -16,6 +16,7 @@ class Event extends Model
     'start_date',
     'venue',
     'status',
+    'status_reason',
     'age_group',
     'category',
     'is_ball_game', 

@@ -200,52 +200,34 @@ document.addEventListener('DOMContentLoaded', () => {
 @endif
 
 
-{{-- Competitions --}}
-@if(in_array('events', $access) || in_array('games', $access))
-    <div x-data="{ isOpen: {{ request()->routeIs(['events.*','games.*']) ? 'true' : 'false' }} }">
+{{-- Event --}}
+@if(in_array('events', $access))
+    <div x-data="{ isOpen: {{ request()->routeIs(['events.*']) ? 'true' : 'false' }} }">
         <button @click="isOpen = !isOpen"
                 class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
-                {{ request()->routeIs(['events.*','games.*']) ? 'bg-blue-900 font-semibold' : '' }}">
-            Competitions
+                {{ request()->routeIs(['events.*']) ? 'bg-blue-900 font-semibold' : '' }}">
+            Events Schedule
             <span x-text="isOpen ? '▾' : '▸'"></span>
         </button>
 
         <div x-show="isOpen" x-cloak class="pl-6 mt-1 space-y-1">
 
-            {{-- Events --}}
-            @if(in_array('events', $access))
-                <p class="px-4 py-1 text-xs text-blue-300 uppercase tracking-wide">Events</p>
-                <a href="{{ route('events.index') }}"
-                   class="block px-4 py-2 rounded hover:bg-blue-600
-                   {{ request()->routeIs('events.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                    All Events
-                </a>
-                <a href="{{ route('events.create') }}"
-                   class="block px-4 py-2 rounded hover:bg-blue-600
-                   {{ request()->routeIs('events.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                    Add Event
-                </a>
-            @endif
+            {{-- Submenu --}}
+            <a href="{{ route('events.index') }}"
+               class="block px-4 py-2 rounded hover:bg-blue-600
+               {{ request()->routeIs('events.index') ? 'bg-blue-700 font-semibold' : '' }}">
+                All Events
+            </a>
+            <a href="{{ route('events.create') }}"
+               class="block px-4 py-2 rounded hover:bg-blue-600
+               {{ request()->routeIs('events.create') ? 'bg-blue-700 font-semibold' : '' }}">
+                Add Event
+            </a>
 
-            {{-- Games --}}
-            @if(in_array('games', $access))
-                <p class="pt-2 border-t border-blue-800 px-4 py-1 text-xs text-blue-300 uppercase tracking-wide">
-                    Ball Games
-                </p>
-                <a href="{{ route('games.index') }}"
-                   class="block px-4 py-2 rounded hover:bg-blue-600
-                   {{ request()->routeIs('games.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                    All Ball Games
-                </a>
-                <a href="{{ route('games.create') }}"
-                   class="block px-4 py-2 rounded hover:bg-blue-600
-                   {{ request()->routeIs('games.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                    Add Ball Games
-                </a>
-            @endif
         </div>
     </div>
 @endif
+
 
 @if(in_array('divisions', $access))
 <div>
