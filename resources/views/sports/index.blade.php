@@ -48,9 +48,6 @@
                     Sport Name
                 </th>
                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
-                    Division
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
                     Type of Game
                 </th>
                 <th class="px-6 py-3 text-right text-xs font-semibold uppercase">
@@ -64,13 +61,6 @@
                 <tr class="hover:bg-gray-50">
                     <td class="px-6 py-4 font-medium">
                         {{ $sport->name }}
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <span class="px-3 py-1 text-xs rounded-full
-                            {{ $sport->division === 'Elementary' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700' }}">
-                            {{ $sport->division }}
-                        </span>
                     </td>
 
                     <td class="px-6 py-4">
