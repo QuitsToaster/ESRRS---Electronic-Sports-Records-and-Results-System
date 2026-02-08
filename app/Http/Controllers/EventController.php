@@ -46,72 +46,52 @@ class EventController extends Controller
        CREATE
     ========================= */
     public function create()
-    {
-        $sports    = Sport::with('sportTypes')->get();
-        $divisions = Division::orderBy('name')->get();
+{
+    $sports = Sport::with('sportTypes')->orderBy('name')->get();
+    $divisions = Division::orderBy('name')->get();
 
-        return view('events.create', compact('sports', 'divisions'));
-    }
+    return view('events.create', compact('sports', 'divisions'));
+}
+
 
    public function store(Request $request)
 {
     $request->validate([
         'sport_id'      => 'required|exists:sports,id',
         'sport_type_id' => 'required|exists:sport_types,id',
-        'status'        => 'required|in:Upcoming,Ongoing,Delayed,Finished',
-        'age_group'     => 'nullable|string',
+        'age_group'     => 'required|string',
         'category'      => 'nullable|string',
         'venue'         => 'nullable|string|max:255',
         'start_date'    => 'nullable|date',
-        'game_time'     => 'nullable|date_format:H:i',
         'divisions'     => 'required|array|min:1',
         'divisions.*'   => 'exists:divisions,id',
-        'is_ball_game'  => 'nullable|boolean',
     ]);
 
+    $sport     = Sport::findOrFail($request->sport_id);
     $sportType = \App\Models\SportType::findOrFail($request->sport_type_id);
 
+    // 🔥 FORCE PARA LEVEL
+    $ageGroup = $sport->division === 'Para Games'
+        ? 'Para Games'
+        : $request->age_group;
+
     $event = Event::create([
-        'sport_id'      => $request->sport_id,
-        'sport_type_id' => $request->sport_type_id,
+        'sport_id'      => $sport->id,
+        'sport_type_id' => $sportType->id,
         'name'          => $sportType->type_name,
-        'status'        => $request->status,
-        'age_group'     => $request->age_group,
+        'status'        => 'Upcoming', // DEFAULT
+        'age_group'     => $ageGroup,
         'category'      => $request->category,
         'venue'         => $request->venue,
         'start_date'    => $request->start_date,
-        'is_ball_game'  => $request->boolean('is_ball_game'),
     ]);
 
     $event->divisions()->sync($request->divisions);
 
-    /** 🔥 CREATE GAME WITH CORRECT TIME */
-    if ($event->is_ball_game) {
-
-        $divisionNames = Division::whereIn('id', $request->divisions)
-            ->orderBy('name')
-            ->pluck('name')
-            ->values();
-
-        $gameDateTime = null;
-
-        if ($request->start_date && $request->game_time) {
-            $gameDateTime = $request->start_date . ' ' . $request->game_time . ':00';
-        }
-
-        Game::create([
-            'event_id'  => $event->id,
-            'team_a'    => $divisionNames[0] ?? 'TBD',
-            'team_b'    => $divisionNames[1] ?? 'TBD',
-            'status'    => 'Upcoming',
-            'game_time' => $gameDateTime,
-            'venue'     => $request->venue ?? 'TBA',
-        ]);
-    }
-
     return redirect()->route('events.index')
         ->with('success', 'Event created successfully!');
 }
+
 
 
 

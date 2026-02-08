@@ -6,7 +6,7 @@
 
 <div class="mb-6">
     <p class="text-sm text-gray-600">
-        Select a sport and its discipline. Event details will be generated automatically.
+        Select a sport and discipline. Event details will adjust automatically.
     </p>
 </div>
 
@@ -15,19 +15,26 @@
 <form action="{{ route('events.store') }}" method="POST"
       x-data="{
         sports: @js($sports),
-        selectedSport: null,
+        selectedSportId: '',
         sportTypes: [],
-        isBallGame: false
+        level: '',
+        isPara: false,
       }"
+      @change="
+        let sport = sports.find(s => s.id == selectedSportId);
+        sportTypes = sport ? sport.sport_types : [];
+        isPara = sport && sport.division === 'Paragames';
+        level = isPara ? 'ParaGames' : '';
+      "
       class="space-y-4">
+
 @csrf
 
 {{-- SPORT --}}
 <div>
     <label class="block font-semibold">Sport *</label>
     <select name="sport_id"
-            x-model="selectedSport"
-            @change="sportTypes = sports.find(s => s.id == selectedSport)?.sport_types || []"
+            x-model="selectedSportId"
             required
             class="w-full border rounded px-3 py-2">
         <option value="">Select Sport</option>
@@ -39,7 +46,7 @@
 
 {{-- SPORT TYPE --}}
 <div>
-    <label class="block font-semibold">Discipline / Event *</label>
+    <label class="block font-semibold">Discipline *</label>
     <select name="sport_type_id"
             :disabled="sportTypes.length === 0"
             required
@@ -51,37 +58,30 @@
     </select>
 </div>
 
-{{-- EVENT STATUS --}}
+{{-- LEVEL (AUTO SWITCHING) --}}
 <div>
-    <label class="block font-semibold">Event Status *</label>
-    <select name="status" required class="w-full border rounded px-3 py-2">
-        <option value="Upcoming">Upcoming</option>
-        <option value="Ongoing">Ongoing</option>
-        <option value="Delayed">Delayed</option>
-        <option value="Finished">Finished</option>
-    </select>
-</div>
+    <label class="block font-semibold">Level *</label>
 
-{{-- BALL GAME --}}
-<div class="border rounded p-4 bg-gray-50">
-    <label class="flex items-center gap-2">
-        <input type="checkbox"
-               name="is_ball_game"
-               value="1"
-               x-model="isBallGame"
-               class="rounded border-gray-300">
-        <span class="font-semibold">This is a Ball Game</span>
-    </label>
-</div>
+    {{-- PARA GAMES --}}
+    <template x-if="isPara">
+        <input type="text"
+               name="age_group"
+               x-model="level"
+               readonly
+               class="w-full border rounded px-3 py-2 bg-gray-100">
+    </template>
 
-{{-- LEVEL --}}
-<div>
-    <label class="block font-semibold">Level</label>
-    <select name="age_group" class="w-full border rounded px-3 py-2">
-        <option value="">Select Level</option>
-        <option value="Elementary">Elementary</option>
-        <option value="Secondary">Secondary</option>
-    </select>
+    {{-- REGULAR SPORTS --}}
+    <template x-if="!isPara">
+        <select name="age_group"
+                x-model="level"
+                required
+                class="w-full border rounded px-3 py-2">
+            <option value="">Select Level</option>
+            <option value="Elementary">Elementary</option>
+            <option value="Secondary">Secondary</option>
+        </select>
+    </template>
 </div>
 
 {{-- CATEGORY --}}
@@ -107,17 +107,11 @@
     <input type="date" name="start_date" class="w-full border rounded px-3 py-2">
 </div>
 
-{{-- GAME TIME --}}
-<div x-show="isBallGame">
-    <label class="block font-semibold">Game Time</label>
-    <input type="time" name="game_time" class="w-full border rounded px-3 py-2">
-</div>
-
-{{-- DIVISIONS --}}
+{{-- PARTICIPATING DIVISIONS --}}
 <div x-data="{ divisionsList: [0] }">
     <label class="block font-semibold mb-2">Participating Divisions *</label>
 
-    <template x-for="(division, index) in divisionsList" :key="index">
+    <template x-for="(item, index) in divisionsList" :key="index">
         <div class="flex gap-2 mb-2">
             <select name="divisions[]" required class="flex-1 border rounded px-3 py-2">
                 <option value="">Select Division</option>
