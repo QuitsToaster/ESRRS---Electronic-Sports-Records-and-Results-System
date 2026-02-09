@@ -99,6 +99,7 @@ function closePrivacyBanner() {
 <div x-data="{ activeStatus: null }" class="max-w-full mx-auto px-4 py-8 space-y-6 bg-gray-100">
 
     <h2 class="text-xl sm:text-4xl font-bold text-black" style="font-family: 'Poppins', sans-serif;">Event Stats</h2>
+    <p class="text-gray-900 mt-2" style="font-family: 'Poppins', sans-serif;">Click card to view event details.</p>
 
     {{-- ====== Status Cards ====== --}}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -455,62 +456,6 @@ function closePrivacyBanner() {
                 </template>
             </div>
         </div>
-
-        {{-- ================= UPCOMING GAMES ================= --}}
-        <div>
-            <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4">
-                Upcoming Games
-            </h2>
-
-            <input
-                type="text"
-                placeholder="Search games..."
-                x-model="gameSearch"
-                class="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-400"
-            >
-
-            <div class="space-y-3">
-                <template
-                    x-for="game in (
-                        gameSearch
-                            ? allGames.filter(g =>
-                                g.team_a.toLowerCase().includes(gameSearch.toLowerCase()) ||
-                                g.team_b.toLowerCase().includes(gameSearch.toLowerCase())
-                              )
-                            : latestGames
-                    ).slice(0, 2)"
-                    :key="game.id"
-                >
-                    <a
-                        :href="'{{ route('viewer.games') }}#game-' + game.id"
-                        class="block p-4 rounded-xl bg-gray-50 border
-                               hover:bg-gray-100 hover:shadow transition"
-                    >
-                        <div class="font-semibold text-gray-800 truncate"
-                             x-text="game.team_a + ' vs ' + game.team_b"></div>
-
-                        <div class="text-xs text-gray-500 mt-1"
-                             x-text="
-                                new Date(game.game_time).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: '2-digit',
-                                    year: 'numeric'
-                                }) + ' · ' +
-                                new Date(game.game_time).toLocaleTimeString('en-US', {
-                                    hour: '2-digit',
-                                    minute: '2-digit',
-                                    hour12: true
-                                })
-                             ">
-                        </div>
-                    </a>
-                </template>
-            </div>
-        </div>
-
-    </div>
-</section>
         </div>
     </div>
 </section>

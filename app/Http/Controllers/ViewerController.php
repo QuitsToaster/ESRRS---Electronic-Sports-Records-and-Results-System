@@ -22,7 +22,7 @@ public function home()
 {
     // ================= EVENTS =================
     $allUpcomingEvents = Event::with('sport')->orderBy('start_date')->get();
-    $latestUpcomingEvents = Event::with('sport')->orderBy('start_date')->take(2)->get();
+    $latestUpcomingEvents = Event::with('sport')->orderBy('start_date')->take(3)->get();
 
     // ================= GAMES =================
     $allUpcomingGames = Game::with('event')->where('status', 'Upcoming')->orderBy('game_time')->get();
