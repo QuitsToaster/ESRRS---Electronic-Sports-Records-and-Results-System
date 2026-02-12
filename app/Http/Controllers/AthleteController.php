@@ -15,11 +15,16 @@ use Illuminate\Support\Facades\Auth;
 
 class AthleteController extends Controller
 {
-    public function index(Request $request)
+public function index(Request $request)
 {
-    $search = $request->input('search');
+    $search   = $request->input('search');
+    $sex      = $request->input('sex');
+    $sport    = $request->input('sport');
+    $division = $request->input('division'); // 👈 NEW FILTER
 
     $athletes = Athlete::with(['school', 'sport'])
+
+        // SEARCH
         ->when($search, function ($query, $search) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
@@ -35,15 +40,34 @@ class AthleteController extends Controller
                   ->orWhere('status', 'like', "%{$search}%");
             });
         })
+
+        // FILTER BY SEX
+        ->when($sex, function ($query, $sex) {
+            $query->where('sex', $sex);
+        })
+
+        // FILTER BY SPORT
+        ->when($sport, function ($query, $sport) {
+            $query->where('sport_id', $sport);
+        })
+
+        // FILTER BY DIVISION (LEVEL)
+        ->when($division, function ($query, $division) {
+            $query->where('division', $division);
+        })
+
         ->orderBy('last_name')
         ->orderBy('first_name')
-        ->paginate(25); // <-- Use pagination (25 per page)
+        ->paginate(25);
 
-    // Keep the search parameter in pagination links
     $athletes->appends($request->all());
 
-    return view('athletes.index', compact('athletes'));
+    $sports = Sport::orderBy('name')->get();
+
+    return view('athletes.index', compact('athletes', 'sports'));
 }
+
+
 
 
 

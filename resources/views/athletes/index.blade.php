@@ -49,13 +49,74 @@
 </div>
 
 
-{{-- SEARCH --}}
-<form method="GET" action="{{ route('athletes.index') }}" class="mb-4 flex gap-2">
-    <input type="text" name="search" value="{{ request('search') }}"
-           placeholder="Search name, school, sport, region, status..."
-           class="flex-1 border rounded px-3 py-2">
-    <button class="bg-blue-600 text-white px-4 py-2 rounded">Search</button>
+{{-- SEARCH + FILTER --}}
+<form method="GET" action="{{ route('athletes.index') }}"
+      class="mb-4 bg-white p-4 rounded shadow flex flex-wrap gap-3 items-end">
+
+    {{-- SEARCH --}}
+    <div class="flex-1 min-w-[200px]">
+        <label class="text-xs text-gray-500">Search</label>
+        <input type="text" name="search" value="{{ request('search') }}"
+               placeholder="Name, school, sport..."
+               class="w-full border rounded px-3 py-2">
+    </div>
+
+    {{-- FILTER SEX --}}
+    <div class="min-w-[150px]">
+        <label class="text-xs text-gray-500">Sex</label>
+        <select name="sex" class="w-full border rounded px-3 py-2">
+            <option value="">All</option>
+            <option value="Male" {{ request('sex') == 'Male' ? 'selected' : '' }}>Male</option>
+            <option value="Female" {{ request('sex') == 'Female' ? 'selected' : '' }}>Female</option>
+        </select>
+    </div>
+
+    {{-- FILTER SPORT --}}
+    <div class="min-w-[200px]">
+        <label class="text-xs text-gray-500">Sport</label>
+        <select name="sport" class="w-full border rounded px-3 py-2">
+            <option value="">All Sports</option>
+            @foreach($sports as $sport)
+                <option value="{{ $sport->id }}"
+                    {{ request('sport') == $sport->id ? 'selected' : '' }}>
+                    {{ $sport->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    {{-- FILTER LEVEL (DIVISION) --}}
+    <div class="min-w-[180px]">
+        <label class="text-xs text-gray-500">Level</label>
+        <select name="division" class="w-full border rounded px-3 py-2">
+            <option value="">All Levels</option>
+            <option value="Elementary" {{ request('division') == 'Elementary' ? 'selected' : '' }}>
+                Elementary
+            </option>
+            <option value="Secondary" {{ request('division') == 'Secondary' ? 'selected' : '' }}>
+                Secondary
+            </option>
+            <option value="Paragames" {{ request('division') == 'Paragames' ? 'selected' : '' }}>
+                Paragames
+            </option>
+        </select>
+    </div>
+
+    {{-- BUTTONS --}}
+    <div class="flex gap-2">
+        <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+            Apply
+        </button>
+
+        <a href="{{ route('athletes.index') }}"
+           class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded shadow">
+            Reset
+        </a>
+    </div>
 </form>
+
+
 
 @if(session('success'))
     <div class="bg-green-100 text-green-800 p-3 rounded mb-4">
