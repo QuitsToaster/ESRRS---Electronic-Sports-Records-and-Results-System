@@ -1,6 +1,6 @@
 @extends('layouts.viewer')
 
-@section('page-title', 'Feedbacks')
+@section('page-title', 'About Us')
 
 @section('content')
 <div class="bg-black min-h-screen text-white py-12">
@@ -15,7 +15,7 @@
             : 'CEMS – CAVRAA Event Monitoring System is designed to streamline and automate the management of events, games, and participants for CAVRAA tournaments. Stay on top of schedules, winners, and all tournament details with ease.';
     @endphp
     <div class="max-w-7xl mx-auto px-4 text-center mb-40">
-        <h1 class="text-7xl font-bold text-red-600 mb-4" style="font-family: 'Poppins', sans-serif;">CEMS – System Overview</h1>
+        <h1 class="text-7xl font-bold text-red-600 mb-4" style="font-family: 'Poppins', sans-serif;">ESRRS – System Overview</h1>
         <p class="text-gray-300 text-lg mx-auto max-w-3xl" style="font-family: 'Poppins', sans-serif;">{!! $systemDescription !!}</p>
     </div>
 
