@@ -13,7 +13,7 @@
         'Elementary Girls' => ['level' => 'Elementary', 'category' => 'Girls'],
         'Secondary Boys' => ['level' => 'Secondary', 'category' => 'Boys'],
         'Secondary Girls' => ['level' => 'Secondary', 'category' => 'Girls'],
-        'Para Games' => ['level' => 'Para Games', 'category' => null],
+        'Para Games' => ['level' => 'Paragames', 'category' => null], // ✅ FIXED
     ];
 @endphp
 
@@ -50,21 +50,46 @@
 
 @foreach($tabs as $tabName => $tab)
 @php
-    $level = $tab['level'];
+    $level    = $tab['level'];
     $category = $tab['category'];
 
+    /*
+    |--------------------------------------------------------------------------
+    | SPORTS
+    |--------------------------------------------------------------------------
+    | Para Games tab  -> ONLY sports with division = Paragames
+    | Other tabs      -> ONLY sports NOT Paragames
+    */
     $sports = Sport::with('types')
-        ->when($level === 'Para Games', fn($q) => $q->where('division','Para Games'))
-        ->when($level !== 'Para Games', fn($q) => $q->where('division','!=','Para Games'))
+        ->where(function ($q) use ($level) {
+            if ($level === 'Paragames') {
+                $q->where('division', 'Paragames');
+            } else {
+                $q->where('division', '!=', 'Paragames');
+            }
+        })
+        ->orderBy('name')
         ->get();
 
+    /*
+    |--------------------------------------------------------------------------
+    | ATHLETES
+    |--------------------------------------------------------------------------
+    */
     $athletes = Athlete::with('school')
-        ->when($level !== 'Para Games', fn($q) => $q->where('division', $level)->where('category', $category))
-        ->when($level === 'Para Games', fn($q) => $q->where('division','Para Games'))
+        ->where(function ($q) use ($level, $category) {
+            if ($level === 'Paragames') {
+                $q->where('division', 'Paragames');
+            } else {
+                $q->where('division', $level)
+                  ->where('category', $category);
+            }
+        })
         ->orderBy('last_name')
         ->orderBy('first_name')
         ->get();
 @endphp
+
 
 
 <div id="{{ Str::slug($tabName) }}" class="tab-content hidden">
