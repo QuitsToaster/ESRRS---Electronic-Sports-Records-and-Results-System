@@ -5,14 +5,25 @@
 @section('content')
 
 {{-- ================= HEADER ================= --}}
-<div class="text-center mb-12">
-    <h1 class="text-5xl font-extrabold text-gray-900 tracking-wide">
-        OFFICIAL RESULT
-    </h1>
-    <p class="text-gray-500 mt-2">
-        Medal Tally & Division Summary
-    </p>
+<div class="flex flex-col md:flex-row md:items-center md:justify-between mb-12 gap-6">
+    <div class="text-center md:text-left">
+        <h1 class="text-5xl font-extrabold text-gray-900 tracking-wide">
+            OFFICIAL RESULT
+        </h1>
+        <p class="text-gray-500 mt-2">
+            Medal Tally & Division Summary
+        </p>
+    </div>
+
+    {{-- ADD RESULT BUTTON --}}
+    <div class="text-center md:text-right">
+        <a href="{{ route('results_divisions.create') }}"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-xl shadow hover:bg-green-700 transition">
+            ➕ Add Result
+        </a>
+    </div>
 </div>
+
 
 @php
     use App\Models\Division;
