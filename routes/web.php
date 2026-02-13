@@ -126,7 +126,13 @@ Route::middleware('auth')->group(function() {
     */
     Route::resource('divisions', DivisionController::class);
     Route::resource('schools', SchoolController::class);
-    Route::resource('sports', SportController::class);
+    // ✅ BULK DELETE (must be before resource route)
+Route::delete('/sports/bulk-delete', [SportController::class, 'bulkDelete'])
+    ->name('sports.bulkDelete');
+
+// Sports Resource
+Route::resource('sports', SportController::class);
+
     Route::resource('events', EventController::class);
     // Manage event winners
     Route::post('events/{event}/winners', [EventController::class, 'saveWinners'])
@@ -168,15 +174,23 @@ Route::middleware('auth')->group(function() {
 
 
    Route::prefix('para-sports')->name('para-sports.')->group(function () {
+
     Route::get('/', [SportController::class, 'paraIndex'])->name('index');
     Route::get('/create', [SportController::class, 'paraCreate'])->name('create');
     Route::post('/', [SportController::class, 'paraStore'])->name('store');
+
+    // ✅ BULK DELETE MUST BE BEFORE {sport}
+    Route::delete('/bulk-delete', [SportController::class, 'paraBulkDelete'])
+        ->name('bulkDelete');
+
     Route::get('/{sport}/edit', [SportController::class, 'paraEdit'])->name('edit');
     Route::put('/{sport}', [SportController::class, 'paraUpdate'])->name('update');
-
-    // ✅ ADD THIS
     Route::delete('/{sport}', [SportController::class, 'paraDestroy'])->name('destroy');
+
 });
+
+
+
 
 
     /*

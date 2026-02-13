@@ -26,23 +26,38 @@
         List of para games available in the system.
     </p>
 
-    <a href="{{ route('para-sports.create') }}"
-       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-        + Add Para Game
-    </a>
+    <div class="flex gap-2">
+        <button id="bulkDeleteBtn"
+                type="button"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow hidden">
+            Delete Selected
+        </button>
+
+        <a href="{{ route('para-sports.create') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+            + Add Para Game
+        </a>
+    </div>
 </div>
 
-{{-- Success Message --}}
 @if(session('success'))
     <div class="bg-green-100 text-green-800 p-4 rounded mb-4">
         {{ session('success') }}
     </div>
 @endif
 
+{{-- BULK DELETE FORM --}}
+<form id="bulkDeleteForm" action="{{ route('para-sports.bulkDelete') }}" method="POST">
+@csrf
+@method('DELETE')
+
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
     <table class="min-w-full border-collapse">
         <thead class="bg-gray-100 border-b border-gray-200">
             <tr>
+                <th class="px-6 py-3">
+                    <input type="checkbox" id="selectAll">
+                </th>
                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
                     Para Game Name
                 </th>
@@ -58,12 +73,17 @@
         <tbody class="divide-y divide-gray-100">
             @forelse($sports as $sport)
                 <tr class="hover:bg-gray-50 transition">
-                    {{-- Para Game Name --}}
+                    <td class="px-6 py-4">
+                        <input type="checkbox"
+                               name="sports[]"
+                               value="{{ $sport->id }}"
+                               class="sport-checkbox">
+                    </td>
+
                     <td class="px-6 py-4 font-medium text-gray-800">
                         {{ $sport->name }}
                     </td>
 
-                    {{-- Type of Game --}}
                     <td class="px-6 py-4">
                         @if($sport->types->count())
                             <div class="flex flex-wrap gap-2">
@@ -82,7 +102,6 @@
                         @endif
                     </td>
 
-                    {{-- Actions --}}
                     <td class="px-6 py-4 text-right whitespace-nowrap">
                         <a href="{{ route('para-sports.edit', $sport->id) }}"
                            class="text-blue-600 hover:text-blue-800 font-medium mr-3">
@@ -92,7 +111,7 @@
                         <form action="{{ route('para-sports.destroy', $sport->id) }}"
                               method="POST"
                               class="inline-block"
-                              onsubmit="return confirm('Are you sure you want to delete this para game?');">
+                              onsubmit="return confirm('Delete this para game?');">
                             @csrf
                             @method('DELETE')
                             <button type="submit"
@@ -104,7 +123,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="3"
+                    <td colspan="4"
                         class="px-6 py-6 text-center text-gray-500">
                         No para games found.
                     </td>
@@ -113,4 +132,39 @@
         </tbody>
     </table>
 </div>
+
+</form>
+
+{{-- JAVASCRIPT --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.sport-checkbox');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+    function toggleBulkButton() {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        bulkDeleteBtn.classList.toggle('hidden', !anyChecked);
+    }
+
+    selectAll.addEventListener('change', function () {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        toggleBulkButton();
+    });
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', toggleBulkButton);
+    });
+
+    bulkDeleteBtn.addEventListener('click', function () {
+        if (confirm('Are you sure you want to delete selected para games?')) {
+            bulkDeleteForm.submit();
+        }
+    });
+
+});
+</script>
+
 @endsection

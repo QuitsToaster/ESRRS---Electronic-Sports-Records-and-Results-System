@@ -224,4 +224,52 @@ class SportController extends Controller
         return redirect()->route('para-sports.index')
             ->with('success', 'Para Game deleted successfully.');
     }
+
+    /**
+ * Bulk Delete Sports
+ */
+public function bulkDelete(Request $request)
+{
+    $request->validate([
+        'sports' => 'required|array',
+        'sports.*' => 'exists:sports,id'
+    ]);
+
+    $sports = Sport::whereIn('id', $request->sports)
+        ->whereIn('division', ['Elementary', 'Secondary'])
+        ->get();
+
+    foreach ($sports as $sport) {
+        $sport->types()->delete();
+        $sport->delete();
+    }
+
+    return redirect()->route('sports.index')
+        ->with('success', 'Selected sports deleted successfully!');
+}
+
+/**
+ * Bulk Delete Para Games
+ */
+public function paraBulkDelete(Request $request)
+{
+    $request->validate([
+        'sports' => 'required|array',
+        'sports.*' => 'exists:sports,id'
+    ]);
+
+    $sports = Sport::whereIn('id', $request->sports)
+        ->where('division', 'Paragames')
+        ->get();
+
+    foreach ($sports as $sport) {
+        $sport->types()->delete();
+        $sport->delete();
+    }
+
+    return redirect()->route('para-sports.index')
+        ->with('success', 'Selected para games deleted successfully!');
+}
+
+
 }

@@ -23,16 +23,27 @@
     </nav>
 </div>
 
+
 <div class="flex justify-between items-center mb-4">
     <p class="text-sm text-gray-600">
         Elementary & Secondary sports
     </p>
 
-    <a href="{{ route('sports.create') }}"
-       class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-        + Add Sport
-    </a>
+    <div class="flex gap-2">
+        {{-- Bulk Delete Button --}}
+        <button id="bulkDeleteBtn"
+                type="button"
+                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow hidden">
+            Delete Selected
+        </button>
+
+        <a href="{{ route('sports.create') }}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
+            + Add Sport
+        </a>
+    </div>
 </div>
+
 
 @if(session('success'))
     <div class="bg-green-100 text-green-800 p-4 rounded mb-4">
@@ -40,10 +51,19 @@
     </div>
 @endif
 
+
+{{-- BULK DELETE FORM --}}
+<form id="bulkDeleteForm" action="{{ route('sports.bulkDelete') }}" method="POST">
+@csrf
+@method('DELETE')
+
 <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
     <table class="min-w-full border-collapse">
         <thead class="bg-gray-100">
             <tr>
+                <th class="px-6 py-3">
+                    <input type="checkbox" id="selectAll">
+                </th>
                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
                     Sport Name
                 </th>
@@ -59,6 +79,13 @@
         <tbody class="divide-y">
             @forelse($sports as $sport)
                 <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4">
+                        <input type="checkbox"
+                               name="sports[]"
+                               value="{{ $sport->id }}"
+                               class="sport-checkbox">
+                    </td>
+
                     <td class="px-6 py-4 font-medium">
                         {{ $sport->name }}
                     </td>
@@ -97,4 +124,40 @@
         </tbody>
     </table>
 </div>
+
+</form>
+
+
+{{-- JAVASCRIPT --}}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+    const selectAll = document.getElementById('selectAll');
+    const checkboxes = document.querySelectorAll('.sport-checkbox');
+    const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+    const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+
+    function toggleBulkButton() {
+        const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+        bulkDeleteBtn.classList.toggle('hidden', !anyChecked);
+    }
+
+    selectAll.addEventListener('change', function () {
+        checkboxes.forEach(cb => cb.checked = selectAll.checked);
+        toggleBulkButton();
+    });
+
+    checkboxes.forEach(cb => {
+        cb.addEventListener('change', toggleBulkButton);
+    });
+
+    bulkDeleteBtn.addEventListener('click', function () {
+        if (confirm('Are you sure you want to delete selected sports?')) {
+            bulkDeleteForm.submit();
+        }
+    });
+
+});
+</script>
+
 @endsection
