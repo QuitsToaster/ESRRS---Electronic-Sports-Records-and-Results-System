@@ -17,13 +17,25 @@
     ];
 @endphp
 
+
+{{-- ================= TOP BACK BUTTON ================= --}}
+<div class="mb-4">
+    <a href="{{ route('results_divisions.index') }}"
+       class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded transition">
+        ← Back to Results
+    </a>
+</div>
+
+
 {{-- ================= TABS ================= --}}
 <div class="mb-6">
-    <ul class="flex border-b border-gray-200" id="awardTabs">
+    <ul class="flex border-b border-gray-300" id="awardTabs">
         @foreach($tabs as $tabName => $tab)
-            <li class="-mb-px mr-1">
+            <li class="mr-2">
                 <a href="#{{ Str::slug($tabName) }}" 
-                   class="inline-block py-2 px-4 font-semibold text-gray-700 hover:text-blue-600 border-b-2 border-transparent"
+                   class="tab-link inline-block py-2 px-4 font-semibold text-gray-600 
+                          border-b-2 border-transparent 
+                          hover:text-blue-600 hover:border-blue-400 transition"
                    onclick="openTab(event, '{{ Str::slug($tabName) }}')">
                     {{ $tabName }}
                 </a>
@@ -31,6 +43,7 @@
         @endforeach
     </ul>
 </div>
+
 
 <form action="{{ route('results_divisions.store') }}" method="POST">
 @csrf
@@ -52,6 +65,7 @@
         ->orderBy('first_name')
         ->get();
 @endphp
+
 
 <div id="{{ Str::slug($tabName) }}" class="tab-content hidden">
 <h2 class="text-2xl font-bold mb-4">{{ $tabName }} Awards</h2>
@@ -80,13 +94,11 @@
 @foreach(['Gold','Silver','Bronze'] as $medal)
 <td class="px-2 py-2">
 
-{{-- 🔹 TYPE FIELD --}}
 <input type="text"
        placeholder="Type athlete name..."
        class="w-full border rounded px-2 py-1 mb-1 athlete-input text-sm"
        data-target="select">
 
-{{-- 🔹 DROPDOWN --}}
 <select name="results[{{ $level }}][{{ $category ?? 'NA' }}][{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
         class="w-full border rounded px-2 py-1 athlete-select text-sm">
 
@@ -121,29 +133,56 @@ data-info='{{ json_encode([
 </div>
 @endforeach
 
-<div class="flex justify-end mt-4 gap-2">
-<a href="{{ route('results_divisions.index') }}" class="px-4 py-2 bg-gray-200 rounded">Cancel</a>
-<button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded">Save Results</button>
+
+<div class="flex justify-end mt-6 gap-2">
+    <a href="{{ route('results_divisions.index') }}"
+       class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded transition">
+        Cancel
+    </a>
+    <button type="submit"
+            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition">
+        Save Results
+    </button>
 </div>
 
 </form>
+
 
 {{-- ================= TAB + SEARCH JS ================= --}}
 <script>
 function openTab(evt, tabId) {
     evt.preventDefault();
-    document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(el => {
+        el.classList.add('hidden');
+    });
+
+    // Show selected tab
     document.getElementById(tabId).classList.remove('hidden');
 
-    document.querySelectorAll('#awardTabs a').forEach(a => a.classList.remove('border-blue-600','text-blue-600'));
-    evt.currentTarget.classList.add('border-blue-600','text-blue-600');
+    // Remove active styles
+    document.querySelectorAll('.tab-link').forEach(link => {
+        link.classList.remove('text-blue-600','border-blue-600','bg-blue-50');
+        link.classList.add('text-gray-600');
+    });
+
+    // Add active styles
+    evt.currentTarget.classList.remove('text-gray-600');
+    evt.currentTarget.classList.add('text-blue-600','border-blue-600','bg-blue-50');
 }
 
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Activate first tab
-    document.querySelectorAll('.tab-content')[0].classList.remove('hidden');
-    document.querySelectorAll('#awardTabs a')[0].classList.add('border-blue-600','text-blue-600');
+    // Activate first tab by default
+    const firstTab = document.querySelectorAll('.tab-content')[0];
+    const firstLink = document.querySelectorAll('.tab-link')[0];
+
+    if(firstTab && firstLink){
+        firstTab.classList.remove('hidden');
+        firstLink.classList.add('text-blue-600','border-blue-600','bg-blue-50');
+        firstLink.classList.remove('text-gray-600');
+    }
 
     // Dropdown change = show details
     document.querySelectorAll('.athlete-select').forEach(select => {
