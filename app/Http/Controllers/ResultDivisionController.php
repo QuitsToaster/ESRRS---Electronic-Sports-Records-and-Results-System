@@ -235,25 +235,38 @@ public function storeIndividualAwards(Request $request)
         return back()->with('error', "No active event found for division: {$request->division}");
     }
 
-    foreach ($request->individual_results ?? [] as $sportId => $types) {
-        foreach ($types as $typeId => $sdos) {
-            foreach ($sdos as $sdo => $medals) {
-                foreach ($medals as $medal => $athleteId) {
-                    if ($athleteId) {
-                        \App\Models\IndividualAwardResult::create([
-                            'event_id' => $eventId,
-                            'sport_id' => $sportId,
-                            'type_id' => $typeId,
-                            'division' => $request->division,
-                            'category' => $request->category,
-                            'sdo' => $sdo,
-                            'medal' => $medal,
-                            'athlete_id' => $athleteId,
-                            'awarded_by' => auth()->id(),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    }
+    $individualResults = $request->input('individual_results', []);
+
+    foreach ($individualResults as $sportId => $types) {
+        foreach ($types as $typeId => $medals) {
+            // Convert 0 back to null if needed
+            $typeId = $typeId == 0 ? null : $typeId;
+
+            foreach ($medals as $medal => $athleteId) {
+                if ($athleteId) {
+                    // Remove previous award for same sport/type/medal/division/category
+                    \App\Models\IndividualAwardResult::where([
+                        'event_id' => $eventId,
+                        'sport_id' => $sportId,
+                        'type_id' => $typeId,
+                        'division' => $request->division,
+                        'category' => $request->category,
+                        'medal' => $medal,
+                    ])->delete();
+
+                    \App\Models\IndividualAwardResult::create([
+                        'event_id'   => $eventId,
+                        'sport_id'   => $sportId,
+                        'type_id'    => $typeId,
+                        'division'   => $request->division,
+                        'category'   => $request->category,
+                        'sdo'        => null, // truly optional
+                        'medal'      => $medal,
+                        'athlete_id' => $athleteId,
+                        'awarded_by' => auth()->id(),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
             }
         }
@@ -261,6 +274,7 @@ public function storeIndividualAwards(Request $request)
 
     return back()->with('success', 'Individual awards saved successfully.');
 }
+
 
 
 
