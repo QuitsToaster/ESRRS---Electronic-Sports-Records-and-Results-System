@@ -5,257 +5,236 @@
 @section('content')
 
 @php
-    use App\Models\Sport;
-    use App\Models\Athlete;
+use App\Models\Sport;
+use App\Models\Division;
+use App\Models\ResultDivision;
+use App\Models\Athlete;
 
-    $tabs = [
-        'Elementary Boys' => ['level' => 'Elementary', 'category' => 'Boys'],
-        'Elementary Girls' => ['level' => 'Elementary', 'category' => 'Girls'],
-        'Secondary Boys' => ['level' => 'Secondary', 'category' => 'Boys'],
-        'Secondary Girls' => ['level' => 'Secondary', 'category' => 'Girls'],
-        'Para Games' => ['level' => 'Paragames', 'category' => null], // ✅ FIXED
-    ];
+$tabs = [
+    'Elementary Boys'   => ['division' => 'Elementary', 'category' => 'Boys'],
+    'Elementary Girls'  => ['division' => 'Elementary', 'category' => 'Girls'],
+    'Secondary Boys'    => ['division' => 'Secondary', 'category' => 'Boys'],
+    'Secondary Girls'   => ['division' => 'Secondary', 'category' => 'Girls'],
+    'Para Games'        => ['division' => 'Paragames', 'category' => null],
+];
+
+$divisions = Division::orderBy('name')->get();
 @endphp
 
+<div x-data="{ 
+        activeTab: '{{ Str::slug(array_key_first($tabs)) }}',
+        awardType: 'individual'
+    }">
 
-{{-- ================= TOP BACK BUTTON ================= --}}
-<div class="mb-4">
-    <a href="{{ route('results_divisions.index') }}"
-       class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded transition">
-        ← Back to Results
-    </a>
+{{-- ================= AWARD TYPE DROPDOWN ================= --}}
+<div class="mb-6">
+    <label class="block text-sm font-medium mb-1">Award Type</label>
+    <select x-model="awardType" class="border rounded px-3 py-2 w-64">
+        <option value="all">All Awards</option>
+        <option value="individual">Individual Awards</option>
+    </select>
 </div>
-
 
 {{-- ================= TABS ================= --}}
-<div class="mb-6">
-    <ul class="flex border-b border-gray-300" id="awardTabs">
-        @foreach($tabs as $tabName => $tab)
-            <li class="mr-2">
-                <a href="#{{ Str::slug($tabName) }}" 
-                   class="tab-link inline-block py-2 px-4 font-semibold text-gray-600 
-                          border-b-2 border-transparent 
-                          hover:text-blue-600 hover:border-blue-400 transition"
-                   onclick="openTab(event, '{{ Str::slug($tabName) }}')">
-                    {{ $tabName }}
-                </a>
-            </li>
-        @endforeach
-    </ul>
-</div>
-
+<ul class="flex border-b mb-6">
+@foreach($tabs as $tabName => $tab)
+    <li class="mr-2">
+        <button
+            @click="activeTab='{{ Str::slug($tabName) }}'"
+            :class="activeTab === '{{ Str::slug($tabName) }}'
+                ? 'border-blue-600 text-blue-600'
+                : 'text-gray-600'"
+            class="py-2 px-4 border-b-2 font-semibold"
+        >
+            {{ $tabName }}
+        </button>
+    </li>
+@endforeach
+</ul>
 
 <form action="{{ route('results_divisions.store') }}" method="POST">
 @csrf
 
 @foreach($tabs as $tabName => $tab)
 @php
-    $level    = $tab['level'];
+    $division = $tab['division'];
     $category = $tab['category'];
 
-    /*
-    |--------------------------------------------------------------------------
-    | SPORTS
-    |--------------------------------------------------------------------------
-    | Para Games tab  -> ONLY sports with division = Paragames
-    | Other tabs      -> ONLY sports NOT Paragames
-    */
     $sports = Sport::with('types')
-        ->where(function ($q) use ($level) {
-            if ($level === 'Paragames') {
-                $q->where('division', 'Paragames');
-            } else {
-                $q->where('division', '!=', 'Paragames');
-            }
-        })
+        ->where(fn($q) =>
+            $division === 'Paragames'
+                ? $q->where('division','Paragames')
+                : $q->where('division','!=','Paragames')
+        )
         ->orderBy('name')
         ->get();
 
-    /*
-    |--------------------------------------------------------------------------
-    | ATHLETES
-    |--------------------------------------------------------------------------
-    */
-    $athletes = Athlete::with('school')
-        ->where(function ($q) use ($level, $category) {
-            if ($level === 'Paragames') {
-                $q->where('division', 'Paragames');
-            } else {
-                $q->where('division', $level)
-                  ->where('category', $category);
-            }
-        })
-        ->orderBy('last_name')
-        ->orderBy('first_name')
-        ->get();
+    $athletes = Athlete::where(function($q) use ($division,$category){
+        $division === 'Paragames'
+            ? $q->where('division','Paragames')
+            : $q->where('division',$division)->where('category',$category);
+    })->orderBy('last_name')->get();
 @endphp
 
+<div x-show="activeTab === '{{ Str::slug($tabName) }}'">
 
+<input type="hidden" name="division" value="{{ $division }}">
+<input type="hidden" name="category" value="{{ $category }}">
 
-<div id="{{ Str::slug($tabName) }}" class="tab-content hidden">
-<h2 class="text-2xl font-bold mb-4">{{ $tabName }} Awards</h2>
+<h2 class="text-2xl font-bold mb-4">{{ $tabName }}</h2>
 
-<div class="overflow-x-auto">
-<table class="w-full border-collapse text-sm">
+{{-- ========================================================= --}}
+{{-- 🧑 INDIVIDUAL AWARDS (OLD UI) --}}
+{{-- ========================================================= --}}
+<div x-show="awardType === 'individual'">
+
+@foreach($sports as $sport)
+<h3 class="font-bold mt-6">{{ strtoupper($sport->name) }}</h3>
+
+<table class="w-full border text-sm mt-2">
 <thead class="bg-gray-100">
 <tr>
-<th class="px-4 py-2 text-left">Sport / Event</th>
-<th class="px-4 py-2">Gold</th>
-<th class="px-4 py-2">Silver</th>
-<th class="px-4 py-2">Bronze</th>
+    <th class="border px-2">Event</th>
+    <th class="border px-2">Gold</th>
+    <th class="border px-2">Silver</th>
+    <th class="border px-2">Bronze</th>
 </tr>
 </thead>
 <tbody>
-
-@foreach($sports as $sport)
-<tr class="bg-gray-50 font-bold">
-<td colspan="4">{{ strtoupper($sport->name) }}</td>
-</tr>
-
 @foreach($sport->types as $type)
-<tr class="border-t">
-<td class="italic px-4 py-2 text-gray-600">{{ $type->type_name }}</td>
+<tr>
+<td class="border px-2 italic">{{ $type->type_name }}</td>
 
 @foreach(['Gold','Silver','Bronze'] as $medal)
-<td class="px-2 py-2">
-
-<input type="text"
-       placeholder="Type athlete name..."
-       class="w-full border rounded px-2 py-1 mb-1 athlete-input text-sm"
-       data-target="select">
-
-<select name="results[{{ $level }}][{{ $category ?? 'NA' }}][{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
-        class="w-full border rounded px-2 py-1 athlete-select text-sm">
-
-<option value="">-- Select Athlete --</option>
-
-@foreach($athletes as $athlete)
-<option value="{{ $athlete->id }}"
-data-name="{{ strtolower($athlete->first_name . ' ' . $athlete->last_name) }}"
-data-info='{{ json_encode([
-"school" => $athlete->school->name ?? "-",
-"age" => $athlete->birthdate ? \Carbon\Carbon::parse($athlete->birthdate)->age : "-",
-"region" => $athlete->region ?? "-"
-]) }}'>
-{{ $athlete->first_name }} {{ $athlete->last_name }}
-</option>
-@endforeach
-
-</select>
-
-<div class="mt-1 text-xs text-gray-500 athlete-details"></div>
-
+<td class="border px-2">
+    <select
+        name="results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
+        class="w-full border rounded px-1"
+    >
+        <option value="">— Select Athlete —</option>
+        @foreach($athletes as $athlete)
+            <option value="{{ $athlete->id }}">
+                {{ $athlete->last_name }}, {{ $athlete->first_name }}
+            </option>
+        @endforeach
+    </select>
 </td>
 @endforeach
-
 </tr>
 @endforeach
-@endforeach
-
 </tbody>
 </table>
+@endforeach
+
 </div>
+
+{{-- ========================================================= --}}
+{{-- 🏆 ALL AWARDS (NEW MEDAL TALLY UI) --}}
+{{-- ========================================================= --}}
+<div x-show="awardType === 'all'">
+
+{{-- ===== TOP MEDAL TALLY WITH SDO LABELS ===== --}}
+<div class="overflow-x-auto mb-10">
+<table class="w-full border text-sm border-collapse">
+
+<thead>
+<tr class="bg-gray-200 text-center">
+    <th rowspan="2" class="border px-3">SPORT</th>
+    @foreach($divisions as $div)
+        <th colspan="3" class="border">{{ $div->name }}<br><span class="text-xs text-gray-600">{{ $div->division ?? '' }}</span></th>
+    @endforeach
+</tr>
+<tr class="text-center">
+    @foreach($divisions as $div)
+        <th class="border bg-yellow-300">G</th> <!-- Gold -->
+        <th class="border bg-gray-300">S</th>   <!-- Silver -->
+        <th class="border bg-orange-200">B</th> <!-- Bronze -->
+    @endforeach
+</tr>
+
+</thead>
+
+<tbody>
+@foreach($sports as $sport)
+<tr>
+<td class="border px-3 font-semibold">{{ strtoupper($sport->name) }}</td>
+
+@foreach($divisions as $div)
+<td class="border text-center">
+    {{ ResultDivision::where(compact('division','category'))
+        ->where('sport_id',$sport->id)
+        ->where('sdo',$div->name)
+        ->where('medal','Gold')->count() }}
+</td>
+<td class="border text-center">
+    {{ ResultDivision::where(compact('division','category'))
+        ->where('sport_id',$sport->id)
+        ->where('sdo',$div->name)
+        ->where('medal','Silver')->count() }}
+</td>
+<td class="border text-center">
+    {{ ResultDivision::where(compact('division','category'))
+        ->where('sport_id',$sport->id)
+        ->where('sdo',$div->name)
+        ->where('medal','Bronze')->count() }}
+</td>
+@endforeach
+</tr>
+@endforeach
+</tbody>
+
+</table>
+</div>
+
+{{-- ===== PER SPORT TABLES WITH SDO LABELS ===== --}}
+@foreach($sports as $sport)
+<h3 class="font-bold mt-8">{{ strtoupper($sport->name) }}</h3>
+
+<table class="w-full border text-sm mt-2">
+<thead class="bg-gray-200 text-center">
+<tr>
+    <th rowspan="2" class="border">Event</th>
+    @foreach($divisions as $div)
+        <th colspan="3" class="border">{{ $div->name }}<br><span class="text-xs text-gray-600">{{ $div->division ?? '' }}</span></th>
+    @endforeach
+</tr>
+<tr class="text-center">
+    @foreach($divisions as $div)
+        <th class="border bg-yellow-300">G</th> <!-- Gold -->
+        <th class="border bg-gray-300">S</th>   <!-- Silver -->
+        <th class="border bg-orange-200">B</th> <!-- Bronze -->
+    @endforeach
+</tr>
+
+</thead>
+
+<tbody>
+@foreach($sport->types as $type)
+<tr>
+<td class="border px-2">{{ $type->type_name }}</td>
+@foreach($divisions as $div)
+<td class="border text-center">{{ ResultDivision::where('sport_id',$sport->id)->where('type_id',$type->id)->where('sdo',$div->name)->where('medal','Gold')->count() }}</td>
+<td class="border text-center">{{ ResultDivision::where('sport_id',$sport->id)->where('type_id',$type->id)->where('sdo',$div->name)->where('medal','Silver')->count() }}</td>
+<td class="border text-center">{{ ResultDivision::where('sport_id',$sport->id)->where('type_id',$type->id)->where('sdo',$div->name)->where('medal','Bronze')->count() }}</td>
+@endforeach
+</tr>
+@endforeach
+</tbody>
+</table>
+@endforeach
+
+</div>
+
 </div>
 @endforeach
 
-
-<div class="flex justify-end mt-6 gap-2">
-    <a href="{{ route('results_divisions.index') }}"
-       class="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded transition">
-        Cancel
-    </a>
-    <button type="submit"
-            class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition">
+<div class="flex justify-end mt-6">
+    <button class="bg-blue-600 text-white px-6 py-2 rounded">
         Save Results
     </button>
 </div>
 
 </form>
-
-
-{{-- ================= TAB + SEARCH JS ================= --}}
-<script>
-function openTab(evt, tabId) {
-    evt.preventDefault();
-
-    // Hide all tab contents
-    document.querySelectorAll('.tab-content').forEach(el => {
-        el.classList.add('hidden');
-    });
-
-    // Show selected tab
-    document.getElementById(tabId).classList.remove('hidden');
-
-    // Remove active styles
-    document.querySelectorAll('.tab-link').forEach(link => {
-        link.classList.remove('text-blue-600','border-blue-600','bg-blue-50');
-        link.classList.add('text-gray-600');
-    });
-
-    // Add active styles
-    evt.currentTarget.classList.remove('text-gray-600');
-    evt.currentTarget.classList.add('text-blue-600','border-blue-600','bg-blue-50');
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    // Activate first tab by default
-    const firstTab = document.querySelectorAll('.tab-content')[0];
-    const firstLink = document.querySelectorAll('.tab-link')[0];
-
-    if(firstTab && firstLink){
-        firstTab.classList.remove('hidden');
-        firstLink.classList.add('text-blue-600','border-blue-600','bg-blue-50');
-        firstLink.classList.remove('text-gray-600');
-    }
-
-    // Dropdown change = show details
-    document.querySelectorAll('.athlete-select').forEach(select => {
-        select.addEventListener('change', function() {
-            showDetails(this);
-        });
-    });
-
-    // Typing = auto match dropdown
-    document.querySelectorAll('.athlete-input').forEach(input => {
-        input.addEventListener('keyup', function() {
-
-            const value = this.value.toLowerCase();
-            const select = this.parentElement.querySelector('.athlete-select');
-            const options = select.querySelectorAll('option');
-
-            let matched = false;
-
-            options.forEach(option => {
-                if(option.dataset.name && option.dataset.name.includes(value)){
-                    select.value = option.value;
-                    matched = true;
-                }
-            });
-
-            if(matched){
-                showDetails(select);
-            }
-        });
-    });
-
-    function showDetails(select){
-        const infoBox = select.parentElement.querySelector('.athlete-details');
-        const selected = select.selectedOptions[0];
-
-        if(selected && selected.dataset.info){
-            const info = JSON.parse(selected.dataset.info);
-            infoBox.innerHTML = `
-                School: ${info.school || '-'}<br>
-                Age: ${info.age || '-'}<br>
-                Region: ${info.region || '-'}
-            `;
-        } else {
-            infoBox.innerHTML = '';
-        }
-    }
-
-});
-</script>
+</div>
 
 @endsection

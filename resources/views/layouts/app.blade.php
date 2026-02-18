@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <button data-nav @click="isOpen = !isOpen"
                 class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
                 {{ request()->routeIs('results_divisions.*') ? 'bg-blue-900 font-semibold' : '' }}">
-            Results / Awards
+            Results & Awards
             <span x-text="isOpen ? '▾' : '▸'"></span>
         </button>
 
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <a href="{{ route('results_divisions.index') }}"
                class="block px-4 py-2 rounded hover:bg-blue-600
                {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                All Results
+                Official Results
             </a>
             <a href="{{ route('results_divisions.create') }}"
                class="block px-4 py-2 rounded hover:bg-blue-600
