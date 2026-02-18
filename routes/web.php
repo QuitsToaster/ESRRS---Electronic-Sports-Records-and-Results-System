@@ -215,6 +215,13 @@ Route::resource('sports', SportController::class);
         Route::get('/export', [ResultDivisionController::class, 'export'])->name('export');
     });
 
+    Route::post('/results/all-awards', [ResultDivisionController::class, 'storeAllAwards'])
+    ->name('results_all_awards.store');
+    // Individual awards
+Route::post('/results/individual-awards', [ResultDivisionController::class, 'storeIndividualAwards'])
+    ->name('results_individual.store');
+
+
     /*
     |--------------------------------------------------------------------------
     | Audit Logs
