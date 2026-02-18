@@ -7,7 +7,6 @@
 @php
 use App\Models\Sport;
 use App\Models\Division;
-use App\Models\ResultDivision;
 use App\Models\Athlete;
 
 $tabs = [
@@ -21,9 +20,20 @@ $tabs = [
 $divisions = Division::orderBy('name')->get();
 @endphp
 
-<div x-data="{ 
+<div x-data="{
         activeTab: '{{ Str::slug(array_key_first($tabs)) }}',
-        awardType: 'individual'
+        awardType: 'individual',
+        results: {},
+        getMedalCount(sportId, typeId, sdo, medal) {
+            return parseInt(this.results?.[sportId]?.[typeId]?.[sdo]?.[medal] || 0);
+        },
+        sdoTotal(sdo, medal, sportId) {
+            let sum = 0;
+            Object.keys(this.results[sportId] || {}).forEach(typeId => {
+                sum += this.getMedalCount(sportId,typeId,sdo,medal);
+            });
+            return sum;
+        }
     }">
 
 {{-- ================= AWARD TYPE DROPDOWN ================= --}}
@@ -69,11 +79,7 @@ $divisions = Division::orderBy('name')->get();
         ->orderBy('name')
         ->get();
 
-    $athletes = Athlete::where(function($q) use ($division,$category){
-        $division === 'Paragames'
-            ? $q->where('division','Paragames')
-            : $q->where('division',$division)->where('category',$category);
-    })->orderBy('last_name')->get();
+    $athletes = []; // We'll not populate this for "All Awards" input
 @endphp
 
 <div x-show="activeTab === '{{ Str::slug($tabName) }}'">
@@ -128,6 +134,7 @@ $divisions = Division::orderBy('name')->get();
 
 </div>
 
+
 {{-- ========================================================= --}}
 {{-- 🏆 ALL AWARDS (NEW MEDAL TALLY UI) --}}
 {{-- ========================================================= --}}
@@ -146,12 +153,11 @@ $divisions = Division::orderBy('name')->get();
 </tr>
 <tr class="text-center">
     @foreach($divisions as $div)
-        <th class="border bg-yellow-300">G</th> <!-- Gold -->
-        <th class="border bg-gray-300">S</th>   <!-- Silver -->
-        <th class="border bg-orange-200">B</th> <!-- Bronze -->
+        <th class="border bg-yellow-300">G</th>
+        <th class="border bg-gray-300">S</th>
+        <th class="border bg-orange-200">B</th>
     @endforeach
 </tr>
-
 </thead>
 
 <tbody>
@@ -160,24 +166,9 @@ $divisions = Division::orderBy('name')->get();
 <td class="border px-3 font-semibold">{{ strtoupper($sport->name) }}</td>
 
 @foreach($divisions as $div)
-<td class="border text-center">
-    {{ ResultDivision::where(compact('division','category'))
-        ->where('sport_id',$sport->id)
-        ->where('sdo',$div->name)
-        ->where('medal','Gold')->count() }}
-</td>
-<td class="border text-center">
-    {{ ResultDivision::where(compact('division','category'))
-        ->where('sport_id',$sport->id)
-        ->where('sdo',$div->name)
-        ->where('medal','Silver')->count() }}
-</td>
-<td class="border text-center">
-    {{ ResultDivision::where(compact('division','category'))
-        ->where('sport_id',$sport->id)
-        ->where('sdo',$div->name)
-        ->where('medal','Bronze')->count() }}
-</td>
+    <td class="border text-center" x-text="sdoTotal('{{ $div->name }}','Gold','{{ $sport->id }}')">0</td>
+    <td class="border text-center" x-text="sdoTotal('{{ $div->name }}','Silver','{{ $sport->id }}')">0</td>
+    <td class="border text-center" x-text="sdoTotal('{{ $div->name }}','Bronze','{{ $sport->id }}')">0</td>
 @endforeach
 </tr>
 @endforeach
@@ -186,7 +177,7 @@ $divisions = Division::orderBy('name')->get();
 </table>
 </div>
 
-{{-- ===== PER SPORT TABLES WITH SDO LABELS ===== --}}
+{{-- ===== PER SPORT TABLES WITH MEDAL INPUTS ===== --}}
 @foreach($sports as $sport)
 <h3 class="font-bold mt-8">{{ strtoupper($sport->name) }}</h3>
 
@@ -200,28 +191,61 @@ $divisions = Division::orderBy('name')->get();
 </tr>
 <tr class="text-center">
     @foreach($divisions as $div)
-        <th class="border bg-yellow-300">G</th> <!-- Gold -->
-        <th class="border bg-gray-300">S</th>   <!-- Silver -->
-        <th class="border bg-orange-200">B</th> <!-- Bronze -->
+        <th class="border bg-yellow-300">G</th>
+        <th class="border bg-gray-300">S</th>
+        <th class="border bg-orange-200">B</th>
     @endforeach
 </tr>
-
 </thead>
 
 <tbody>
 @foreach($sport->types as $type)
 <tr>
 <td class="border px-2">{{ $type->type_name }}</td>
+
 @foreach($divisions as $div)
-<td class="border text-center">{{ ResultDivision::where('sport_id',$sport->id)->where('type_id',$type->id)->where('sdo',$div->name)->where('medal','Gold')->count() }}</td>
-<td class="border text-center">{{ ResultDivision::where('sport_id',$sport->id)->where('type_id',$type->id)->where('sdo',$div->name)->where('medal','Silver')->count() }}</td>
-<td class="border text-center">{{ ResultDivision::where('sport_id',$sport->id)->where('type_id',$type->id)->where('sdo',$div->name)->where('medal','Bronze')->count() }}</td>
+<td class="border text-center">
+    <input type="number" min="0" class="w-16 text-center border rounded px-1"
+        x-model.number="results['{{ $sport->id }}'] = results['{{ $sport->id }}'] || {}; 
+                        results['{{ $sport->id }}']['{{ $type->id }}'] = results['{{ $sport->id }}']['{{ $type->id }}'] || {}; 
+                        results['{{ $sport->id }}']['{{ $type->id }}']['{{ $div->name }}'] = results['{{ $sport->id }}']['{{ $type->id }}']['{{ $div->name }}'] || {};
+                        results['{{ $sport->id }}']['{{ $type->id }}']['{{ $div->name }}']['Gold']"
+        name="results[{{ $sport->id }}][{{ $type->id }}][{{ $div->name }}][Gold]"
+    >
+</td>
+<td class="border text-center">
+    <input type="number" min="0" class="w-16 text-center border rounded px-1"
+        x-model.number="results['{{ $sport->id }}']['{{ $type->id }}']['{{ $div->name }}']['Silver']"
+        name="results[{{ $sport->id }}][{{ $type->id }}][{{ $div->name }}][Silver]"
+    >
+</td>
+<td class="border text-center">
+    <input type="number" min="0" class="w-16 text-center border rounded px-1"
+        x-model.number="results['{{ $sport->id }}']['{{ $type->id }}']['{{ $div->name }}']['Bronze']"
+        name="results[{{ $sport->id }}][{{ $type->id }}][{{ $div->name }}][Bronze]"
+    >
+</td>
 @endforeach
 </tr>
 @endforeach
 </tbody>
+
+{{-- ===== FOOTER TOTAL ROW ===== --}}
+<tfoot>
+<tr class="bg-green-100 font-semibold text-center">
+    <td class="border px-2">TOTAL</td>
+    @foreach($divisions as $div)
+        <td class="border" x-text="Object.keys(results['{{ $sport->id }}'] || {}).reduce((sum,typeId)=>sum + getMedalCount('{{ $sport->id }}',typeId,'{{ $div->name }}','Gold'),0)">0</td>
+        <td class="border" x-text="Object.keys(results['{{ $sport->id }}'] || {}).reduce((sum,typeId)=>sum + getMedalCount('{{ $sport->id }}',typeId,'{{ $div->name }}','Silver'),0)">0</td>
+        <td class="border" x-text="Object.keys(results['{{ $sport->id }}'] || {}).reduce((sum,typeId)=>sum + getMedalCount('{{ $sport->id }}',typeId,'{{ $div->name }}','Bronze'),0)">0</td>
+    @endforeach
+    <td class="border" x-text="Object.keys(results['{{ $sport->id }}'] || {}).reduce((sum,typeId)=>sum + Object.keys(results['{{ $sport->id }}'][typeId] || {}).reduce((s,sdo)=>s + rowTotal('{{ $sport->id }}',typeId,sdo),0),0)">0</td>
+</tr>
+</tfoot>
+
 </table>
 @endforeach
+
 
 </div>
 
