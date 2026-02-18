@@ -69,66 +69,90 @@ class ResultDivisionController extends Controller
     // CREATE PAGE
     // -----------------------------
     public function create(Request $request)
-    {
-        $division = $request->get('division', 'Elementary');
-        $category = $request->get('category', 'Boys');
+{
+    $user = auth()->user();
 
-        $sports = Sport::with('types')->orderBy('name')->get();
-        $divisions = Division::orderBy('name')->get(); // SDOs
+    $division = $request->get('division', 'Elementary');
+    $category = $request->get('category', 'Boys');
 
-        $existingResults = ResultDivision::where('category', $category)
-            ->whereHas('event', fn($q) => $q->where('age_group', $division))
-            ->get()
-            ->groupBy(fn($r) => $r->sport_id . '-' . ($r->type_id ?? 0) . '-' . $r->sdo . '-' . $r->medal);
+    $sports = Sport::with('types')
+        ->where('division', $division)
+        ->orderBy('name')
+        ->get();
 
-        return view('results_divisions.create', compact(
-            'sports', 'divisions', 'division', 'category', 'existingResults'
-        ));
+    // 🔐 DIVISION (SDO) FILTER
+    if ($user->role->name === 'Super Admin') {
+        $divisions = Division::orderBy('name')->get();
+    } else {
+        // ONLY their assigned SDO
+        $divisions = Division::where('id', $user->division_id)->get();
     }
 
-    // -----------------------------
-    // STORE RESULTS
-    // -----------------------------
-    public function store(Request $request)
-    {
-        $eventId = \App\Models\Event::where('is_active', 1)
-            ->where('age_group', $request->division)
-            ->value('id');
+    return view('results_divisions.create', compact(
+        'sports', 'divisions', 'division', 'category'
+    ));
+}
 
-        if (!$eventId) {
-            return back()->with('error', "No active event found for division: {$request->division}");
+
+    // =========================
+    // STORE (REGULAR RESULTS)
+    // =========================
+     public function store(Request $request)
+    {
+        $request->validate([
+            'event_id' => 'required|exists:events,id',
+            'results'  => 'required'
+        ]);
+
+        $eventId = $request->event_id;
+
+        $results = is_string($request->results)
+            ? json_decode($request->results, true)
+            : $request->results;
+
+        if (!is_array($results)) {
+            return back()->with('error', 'Invalid results payload.');
         }
 
-        foreach ($request->results ?? [] as $sportId => $types) {
+        $user = auth()->user();
+
+        foreach ($results as $sportId => $types) {
             foreach ($types as $typeId => $sdos) {
+
                 $typeId = $typeId == 0 ? null : $typeId;
 
                 foreach ($sdos as $sdo => $medals) {
+
+                    if ($user->role->name !== 'Super Admin' &&
+                        $sdo !== $user->division->name) {
+                        continue;
+                    }
+
                     foreach ($medals as $medal => $count) {
-                        // Delete previous
+
                         ResultDivision::where([
                             'event_id' => $eventId,
                             'sport_id' => $sportId,
-                            'type_id' => $typeId,
+                            'type_id'  => $typeId,
                             'division' => $request->division,
-                            'sdo' => $sdo,
                             'category' => $request->category,
-                            'medal' => $medal,
+                            'sdo'      => $sdo,
+                            'medal'    => $medal,
                         ])->delete();
 
-                        if ($count > 0) {
+                        if ((int)$count > 0) {
                             ResultDivision::insert(
-                                array_fill(0, $count, [
-                                    'event_id' => $eventId,
-                                    'sport_id' => $sportId,
-                                    'type_id' => $typeId,
-                                    'division' => $request->division,
-                                    'sdo' => $sdo,
-                                    'category' => $request->category,
-                                    'medal' => $medal,
+                                array_fill(0, (int)$count, [
+                                    'event_id'   => $eventId,
+                                    'sport_id'   => $sportId,
+                                    'type_id'    => $typeId,
+                                    'division'   => $request->division,
+                                    'category'   => $request->category,
+                                    'sdo'        => $sdo,
+                                    'medal'      => $medal,
                                     'awarded_by' => Auth::id(),
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
+                                    'created_at'=> now(),
+                                    'updated_at'=> now(),
                                 ])
                             );
                         }
@@ -176,54 +200,72 @@ class ResultDivisionController extends Controller
     return $pdf->download('awarded_medals.pdf');
 }
 
-public function storeAllAwards(Request $request)
-{
-    $eventId = \App\Models\Event::where('is_active', 1)
-        ->where('age_group', $request->division)
-        ->value('id');
+// =========================
+    // STORE ALL AWARDS (SUPER ADMIN)
+    // =========================
+    public function storeAllAwards(Request $request)
+    {
+        // 🔒 HARD VALIDATION
+        $request->validate([
+            'event_id' => 'required|exists:events,id',
+            'results'  => 'required'
+        ]);
 
-    if (!$eventId) {
-        return back()->with('error', "No active event found for division: {$request->division}");
-    }
+        $eventId = $request->event_id;
 
-    foreach ($request->results ?? [] as $sportId => $types) {
-        foreach ($types as $typeId => $sdos) {
-            $typeId = $typeId == 0 ? null : $typeId;
+        // ✅ Decode JSON safely
+        $results = is_string($request->results)
+            ? json_decode($request->results, true)
+            : $request->results;
 
-            foreach ($sdos as $sdo => $medals) {
-                foreach ($medals as $medal => $count) {
-                    // Remove previous
-                    \App\Models\AllAwardResult::where([
-                        'event_id' => $eventId,
-                        'sport_id' => $sportId,
-                        'type_id' => $typeId,
-                        'division' => $request->division,
-                        'category' => $request->category,
-                        'sdo' => $sdo,
-                        'medal' => $medal,
-                    ])->delete();
+        if (!is_array($results)) {
+            return back()->with('error', 'Invalid results payload.');
+        }
 
-                    // Insert if > 0
-                    if ($count > 0) {
-                        \App\Models\AllAwardResult::create([
+        $user = auth()->user();
+
+        foreach ($results as $sportId => $types) {
+            foreach ($types as $typeId => $sdos) {
+
+                $typeId = $typeId == 0 ? null : $typeId;
+
+                foreach ($sdos as $sdo => $medals) {
+
+                    foreach ($medals as $medal => $count) {
+
+                        // 🧹 Remove previous record
+                        AllAwardResult::where([
                             'event_id' => $eventId,
                             'sport_id' => $sportId,
-                            'type_id' => $typeId,
+                            'type_id'  => $typeId,
                             'division' => $request->division,
                             'category' => $request->category,
-                            'sdo' => $sdo,
-                            'medal' => $medal,
-                            'count' => $count,
-                            'awarded_by' => auth()->id(),
-                        ]);
+                            'sdo'      => $sdo,
+                            'medal'    => $medal,
+                        ])->delete();
+
+                        // ✅ Save only if count > 0
+                        if ((int)$count > 0) {
+                            AllAwardResult::create([
+                                'event_id'   => $eventId,
+                                'sport_id'   => $sportId,
+                                'type_id'    => $typeId,
+                                'division'   => $request->division,
+                                'category'   => $request->category,
+                                'sdo'        => $sdo,
+                                'medal'      => $medal,
+                                'count'      => (int)$count,
+                                'awarded_by' => Auth::id(),
+                            ]);
+                        }
                     }
                 }
             }
         }
+
+        return back()->with('success', 'All Awards results saved successfully.');
     }
 
-    return back()->with('success', 'All Awards results saved successfully.');
-}
 
 public function storeIndividualAwards(Request $request)
 {

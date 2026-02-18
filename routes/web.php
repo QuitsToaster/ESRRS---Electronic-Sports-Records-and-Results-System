@@ -18,6 +18,7 @@ use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\GalleryController;
+use App\Http\Controllers\AwardRequestController;
 use App\Http\Controllers\BracketController;
 use App\Http\Controllers\AccountRequestController;
 use Illuminate\Support\Facades\Route;
@@ -220,6 +221,19 @@ Route::resource('sports', SportController::class);
     // Individual awards
 Route::post('/results/individual-awards', [ResultDivisionController::class, 'storeIndividualAwards'])
     ->name('results_individual.store');
+
+    Route::prefix('award-requests')->name('award_requests.')->group(function () {
+
+    // Store request (Secretary submits)
+    Route::post('/store', [AwardRequestController::class, 'store'])
+        ->name('store');
+
+});
+
+Route::middleware(['auth'])->group(function() {
+    Route::get('/award_requests/{awardRequest}', [AwardRequestController::class, 'preview'])->name('award_requests.preview');
+    Route::post('/award_requests/{awardRequest}/validate', [AwardRequestController::class, 'validateRequest'])->name('award_requests.validate');
+});
 
 
     /*

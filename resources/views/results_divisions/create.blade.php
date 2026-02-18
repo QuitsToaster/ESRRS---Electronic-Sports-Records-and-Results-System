@@ -7,9 +7,16 @@
 @php
 use App\Models\Sport;
 use App\Models\Division;
-use App\Models\Athlete;
 use App\Models\AllAwardResult;
-use App\Models\IndividualAwardResult;
+use App\Models\AwardRequest;
+use App\Models\Event;
+
+$user = auth()->user();
+$role = $user->role->name;
+
+$isSecretary  = $role === 'Tournament Secretary';
+$isManager    = $role === 'Tournament Manager';
+$isSuperAdmin = $role === 'Super Admin';
 
 $tabs = [
     'Elementary Boys'   => ['division' => 'Elementary', 'category' => 'Boys'],
@@ -19,294 +26,223 @@ $tabs = [
     'Para Games'        => ['division' => 'Paragames', 'category' => null],
 ];
 
-$divisions = Division::orderBy('name')->get();
-$athletes  = Athlete::orderBy('last_name')->get();
+$divisions = $isSuperAdmin
+    ? Division::orderBy('name')->get()
+    : Division::where('id', $user->division_id)->get();
 
-/* ================= PREFILL ALL AWARDS RESULTS ================= */
-$prefillResults = [];
+$activeEvent = Event::where('is_active', 1)->first();
 
-foreach ($tabs as $tabName => $tab) {
-    $query = AllAwardResult::where('division', $tab['division']);
-    if (!is_null($tab['category'])) {
-        $query->where('category', $tab['category']);
-    } else {
-        $query->whereNull('category');
-    }
-
-    foreach ($query->get() as $r) {
-        $prefillResults[$tabName]
-            [$r->sport_id]
-            [$r->type_id ?? 0]
-            [$r->sdo]
-            [$r->medal] = $r->count;
-    }
-}
-
-/* ================= PREFILL INDIVIDUAL AWARDS ================= */
-$prefillIndividual = [];
-foreach ($tabs as $tabName => $tab) {
-    $query = IndividualAwardResult::where('division', $tab['division']);
-    if (!is_null($tab['category'])) {
-        $query->where('category', $tab['category']);
-    } else {
-        $query->whereNull('category');
-    }
-
-    foreach ($query->get() as $r) {
-        $prefillIndividual[$tabName]
-            [$r->sport_id]
-            [$r->type_id ?? 0]
-            [$r->sdo]
-            [$r->medal] = $r->athlete_id;
-    }
+$pendingRequests = [];
+if ($isManager) {
+    $pendingRequests = AwardRequest::where('sdo', $user->division->name)
+        ->where('status', 'Pending')
+        ->with('submitter', 'event')
+        ->latest()
+        ->get();
 }
 @endphp
 
-<div x-data="awardApp()" class="p-4 space-y-6">
+{{-- FLASH MESSAGES --}}
+@if(session('success'))
+<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+    {{ session('success') }}
+</div>
+@endif
 
-    {{-- ================= AWARD TYPE ================= --}}
-    <select x-model="awardType" class="border rounded px-3 py-2 w-64 mb-4">
-        <option value="all">All Awards</option>
-        <option value="individual">Individual Awards</option>
-    </select>
+@if(session('error'))
+<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+    {{ session('error') }}
+</div>
+@endif
 
-    {{-- ================= TABS ================= --}}
-    <ul class="flex border-b mb-6">
-    @foreach($tabs as $name => $tab)
-        <li>
-            <button @click="activeTab='{{ $name }}'"
-                    class="px-4 py-2 border-b-2 font-semibold"
-                    :class="activeTab==='{{ $name }}'
-                        ? 'border-blue-600 text-blue-600'
-                        : 'text-gray-500'">
-                {{ $name }}
-            </button>
-        </li>
+{{-- ================= MEDAL TALLY ================= --}}
+<div class="overflow-x-auto mb-10">
+<table class="w-full border text-sm">
+<thead class="bg-gray-200 text-center">
+<tr>
+    <th class="border p-2">SDO</th>
+    <th class="border p-2">Gold</th>
+    <th class="border p-2">Silver</th>
+    <th class="border p-2">Bronze</th>
+    <th class="border p-2">Total</th>
+</tr>
+</thead>
+<tbody>
+@foreach($divisions as $division)
+@php
+$g = AllAwardResult::where('sdo',$division->name)->where('medal','Gold')->sum('count');
+$s = AllAwardResult::where('sdo',$division->name)->where('medal','Silver')->sum('count');
+$b = AllAwardResult::where('sdo',$division->name)->where('medal','Bronze')->sum('count');
+@endphp
+<tr class="text-center">
+    <td class="border p-2 font-semibold">{{ $division->name }}</td>
+    <td class="border p-2">{{ $g }}</td>
+    <td class="border p-2">{{ $s }}</td>
+    <td class="border p-2">{{ $b }}</td>
+    <td class="border p-2 font-bold">{{ $g + $s + $b }}</td>
+</tr>
+@endforeach
+</tbody>
+</table>
+</div>
+
+<div x-data="awardApp()" class="space-y-6">
+
+{{-- ================= SECRETARY / SUPER ADMIN FORM ================= --}}
+@if($isSecretary || $isSuperAdmin)
+
+<form method="POST"
+      action="{{ $isSuperAdmin ? route('results_all_awards.store') : route('award_requests.store') }}"
+      enctype="multipart/form-data">
+@csrf
+
+<input type="hidden" name="event_id" value="{{ $activeEvent?->id }}">
+<input type="hidden" name="award_type" value="all">
+<input type="hidden" name="division" x-model="currentDivision">
+<input type="hidden" name="category" x-model="currentCategory">
+
+@if($isSuperAdmin)
+<input type="hidden" name="results" :value="JSON.stringify(results)">
+@endif
+
+@if($isSecretary)
+<input type="hidden" name="payload" :value="JSON.stringify(results)">
+@endif
+
+{{-- TABS --}}
+<ul class="flex border-b mb-4">
+@foreach($tabs as $name => $tab)
+<li>
+<button type="button"
+    @click="setTab('{{ $name }}','{{ $tab['division'] }}','{{ $tab['category'] }}')"
+    class="px-4 py-2 border-b-2"
+    :class="activeTab === '{{ $name }}'
+        ? 'border-blue-600 text-blue-600'
+        : 'text-gray-500'">
+    {{ $name }}
+</button>
+</li>
+@endforeach
+</ul>
+
+{{-- PER TAB --}}
+@foreach($tabs as $tabName => $tab)
+@php
+$sports = Sport::with('types')->where('division', $tab['division'])->get();
+@endphp
+
+<div x-show="activeTab === '{{ $tabName }}'">
+
+@foreach($sports as $sport)
+<h3 class="font-semibold mt-6 mb-2">{{ strtoupper($sport->name) }}</h3>
+
+<table class="w-full border text-sm">
+<thead class="bg-gray-100 text-center">
+
+{{-- SDO LABEL ROW --}}
+<tr>
+    <th rowspan="2" class="border p-2">Event</th>
+    @foreach($divisions as $d)
+        <th colspan="3" class="border p-2 font-semibold">
+            {{ $d->name }}
+        </th>
     @endforeach
-    </ul>
+</tr>
 
-    @foreach($tabs as $tabName => $tab)
-        @php
-        $sports = Sport::with('types')
-            ->where('division', $tab['division'])
-            ->orderBy('name')
-            ->get();
-        $tabAthletes = $athletes
-            ->where('division', $tab['division'])
-            ->where('category', $tab['category'])
-            ->sortBy('last_name');
-        @endphp
-
-        <div x-show="activeTab==='{{ $tabName }}'" x-cloak>
-
-            <h2 class="text-xl font-bold mb-4">{{ $tabName }}</h2>
-
-            {{-- ========================================================= --}}
-            {{-- 🏆 ALL AWARDS TABLE --}}
-            {{-- ========================================================= --}}
-            <div x-show="awardType==='all'" class="overflow-x-auto mb-8">
-                <table class="w-full border border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-gray-200 text-center">
-                            <th rowspan="2" class="border px-3">SPORT</th>
-                            @foreach($divisions as $d)
-                                <th colspan="3" class="border">{{ $d->name }}</th>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            @foreach($divisions as $d)
-                                <th class="border bg-yellow-300">G</th>
-                                <th class="border bg-gray-300">S</th>
-                                <th class="border bg-orange-200">B</th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($sports as $sport)
-                        <tr>
-                            <td class="border px-3 font-semibold">{{ strtoupper($sport->name) }}</td>
-                            @foreach($divisions as $d)
-                                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Gold')"></td>
-                                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Silver')"></td>
-                                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Bronze')"></td>
-                            @endforeach
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- ========================================================= --}}
-            {{-- 📝 ALL AWARDS FORM --}}
-            {{-- ========================================================= --}}
-            <form x-show="awardType==='all'" method="POST" action="{{ route('results_all_awards.store') }}">
-                @csrf
-                <input type="hidden" name="division" value="{{ $tab['division'] }}">
-                @if(!is_null($tab['category']))
-                <input type="hidden" name="category" value="{{ $tab['category'] }}">
-                @endif
-
-                @foreach($sports as $sport)
-                    <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
-                    <table class="w-full border text-sm mt-2">
-                        <tbody>
-                        @foreach($sport->types as $type)
-                            <tr>
-                                <td class="border px-2">{{ $type->type_name }}</td>
-                                @foreach($divisions as $d)
-                                    @foreach(['Gold','Silver','Bronze'] as $medal)
-                                        <td class="border text-center">
-                                            <input type="number" min="0" class="w-16 border rounded text-center"
-                                            x-model.number="results['{{ $tabName }}']['{{ $sport->id }}']['{{ $type->id }}']['{{ $d->name }}']['{{ $medal }}']"
-                                            name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]">
-                                        </td>
-                                    @endforeach
-                                @endforeach
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
-                @endforeach
-
-                <div class="flex justify-end mt-6">
-                    <button class="bg-blue-600 text-white px-6 py-2 rounded">Save All Awards</button>
-                </div>
-            </form>
-
-{{-- ========================================================= --}}
-{{-- 🏅 INDIVIDUAL AWARDS FORM (Gold, Silver, Bronze per sport) --}}
-{{-- ========================================================= --}}
-<form x-show="awardType==='individual'" method="POST" action="{{ route('results_individual.store') }}">
-    @csrf
-    <input type="hidden" name="division" value="{{ $tab['division'] }}">
-    @if(!is_null($tab['category']))
-        <input type="hidden" name="category" value="{{ $tab['category'] }}">
-    @endif
-
-    @php
-        // Prepare summary from database
-        $summary = [];
-        $eventId = \App\Models\Event::where('is_active', 1)
-            ->where('age_group', $tab['division'])
-            ->value('id');
-
-        if ($eventId) {
-            $awardResults = \App\Models\IndividualAwardResult::where('event_id', $eventId)
-                ->where('division', $tab['division'])
-                ->where('category', $tab['category'] ?? null)
-                ->get();
-
-            foreach ($awardResults as $award) {
-                $athlete = \App\Models\Athlete::find($award->athlete_id);
-                if ($athlete) {
-                    $summary[$award->sport_id][$award->type_id][$award->medal] = $athlete;
-                }
-            }
-        }
-
-        // Filter athletes per tab for the select options
-        $tabAthletes = $athletes->filter(fn($a) => $a->division == $tab['division'] && ($tab['category'] ? $a->category == $tab['category'] : true));
-    @endphp
-
-    {{-- ================= SUMMARY TABLE ================= --}}
-    <div class="overflow-x-auto mb-6">
-        <h3 class="text-lg font-bold mb-2">Individual Awards Summary</h3>
-        <table class="w-full border text-sm">
-            <thead class="bg-gray-200 text-center">
-                <tr>
-                    <th class="border px-2">Sport</th>
-                    <th class="border px-2">Event Type</th>
-                    <th class="border px-2">Gold</th>
-                    <th class="border px-2">Silver</th>
-                    <th class="border px-2">Bronze</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($sports as $sport)
-                    @foreach($sport->types as $type)
-                        @php $typeKey = $type->id ?? 0; @endphp
-                        <tr>
-                            <td class="border px-2 font-semibold">{{ strtoupper($sport->name) }}</td>
-                            <td class="border px-2 font-semibold">{{ $type->type_name }}</td>
-                            @foreach(['Gold','Silver','Bronze'] as $medal)
-                                <td class="border px-2 text-left align-top">
-                                    @if(isset($summary[$sport->id][$typeKey][$medal]))
-                                        @php $ath = $summary[$sport->id][$typeKey][$medal]; @endphp
-                                        <strong>{{ $ath->last_name }}, {{ $ath->first_name }}</strong><br>
-                                        <small>Region: {{ $ath->region }}</small><br>
-                                        <small>School: {{ $ath->school_name }}</small><br>
-                                        <small>Birthdate: {{ $ath->birthdate }}</small>
-                                    @else
-                                        --
-                                    @endif
-                                </td>
-                            @endforeach
-                        </tr>
-                    @endforeach
-                @endforeach
-            </tbody>
-        </table>
-    </div>
-
-    {{-- ================= SELECTION FORM ================= --}}
-    @foreach($sports as $sport)
-        <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
-        <table class="w-full border text-sm mt-2">
-            <tbody>
-                @foreach($sport->types as $type)
-                    @php $typeKey = $type->id ?? 0; @endphp
-                    <tr>
-                        <td class="border px-2 font-semibold">{{ $type->type_name }}</td>
-                        @foreach(['Gold','Silver','Bronze'] as $medal)
-                            <td class="border px-1">
-                                <select class="w-full border rounded text-sm"
-                                        x-model="individualResults['{{ $tabName }}']['{{ $sport->id }}']['{{ $typeKey }}']['{{ $medal }}']"
-                                        name="individual_results[{{ $sport->id }}][{{ $typeKey }}][{{ $medal }}]">
-                                    <option value="">-- Select Athlete --</option>
-                                    @foreach($tabAthletes as $athlete)
-                                        <option value="{{ $athlete->id }}"
-                                            {{ (isset($summary[$sport->id][$typeKey][$medal]) && $summary[$sport->id][$typeKey][$medal]->id == $athlete->id) ? 'selected' : '' }}>
-                                            {{ $athlete->last_name }}, {{ $athlete->first_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        @endforeach
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
+{{-- G S B LABEL ROW --}}
+<tr>
+    @foreach($divisions as $d)
+        <th class="border p-1">G</th>
+        <th class="border p-1">S</th>
+        <th class="border p-1">B</th>
     @endforeach
+</tr>
 
-    <div class="flex justify-end mt-6">
-        <button class="bg-green-600 text-white px-6 py-2 rounded">Save Individual Awards</button>
-    </div>
+</thead>
+
+<tbody>
+@foreach($sport->types as $type)
+<tr class="text-center">
+    <td class="border px-2 text-left">{{ $type->type_name }}</td>
+
+    @foreach($divisions as $d)
+        @foreach(['Gold','Silver','Bronze'] as $m)
+        <td class="border">
+            <input type="number" min="0"
+                class="w-14 text-center border rounded"
+                x-model.number="results['{{ $sport->id }}']['{{ $type->id }}']['{{ $d->name }}']['{{ $m }}']">
+        </td>
+        @endforeach
+    @endforeach
+</tr>
+@endforeach
+</tbody>
+</table>
+@endforeach
+
+</div>
+@endforeach
+
+<div class="flex justify-end mt-6">
+<button type="submit"
+    class="px-6 py-2 rounded text-white {{ $isSuperAdmin ? 'bg-green-600' : 'bg-blue-600' }}">
+    {{ $isSuperAdmin ? 'Save Awards' : 'Forward for Validation' }}
+</button>
+</div>
+
 </form>
+@endif
 
+{{-- ================= MANAGER VALIDATION ================= --}}
+@if($isManager)
+<h2 class="text-lg font-bold mb-4">Pending Award Requests</h2>
 
-
-
-
-        </div>
-    @endforeach
+@if($pendingRequests->isEmpty())
+<div class="text-gray-500">No pending award requests.</div>
+@else
+<table class="w-full border text-sm">
+<thead class="bg-gray-200 text-center">
+<tr>
+    <th class="border p-2">Event</th>
+    <th class="border p-2">Submitted By</th>
+    <th class="border p-2">Division</th>
+    <th class="border p-2">Action</th>
+</tr>
+</thead>
+<tbody>
+@foreach($pendingRequests as $req)
+<tr class="text-center">
+    <td class="border p-2">{{ $req->event->name }}</td>
+    <td class="border p-2">{{ $req->submitter->name }}</td>
+    <td class="border p-2">{{ $req->division }}</td>
+    <td class="border p-2">
+        <form method="POST" action="{{ route('award_requests.validate', $req->id) }}">
+        @csrf
+        <button class="bg-green-600 text-white px-4 py-1 rounded">
+            Validate & Save
+        </button>
+        </form>
+    </td>
+</tr>
+@endforeach
+</tbody>
+</table>
+@endif
+@endif
 
 </div>
 
 <script>
 function awardApp(){
     return {
-        activeTab:'{{ array_key_first($tabs) }}',
-        awardType:'all',
-        results:@json($prefillResults),
-        individualResults:@json($prefillIndividual),
-
-        getTotal(tab, sportId, sdo, medal){
-            let sum = 0;
-            const sport = this.results[tab]?.[sportId] || {};
-            for (let typeId in sport) {
-                sum += sport[typeId]?.[sdo]?.[medal] || 0;
-            }
-            return sum;
+        activeTab: 'Elementary Boys',
+        currentDivision: 'Elementary',
+        currentCategory: 'Boys',
+        results: {},
+        setTab(name, division, category){
+            this.activeTab = name
+            this.currentDivision = division
+            this.currentCategory = category
         }
     }
 }
