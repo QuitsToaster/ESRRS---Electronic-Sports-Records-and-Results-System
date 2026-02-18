@@ -462,7 +462,7 @@ function closePrivacyBanner() {
 {{-- ================= END DASHBOARD STRIP ================= --}}
 
 
-{{-- ================= LIVE GAMES ================= --}}
+<!-- {{-- ================= LIVE GAMES ================= --}}
 <section class="relative py-16 overflow-hidden">
 
     {{-- Background --}}
@@ -571,7 +571,7 @@ function closePrivacyBanner() {
             </div>
         @endif
     </div>
-</section>
+</section> -->
 
 
 
