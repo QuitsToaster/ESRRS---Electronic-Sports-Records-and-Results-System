@@ -26,37 +26,76 @@
 
 
 @php
-    use App\Models\Division;
+use App\Models\Division;
+use App\Models\AllAwardResult;
+use App\Models\IndividualAwardResult;
 
-    $allDivisions = Division::orderBy('name')->get();
+// Get all divisions
+$allDivisions = Division::orderBy('name')->get();
 
-    function medalCount($tally, $division, $level, $gender, $medal) {
-        $record = $tally->first(function ($item) use ($division, $level, $gender) {
-            return $item->name === $division
-                && $item->level === $level
-                && $item->gender === $gender;
-        });
+// ---------------------------
+// Preload all awards for medal tables
+// ---------------------------
+$allAwards = AllAwardResult::all()->groupBy(function($item) {
+    return $item->division . '|' . ($item->category ?? 'none') . '|' . ($item->sdo ?? 'none') . '|' . $item->medal;
+});
 
-        return $record ? ($record->{strtolower($medal)} ?? 0) : 0;
-    }
-@endphp
+// Function to get medal count from preloaded data
+function medalCountFromPreloaded($allAwards, $division, $category, $sdo, $medal) {
+    $key = $division . '|' . ($category ?? 'none') . '|' . ($sdo ?? 'none') . '|' . $medal;
+    return isset($allAwards[$key]) ? $allAwards[$key]->sum('count') : 0;
+}
 
+// ---------------------------
+// Map Overall Summary (Elementary + Secondary only, Boys & Girls)
+// ---------------------------
+$overall = $allDivisions->map(function ($division) use ($allAwards) {
 
-{{-- ================= OVERALL SUMMARY WITH LOGO ================= --}}
-@php
-$overall = $allDivisions->map(function ($division) use ($medalTally) {
+    // Sum all Elementary & Secondary medals (Boys + Girls) for this division
+    $division->total_gold   = medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold')
+                            + medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold')
+                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold')
+                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Gold');
 
-    $division->total_gold   = $medalTally->where('name',$division->name)->sum('gold');
-    $division->total_silver = $medalTally->where('name',$division->name)->sum('silver');
-    $division->total_bronze = $medalTally->where('name',$division->name)->sum('bronze');
+    $division->total_silver = medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Silver')
+                            + medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Silver')
+                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Silver')
+                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Silver');
+
+    $division->total_bronze = medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Bronze')
+                            + medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Bronze')
+                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze')
+                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze');
+
+    // Calculate points (optional, for display only)
     $division->total_points = ($division->total_gold * 3)
                             + ($division->total_silver * 2)
                             + ($division->total_bronze * 1);
 
     return $division;
 
-})->sortByDesc('total_gold')->values();
+})->sort(function($a, $b) {
+    // Sort by gold DESC, then silver DESC, then bronze DESC
+    if ($a->total_gold !== $b->total_gold) {
+        return $b->total_gold <=> $a->total_gold;
+    }
+    if ($a->total_silver !== $b->total_silver) {
+        return $b->total_silver <=> $a->total_silver;
+    }
+    return $b->total_bronze <=> $a->total_bronze;
+})->values();
+
+// ---------------------------
+// Individual Awards
+// ---------------------------
+$individualAwards = IndividualAwardResult::with('athlete','sport','event')->orderBy('event_id')->get();
+$awardsByMedal = $individualAwards->groupBy('medal');
 @endphp
+
+
+
+
+{{-- ================= OVERALL SUMMARY WITH LOGO ================= --}}
 
 <div class="mb-20">
     <h2 class="text-3xl font-bold text-gray-900 mb-8 border-l-8 border-green-600 pl-4">
@@ -104,18 +143,63 @@ $overall = $allDivisions->map(function ($division) use ($medalTally) {
                         <p class="text-xs text-gray-500">Bronze</p>
                     </div>
                 </div>
-
-                <div class="mt-6 text-center">
-                    <span class="text-sm text-gray-500">Total Points</span>
-                    <p class="text-xl font-bold text-green-600">
-                        {{ $division->total_points }}
-                    </p>
-                </div>
-
             </div>
         @endforeach
     </div>
 </div>
+
+{{-- ================= INDIVIDUAL AWARDS ================= --}}
+
+
+<div class="mb-16">
+    <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-8 border-purple-600 pl-4">
+        Individual Awards
+    </h2>
+
+    @foreach(['Gold', 'Silver', 'Bronze'] as $medal)
+        @if(isset($awardsByMedal[$medal]) && $awardsByMedal[$medal]->count() > 0)
+            <div class="mb-10">
+                <h3 class="text-2xl font-semibold text-gray-700 mb-4">
+                    {{ $medal }} Medalists
+                </h3>
+
+                <div class="bg-white shadow-xl rounded-2xl overflow-hidden border border-gray-200 overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-purple-700 text-white uppercase text-sm">
+                            <tr>
+                                <th class="px-4 py-3">Event</th>
+                                <th class="px-4 py-3">Event Type</th>
+                                <th class="px-4 py-3">Athlete Name</th>
+                                <th class="px-4 py-3">School</th>
+                                <th class="px-4 py-3">Region</th>
+                                <th class="px-4 py-3">Birthdate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($awardsByMedal[$medal] as $award)
+                                @php
+                                    $athlete = $award->athlete;
+                                    $sport   = $award->sport;
+                                    $event   = $award->event;
+                                @endphp
+                                <tr class="border-t hover:bg-gray-50">
+                                    <td class="px-4 py-3">{{ $event ? $event->name : 'N/A' }}</td>
+                                    <td class="px-4 py-3">{{ $sport ? $sport->name ?? 'N/A' : 'N/A' }}</td>
+                                    <td class="px-4 py-3">{{ $athlete ? $athlete->last_name . ', ' . $athlete->first_name : 'N/A' }}</td>
+                                    <td class="px-4 py-3">{{ $athlete ? $athlete->school_name : 'N/A' }}</td>
+                                    <td class="px-4 py-3">{{ $athlete ? $athlete->region : 'N/A' }}</td>
+                                    <td class="px-4 py-3">{{ $athlete ? $athlete->birthdate : 'N/A' }}</td>
+                                </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        @endif
+    @endforeach
+</div>
+
+
 
 {{-- ================= ELEMENTARY ================= --}}
 <div class="mb-16">
@@ -127,7 +211,7 @@ $overall = $allDivisions->map(function ($division) use ($medalTally) {
         <table class="w-full text-sm text-center">
             <thead>
                 <tr class="bg-gray-900 text-white uppercase text-sm">
-                    <th rowspan="2" class="px-4 py-3 text-left">Division</th>
+                    <th rowspan="2" class="px-4 py-3 text-left">SDO</th>
                     <th colspan="3" class="bg-blue-700">Boys</th>
                     <th colspan="3" class="bg-pink-600">Girls</th>
                 </tr>
@@ -137,39 +221,25 @@ $overall = $allDivisions->map(function ($division) use ($medalTally) {
                 </tr>
             </thead>
             <tbody>
-                @foreach($allDivisions as $division)
+                @foreach($allDivisions as $division) {{-- SDO list --}}
                     <tr class="border-t hover:bg-gray-50">
-                        <td class="px-4 py-3 text-left font-semibold">
-                            {{ $division->name }}
-                        </td>
+                        <td class="px-4 py-3 text-left font-semibold">{{ $division->name }}</td>
 
-                        <td class="font-bold text-yellow-500">
-                            {{ medalCount($medalTally,$division->name,'Elementary','Boys','Gold') }}
-                        </td>
-                        <td class="font-bold text-gray-500">
-                            {{ medalCount($medalTally,$division->name,'Elementary','Boys','Silver') }}
-                        </td>
-                        <td class="font-bold text-orange-500">
-                            {{ medalCount($medalTally,$division->name,'Elementary','Boys','Bronze') }}
-                        </td>
+                        {{-- Boys --}}
+                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold') }}</td>
+                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Silver') }}</td>
+                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Bronze') }}</td>
 
-                        <td class="font-bold text-yellow-500">
-                            {{ medalCount($medalTally,$division->name,'Elementary','Girls','Gold') }}
-                        </td>
-                        <td class="font-bold text-gray-500">
-                            {{ medalCount($medalTally,$division->name,'Elementary','Girls','Silver') }}
-                        </td>
-                        <td class="font-bold text-orange-500">
-                            {{ medalCount($medalTally,$division->name,'Elementary','Girls','Bronze') }}
-                        </td>
+                        {{-- Girls --}}
+                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold') }}</td>
+                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Silver') }}</td>
+                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Bronze') }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 </div>
-
-
 
 {{-- ================= SECONDARY ================= --}}
 <div class="mb-16">
@@ -181,7 +251,7 @@ $overall = $allDivisions->map(function ($division) use ($medalTally) {
         <table class="w-full text-sm text-center">
             <thead>
                 <tr class="bg-gray-900 text-white uppercase text-sm">
-                    <th rowspan="2" class="px-4 py-3 text-left">Division</th>
+                    <th rowspan="2" class="px-4 py-3 text-left">SDO</th>
                     <th colspan="3" class="bg-blue-700">Boys</th>
                     <th colspan="3" class="bg-pink-600">Girls</th>
                 </tr>
@@ -193,37 +263,23 @@ $overall = $allDivisions->map(function ($division) use ($medalTally) {
             <tbody>
                 @foreach($allDivisions as $division)
                     <tr class="border-t hover:bg-gray-50">
-                        <td class="px-4 py-3 text-left font-semibold">
-                            {{ $division->name }}
-                        </td>
+                        <td class="px-4 py-3 text-left font-semibold">{{ $division->name }}</td>
 
-                        <td class="font-bold text-yellow-500">
-                            {{ medalCount($medalTally,$division->name,'Secondary','Boys','Gold') }}
-                        </td>
-                        <td class="font-bold text-gray-500">
-                            {{ medalCount($medalTally,$division->name,'Secondary','Boys','Silver') }}
-                        </td>
-                        <td class="font-bold text-orange-500">
-                            {{ medalCount($medalTally,$division->name,'Secondary','Boys','Bronze') }}
-                        </td>
+                        {{-- Boys --}}
+                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold') }}</td>
+                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Silver') }}</td>
+                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze') }}</td>
 
-                        <td class="font-bold text-yellow-500">
-                            {{ medalCount($medalTally,$division->name,'Secondary','Girls','Gold') }}
-                        </td>
-                        <td class="font-bold text-gray-500">
-                            {{ medalCount($medalTally,$division->name,'Secondary','Girls','Silver') }}
-                        </td>
-                        <td class="font-bold text-orange-500">
-                            {{ medalCount($medalTally,$division->name,'Secondary','Girls','Bronze') }}
-                        </td>
+                        {{-- Girls --}}
+                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Gold') }}</td>
+                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Silver') }}</td>
+                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze') }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 </div>
-
-
 
 {{-- ================= PARA GAMES ================= --}}
 <div class="mb-16">
@@ -235,7 +291,7 @@ $overall = $allDivisions->map(function ($division) use ($medalTally) {
         <table class="w-full text-sm text-center">
             <thead class="bg-purple-700 text-white uppercase">
                 <tr>
-                    <th class="px-4 py-3 text-left">Division</th>
+                    <th class="px-4 py-3 text-left">SDO</th>
                     <th>Gold</th>
                     <th>Silver</th>
                     <th>Bronze</th>
@@ -244,24 +300,16 @@ $overall = $allDivisions->map(function ($division) use ($medalTally) {
             <tbody>
                 @foreach($allDivisions as $division)
                     <tr class="border-t hover:bg-gray-50">
-                        <td class="px-4 py-3 text-left font-semibold">
-                            {{ $division->name }}
-                        </td>
+                        <td class="px-4 py-3 text-left font-semibold">{{ $division->name }}</td>
 
-                        <td class="font-bold text-yellow-500">
-                            {{ $medalTally->where('name',$division->name)->where('level','Para Games')->sum('gold') }}
-                        </td>
-                        <td class="font-bold text-gray-500">
-                            {{ $medalTally->where('name',$division->name)->where('level','Para Games')->sum('silver') }}
-                        </td>
-                        <td class="font-bold text-orange-500">
-                            {{ $medalTally->where('name',$division->name)->where('level','Para Games')->sum('bronze') }}
-                        </td>
+                        {{-- Para Games ignore category --}}
+                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Para Games', null, $division->name, 'Gold') }}</td>
+                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Para Games', null, $division->name, 'Silver') }}</td>
+                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Para Games', null, $division->name, 'Bronze') }}</td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
 </div>
-
 @endsection

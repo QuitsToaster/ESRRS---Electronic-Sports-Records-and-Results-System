@@ -12,4 +12,22 @@ class AllAwardResult extends Model
     protected $fillable = [
         'event_id','sport_id','type_id','division','category','sdo','medal','count','awarded_by'
     ];
+
+    // -----------------------------
+    // RELATIONSHIPS
+    // -----------------------------
+    public function sport()
+    {
+        return $this->belongsTo(Sport::class, 'sport_id');
+    }
+
+    public function event()
+    {
+        return $this->belongsTo(\App\Models\Event::class, 'event_id');
+    }
+
+    public function type()
+    {
+        return $this->belongsTo(\App\Models\SportType::class, 'type_id');
+    }
 }
