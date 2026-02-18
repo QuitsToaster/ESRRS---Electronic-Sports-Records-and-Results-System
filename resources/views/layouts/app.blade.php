@@ -143,22 +143,45 @@ document.addEventListener('DOMContentLoaded', () => {
     </p>
 </div>
 
+{{-- SIDEBAR SEARCH --}}
+<div
+    class="px-4 mt-4"
+    x-data="{ query: '' }"
+    x-init="$watch('query', value => {
+        document.querySelectorAll('[data-nav]').forEach(el => {
+            el.style.display = el.innerText.toLowerCase().includes(value.toLowerCase())
+                ? ''
+                : 'none';
+        });
+    })"
+>
+    <input
+        type="text"
+        x-model="query"
+        placeholder="Search menu..."
+        class="w-full px-3 py-2 rounded bg-blue-700 text-white placeholder-blue-200
+               focus:outline-none focus:ring-2 focus:ring-blue-400"
+    >
+</div>
+
 
         {{-- MENU --}}
         <nav class="mt-6 flex-1 overflow-y-auto">
 
             @if(in_array('dashboard', $access))
-            <a href="{{ route('dashboard') }}"
-               class="block px-6 py-3 hover:bg-blue-700
-               {{ request()->routeIs('dashboard') ? 'bg-blue-900 font-semibold' : '' }}">
-                Dashboard
-            </a>
-            @endif
+    <a data-nav
+       href="{{ route('dashboard') }}"
+       class="block px-6 py-3 hover:bg-blue-700
+       {{ request()->routeIs('dashboard') ? 'bg-blue-900 font-semibold' : '' }}">
+        Dashboard
+    </a>
+@endif
+
 
            {{-- Attendance --}}
         @if(in_array('attendance', $access))
             <div>
-                <button @click="openMenu = openMenu === 'attendance' ? null : 'attendance'"
+                <button data-nav @click="openMenu = openMenu === 'attendance' ? null : 'attendance'"
                         class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
                         {{ request()->routeIs('attendance.*') ? 'bg-blue-900 font-semibold' : '' }}">
                     Attendance
@@ -177,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
         {{-- Results --}}
 @if(in_array('results', $access))
     <div x-data="{ isOpen: {{ request()->routeIs('results_divisions.*') ? 'true' : 'false' }} }">
-        <button @click="isOpen = !isOpen"
+        <button data-nav @click="isOpen = !isOpen"
                 class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
                 {{ request()->routeIs('results_divisions.*') ? 'bg-blue-900 font-semibold' : '' }}">
             Results / Awards
@@ -203,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
 {{-- Event --}}
 @if(in_array('events', $access))
     <div x-data="{ isOpen: {{ request()->routeIs(['events.*']) ? 'true' : 'false' }} }">
-        <button @click="isOpen = !isOpen"
+        <button data-nav @click="isOpen = !isOpen"
                 class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
                 {{ request()->routeIs(['events.*']) ? 'bg-blue-900 font-semibold' : '' }}">
             Events Schedule
@@ -231,7 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 @if(in_array('divisions', $access))
 <div>
-    <button @click="openMenu = openMenu === 'divisions' ? null : 'divisions'"
+    <button data-nav @click="openMenu = openMenu === 'divisions' ? null : 'divisions'"
             class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
             {{ request()->routeIs('divisions.*') ? 'bg-blue-900 font-semibold' : '' }}">
         Divisions
@@ -260,7 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
     x-init="if (isActive) openMenu = 'schools'"
 >
     <button
-        @click="openMenu = openMenu === 'schools' ? null : 'schools'"
+        data-nav @click="openMenu = openMenu === 'schools' ? null : 'schools'"
         class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
         {{ request()->routeIs('schools.*') ? 'bg-blue-900 font-semibold' : '' }}"
     >
@@ -287,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             @if(in_array('sports', $access))
 <div>
-    <button @click="openMenu = openMenu === 'sports' ? null : 'sports'"
+    <button data-nav @click="openMenu = openMenu === 'sports' ? null : 'sports'"
             class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
             {{ request()->routeIs('sports.*') || request()->routeIs('para-sports.*') ? 'bg-blue-900 font-semibold' : '' }}">
         Sports
@@ -333,7 +356,7 @@ document.addEventListener('DOMContentLoaded', () => {
             @if(in_array('athletes', $access))
             {{-- Athletes --}}
             <div>
-                <button @click="openMenu = openMenu === 'athletes' ? null : 'athletes'"
+                <button data-nav @click="openMenu = openMenu === 'athletes' ? null : 'athletes'"
                         class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
                         {{ request()->routeIs('athletes.*') ? 'bg-blue-900 font-semibold' : '' }}">
                     Athletes
@@ -357,7 +380,7 @@ document.addEventListener('DOMContentLoaded', () => {
             @if(in_array('coaches', $access))
             {{-- Coaches --}}
             <div>
-                <button @click="openMenu = openMenu === 'coaches' ? null : 'coaches'"
+                <button data-nav @click="openMenu = openMenu === 'coaches' ? null : 'coaches'"
                         class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
                         {{ request()->routeIs('coaches.*') ? 'bg-blue-900 font-semibold' : '' }}">
                     Coaches
@@ -383,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
             @if(in_array('announcements', $access))
             {{-- Announcements --}}
             <div>
-                <button @click="openMenu = openMenu === 'announcements' ? null : 'announcements'"
+                <button data-nav @click="openMenu = openMenu === 'announcements' ? null : 'announcements'"
                         class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
                         {{ request()->routeIs('announcements.*') ? 'bg-blue-900 font-semibold' : '' }}">
                     Announcements
@@ -407,7 +430,7 @@ document.addEventListener('DOMContentLoaded', () => {
             @if(in_array('logs', $access))
             {{-- Logs --}}
             <div>
-                <button @click="openMenu = openMenu === 'logs' ? null : 'logs'"
+                <button data-nav @click="openMenu = openMenu === 'logs' ? null : 'logs'"
                         class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
                         {{ request()->routeIs('audit-logs.*') ? 'bg-blue-900 font-semibold' : '' }}">
                     Logs
@@ -426,7 +449,7 @@ document.addEventListener('DOMContentLoaded', () => {
             @if(in_array('settings', $access))
             {{-- Settings --}}
             <div>
-                <button @click="openMenu = openMenu === 'settings' ? null : 'settings'"
+                <button data-nav @click="openMenu = openMenu === 'settings' ? null : 'settings'"
                         class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
                         {{ request()->routeIs('users.*') ? 'bg-blue-900 font-semibold' : '' }}">
                     Settings
