@@ -27,6 +27,19 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
 
 <body class="min-h-screen flex flex-col items-center justify-center p-6">
 
+{{-- ================= INSTRUCTIONS ================= --}}
+<div class="w-full max-w-5xl mb-6 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h2 class="font-semibold mb-2 text-lg">How to Use the Attendance Scanner</h2>
+    <ul class="list-disc list-inside space-y-1 text-sm">
+        <li>Use your <strong>QR code</strong> to record Time In / Time Out.</li>
+        <li>Choose <strong>External Scanner</strong> if using a physical QR scanner or <strong>Use Camera</strong> to scan via your device camera.</li>
+        <li>If using camera scanning, ensure your connection is <strong>HTTPS</strong> for security and browser access.</li>
+        <li>After scanning, the attendance will be automatically submitted and confirmed on screen.</li>
+        <li>Recent attendance records are displayed on the right for verification.</li>
+    </ul>
+</div>
+
+
 <div class="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-2 gap-6">
 
 {{-- ================= SCANNER ================= --}}

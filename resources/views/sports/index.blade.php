@@ -4,6 +4,19 @@
 
 @section('content')
 
+{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>View all registered sports and their corresponding game types.</li>
+        <li>Use the checkboxes to select multiple sports for bulk deletion.</li>
+        <li>Click <strong>+ Add Sport</strong> to register a new sport.</li>
+        <li>Edit or delete individual sports using the Actions column.</li>
+        <li>Use the tabs above to switch between Regular Sports and Para Games.</li>
+    </ul>
+</div>
+
+
 {{-- Tabs --}}
 <div class="mb-6 border-b border-gray-200">
     <nav class="flex gap-6">

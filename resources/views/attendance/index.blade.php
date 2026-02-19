@@ -3,6 +3,19 @@
 @section('page-title', 'Manage Attendance')
 
 @section('content')
+
+{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>Monitor daily attendance for athletes and coaches.</li>
+        <li>View who has already attended and who has not for today.</li>
+        <li>Use the <strong>Export Attendance (PDF)</strong> button to download attendance records.</li>
+        <li>Click on individual names to view more details if needed.</li>
+        <li>This page updates automatically as attendance records are scanned via QR codes.</li>
+    </ul>
+</div>
+
 <div class="container mx-auto px-4 py-6">
 
     {{-- Header with Export PDF --}}

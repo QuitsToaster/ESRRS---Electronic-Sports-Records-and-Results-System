@@ -64,6 +64,18 @@ foreach ($tabs as $tabName => $tab) {
 
 <div x-data="awardApp()" class="p-4 space-y-6">
 
+{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+    <div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+        <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+        <ul class="list-disc list-inside text-sm space-y-1">
+            <li>Select the award type: <strong>All Awards</strong> for medal tallies per sport or <strong>Individual Awards</strong> for specific athletes.</li>
+            <li>Use the tabs above to switch between divisions and categories (e.g., Elementary Boys, Secondary Girls, Para Games).</li>
+            <li>For <strong>All Awards</strong>, enter the number of Gold, Silver, and Bronze medals for each SDO in the table.</li>
+            <li>For <strong>Individual Awards</strong>, select the athletes who won Gold, Silver, and Bronze for each sport and type.</li>
+            <li>After filling the data, click the <strong>Save</strong> button at the bottom of each section to store your entries.</li>
+        </ul>
+    </div>
+
     {{-- ================= AWARD TYPE ================= --}}
     <select x-model="awardType" class="border rounded px-3 py-2 w-64 mb-4">
         <option value="all">All Awards</option>

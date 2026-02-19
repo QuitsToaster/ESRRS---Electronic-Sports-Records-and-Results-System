@@ -5,6 +5,20 @@
 @section('content')
 
 {{-- Header --}}
+
+{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>View all registered competitions and their details including sport, division, venue, and matches.</li>
+        <li>Use the search box to quickly find competitions by name, sport, division, or venue.</li>
+        <li>Click <strong>+ Add Competition</strong> to register a new event.</li>
+        <li>Update the event status using the dropdown: <strong>Upcoming</strong>, <strong>Ongoing</strong>, <strong>Delayed</strong>, or <strong>Finished</strong>. Provide a reason if delayed.</li>
+        <li>Manage matches and winners by clicking <strong>Manage</strong> in the Actions column.</li>
+        <li>Edit or delete competitions directly from the Actions column as needed.</li>
+    </ul>
+</div>
+
 <div class="flex justify-between items-center mb-6">
     <div>
         <p class="text-sm text-gray-600 mt-1">

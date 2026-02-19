@@ -3,6 +3,19 @@
 @section('page-title', 'Athletes')
 
 @section('content')
+{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>View all registered athletes in the system, including their school, region, and assigned sport.</li>
+        <li>Use the search box to find athletes by name, school, or sport.</li>
+        <li>Apply filters for <strong>Sex</strong>, <strong>Sport</strong>, or <strong>Level</strong> to narrow down the list.</li>
+        <li>Click <strong>+ Add Athlete</strong> to register a new athlete manually, or use <strong>Upload CSV</strong> for bulk registration.</li>
+        <li>Click <strong>Export ID PDF</strong> to generate ID cards for all listed athletes.</li>
+        <li>Click on the QR image to view the athlete’s QR code and details in a modal.</li>
+    </ul>
+</div>
+
 <div class="flex justify-between items-center mb-4">
     <div>
         <p class="text-sm text-gray-600 mt-1">
