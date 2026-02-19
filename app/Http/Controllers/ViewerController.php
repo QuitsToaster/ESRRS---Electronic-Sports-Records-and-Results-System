@@ -10,6 +10,9 @@ use App\Models\Banner;
 use App\Models\GalleryPhoto;
 use App\Models\Game;
 use App\Models\School;
+use App\Models\Division; 
+use App\Models\AllAwardResult;
+use App\Models\IndividualAwardResult;
 use App\Models\ResultDivision;
 use App\Models\Sport;
 use App\Models\Athlete;
@@ -104,34 +107,52 @@ public function home()
 
 
 
-    public function participantShow(\App\Models\Division $division, Request $request)
+   public function participantShow(Division $division, Request $request)
 {
-    $sportId = $request->input('sport');
-
-    // ✅ CORRECT: use the relationship
-    $awards = $division->resultsDivisions()
-        ->with(['event', 'sport'])
-        ->when($sportId, function ($q) use ($sportId) {
-            $q->where('sport_id', $sportId);
-        })
-        ->orderByRaw("FIELD(medal, 'Gold', 'Silver', 'Bronze')")
+    /* ================= TEAM / AGGREGATED MEDALS ================= */
+    $teamResults = AllAwardResult::with(['sport','event'])
+        ->where('sdo', $division->name)
         ->get();
 
-    // Medal counts
-    $medalCounts = [
-        'Gold'   => $awards->where('medal', 'Gold')->count(),
-        'Silver' => $awards->where('medal', 'Silver')->count(),
-        'Bronze' => $awards->where('medal', 'Bronze')->count(),
-    ];
+    /* ================= INDIVIDUAL MEDALS ================= */
+    $individualResults = IndividualAwardResult::with(['sport','event','athlete'])
+        ->where('division', $division->name)
+        ->get();
 
-    $sports = Sport::orderBy('name')->get();
+    /* ================= MERGE RESULTS ================= */
+    $awards = collect()
+        ->merge(
+            $teamResults->map(fn ($r) => (object) [
+                'medal'    => $r->medal,
+                'event'    => $r->event,
+                'sport'    => $r->sport,
+                'category' => 'Team',
+                'date'     => $r->created_at,
+            ])
+        )
+        ->merge(
+            $individualResults->map(fn ($r) => (object) [
+                'medal'    => $r->medal,
+                'event'    => $r->event,
+                'sport'    => $r->sport,
+                'category' => 'Individual',
+                'date'     => $r->created_at,
+            ])
+        )
+        ->sortBy(fn ($r) => array_search($r->medal, ['Gold','Silver','Bronze']))
+        ->values();
+
+    /* ================= MEDAL COUNTS ================= */
+    $medalCounts = [
+        'Gold'   => $awards->where('medal','Gold')->count(),
+        'Silver' => $awards->where('medal','Silver')->count(),
+        'Bronze' => $awards->where('medal','Bronze')->count(),
+    ];
 
     return view('viewer.participants-show', compact(
         'division',
         'awards',
-        'medalCounts',
-        'sportId',
-        'sports'
+        'medalCounts'
     ));
 }
 

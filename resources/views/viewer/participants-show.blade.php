@@ -45,11 +45,11 @@
         </h2>
     </div>
 
-    {{-- Medal Cards --}}
+    {{-- ================= MEDAL CARDS ================= --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
         @foreach(['Gold','Silver','Bronze'] as $medal)
             @php
-                $count = $medalCounts[$medal];
+                $count = $medalCounts[$medal] ?? 0;
                 $style = $medal === 'Gold'
                     ? 'from-yellow-400 to-yellow-200 text-yellow-700'
                     : ($medal === 'Silver'
@@ -77,20 +77,28 @@
                     <th class="px-4 py-3 text-left">Event</th>
                     <th class="px-4 py-3 text-left">Sport</th>
                     <th class="px-4 py-3 text-left">Category</th>
+                    <th class="px-4 py-3 text-left">Date</th>
                 </tr>
             </thead>
 
             <tbody class="divide-y">
                 @forelse($awards as $award)
                     <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-semibold">{{ $award->medal }}</td>
-                        <td class="px-4 py-3">{{ $award->event->name ?? 'N/A' }}</td>
-                        <td class="px-4 py-3">{{ $award->sport->name ?? 'N/A' }}</td>
-                        <td class="px-4 py-3">{{ $award->category ?? 'N/A' }}</td>
+                        <td class="px-4 py-3 font-bold
+                            {{ $award->medal === 'Gold' ? 'text-yellow-600' :
+                               ($award->medal === 'Silver' ? 'text-gray-600' : 'text-orange-600') }}">
+                            {{ $award->medal }}
+                        </td>
+                        <td class="px-4 py-3">{{ $award->event?->name ?? 'N/A' }}</td>
+                        <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
+                        <td class="px-4 py-3">{{ $award->category }}</td>
+                        <td class="px-4 py-3">
+                            {{ $award->date?->format('M d, Y') }}
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="4" class="px-4 py-6 text-center text-gray-500">
+                        <td colspan="5" class="px-4 py-6 text-center text-gray-500">
                             No medals recorded for this division.
                         </td>
                     </tr>
