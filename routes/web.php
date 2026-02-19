@@ -155,7 +155,7 @@ Route::resource('sports', SportController::class);
     Route::get('/athletes/export-id-pdf', [AthleteController::class, 'exportIdPdf'])
     ->name('athletes.exportIdPdf');
 
-
+    
     /*
     |--------------------------------------------------------------------------
     | Games

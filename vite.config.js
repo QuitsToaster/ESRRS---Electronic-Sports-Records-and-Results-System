@@ -9,7 +9,7 @@ export default defineConfig({
         }),
     ],
     // server: {
-    //     host: '172.16.20.161',
+    //     host: '10.0.15.29',
     //     port: 5173,
     // },
 });

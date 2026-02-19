@@ -116,26 +116,31 @@ class SportController extends Controller
      * Delete regular sport safely (types + award results, NOT athletes)
      */
     public function destroy($id)
-    {
-        $sport = Sport::findOrFail($id);
+{
+    $sport = Sport::findOrFail($id);
 
-        if ($sport->division === 'Paragames') {
-            abort(403, 'Use Para Games module.');
-        }
-
-        // ✅ Delete related award results first
-        AllAwardResult::where('sport_id', $sport->id)->delete();
-        IndividualAwardResult::where('sport_id', $sport->id)->delete();
-
-        // Delete sport types
-        $sport->types()->delete();
-
-        // Delete the sport itself
-        $sport->delete();
-
-        return redirect()->route('sports.index')
-            ->with('success', 'Sport deleted successfully!');
+    if ($sport->division === 'Paragames') {
+        abort(403, 'Use Para Games module.');
     }
+
+    // ✅ Detach athletes from this sport
+    $sport->events()->update(['sport_id' => null]); // if athletes linked via events
+    \App\Models\Athlete::where('sport_id', $sport->id)->update(['sport_id' => null]);
+
+    // Delete related award results
+    AllAwardResult::where('sport_id', $sport->id)->delete();
+    IndividualAwardResult::where('sport_id', $sport->id)->delete();
+
+    // Delete sport types
+    $sport->types()->delete();
+
+    // Delete sport itself
+    $sport->delete();
+
+    return redirect()->route('sports.index')
+        ->with('success', 'Sport deleted successfully!');
+}
+
 
     // ---------------- PARA GAMES ----------------
 
