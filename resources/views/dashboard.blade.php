@@ -60,7 +60,7 @@
         </div>
     </a>
 
-    {{-- Total Games Card --}}
+    <!-- {{-- Total Games Card --}}
     <a href="{{ route('games.index') }}" class="block bg-teal-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
@@ -69,7 +69,7 @@
             </div>
             <div class="text-3xl font-bold text-teal-800">{{ $gamesCount }}</div>
         </div>
-    </a>
+    </a> -->
 
 </div>
 
@@ -128,7 +128,7 @@
 </div>
 
 
-{{-- Live Games --}}
+<!-- {{-- Live Games --}}
 <div class="mt-6">
     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Games</h2>
 
@@ -160,9 +160,51 @@
             @endforeach
         </div>
     @endif
-</div>
+</div> -->
 
 
+
+@php
+    use App\Models\AllAwardResult;
+    use App\Models\Division;
+
+    // 1️⃣ Fetch all divisions (SDOs)
+    $allDivisions = Division::orderBy('name')->get();
+
+    // 2️⃣ Fetch medal counts grouped by division and medal
+    $raw = AllAwardResult::select('sdo', 'medal', \DB::raw('SUM(`count`) as total'))
+            ->groupBy('sdo','medal')
+            ->get()
+            ->groupBy('sdo');
+
+    // 3️⃣ Merge counts into divisions
+    $medalTally = $allDivisions->map(function($division) use ($raw) {
+        $rows = $raw->get($division->name, collect());
+
+        $gold   = $rows->where('medal','Gold')->sum('total');
+        $silver = $rows->where('medal','Silver')->sum('total');
+        $bronze = $rows->where('medal','Bronze')->sum('total');
+
+        return (object)[
+            'name'   => $division->name,
+            'logo'   => $division->logo,
+            'gold'   => $gold,
+            'silver' => $silver,
+            'bronze' => $bronze,
+            'total'  => $gold + $silver + $bronze,
+            'results'=> AllAwardResult::with(['sport','event'])
+                            ->where('sdo',$division->name)
+                            ->get(),
+        ];
+    });
+
+    // 4️⃣ Sort by Gold → Silver → Bronze
+    $medalTally = $medalTally->sort(function($a,$b){
+        if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
+        if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
+        return $b->bronze <=> $a->bronze;
+    })->values();
+@endphp
 
 {{-- Medal Tally --}}
 <div class="mt-6">
@@ -184,11 +226,11 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($medalTally as $division)
+                    @foreach($medalTally as $index => $division)
                         <tr class="hover:bg-gray-50 transition">
                             {{-- Rank --}}
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
-                                {{ $division->rank }}
+                                {{ $index + 1 }}
                             </td>
 
                             {{-- Division --}}
