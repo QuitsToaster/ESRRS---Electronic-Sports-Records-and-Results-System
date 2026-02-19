@@ -1,7 +1,7 @@
 {{-- Desktop Row --}}
 <div
     @click='openModal(
-        @json($division->only(["id","name"])),
+        @json(["id"=>$division->id ?? null,"name"=>$division->name]),
         @json($division->results)
     )'
     class="hidden md:grid grid-cols-[40px_1fr_420px_96px]
@@ -36,7 +36,7 @@
 {{-- Mobile Card --}}
 <div
     @click='openModal(
-        @json($division->only(["id","name"])),
+        @json(["id"=>$division->id ?? null,"name"=>$division->name]),
         @json($division->results)
     )'
     class="md:hidden bg-white/10 backdrop-blur-md

@@ -149,6 +149,21 @@ foreach ($tabs as $tabName => $tab) {
                 @foreach($sports as $sport)
                     <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
                     <table class="w-full border text-sm mt-2">
+                        <thead>
+                            <tr class="bg-gray-200 text-center">
+                                <th rowspan="2" class="border px-2">Event Type</th>
+                                @foreach($divisions as $d)
+                                    <th colspan="3" class="border">{{ $d->name }}</th>
+                                @endforeach
+                            </tr>
+                            <tr>
+                                @foreach($divisions as $d)
+                                    <th class="border bg-yellow-300">G</th>
+                                    <th class="border bg-gray-300">S</th>
+                                    <th class="border bg-orange-200">B</th>
+                                @endforeach
+                            </tr>
+                        </thead>
                         <tbody>
                         @foreach($sport->types as $type)
                             <tr>
@@ -173,7 +188,7 @@ foreach ($tabs as $tabName => $tab) {
                 </div>
             </form>
 
-{{-- ========================================================= --}}
+            {{-- ========================================================= --}}
 {{-- 🏅 INDIVIDUAL AWARDS FORM (Gold, Silver, Bronze per sport) --}}
 {{-- ========================================================= --}}
 <form x-show="awardType==='individual'" method="POST" action="{{ route('results_individual.store') }}">
@@ -282,9 +297,6 @@ foreach ($tabs as $tabName => $tab) {
         <button class="bg-green-600 text-white px-6 py-2 rounded">Save Individual Awards</button>
     </div>
 </form>
-
-
-
 
 
         </div>

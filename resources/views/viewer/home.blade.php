@@ -266,7 +266,7 @@ function closePrivacyBanner() {
 </section>
 
 
-          {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
+         {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
 <section
     x-data="{
         activeTab: 'regular',
@@ -287,6 +287,52 @@ function closePrivacyBanner() {
     }"
     class="order-1 lg:order-2 flex flex-col justify-start h-full"
 >
+    @php
+    use App\Models\AllAwardResult;
+    use App\Models\Division;
+
+    // Get all divisions (no type filter)
+    $allDivisions = Division::orderBy('name')->get();
+
+    // Get medal counts per SDO from all_award_results
+    $raw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
+        ->groupBy('sdo','medal')
+        ->get()
+        ->groupBy('sdo');
+
+    // Merge counts into all divisions
+    $medalTally = $allDivisions->map(function($division) use ($raw) {
+        $rows = $raw->get($division->name, collect());
+
+        $gold   = $rows->where('medal','Gold')->sum('total');
+        $silver = $rows->where('medal','Silver')->sum('total');
+        $bronze = $rows->where('medal','Bronze')->sum('total');
+
+        return (object)[
+            'name'   => $division->name,
+            'logo'   => $division->logo,
+            'gold'   => $gold,
+            'silver' => $silver,
+            'bronze' => $bronze,
+            'total'  => $gold + $silver + $bronze,
+            'results'=> AllAwardResult::with(['sport','event'])
+                            ->where('sdo',$division->name)
+                            ->get(),
+        ];
+    });
+
+    // Sort by Gold → Silver → Bronze
+    $medalTally = $medalTally->sort(function($a,$b){
+        if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
+        if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
+        return $b->bronze <=> $a->bronze;
+    })->values();
+
+    // If you want Para Games separately, you can filter by name or another column you actually have
+    // Example: $medalTallyPara = $medalTally->filter(fn($d)=> str_contains($d->name,'Para'))->values();
+@endphp
+
+
     <div class="relative w-full h-full">
         {{-- Medal Tally Background --}}
         <div class="relative bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 overflow-hidden shadow-lg h-full">
@@ -331,7 +377,6 @@ function closePrivacyBanner() {
                     </template>
 
                 </div>
-
             </div>
         </div>
     </div>
@@ -375,7 +420,14 @@ function closePrivacyBanner() {
                                     <span>Level: <strong x-text="m.event?.age_group ?? 'N/A'"></strong></span>
                                     <span>Category: <strong x-text="m.event?.category ?? 'N/A'"></strong></span>
                                     <span>Schedule: <strong x-text="m.event?.start_date ? new Date(m.event.start_date).toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}) : 'N/A'"></strong></span>
-                                    <span>Award Date: <strong x-text="m.event?.award_date ? new Date(m.event.award_date).toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}) : 'N/A'"></strong></span>
+                                    <span>
+    Award Date: 
+    <strong x-text="m.created_at 
+        ? new Date(m.created_at).toLocaleDateString('en-US', {month:'short', day:'2-digit', year:'numeric'}) 
+        : 'N/A'">
+    </strong>
+</span>
+
                                 </div>
                             </div>
                         </template>
@@ -387,6 +439,7 @@ function closePrivacyBanner() {
         </div>
     </div>
 </section>
+
 
 
             {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES ================= --}}
