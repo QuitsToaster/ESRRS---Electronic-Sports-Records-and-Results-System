@@ -8,6 +8,11 @@
         <p class="text-sm text-gray-600 mt-1">
             List of participating athletes registered in the system
         </p>
+
+        {{-- ATHLETE COUNT --}}
+        <p class="text-sm text-gray-700 mt-1 font-semibold">
+            Total Athletes: {{ $athleteCount }}
+        </p>
     </div>
 
     <div class="flex gap-2 items-center">
@@ -38,16 +43,12 @@
         </form>
 
         {{-- EXPORT ID PDF --}}
-<a href="{{ route('athletes.exportIdPdf') }}"
-   class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
-    <span>Export ID PDF</span>
-</a>
-
-
-
+        <a href="{{ route('athletes.exportIdPdf') }}"
+           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
+            <span>Export ID PDF</span>
+        </a>
     </div>
 </div>
-
 
 {{-- SEARCH + FILTER --}}
 <form method="GET" action="{{ route('athletes.index') }}"
@@ -116,8 +117,6 @@
     </div>
 </form>
 
-
-
 @if(session('success'))
     <div class="bg-green-100 text-green-800 p-3 rounded mb-4">
         {{ session('success') }}
@@ -151,7 +150,6 @@
 <tbody class="divide-y">
 @forelse($athletes as $athlete)
 <tr class="hover:bg-gray-50">
-
     {{-- PROFILE --}}
     <td class="px-4 py-2">
         @if($athlete->profile_photo)
@@ -166,18 +164,14 @@
 
     {{-- NAME --}}
     <td class="px-4 py-2 font-medium">
-        {{ $athlete->last_name }},
-        {{ $athlete->first_name }}
+        {{ $athlete->last_name }}, {{ $athlete->first_name }}
         @if($athlete->middle_initial)
             {{ $athlete->middle_initial }}
         @endif
     </td>
 
     <td class="px-4 py-2">{{ $athlete->sex ?? '—' }}</td>
-    <td class="px-4 py-2">
-    {{ $athlete->birthdate ? \Carbon\Carbon::parse($athlete->birthdate)->format('M. d, Y') : '—' }}
-</td>
-
+    <td class="px-4 py-2">{{ $athlete->birthdate ? \Carbon\Carbon::parse($athlete->birthdate)->format('M. d, Y') : '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->division }}</td>
     <td class="px-4 py-2">{{ $athlete->category }}</td>
     <td class="px-4 py-2">{{ $athlete->region ?? '—' }}</td>
@@ -218,7 +212,7 @@
 </tr>
 @empty
 <tr>
-    <td colspan="12" class="text-center py-6 text-gray-500">
+    <td colspan="17" class="text-center py-6 text-gray-500">
         No athletes found.
     </td>
 </tr>

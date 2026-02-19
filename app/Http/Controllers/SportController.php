@@ -5,13 +5,12 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Sport;
 use App\Models\AuditLog;
+use App\Models\AllAwardResult;
+use App\Models\IndividualAwardResult;
 use Illuminate\Support\Facades\Auth;
 
 class SportController extends Controller
 {
-    /**
-     * Display Regular Sports (Elementary + Secondary)
-     */
     public function index(Request $request)
     {
         $sports = Sport::with('types')
@@ -22,17 +21,11 @@ class SportController extends Controller
         return view('sports.index', compact('sports'));
     }
 
-    /**
-     * Show form for creating regular sport
-     */
     public function create()
     {
         return view('sports.create');
     }
 
-    /**
-     * Store regular sport
-     */
     public function store(Request $request)
     {
         $request->validate([
@@ -40,10 +33,9 @@ class SportController extends Controller
             'type_of_game.*' => 'nullable|string',
         ]);
 
-        // ✅ AUTO ASSIGN DIVISION
         $sport = Sport::create([
             'name'     => $request->name,
-            'division' => 'Elementary', // default for regular sports
+            'division' => 'Elementary',
         ]);
 
         if ($request->type_of_game) {
@@ -67,9 +59,6 @@ class SportController extends Controller
             ->with('success', 'Sport added successfully!');
     }
 
-    /**
-     * Edit regular sport
-     */
     public function edit($id)
     {
         $sport = Sport::with('types')->findOrFail($id);
@@ -81,9 +70,6 @@ class SportController extends Controller
         return view('sports.edit', compact('sport'));
     }
 
-    /**
-     * Update regular sport
-     */
     public function update(Request $request, $id)
     {
         $sport = Sport::findOrFail($id);
@@ -101,9 +87,9 @@ class SportController extends Controller
 
         $sport->update([
             'name' => $request->name,
-            // ❌ DO NOT TOUCH DIVISION
         ]);
 
+        // Delete old types & recreate
         $sport->types()->delete();
         if ($request->type_of_game) {
             foreach ($request->type_of_game as $type) {
@@ -127,7 +113,7 @@ class SportController extends Controller
     }
 
     /**
-     * Delete regular sport
+     * Delete regular sport safely (types + award results, NOT athletes)
      */
     public function destroy($id)
     {
@@ -137,18 +123,21 @@ class SportController extends Controller
             abort(403, 'Use Para Games module.');
         }
 
+        // ✅ Delete related award results first
+        AllAwardResult::where('sport_id', $sport->id)->delete();
+        IndividualAwardResult::where('sport_id', $sport->id)->delete();
+
+        // Delete sport types
         $sport->types()->delete();
+
+        // Delete the sport itself
         $sport->delete();
 
         return redirect()->route('sports.index')
             ->with('success', 'Sport deleted successfully!');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | PARA GAMES
-    |--------------------------------------------------------------------------
-    */
+    // ---------------- PARA GAMES ----------------
 
     public function paraIndex()
     {
@@ -218,6 +207,10 @@ class SportController extends Controller
 
     public function paraDestroy(Sport $sport)
     {
+        // Delete related award results first
+        AllAwardResult::where('sport_id', $sport->id)->delete();
+        IndividualAwardResult::where('sport_id', $sport->id)->delete();
+
         $sport->types()->delete();
         $sport->delete();
 
@@ -226,50 +219,52 @@ class SportController extends Controller
     }
 
     /**
- * Bulk Delete Sports
- */
-public function bulkDelete(Request $request)
-{
-    $request->validate([
-        'sports' => 'required|array',
-        'sports.*' => 'exists:sports,id'
-    ]);
+     * Bulk Delete Sports
+     */
+    public function bulkDelete(Request $request)
+    {
+        $request->validate([
+            'sports' => 'required|array',
+            'sports.*' => 'exists:sports,id'
+        ]);
 
-    $sports = Sport::whereIn('id', $request->sports)
-        ->whereIn('division', ['Elementary', 'Secondary'])
-        ->get();
+        $sports = Sport::whereIn('id', $request->sports)
+            ->whereIn('division', ['Elementary', 'Secondary'])
+            ->get();
 
-    foreach ($sports as $sport) {
-        $sport->types()->delete();
-        $sport->delete();
+        foreach ($sports as $sport) {
+            AllAwardResult::where('sport_id', $sport->id)->delete();
+            IndividualAwardResult::where('sport_id', $sport->id)->delete();
+            $sport->types()->delete();
+            $sport->delete();
+        }
+
+        return redirect()->route('sports.index')
+            ->with('success', 'Selected sports deleted successfully!');
     }
 
-    return redirect()->route('sports.index')
-        ->with('success', 'Selected sports deleted successfully!');
-}
+    /**
+     * Bulk Delete Para Games
+     */
+    public function paraBulkDelete(Request $request)
+    {
+        $request->validate([
+            'sports' => 'required|array',
+            'sports.*' => 'exists:sports,id'
+        ]);
 
-/**
- * Bulk Delete Para Games
- */
-public function paraBulkDelete(Request $request)
-{
-    $request->validate([
-        'sports' => 'required|array',
-        'sports.*' => 'exists:sports,id'
-    ]);
+        $sports = Sport::whereIn('id', $request->sports)
+            ->where('division', 'Paragames')
+            ->get();
 
-    $sports = Sport::whereIn('id', $request->sports)
-        ->where('division', 'Paragames')
-        ->get();
+        foreach ($sports as $sport) {
+            AllAwardResult::where('sport_id', $sport->id)->delete();
+            IndividualAwardResult::where('sport_id', $sport->id)->delete();
+            $sport->types()->delete();
+            $sport->delete();
+        }
 
-    foreach ($sports as $sport) {
-        $sport->types()->delete();
-        $sport->delete();
+        return redirect()->route('para-sports.index')
+            ->with('success', 'Selected para games deleted successfully!');
     }
-
-    return redirect()->route('para-sports.index')
-        ->with('success', 'Selected para games deleted successfully!');
-}
-
-
 }

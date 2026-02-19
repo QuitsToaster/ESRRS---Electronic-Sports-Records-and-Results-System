@@ -22,9 +22,7 @@ public function index(Request $request)
     $sport    = $request->input('sport');
     $division = $request->input('division'); // 👈 NEW FILTER
 
-    $athletes = Athlete::with(['school', 'sport'])
-
-        // SEARCH
+    $query = Athlete::with(['school', 'sport'])
         ->when($search, function ($query, $search) {
             $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
@@ -40,32 +38,24 @@ public function index(Request $request)
                   ->orWhere('status', 'like', "%{$search}%");
             });
         })
-
-        // FILTER BY SEX
-        ->when($sex, function ($query, $sex) {
-            $query->where('sex', $sex);
-        })
-
-        // FILTER BY SPORT
-        ->when($sport, function ($query, $sport) {
-            $query->where('sport_id', $sport);
-        })
-
-        // FILTER BY DIVISION (LEVEL)
-        ->when($division, function ($query, $division) {
-            $query->where('division', $division);
-        })
-
+        ->when($sex, fn($q) => $q->where('sex', $sex))
+        ->when($sport, fn($q) => $q->where('sport_id', $sport))
+        ->when($division, fn($q) => $q->where('division', $division))
         ->orderBy('last_name')
-        ->orderBy('first_name')
-        ->paginate(25);
+        ->orderBy('first_name');
 
+    // Total count even with filters
+    $athleteCount = $query->count();
+
+    // Pagination
+    $athletes = $query->paginate(25);
     $athletes->appends($request->all());
 
     $sports = Sport::orderBy('name')->get();
 
-    return view('athletes.index', compact('athletes', 'sports'));
+    return view('athletes.index', compact('athletes', 'sports', 'athleteCount'));
 }
+
 
 
 

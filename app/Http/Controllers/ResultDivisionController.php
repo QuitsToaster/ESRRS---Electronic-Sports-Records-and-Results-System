@@ -146,7 +146,10 @@ class ResultDivisionController extends Controller
     $results = ResultDivision::with(['sport', 'division_model', 'awardedBy', 'event'])
                 ->latest()->get();
 
-    // Medal tally
+    // Get all sports
+    $allSports = \App\Models\Sport::orderBy('name')->get();
+
+    // Medal tally by division
     $divisions = Division::withCount([
         'resultsDivisions as gold'   => fn($q) => $q->where('medal', 'Gold'),
         'resultsDivisions as silver' => fn($q) => $q->where('medal', 'Silver'),
@@ -160,21 +163,25 @@ class ResultDivisionController extends Controller
 
     $divisions = $divisions->sortByDesc(fn($d) => [$d->points, $d->gold, $d->silver, $d->bronze])->values();
 
+    // Assign ranks
     $rank = 1;
     foreach ($divisions as $division) {
         $division->rank = $rank++;
     }
 
-    // Load Blade view for PDF
-    $pdf = PDF::loadView('results_divisions.export', [
-        'results' => $results,
-        'medalTally' => $divisions,
-        'allSports' => \App\Models\Sport::orderBy('name')->get(),
-    ])->setPaper('a4', 'landscape');
+    // Group results by division + sport + category for PDF
+    $groupedResults = $results->groupBy(function ($item) {
+        return $item->division . '|' . $item->category . '|' . $item->sport_id;
+    });
 
-    // Download PDF
-    return $pdf->download('awarded_medals.pdf');
+    return PDF::loadView('results_divisions.export', [
+        'medalTally'     => $divisions,
+        'allSports'      => $allSports,
+        'groupedResults' => $groupedResults,
+        'levels'         => ['Elementary', 'Secondary', 'Para Games'],
+    ])->setPaper('a4', 'landscape')->download('awarded_medals.pdf');
 }
+
 
 public function storeAllAwards(Request $request)
 {

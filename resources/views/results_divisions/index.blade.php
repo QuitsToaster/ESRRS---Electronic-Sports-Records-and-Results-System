@@ -15,15 +15,19 @@
         </p>
     </div>
 
-    {{-- ADD RESULT BUTTON --}}
-    <div class="text-center md:text-right">
+    {{-- ADD RESULT + EXPORT BUTTONS --}}
+    <div class="text-center md:text-right flex flex-col md:flex-row gap-2 md:gap-4">
         <a href="{{ route('results_divisions.create') }}"
         class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-xl shadow hover:bg-green-700 transition">
             ➕ Add Result
         </a>
+
+        <a href="{{ route('results_divisions.export') }}" target="_blank"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
+            📄 Export PDF
+        </a>
     </div>
 </div>
-
 
 @php
 use App\Models\Division;
@@ -50,8 +54,6 @@ function medalCountFromPreloaded($allAwards, $division, $category, $sdo, $medal)
 // Map Overall Summary (Elementary + Secondary only, Boys & Girls)
 // ---------------------------
 $overall = $allDivisions->map(function ($division) use ($allAwards) {
-
-    // Sum all Elementary & Secondary medals (Boys + Girls) for this division
     $division->total_gold   = medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold')
                             + medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold')
                             + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold')
@@ -67,21 +69,14 @@ $overall = $allDivisions->map(function ($division) use ($allAwards) {
                             + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze')
                             + medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze');
 
-    // Calculate points (optional, for display only)
     $division->total_points = ($division->total_gold * 3)
                             + ($division->total_silver * 2)
                             + ($division->total_bronze * 1);
 
     return $division;
-
 })->sort(function($a, $b) {
-    // Sort by gold DESC, then silver DESC, then bronze DESC
-    if ($a->total_gold !== $b->total_gold) {
-        return $b->total_gold <=> $a->total_gold;
-    }
-    if ($a->total_silver !== $b->total_silver) {
-        return $b->total_silver <=> $a->total_silver;
-    }
+    if ($a->total_gold !== $b->total_gold) return $b->total_gold <=> $a->total_gold;
+    if ($a->total_silver !== $b->total_silver) return $b->total_silver <=> $a->total_silver;
     return $b->total_bronze <=> $a->total_bronze;
 })->values();
 
@@ -92,11 +87,7 @@ $individualAwards = IndividualAwardResult::with('athlete','sport','event')->orde
 $awardsByMedal = $individualAwards->groupBy('medal');
 @endphp
 
-
-
-
 {{-- ================= OVERALL SUMMARY WITH LOGO ================= --}}
-
 <div class="mb-20">
     <h2 class="text-3xl font-bold text-gray-900 mb-8 border-l-8 border-green-600 pl-4">
         Over-All Summary
@@ -117,12 +108,8 @@ $awardsByMedal = $individualAwards->groupBy('medal');
                     @endif
 
                     <div>
-                        <h3 class="text-lg font-bold text-gray-800">
-                            {{ $division->name }}
-                        </h3>
-                        <p class="text-sm text-gray-500">
-                            Overall Rank #{{ $index + 1 }}
-                        </p>
+                        <h3 class="text-lg font-bold text-gray-800">{{ $division->name }}</h3>
+                        <p class="text-sm text-gray-500">Overall Rank #{{ $index + 1 }}</p>
                     </div>
                 </div>
 
@@ -149,8 +136,6 @@ $awardsByMedal = $individualAwards->groupBy('medal');
 </div>
 
 {{-- ================= INDIVIDUAL AWARDS ================= --}}
-
-
 <div class="mb-16">
     <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-8 border-purple-600 pl-4">
         Individual Awards
@@ -198,7 +183,6 @@ $awardsByMedal = $individualAwards->groupBy('medal');
         @endif
     @endforeach
 </div>
-
 
 
 {{-- ================= ELEMENTARY ================= --}}
