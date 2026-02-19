@@ -52,7 +52,7 @@ html, body {
         <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
         {{-- Loading Text --}}
         <p class="text-sm font-medium text-gray-600 tracking-wide">
-            Loading CAVRAA Monitoring System…
+            Loading ESRRS…
         </p>
     </div>
 </div>
