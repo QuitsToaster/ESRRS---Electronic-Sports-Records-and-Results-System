@@ -28,6 +28,18 @@
         <div class="absolute inset-0 overlay-dark backdrop-blur-sm"></div>
     </div>
 
+    {{-- ================= INSTRUCTIONS & DATA PRIVACY ================= --}}
+<div class="max-w-md w-full mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm relative z-10">
+    <h2 class="font-semibold mb-2 text-lg">Login Instructions & Data Privacy Notice</h2>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>Please enter your registered <strong>Email</strong> and <strong>Password</strong> to log in.</li>
+        <li>Your login data is encrypted and securely stored. We will not share your personal information with unauthorized parties.</li>
+        <li>By logging in, you consent to the processing of your data for authentication and attendance tracking purposes only.</li>
+        <li>If you encounter any issues, contact the system administrator.</li>
+    </ul>
+</div>
+
+
     {{-- Login Form Card --}}
     <div class="max-w-md w-full p-8 rounded-xl shadow-xl glass-card relative z-10">
         <h1 class="text-3xl font-bold mb-6 text-center text-white drop-shadow-lg" style="font-family: 'Poppins', sans-serif;">
@@ -63,10 +75,6 @@
             </div>
 
             <div class="flex items-center justify-between text-white text-sm">
-                <label class="inline-flex items-center">
-                    <input type="checkbox" name="remember" class="rounded border-gray-300">
-                    <span class="ml-2">Remember me</span>
-                </label>
                 <a href="#" @click.prevent="openModal('forgot_password')" class="hover:underline text-blue-400">Forgot password?</a>
             </div>
 
