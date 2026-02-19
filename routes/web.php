@@ -235,6 +235,13 @@ Route::middleware(['auth'])->group(function() {
     Route::post('/award_requests/{awardRequest}/validate', [AwardRequestController::class, 'validateRequest'])->name('award_requests.validate');
 });
 
+// Secretary Awards
+Route::post('/results/secretary/store', [ResultDivisionController::class, 'storeSecretaryAwards'])
+    ->name('results_secretary.storeSecretaryAwards');
+
+// All Awards (Super Admin)
+Route::post('/results/all/store', [ResultDivisionController::class, 'storeAllAwards'])
+    ->name('results_all_awards.storeAllAwards');
 
     /*
     |--------------------------------------------------------------------------

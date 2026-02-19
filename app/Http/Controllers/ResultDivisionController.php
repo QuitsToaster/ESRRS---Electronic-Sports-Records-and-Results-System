@@ -7,6 +7,7 @@ use App\Models\Division;
 use App\Models\Sport;
 use PDF; // Add at the top
 use App\Models\Event;
+use App\Models\SecretaryAward;
 use App\Models\AllAwardResult;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -318,6 +319,63 @@ public function storeIndividualAwards(Request $request)
 }
 
 
+public function storeSecretaryAwards(Request $request)
+{
+    $request->validate([
+        'event_id' => 'required|exists:events,id',
+        'results'  => 'required',
+        'division' => 'required|string',
+        'category' => 'nullable|string'
+    ]);
 
+    $results = is_string($request->results)
+        ? json_decode($request->results, true)
+        : $request->results;
+
+    if (!is_array($results)) {
+        return back()->with('error', 'Invalid results payload.');
+    }
+
+    $user = auth()->user();
+    $sdo = $user->division->name; // Secretary's SDO
+
+    foreach ($results as $sportId => $types) {
+        foreach ($types as $typeId => $medals) {
+            $typeId = $typeId == 0 ? null : $typeId;
+
+            foreach ($medals as $medal => $count) {
+                $count = (int)$count;
+                if ($count <= 0) continue;
+
+                // Delete previous record if exists
+                SecretaryAward::where([
+                    'event_id' => $request->event_id,
+                    'sport_id' => $sportId,
+                    'type_id'  => $typeId,
+                    'division' => $request->division,
+                    'category' => $request->category,
+                    'sdo'      => $sdo,
+                    'medal'    => $medal,
+                ])->delete();
+
+                SecretaryAward::create([
+                    'event_id'   => $request->event_id,
+                    'sport_id'   => $sportId,
+                    'type_id'    => $typeId,
+                    'division'   => $request->division,
+                    'category'   => $request->category,
+                    'sdo'        => $sdo,
+                    'medal'      => $medal,
+                    'count'      => $count,
+                    'awarded_by' => $user->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+    return back()->with('success', 'Awards submitted successfully to Tournament Manager.');
+}
 
 }
