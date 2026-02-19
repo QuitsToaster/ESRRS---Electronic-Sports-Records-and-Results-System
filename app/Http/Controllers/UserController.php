@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\User;
 use App\Models\Role;
 use App\Models\AccountRequest;
+use App\Models\Sport;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\Hash;
 
@@ -38,28 +39,31 @@ class UserController extends Controller
 
     // Show form to create user
     public function create()
-    {
-        $roles = Role::all();
-        return view('users.create', compact('roles'));
-    }
+{
+    $roles  = Role::all();
+    $sports = Sport::orderBy('name')->get(); // ✅ FETCH SPORTS
+
+    return view('users.create', compact('roles', 'sports'));
+}
+
 
     // Store new user
    public function store(Request $request)
 {
     $request->validate([
-        'name'      => 'required|string|max:255',
-        'email'     => 'required|email|unique:users',
-        'password'  => 'required|confirmed|min:6',
-        'role_id'   => 'nullable|exists:roles,id',
-        'new_role'  => 'nullable|string|max:50',
-        'access'    => 'nullable|array',
+        'name'          => 'required|string|max:255',
+        'email'         => 'required|email|unique:users',
+        'password'      => 'required|confirmed|min:6',
+        'role_id'       => 'nullable|exists:roles,id',
+        'new_role'      => 'nullable|string|max:50',
+        'access'        => 'nullable|array',
+        'sports_access' => 'nullable|array',
+        'sports_access.*' => 'exists:sports,id',
     ]);
 
     // Determine role
     if ($request->filled('new_role')) {
-        $role = Role::firstOrCreate([
-            'name' => trim($request->new_role)
-        ]);
+        $role = Role::firstOrCreate(['name' => trim($request->new_role)]);
     } elseif ($request->filled('role_id')) {
         $role = Role::find($request->role_id);
     } else {
@@ -69,11 +73,12 @@ class UserController extends Controller
     }
 
     $user = User::create([
-        'name'     => $request->name,
-        'email'    => $request->email,
-        'password' => Hash::make($request->password),
-        'role_id'  => $role->id, // ✅ FIXED
-        'access'   => $request->access ?? [],
+        'name'          => $request->name,
+        'email'         => $request->email,
+        'password'      => Hash::make($request->password),
+        'role_id'       => $role->id,
+        'access'        => $request->access ?? [],
+        'sports_access' => $request->sports_access ?? [], // ✅ SAVE SPORTS
     ]);
 
     AuditLog::create([
@@ -89,6 +94,7 @@ class UserController extends Controller
         ->route('users.index')
         ->with('success', 'User created successfully.');
 }
+
 
 
     // Show form to edit user

@@ -130,6 +130,30 @@
     </p>
 </div>
 
+{{-- SPORTS ACCESS --}}
+<div>
+    <label class="block text-sm font-semibold text-gray-700 mb-2">
+        Sports Access
+    </label>
+
+    <p class="text-xs text-gray-500 mb-3">
+        Select which sport(s) this user can view and manage.
+    </p>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+        @foreach($sports as $sport)
+            <label class="flex items-center gap-2">
+                <input type="checkbox"
+                       name="sports_access[]"
+                       value="{{ $sport->id }}"
+                       {{ in_array($sport->id, old('sports_access', [])) ? 'checked' : '' }}>
+                {{ $sport->name }}
+            </label>
+        @endforeach
+    </div>
+</div>
+
+
 {{-- Actions --}}
 <div class="flex justify-end gap-3 pt-4 border-t">
     <a href="{{ route('users.index') }}"

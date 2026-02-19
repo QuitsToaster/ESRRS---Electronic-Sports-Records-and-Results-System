@@ -44,6 +44,7 @@
                     <th class="px-4 py-2 text-left text-gray-700">Email</th>
                     <th class="px-4 py-2 text-left text-gray-700">Role</th>
                     <th class="px-4 py-2 text-left text-gray-700">Access</th>
+                    <th class="px-4 py-2 text-left text-gray-700">Sport Access</th>
                     <th class="px-4 py-2 text-left text-gray-700">Actions</th>
                 </tr>
             </thead>
@@ -55,6 +56,9 @@
                     <td class="px-4 py-2 text-gray-700">{{ $user->role->name ?? 'N/A' }}</td>
                     <td class="px-4 py-2 text-gray-700">
                         {{ $user->access ? implode(', ', $user->access) : '-' }}
+                    </td>
+                    <td class="px-4 py-2 text-gray-700">
+                        {{ $user->sports_access ? implode(', ', $user->sports_access) : '-' }}
                     </td>
                     <td class="px-4 py-2 flex items-center gap-2">
 
