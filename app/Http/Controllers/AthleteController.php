@@ -267,11 +267,11 @@ public function exportIdPdf()
     $athletes = Athlete::with(['school', 'sport'])
         ->orderBy('last_name')
         ->orderBy('first_name')
-        ->limit(25)   // 👈 ONLY FIRST 25 (for testing)
+        ->limit(25)
         ->get();
 
     $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
-        ->setPaper('a4', 'portrait');
+        ->setPaper('letter', 'portrait'); // IMPORTANT
 
     return $pdf->download('athlete-id-cards.pdf');
 }

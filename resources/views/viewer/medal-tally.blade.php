@@ -107,8 +107,9 @@
                                 <tr>
                                     <th class="px-4 py-2">Event</th>
                                     <th class="px-4 py-2">Athlete</th>
+                                    <th class="px-4 py-2">Category</th>
                                     <th class="px-4 py-2">School</th>
-                                    <th class="px-4 py-2">Region</th>
+                                    <th class="px-4 py-2">Division</th>
                                     <th class="px-4 py-2">Medal</th>
                                     <th class="px-4 py-2">Date</th>
                                 </tr>
@@ -118,8 +119,9 @@
                                     <tr class="border-b border-white/20">
                                         <td class="px-4 py-2">{{ $r->event?->name }}</td>
                                         <td class="px-4 py-2">{{ $r->athlete?->full_name }}</td>
+                                        <td class="px-4 py-2">{{ $r->athlete?->category }}</td>
                                         <td class="px-4 py-2">{{ $r->athlete?->school_name }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->region }}</td>
+                                        <td class="px-4 py-2">{{ $r->athlete?->school_division }}</td>
                                         <td class="px-4 py-2 font-bold
                                             {{ $r->medal==='Gold'?'text-yellow-400':($r->medal==='Silver'?'text-gray-300':'text-orange-400') }}">
                                             {{ $r->medal }}
