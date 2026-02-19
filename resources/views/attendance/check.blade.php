@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Attendance Scanner - CEMS</title>
+<title>Attendance Scanner - ESRRS</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -44,7 +44,7 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
 
 {{-- ================= SCANNER ================= --}}
 <div class="card p-8 flex flex-col items-center">
-    <h1 class="text-2xl font-bold mb-2">CEMS Attendance</h1>
+    <h1 class="text-2xl font-bold mb-2">ESRRS Attendance</h1>
     <p class="text-gray-600 mb-6 text-center">Scan your QR code to Time In / Time Out</p>
 
     {{-- STATUS --}}

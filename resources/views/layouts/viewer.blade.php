@@ -101,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 @if($viewerLogo && $viewerLogo->value)
                     <img src="{{ asset('storage/' . $viewerLogo->value) }}" alt="Viewer Logo" class="h-8 sm:h-10 object-contain">
                 @else
-                    <span class="text-lg sm:text-xl font-bold text-gray-800">CEMS</span>
+                    <span class="text-lg sm:text-xl font-bold text-gray-800">ESRRS</span>
                 @endif
             </a>
 
@@ -200,7 +200,7 @@ document.addEventListener('DOMContentLoaded', () => {
             @if($footer && $footer->logo)
                 <img src="{{ asset('storage/' . $footer->logo) }}" alt="Footer Logo" class="h-16 object-contain">
             @endif
-            <span class="text-2xl font-bold tracking-wide">{{ $footer->logo_name ?? 'CEMS' }}</span>
+            <span class="text-2xl font-bold tracking-wide">{{ $footer->logo_name ?? 'ESRRS' }}</span>
         </div>
 
         {{-- Quick Links --}}
