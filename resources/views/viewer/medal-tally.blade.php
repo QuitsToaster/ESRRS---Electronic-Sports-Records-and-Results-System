@@ -73,6 +73,70 @@
             }
          }">
 
+         {{-- ================= ALL MEDALS AWARDED ================= --}}
+        @php
+            use App\Models\IndividualAwardResult;
+            use App\Models\Sport;
+
+            $individualResults = IndividualAwardResult::with(['sport','athlete','event'])
+                ->latest()->get();
+
+            $sports = Sport::orderBy('name')->get();
+        @endphp
+
+        <div class="mt-20">
+            <h2 class="text-center text-6xl font-extrabold mb-10 text-yellow-400">
+                All Medals Awarded
+            </h2>
+
+            @foreach(['Elementary','Secondary','Paragames'] as $division)
+                <h3 class="text-3xl font-semibold text-white mb-4">{{ $division }}</h3>
+
+                @foreach($sports as $sport)
+                    @php
+                        $rows = $individualResults
+                            ->where('division', $division)
+                            ->where('sport_id', $sport->id);
+                    @endphp
+
+                    @if($rows->isNotEmpty())
+                        <h4 class="text-xl text-yellow-300 mb-2">{{ $sport->name }}</h4>
+
+                        <table class="w-full mb-6 bg-white/10 text-white rounded-xl">
+                            <thead class="bg-white/20">
+                                <tr>
+                                    <th class="px-4 py-2">Event</th>
+                                    <th class="px-4 py-2">Athlete</th>
+                                    <th class="px-4 py-2">School</th>
+                                    <th class="px-4 py-2">Region</th>
+                                    <th class="px-4 py-2">Medal</th>
+                                    <th class="px-4 py-2">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($rows as $r)
+                                    <tr class="border-b border-white/20">
+                                        <td class="px-4 py-2">{{ $r->event?->name }}</td>
+                                        <td class="px-4 py-2">{{ $r->athlete?->full_name }}</td>
+                                        <td class="px-4 py-2">{{ $r->athlete?->school_name }}</td>
+                                        <td class="px-4 py-2">{{ $r->athlete?->region }}</td>
+                                        <td class="px-4 py-2 font-bold
+                                            {{ $r->medal==='Gold'?'text-yellow-400':($r->medal==='Silver'?'text-gray-300':'text-orange-400') }}">
+                                            {{ $r->medal }}
+                                        </td>
+                                        <td class="px-4 py-2">
+                                            {{ $r->created_at?->format('M d, Y') }}
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    @endif
+                @endforeach
+            @endforeach
+        </div>
+
+
         {{-- ================= MEDAL TALLY ================= --}}
         <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white
                     bg-black/20 backdrop-blur-md px-6 py-3 rounded-xl">
@@ -149,70 +213,6 @@
                 </template>
             </div>
         </div>
-
-        {{-- ================= ALL MEDALS AWARDED ================= --}}
-        @php
-            use App\Models\IndividualAwardResult;
-            use App\Models\Sport;
-
-            $individualResults = IndividualAwardResult::with(['sport','athlete','event'])
-                ->latest()->get();
-
-            $sports = Sport::orderBy('name')->get();
-        @endphp
-
-        <div class="mt-20">
-            <h2 class="text-center text-6xl font-extrabold mb-10 text-yellow-400">
-                All Medals Awarded
-            </h2>
-
-            @foreach(['Elementary','Secondary','Paragames'] as $division)
-                <h3 class="text-3xl font-semibold text-white mb-4">{{ $division }}</h3>
-
-                @foreach($sports as $sport)
-                    @php
-                        $rows = $individualResults
-                            ->where('division', $division)
-                            ->where('sport_id', $sport->id);
-                    @endphp
-
-                    @if($rows->isNotEmpty())
-                        <h4 class="text-xl text-yellow-300 mb-2">{{ $sport->name }}</h4>
-
-                        <table class="w-full mb-6 bg-white/10 text-white rounded-xl">
-                            <thead class="bg-white/20">
-                                <tr>
-                                    <th class="px-4 py-2">Event</th>
-                                    <th class="px-4 py-2">Athlete</th>
-                                    <th class="px-4 py-2">School</th>
-                                    <th class="px-4 py-2">Region</th>
-                                    <th class="px-4 py-2">Medal</th>
-                                    <th class="px-4 py-2">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($rows as $r)
-                                    <tr class="border-b border-white/20">
-                                        <td class="px-4 py-2">{{ $r->event?->name }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->full_name }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->school_name }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->region }}</td>
-                                        <td class="px-4 py-2 font-bold
-                                            {{ $r->medal==='Gold'?'text-yellow-400':($r->medal==='Silver'?'text-gray-300':'text-orange-400') }}">
-                                            {{ $r->medal }}
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            {{ $r->created_at?->format('M d, Y') }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endif
-                @endforeach
-            @endforeach
-        </div>
-
     </div>
 </section>
 @endsection
