@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'CAVRAA Monitoring System') }}</title>
+    <title>{{ config('app.name', 'ESRRS') }}</title>
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -135,11 +135,11 @@ document.addEventListener('DOMContentLoaded', () => {
             class="h-14 object-contain"
         >
     @else
-        <span class="font-bold text-xl">CEMS</span>
+        <span class="font-bold text-xl">ESRRS</span>
     @endif
 
     <p class="text-xs text-gray-300 text-center">
-        CAVRAA Event Monitoring System
+        ESRRS - Electronic Sports Records and Results System
     </p>
 </div>
 
