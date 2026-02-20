@@ -43,9 +43,10 @@ class DivisionController extends Controller
             $data['logo'] = $this->storeLargeImage($request->file('logo'));
         }
 
+        // Create division
         $division = Division::create($data);
 
-        // AUTOMATIC USER CREATION FOR THE NEW DIVISION
+        // Automatically create accounts for this division
         $this->createDivisionAccounts($division);
 
         return redirect()->route('divisions.index')
@@ -59,11 +60,10 @@ class DivisionController extends Controller
             'Tournament Manager' => 'tm'
         ];
 
-        // Levels to consider
         $levels = ['Elementary', 'Secondary', 'Paragames'];
 
         foreach ($levels as $level) {
-            // Fetch sports for this level
+            // Get sports for this level
             $sports = Sport::where('division', $level)->get();
 
             foreach ($sports as $sport) {
@@ -71,19 +71,16 @@ class DivisionController extends Controller
                 $categories = strtolower($level) === 'paragames' ? [null] : ['Boys', 'Girls'];
 
                 foreach ($categories as $category) {
-                    // Skip if sport has category and doesn't match
+                    // Skip if category doesn't match sport's category
                     if ($category && $sport->category && strtolower($category) !== strtolower($sport->category)) {
                         continue;
                     }
 
                     foreach ($rolesToCreate as $roleName => $roleInitials) {
-                        // Create or get role
                         $role = Role::firstOrCreate(['name' => $roleName]);
 
-                        // Short SDO code (first 3 letters of division, lowercase)
+                        // Create email
                         $sdoCode = strtolower(substr(str_replace('SDO - ', '', $division->name), 0, 3));
-
-                        // Generate email
                         $email = strtolower(
                             substr($level, 0, 4) .
                             ($category ? substr($category, 0, 1) : 'P') .
@@ -99,13 +96,14 @@ class DivisionController extends Controller
                         if ($category) $name .= ' ' . $category;
                         $name .= ' ' . $sport->name . ' ' . $roleName;
 
-                        // Create user
+                        // ✅ Create user with division_name
                         User::firstOrCreate(
                             ['email' => $email],
                             [
                                 'name' => $name,
                                 'password' => Hash::make('ESRRS@2026'),
                                 'role_id' => $role->id,
+                                'division_name' => $division->name, // store actual division name
                                 'access' => ['results'],
                                 'level_access' => [$level],
                                 'category_access' => $category ? [$category] : [],
