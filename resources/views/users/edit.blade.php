@@ -4,6 +4,10 @@
 
 @section('content')
 
+@php
+$isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
+@endphp
+
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Edit User</h1>
     <p class="text-sm text-gray-600 mt-1">
@@ -19,125 +23,171 @@
 
 {{-- Name --}}
 <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Name <span class="text-red-500">*</span></label>
+    <label class="block text-sm font-semibold mb-1">Name</label>
     <input type="text" name="name" required
            value="{{ old('name', $user->name) }}"
-           class="w-full border border-gray-300 rounded px-3 py-2">
+           class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- Email --}}
 <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Email <span class="text-red-500">*</span></label>
+    <label class="block text-sm font-semibold mb-1">Email</label>
     <input type="email" name="email" required
            value="{{ old('email', $user->email) }}"
-           class="w-full border border-gray-300 rounded px-3 py-2">
+           class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- Password --}}
 <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Password (leave blank to keep current)</label>
+    <label class="block text-sm font-semibold mb-1">Password</label>
     <input type="password" name="password"
-           class="w-full border border-gray-300 rounded px-3 py-2">
-</div>
-
-{{-- Confirm Password --}}
-<div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Confirm Password</label>
-    <input type="password" name="password_confirmation"
-           class="w-full border border-gray-300 rounded px-3 py-2">
+           class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- Role --}}
 <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Role <span class="text-red-500">*</span></label>
-    <select name="role_id" class="w-full border border-gray-300 rounded px-3 py-2">
-        <option value="">-- Select Role --</option>
+    <label class="block text-sm font-semibold mb-1">Role</label>
+    <select name="role_id" class="w-full border rounded px-3 py-2">
         @foreach($roles as $role)
-            <option value="{{ $role->id }}" {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
+            <option value="{{ $role->id }}"
+                {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
                 {{ $role->name }}
             </option>
         @endforeach
     </select>
 </div>
 
-{{-- New Role --}}
+{{-- ACCESS --}}
 <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Or Add New Role</label>
-    <input type="text" name="new_role" value="{{ old('new_role') }}"
-           class="w-full border border-gray-300 rounded px-3 py-2"
-           placeholder="Enter a new role name">
-</div>
+    <label class="block text-sm font-semibold mb-2">System Access</label>
 
-{{-- ACCESS CONTROL --}}
-<div>
-    <label class="block text-sm font-semibold text-gray-700 mb-2">
-        Access
-    </label>
-
-    {{-- Select All --}}
     <label class="flex items-center gap-2 mb-2">
         <input type="checkbox" id="selectAllAccess">
         Select All Access
     </label>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm" id="accessModules">
-        @php
-            $modules = [
-                'dashboard' => 'Dashboard',
-                'attendance' => 'Attendance',
-                'results' => 'Results',
-                'divisions' => 'Divisions',
-                'participants' => 'Teams',
-                'events' => 'Events',
-                'sports' => 'Sports',
-                'athletes' => 'Athletes',
-                'coaches' => 'Coaches',
-                'games' => 'Games',
-                'announcements' => 'Announcements',
-                'users' => 'User Management',
-                'logs' => 'Audit Logs',
-                'settings' => 'Settings',
-            ];
-            $userAccess = old('access', $user->access ?? []);
-        @endphp
+    @php
+        $modules = [
+            'dashboard','attendance','results','divisions','participants',
+            'events','sports','athletes','coaches','games',
+            'announcements','users','logs','settings'
+        ];
+        $userAccess = old('access', $user->access ?? []);
+    @endphp
 
-        @foreach($modules as $key => $label)
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+        @foreach($modules as $m)
             <label class="flex items-center gap-2">
-                <input type="checkbox" name="access[]" value="{{ $key }}"
-                       class="moduleCheckbox"
-                       {{ in_array($key, $userAccess) ? 'checked' : '' }}>
-                {{ $label }}
+                <input type="checkbox" class="moduleCheckbox"
+                       name="access[]" value="{{ $m }}"
+                       {{ in_array($m, $userAccess) ? 'checked' : '' }}>
+                {{ ucfirst($m) }}
+            </label>
+        @endforeach
+    </div>
+</div>
+
+{{-- LEVEL & CATEGORY --}}
+<div class="border rounded p-4 bg-gray-50">
+    <h3 class="font-semibold text-sm mb-3">Level & Category Access</h3>
+
+    {{-- LEVEL --}}
+    <div class="mb-3">
+        <label class="flex items-center gap-2 font-semibold mb-1">
+            <input type="checkbox" id="selectAllLevels">
+            Select All Levels
+        </label>
+
+        @foreach(['Elementary','Secondary','Paragames'] as $level)
+            <label class="inline-flex items-center mr-4">
+                <input type="checkbox" class="levelCheckbox"
+                       name="level_access[]"
+                       value="{{ $level }}"
+                       {{ $isSuperAdmin || in_array($level, old('level_access', $user->level_access ?? [])) ? 'checked' : '' }}>
+                <span class="ml-1">{{ $level }}</span>
             </label>
         @endforeach
     </div>
 
-    <p class="text-xs text-gray-500 mt-2">
-        Select which modules this user can access in the sidebar.
-    </p>
+    {{-- CATEGORY --}}
+    <div>
+        <label class="flex items-center gap-2 font-semibold mb-1">
+            <input type="checkbox" id="selectAllCategories">
+            Select All Categories
+        </label>
+
+        @foreach(['Boys','Girls'] as $cat)
+            <label class="inline-flex items-center mr-4">
+                <input type="checkbox" class="categoryCheckbox"
+                       name="category_access[]"
+                       value="{{ $cat }}"
+                       {{ $isSuperAdmin || in_array($cat, old('category_access', $user->category_access ?? [])) ? 'checked' : '' }}>
+                <span class="ml-1">{{ $cat }}</span>
+            </label>
+        @endforeach
+    </div>
+</div>
+
+{{-- SPORTS ACCESS --}}
+<div>
+    <label class="flex items-center gap-2 font-semibold mb-2">
+        <input type="checkbox" id="selectAllSports">
+        Select All Sports
+    </label>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+        @foreach(\App\Models\Sport::orderBy('division')->orderBy('category')->orderBy('name')->get() as $sport)
+            <label class="flex items-center gap-2">
+                <input type="checkbox" class="sportCheckbox"
+                       name="sports_access[]"
+                       value="{{ $sport->id }}"
+                       {{ $isSuperAdmin || in_array($sport->id, old('sports_access', $user->sports_access ?? [])) ? 'checked' : '' }}>
+                {{ $sport->name }}
+                <span class="text-xs text-gray-500">
+                    ({{ $sport->division }} • {{ $sport->category }})
+                </span>
+            </label>
+        @endforeach
+    </div>
 </div>
 
 {{-- Actions --}}
 <div class="flex justify-end gap-3 pt-4 border-t">
-    <a href="{{ route('users.index') }}" class="px-4 py-2 rounded border border-gray-400 text-gray-700">
-        Cancel
-    </a>
-    <button type="submit" class="px-5 py-2 rounded bg-green-600 text-white font-semibold">
-        Update User
-    </button>
+    <a href="{{ route('users.index') }}" class="px-4 py-2 border rounded">Cancel</a>
+    <button class="px-5 py-2 bg-green-600 text-white rounded">Update User</button>
 </div>
 
 </form>
 </div>
 
-{{-- Simple JS for Select All --}}
+{{-- JS --}}
 <script>
-document.addEventListener('DOMContentLoaded', function () {
-    const selectAll = document.getElementById('selectAllAccess');
-    const checkboxes = document.querySelectorAll('.moduleCheckbox');
+document.addEventListener('DOMContentLoaded', () => {
+    const bindSelectAll = (master, items) => {
+        master.addEventListener('change', () => {
+            items.forEach(cb => cb.checked = master.checked);
+        });
+    };
 
-    selectAll.addEventListener('change', function () {
-        checkboxes.forEach(cb => cb.checked = selectAll.checked);
-    });
+    bindSelectAll(
+        document.getElementById('selectAllAccess'),
+        document.querySelectorAll('.moduleCheckbox')
+    );
+
+    bindSelectAll(
+        document.getElementById('selectAllLevels'),
+        document.querySelectorAll('.levelCheckbox')
+    );
+
+    bindSelectAll(
+        document.getElementById('selectAllCategories'),
+        document.querySelectorAll('.categoryCheckbox')
+    );
+
+    bindSelectAll(
+        document.getElementById('selectAllSports'),
+        document.querySelectorAll('.sportCheckbox')
+    );
 });
 </script>
 

@@ -38,47 +38,52 @@ class UserController extends Controller
 
 
     // Show form to create user
-    public function create()
+   public function create()
 {
-    $roles  = Role::all();
-    $sports = Sport::orderBy('name')->get(); // ✅ FETCH SPORTS
+    $roles = Role::all();
+    $sports = Sport::orderBy('division')
+        ->orderBy('category')
+        ->orderBy('name')
+        ->get();
 
     return view('users.create', compact('roles', 'sports'));
 }
+
 
 
     // Store new user
    public function store(Request $request)
 {
     $request->validate([
-        'name'          => 'required|string|max:255',
-        'email'         => 'required|email|unique:users',
-        'password'      => 'required|confirmed|min:6',
-        'role_id'       => 'nullable|exists:roles,id',
-        'new_role'      => 'nullable|string|max:50',
-        'access'        => 'nullable|array',
-        'sports_access' => 'nullable|array',
-        'sports_access.*' => 'exists:sports,id',
+        'name'             => 'required|string|max:255',
+        'email'            => 'required|email|unique:users',
+        'password'         => 'required|confirmed|min:6',
+        'role_id'          => 'nullable|exists:roles,id',
+        'new_role'         => 'nullable|string|max:50',
+        'access'           => 'nullable|array',
+        'sports_access'    => 'nullable|array',
+        'sports_access.*'  => 'exists:sports,id',
+        'level_access'     => 'nullable|array',
+        'category_access'  => 'nullable|array',
     ]);
 
-    // Determine role
     if ($request->filled('new_role')) {
         $role = Role::firstOrCreate(['name' => trim($request->new_role)]);
     } elseif ($request->filled('role_id')) {
-        $role = Role::find($request->role_id);
+        $role = Role::findOrFail($request->role_id);
     } else {
-        return back()
-            ->withErrors(['role_id' => 'Please select a role or add a new one.'])
-            ->withInput();
+        return back()->withErrors(['role_id' => 'Role is required'])->withInput();
     }
 
     $user = User::create([
-        'name'          => $request->name,
-        'email'         => $request->email,
-        'password'      => Hash::make($request->password),
-        'role_id'       => $role->id,
-        'access'        => $request->access ?? [],
-        'sports_access' => $request->sports_access ?? [], // ✅ SAVE SPORTS
+        'name'            => $request->name,
+        'email'           => $request->email,
+        'password'        => Hash::make($request->password),
+        'role_id'         => $role->id,
+        'access'          => $request->access ?? [],
+        'sports_access'   => $request->sports_access ?? [],
+        'level_access'    => $request->level_access ?? [],
+        'category_access' => $request->category_access ?? [],
     ]);
 
     AuditLog::create([
@@ -86,14 +91,12 @@ class UserController extends Controller
         'model_id'   => $user->id,
         'user_id'    => auth()->id(),
         'action'     => 'Created User',
-        'old_values' => null,
         'new_values' => json_encode($user->toArray()),
     ]);
 
-    return redirect()
-        ->route('users.index')
-        ->with('success', 'User created successfully.');
+    return redirect()->route('users.index')->with('success', 'User created successfully.');
 }
+
 
 
 
@@ -108,41 +111,41 @@ class UserController extends Controller
     public function update(Request $request, User $user)
 {
     $request->validate([
-        'name'     => 'required|string|max:255',
-        'email'    => 'required|email|unique:users,email,' . $user->id,
-        'password' => 'nullable|string|min:6|confirmed',
-        'role_id'  => 'nullable|exists:roles,id',
-        'new_role' => 'nullable|string|max:50',
+        'name'             => 'required|string|max:255',
+        'email'            => 'required|email|unique:users,email,' . $user->id,
+        'password'         => 'nullable|string|min:6|confirmed',
+        'role_id'          => 'nullable|exists:roles,id',
+        'new_role'         => 'nullable|string|max:50',
+        'access'           => 'nullable|array',
+        'level_access'     => 'nullable|array',
+        'category_access'  => 'nullable|array',
+        'sports_access'    => 'nullable|array',
     ]);
 
     $oldValues = $user->toArray();
 
-    // Determine role
-    if (!empty($request->new_role)) {
+    if ($request->filled('new_role')) {
         $role = Role::firstOrCreate(['name' => $request->new_role]);
-    } elseif (!empty($request->role_id)) {
-        $role = Role::find($request->role_id);
-        if (!$role) {
-            return back()->withErrors(['role_id' => 'Selected role not found'])->withInput();
-        }
     } else {
-        return back()->withErrors(['role_id' => 'Please select a role or enter a new role'])->withInput();
+        $role = Role::findOrFail($request->role_id);
     }
 
-    // Update user fields
-    $user->name = $request->name;
-    $user->email = $request->email;
-    $user->role_id = $role->id;
-    $user->access = $request->access ?? [];
+    $user->update([
+        'name'            => $request->name,
+        'email'           => $request->email,
+        'role_id'         => $role->id,
+        'access'          => $request->access ?? [],
+        'level_access'    => $request->level_access ?? [],
+        'category_access' => $request->category_access ?? [],
+        'sports_access'   => $request->sports_access ?? [],
+    ]);
 
     if ($request->filled('password')) {
-        $user->password = Hash::make($request->password);
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
     }
 
-    $user->save();
-
-
-    // Audit log
     AuditLog::create([
         'model_type' => 'User',
         'model_id'   => $user->id,
@@ -152,8 +155,10 @@ class UserController extends Controller
         'new_values' => json_encode($user->toArray()),
     ]);
 
-    return redirect()->route('users.index')->with('success', 'User updated successfully.');
+    return redirect()->route('users.index')
+        ->with('success', 'User updated successfully.');
 }
+
 
 
     // Delete user

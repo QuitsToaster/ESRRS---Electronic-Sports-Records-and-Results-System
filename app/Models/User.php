@@ -17,7 +17,9 @@ class User extends Authenticatable
         'password',
         'role_id',
         'access',
-        'sports_access', // ✅ NEW
+        'sports_access',
+        'level_access',      // ✅ FIX
+        'category_access',   // ✅ FIX
     ];
 
     protected $hidden = [
@@ -26,8 +28,10 @@ class User extends Authenticatable
     ];
 
     protected $casts = [
-        'access'        => 'array',
-        'sports_access' => 'array', // ✅ NEW
+        'access'          => 'array',
+        'sports_access'   => 'array',
+        'level_access'    => 'array',   // ✅ FIX
+        'category_access' => 'array',   // ✅ FIX
         'email_verified_at' => 'datetime',
     ];
 

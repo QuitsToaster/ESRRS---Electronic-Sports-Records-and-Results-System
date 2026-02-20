@@ -12,19 +12,7 @@
 
 <div class="bg-white shadow rounded-lg p-6 w-full">
 
-<form
-    action="{{ route('users.store') }}"
-    method="POST"
-    class="space-y-6"
-    x-data="{
-        allAccess: false,
-        toggleAll() {
-            this.$refs.modules
-                .querySelectorAll('input[type=checkbox]')
-                .forEach(cb => cb.checked = this.allAccess);
-        }
-    }"
->
+<form action="{{ route('users.store') }}" method="POST" class="space-y-6">
 @csrf
 
 {{-- Name --}}
@@ -86,73 +74,101 @@
         Access
     </label>
 
-    {{-- Select All --}}
     <label class="flex items-center gap-2 mb-3">
-        <input type="checkbox"
-               x-model="allAccess"
-               @change="toggleAll">
+        <input type="checkbox" id="selectAllAccess">
         Select All Access
     </label>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm" x-ref="modules">
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
         @php
             $modules = [
-                'dashboard' => 'Dashboard',
-                'attendance' => 'Attendance',
-                'results' => 'Results',
-                'divisions' => 'Divisions',
-                'participants' => 'Teams',
-                'events' => 'Events',
-                'sports' => 'Sports',
-                'athletes' => 'Athletes',
-                'coaches' => 'Coaches',
-                'games' => 'Games',
-                'announcements' => 'Announcements',
-                'users' => 'User Management',
-                'logs' => 'Audit Logs',
-                'settings' => 'Settings',
+                'dashboard','attendance','results','divisions','participants',
+                'events','sports','athletes','coaches','games',
+                'announcements','users','logs','settings'
             ];
         @endphp
 
-        @foreach($modules as $key => $label)
+        @foreach($modules as $key)
             <label class="flex items-center gap-2">
-                <input type="checkbox"
-                       name="access[]"
-                       value="{{ $key }}"
+                <input type="checkbox" class="moduleCheckbox"
+                       name="access[]" value="{{ $key }}"
                        {{ in_array($key, old('access', [])) ? 'checked' : '' }}>
-                {{ $label }}
+                {{ ucfirst($key) }}
             </label>
         @endforeach
     </div>
+</div>
 
-    <p class="text-xs text-gray-500 mt-2">
-        Select which modules this user can access in the sidebar.
-    </p>
+{{-- LEVEL ACCESS --}}
+<div>
+    <label class="flex items-center gap-2 font-semibold mb-2">
+        <input type="checkbox" id="selectAllLevels">
+        Select All Levels
+    </label>
+
+    <div class="flex gap-4 text-sm">
+        @foreach(['Elementary','Secondary','Paragames'] as $level)
+            <label class="flex items-center gap-2">
+                <input type="checkbox" class="levelCheckbox"
+                       name="level_access[]" value="{{ $level }}"
+                       {{ in_array($level, old('level_access', [])) ? 'checked' : '' }}>
+                {{ $level }}
+            </label>
+        @endforeach
+    </div>
+</div>
+
+{{-- CATEGORY ACCESS --}}
+<div>
+    <label class="flex items-center gap-2 font-semibold mb-2">
+        <input type="checkbox" id="selectAllCategories">
+        Select All Categories
+    </label>
+
+    <div class="flex gap-4 text-sm">
+        @foreach(['Boys','Girls'] as $cat)
+            <label class="flex items-center gap-2">
+                <input type="checkbox" class="categoryCheckbox"
+                       name="category_access[]" value="{{ $cat }}"
+                       {{ in_array($cat, old('category_access', [])) ? 'checked' : '' }}>
+                {{ $cat }}
+            </label>
+        @endforeach
+    </div>
 </div>
 
 {{-- SPORTS ACCESS --}}
 <div>
-    <label class="block text-sm font-semibold text-gray-700 mb-2">
-        Sports Access
+    <label class="flex items-center gap-2 font-semibold mb-2">
+        <input type="checkbox" id="selectAllSports">
+        Select All Sports
     </label>
 
     <p class="text-xs text-gray-500 mb-3">
-        Select which sport(s) this user can view and manage.
+        Sports are grouped by <strong>Level</strong> and <strong>Category</strong>.
     </p>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-        @foreach($sports as $sport)
-            <label class="flex items-center gap-2">
-                <input type="checkbox"
-                       name="sports_access[]"
-                       value="{{ $sport->id }}"
-                       {{ in_array($sport->id, old('sports_access', [])) ? 'checked' : '' }}>
-                {{ $sport->name }}
-            </label>
-        @endforeach
-    </div>
-</div>
+    @foreach($sports->groupBy(['division','category']) as $division => $categories)
+        <div class="mb-4">
+            <h4 class="font-semibold text-sm mb-2">{{ $division }}</h4>
 
+            @foreach($categories as $category => $items)
+                <p class="text-xs text-gray-600 mb-1">{{ $category }}</p>
+
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-3">
+                    @foreach($items as $sport)
+                        <label class="flex items-center gap-2">
+                            <input type="checkbox" class="sportCheckbox"
+                                   name="sports_access[]" value="{{ $sport->id }}"
+                                   {{ in_array($sport->id, old('sports_access', [])) ? 'checked' : '' }}>
+                            {{ $sport->name }}
+                        </label>
+                    @endforeach
+                </div>
+            @endforeach
+        </div>
+    @endforeach
+</div>
 
 {{-- Actions --}}
 <div class="flex justify-end gap-3 pt-4 border-t">
@@ -169,5 +185,36 @@
 
 </form>
 </div>
+
+{{-- SELECT ALL JS --}}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const bind = (master, items) => {
+        master.addEventListener('change', () => {
+            items.forEach(cb => cb.checked = master.checked);
+        });
+    };
+
+    bind(
+        document.getElementById('selectAllAccess'),
+        document.querySelectorAll('.moduleCheckbox')
+    );
+
+    bind(
+        document.getElementById('selectAllLevels'),
+        document.querySelectorAll('.levelCheckbox')
+    );
+
+    bind(
+        document.getElementById('selectAllCategories'),
+        document.querySelectorAll('.categoryCheckbox')
+    );
+
+    bind(
+        document.getElementById('selectAllSports'),
+        document.querySelectorAll('.sportCheckbox')
+    );
+});
+</script>
 
 @endsection

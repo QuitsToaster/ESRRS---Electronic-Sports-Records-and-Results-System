@@ -44,6 +44,8 @@
                     <th class="px-4 py-2 text-left text-gray-700">Email</th>
                     <th class="px-4 py-2 text-left text-gray-700">Role</th>
                     <th class="px-4 py-2 text-left text-gray-700">Access</th>
+                    <th class="px-4 py-2 text-left text-gray-700">Level Access</th>
+                    <th class="px-4 py-2 text-left text-gray-700">Category Access</th>
                     <th class="px-4 py-2 text-left text-gray-700">Sport Access</th>
                     <th class="px-4 py-2 text-left text-gray-700">Actions</th>
                 </tr>
@@ -56,6 +58,15 @@
                     <td class="px-4 py-2 text-gray-700">{{ $user->role->name ?? 'N/A' }}</td>
                     <td class="px-4 py-2 text-gray-700">
                         {{ $user->access ? implode(', ', $user->access) : '-' }}
+                    </td>
+                    {{-- LEVEL ACCESS --}}
+                    <td class="px-4 py-2 text-sm">
+                        {{ $user->level_access ? implode(', ', $user->level_access) : '—' }}
+                    </td>
+
+                    {{-- CATEGORY ACCESS --}}
+                    <td class="px-4 py-2 text-sm">
+                        {{ $user->category_access ? implode(', ', $user->category_access) : '—' }}
                     </td>
                     <td class="px-4 py-2 text-gray-700">
                         {{ $user->sports_access ? implode(', ', $user->sports_access) : '-' }}
