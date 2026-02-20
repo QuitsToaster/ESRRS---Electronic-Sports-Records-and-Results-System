@@ -21,6 +21,27 @@
     <form action="{{ route('sports.store') }}" method="POST" class="space-y-4 w-full">
         @csrf
 
+        {{-- ================= LEVEL ================= --}}
+        <div class="mb-4">
+            <label class="block text-gray-700 font-semibold mb-2">Level</label>
+            <select name="level" class="w-full border rounded px-3 py-2" required>
+                <option value="">-- Select Level --</option>
+                <option value="Elementary" {{ old('level') == 'Elementary' ? 'selected' : '' }}>Elementary</option>
+                <option value="Secondary" {{ old('level') == 'Secondary' ? 'selected' : '' }}>Secondary</option>
+            </select>
+        </div>
+
+        {{-- ================= CATEGORY ================= --}}
+        <div class="mb-4">
+            <label class="block text-gray-700 font-semibold mb-2">Category</label>
+            <select name="category" class="w-full border rounded px-3 py-2" required>
+                <option value="">-- Select Category --</option>
+                <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
+                <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
+            </select>
+        </div>
+
+        {{-- ================= SPORT NAME ================= --}}
         <div>
             <label for="name" class="block text-gray-700 font-semibold mb-2">Sport Name</label>
             <input type="text" name="name" id="name" value="{{ old('name') }}"
@@ -28,38 +49,36 @@
                    required>
         </div>
 
-                <!-- Type of Game (Dynamic) -->
-<div>
-    <label class="block text-gray-700 font-semibold mb-1">Type of Game</label>
-    <div id="typeFields">
-        <div class="flex mb-2">
-            <input type="text" name="type_of_game[]" 
-                   placeholder="e.g., Single Stick" 
-                   class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button type="button" onclick="removeField(this)" 
-                    class="ml-2 px-2 bg-red-500 text-white rounded">×</button>
+        {{-- ================= TYPE OF GAME ================= --}}
+        <div>
+            <label class="block text-gray-700 font-semibold mb-1">Type of Game</label>
+            <div id="typeFields">
+                <div class="flex mb-2">
+                    <input type="text" name="type_of_game[]" 
+                           placeholder="e.g., Single Stick" 
+                           class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button type="button" onclick="removeField(this)" 
+                            class="ml-2 px-2 bg-red-500 text-white rounded">×</button>
+                </div>
+            </div>
+            <button type="button" onclick="addField()" 
+                    class="mt-2 px-3 py-1 bg-green-500 text-white rounded">Add Another Type</button>
         </div>
-    </div>
-    <button type="button" onclick="addField()" 
-            class="mt-2 px-3 py-1 bg-green-500 text-white rounded">Add Another Type</button>
-</div>
 
-<script>
-function addField() {
-    const container = document.getElementById('typeFields');
-    const div = document.createElement('div');
-    div.classList.add('flex','mb-2');
-    div.innerHTML = `<input type="text" name="type_of_game[]" placeholder="e.g., Double Stick" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                     <button type="button" onclick="removeField(this)" class="ml-2 px-2 bg-red-500 text-white rounded">×</button>`;
-    container.appendChild(div);
-}
+        <script>
+            function addField() {
+                const container = document.getElementById('typeFields');
+                const div = document.createElement('div');
+                div.classList.add('flex','mb-2');
+                div.innerHTML = `<input type="text" name="type_of_game[]" placeholder="e.g., Double Stick" class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                 <button type="button" onclick="removeField(this)" class="ml-2 px-2 bg-red-500 text-white rounded">×</button>`;
+                container.appendChild(div);
+            }
 
-function removeField(button) {
-    button.parentElement.remove();
-}
-</script>
-
-
+            function removeField(button) {
+                button.parentElement.remove();
+            }
+        </script>
 
         <div class="flex justify-end space-x-2 mt-4">
             <a href="{{ route('sports.index') }}" class="px-4 py-2 bg-gray-300 hover:bg-gray-400 rounded shadow text-gray-700">Cancel</a>

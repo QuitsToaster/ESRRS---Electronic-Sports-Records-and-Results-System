@@ -28,5 +28,9 @@ public function sportTypes()
     return $this->hasMany(SportType::class);
 }
 
+// Sport.php
+public function athletes() {
+    return $this->hasMany(Athlete::class);
+}
 
 }

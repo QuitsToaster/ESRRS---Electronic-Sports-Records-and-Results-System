@@ -6,60 +6,83 @@ use Illuminate\Http\Request;
 use App\Models\Sport;
 use App\Models\AuditLog;
 use App\Models\AllAwardResult;
+use Illuminate\Validation\Rule;
 use App\Models\IndividualAwardResult;
 use Illuminate\Support\Facades\Auth;
 
 class SportController extends Controller
 {
     public function index(Request $request)
-    {
-        $sports = Sport::with('types')
-            ->whereIn('division', ['Elementary', 'Secondary'])
-            ->orderBy('name')
-            ->get();
+{
+    // Get filter values from query
+    $level = $request->query('level');      // Elementary / Secondary
+    $category = $request->query('category'); // Boys / Girls
 
-        return view('sports.index', compact('sports'));
+    $query = Sport::with('types')->whereIn('division', ['Elementary', 'Secondary']);
+
+    if ($level) {
+        $query->where('division', $level);
     }
 
-    public function create()
-    {
-        return view('sports.create');
+    if ($category) {
+        $query->where('category', $category);
     }
+
+    $sports = $query->orderBy('name')->get();
+
+    // Total count of filtered sports
+    $totalSports = $sports->count();
+
+    return view('sports.index', compact('sports', 'totalSports', 'level', 'category'));
+}
+
+
 
     public function store(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|unique:sports,name',
-            'type_of_game.*' => 'nullable|string',
-        ]);
+{
+    $request->validate([
+        'name' => [
+            'required',
+            'string',
+            Rule::unique('sports')->where(function ($query) use ($request) {
+                return $query->where('division', $request->level);
+            }),
+        ],
+        'level' => 'required|in:Elementary,Secondary',
+        'category' => 'required|in:Boys,Girls',
+        'type_of_game.*' => 'nullable|string',
+    ]);
 
-        $sport = Sport::create([
-            'name'     => $request->name,
-            'division' => 'Elementary',
-        ]);
+    $sport = Sport::create([
+        'name'     => $request->name,
+        'division' => $request->level,
+        'level'    => $request->level,
+        'category' => $request->category,
+    ]);
 
-        if ($request->type_of_game) {
-            foreach ($request->type_of_game as $type) {
-                if ($type) {
-                    $sport->types()->create(['type_name' => $type]);
-                }
+    if ($request->type_of_game) {
+        foreach ($request->type_of_game as $type) {
+            if ($type) {
+                $sport->types()->create(['type_name' => $type]);
             }
         }
-
-        AuditLog::create([
-            'model_type' => 'Sport',
-            'model_id'   => $sport->id,
-            'user_id'    => Auth::id(),
-            'old_values' => null,
-            'new_values' => json_encode($sport->toArray()),
-            'action'     => 'Created Sport: ' . $sport->name,
-        ]);
-
-        return redirect()->route('sports.index')
-            ->with('success', 'Sport added successfully!');
     }
 
-    public function edit($id)
+    AuditLog::create([
+        'model_type' => 'Sport',
+        'model_id'   => $sport->id,
+        'user_id'    => Auth::id(),
+        'old_values' => null,
+        'new_values' => json_encode($sport->toArray()),
+        'action'     => 'Created Sport: ' . $sport->name,
+    ]);
+
+    return redirect()->route('sports.index')
+        ->with('success', 'Sport added successfully!');
+}
+
+
+   public function edit($id)
     {
         $sport = Sport::with('types')->findOrFail($id);
 
@@ -71,75 +94,79 @@ class SportController extends Controller
     }
 
     public function update(Request $request, $id)
+{
+    $sport = Sport::findOrFail($id);
+
+    $request->validate([
+        'name' => [
+            'required',
+            'string',
+            Rule::unique('sports')->where(function ($query) use ($request, $sport) {
+                return $query->where('division', $request->level)
+                             ->where('id', '<>', $sport->id);
+            }),
+        ],
+        'level' => 'required|in:Elementary,Secondary',
+        'category' => 'required|in:Boys,Girls',
+        'type_of_game.*' => 'nullable|string',
+    ]);
+
+    $oldValues = $sport->toArray();
+
+    $sport->update([
+        'name'     => $request->name,
+        'level'    => $request->level,
+        'category' => $request->category,
+        'division' => $request->level,
+    ]);
+
+    $sport->types()->delete();
+    if ($request->type_of_game) {
+        foreach ($request->type_of_game as $type) {
+            if ($type) {
+                $sport->types()->create(['type_name' => $type]);
+            }
+        }
+    }
+
+    AuditLog::create([
+        'model_type' => 'Sport',
+        'model_id'   => $sport->id,
+        'user_id'    => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($sport->toArray()),
+        'action'     => 'Updated Sport: ' . $sport->name,
+    ]);
+
+    return redirect()->route('sports.index')
+        ->with('success', 'Sport updated successfully!');
+}
+
+    public function destroy($id)
     {
         $sport = Sport::findOrFail($id);
 
         if ($sport->division === 'Paragames') {
-            abort(403);
+            abort(403, 'Use Para Games module.');
         }
 
-        $request->validate([
-            'name' => 'required|string|unique:sports,name,' . $sport->id,
-            'type_of_game.*' => 'nullable|string',
-        ]);
+        // Detach athletes from this sport
+        $sport->events()->update(['sport_id' => null]);
+        \App\Models\Athlete::where('sport_id', $sport->id)->update(['sport_id' => null]);
 
-        $oldValues = $sport->toArray();
+        // Delete related award results
+        AllAwardResult::where('sport_id', $sport->id)->delete();
+        IndividualAwardResult::where('sport_id', $sport->id)->delete();
 
-        $sport->update([
-            'name' => $request->name,
-        ]);
-
-        // Delete old types & recreate
+        // Delete sport types
         $sport->types()->delete();
-        if ($request->type_of_game) {
-            foreach ($request->type_of_game as $type) {
-                if ($type) {
-                    $sport->types()->create(['type_name' => $type]);
-                }
-            }
-        }
 
-        AuditLog::create([
-            'model_type' => 'Sport',
-            'model_id'   => $sport->id,
-            'user_id'    => Auth::id(),
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($sport->toArray()),
-            'action'     => 'Updated Sport: ' . $sport->name,
-        ]);
+        // Delete sport itself
+        $sport->delete();
 
         return redirect()->route('sports.index')
-            ->with('success', 'Sport updated successfully!');
+            ->with('success', 'Sport deleted successfully!');
     }
-
-    /**
-     * Delete regular sport safely (types + award results, NOT athletes)
-     */
-    public function destroy($id)
-{
-    $sport = Sport::findOrFail($id);
-
-    if ($sport->division === 'Paragames') {
-        abort(403, 'Use Para Games module.');
-    }
-
-    // ✅ Detach athletes from this sport
-    $sport->events()->update(['sport_id' => null]); // if athletes linked via events
-    \App\Models\Athlete::where('sport_id', $sport->id)->update(['sport_id' => null]);
-
-    // Delete related award results
-    AllAwardResult::where('sport_id', $sport->id)->delete();
-    IndividualAwardResult::where('sport_id', $sport->id)->delete();
-
-    // Delete sport types
-    $sport->types()->delete();
-
-    // Delete sport itself
-    $sport->delete();
-
-    return redirect()->route('sports.index')
-        ->with('success', 'Sport deleted successfully!');
-}
 
 
     // ---------------- PARA GAMES ----------------

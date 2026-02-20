@@ -7,7 +7,7 @@
 
     <h1 class="text-2xl font-bold text-gray-800 mb-2">Edit Sport</h1>
     <p class="text-sm text-gray-600 mb-6">
-        Update the sport information and its types of game.
+        Update the sport information, its level, category, and types of game.
     </p>
 
     @if ($errors->any())
@@ -35,12 +35,31 @@
                           focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
 
+        <!-- Level -->
+        <div>
+            <label class="block text-gray-700 font-semibold mb-2">Level</label>
+            <select name="level" required
+                    class="w-full border border-gray-300 rounded px-3 py-2">
+                <option value="">-- Select Level --</option>
+                <option value="Elementary" {{ old('level', $sport->level) == 'Elementary' ? 'selected' : '' }}>Elementary</option>
+                <option value="Secondary" {{ old('level', $sport->level) == 'Secondary' ? 'selected' : '' }}>Secondary</option>
+            </select>
+        </div>
+
+        <!-- Category -->
+        <div>
+            <label class="block text-gray-700 font-semibold mb-2">Category</label>
+            <select name="category" required
+                    class="w-full border border-gray-300 rounded px-3 py-2">
+                <option value="">-- Select Category --</option>
+                <option value="Boys" {{ old('category', $sport->category) == 'Boys' ? 'selected' : '' }}>Boys</option>
+                <option value="Girls" {{ old('category', $sport->category) == 'Girls' ? 'selected' : '' }}>Girls</option>
+            </select>
+        </div>
+
         <!-- Type of Game (Dynamic) -->
         <div>
-            <label class="block text-gray-700 font-semibold mb-2">
-                Type of Game
-            </label>
-
+            <label class="block text-gray-700 font-semibold mb-2">Type of Game</label>
             <div id="typeFields" class="space-y-2">
                 @forelse($sport->types as $type)
                     <div class="flex gap-2">
