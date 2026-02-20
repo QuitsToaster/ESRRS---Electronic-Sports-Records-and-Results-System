@@ -69,22 +69,37 @@ class ResultDivisionController extends Controller
     // CREATE PAGE
     // -----------------------------
     public function create(Request $request)
-    {
-        $division = $request->get('division', 'Elementary');
-        $category = $request->get('category', 'Boys');
+{
+    $user = auth()->user();
 
-        $sports = Sport::with('types')->orderBy('name')->get();
-        $divisions = Division::orderBy('name')->get(); // SDOs
+    $tabs = [
+        'Elementary Boys'   => ['division' => 'Elementary', 'category' => 'Boys'],
+        'Elementary Girls'  => ['division' => 'Elementary', 'category' => 'Girls'],
+        'Secondary Boys'    => ['division' => 'Secondary', 'category' => 'Boys'],
+        'Secondary Girls'   => ['division' => 'Secondary', 'category' => 'Girls'],
+        'Para Games'        => ['division' => 'Paragames', 'category' => null],
+    ];
 
-        $existingResults = ResultDivision::where('category', $category)
-            ->whereHas('event', fn($q) => $q->where('age_group', $division))
-            ->get()
-            ->groupBy(fn($r) => $r->sport_id . '-' . ($r->type_id ?? 0) . '-' . $r->sdo . '-' . $r->medal);
+    $athletes = \App\Models\Athlete::orderBy('last_name')->get();
 
-        return view('results_divisions.create', compact(
-            'sports', 'divisions', 'division', 'category', 'existingResults'
-        ));
+    $divisionsQuery = Division::orderBy('name');
+
+    // If user is NOT super admin, filter by user's division_name
+    if ($user->role->name !== 'Super Admin') {
+        $divisionsQuery->where('name', $user->division_name);
+        // Filter athletes as well
+        $athletes = $athletes->filter(function ($a) use ($user) {
+            return $a->division == $user->level_access[0] // level_access usually array
+                && ($user->category_access ? in_array($a->category, $user->category_access) : true)
+                && in_array($a->sport_id, $user->sports_access);
+        });
     }
+
+    $divisions = $divisionsQuery->get();
+
+    return view('results_divisions.create', compact('divisions', 'athletes', 'tabs'));
+}
+
 
     // -----------------------------
     // STORE RESULTS

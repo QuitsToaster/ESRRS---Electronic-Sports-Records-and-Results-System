@@ -6,12 +6,14 @@
 
 @php
 use App\Models\Sport;
-use App\Models\Division;
-use App\Models\Athlete;
 use App\Models\AllAwardResult;
 use App\Models\IndividualAwardResult;
+use App\Models\Athlete;
 
-$tabs = [
+$user = auth()->user();
+
+// ====================== FILTER TABS FOR TOURNAMENT SECRETARY ======================
+$allTabs = [
     'Elementary Boys'   => ['division' => 'Elementary', 'category' => 'Boys'],
     'Elementary Girls'  => ['division' => 'Elementary', 'category' => 'Girls'],
     'Secondary Boys'    => ['division' => 'Secondary', 'category' => 'Boys'],
@@ -19,18 +21,41 @@ $tabs = [
     'Para Games'        => ['division' => 'Paragames', 'category' => null],
 ];
 
-$divisions = Division::orderBy('name')->get();
-$athletes  = Athlete::orderBy('last_name')->get();
+// If not Super Admin, filter tabs based on user's level_access and category_access
+if ($user->role->name !== 'Super Admin') {
+    $tabs = array_filter($allTabs, function($tab) use ($user) {
+        $levelOk = in_array($tab['division'], $user->level_access);
+        $categoryOk = is_null($tab['category']) || in_array($tab['category'], $user->category_access);
+        return $levelOk && $categoryOk;
+    });
+} else {
+    $tabs = $allTabs;
+}
 
-/* ================= PREFILL ALL AWARDS RESULTS ================= */
+// ====================== FILTER DIVISIONS ======================
+$allDivisions = \App\Models\Division::orderBy('name')->get();
+if ($user->role->name !== 'Super Admin') {
+    $divisions = $allDivisions->filter(fn($d) => $d->name === $user->division_name);
+} else {
+    $divisions = $allDivisions;
+}
+
+// ====================== ALL ATHLETES ======================
+$athletes = \App\Models\Athlete::orderBy('last_name')->get();
+
+// ================= PREFILL ALL AWARDS RESULTS =================
 $prefillResults = [];
-
 foreach ($tabs as $tabName => $tab) {
     $query = AllAwardResult::where('division', $tab['division']);
     if (!is_null($tab['category'])) {
         $query->where('category', $tab['category']);
     } else {
         $query->whereNull('category');
+    }
+
+    if ($user->role->name !== 'Super Admin') {
+        $query->whereIn('sport_id', $user->sports_access)
+              ->where('sdo', $user->division_name);
     }
 
     foreach ($query->get() as $r) {
@@ -42,7 +67,7 @@ foreach ($tabs as $tabName => $tab) {
     }
 }
 
-/* ================= PREFILL INDIVIDUAL AWARDS ================= */
+// ================= PREFILL INDIVIDUAL AWARDS =================
 $prefillIndividual = [];
 foreach ($tabs as $tabName => $tab) {
     $query = IndividualAwardResult::where('division', $tab['division']);
@@ -50,6 +75,11 @@ foreach ($tabs as $tabName => $tab) {
         $query->where('category', $tab['category']);
     } else {
         $query->whereNull('category');
+    }
+
+    if ($user->role->name !== 'Super Admin') {
+        $query->whereIn('sport_id', $user->sports_access)
+              ->where('sdo', $user->division_name);
     }
 
     foreach ($query->get() as $r) {
@@ -65,49 +95,52 @@ foreach ($tabs as $tabName => $tab) {
 <div x-data="awardApp()" class="p-4 space-y-6">
 
 {{-- ================= INSTRUCTIONS / NOTES ================= --}}
-    <div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
-        <h3 class="font-semibold mb-1">How to Use This Page:</h3>
-        <ul class="list-disc list-inside text-sm space-y-1">
-            <li>Select the award type: <strong>All Awards</strong> for medal tallies per sport or <strong>Individual Awards</strong> for specific athletes.</li>
-            <li>Use the tabs above to switch between divisions and categories (e.g., Elementary Boys, Secondary Girls, Para Games).</li>
-            <li>For <strong>All Awards</strong>, enter the number of Gold, Silver, and Bronze medals for each SDO in the table.</li>
-            <li>For <strong>Individual Awards</strong>, select the athletes who won Gold, Silver, and Bronze for each sport and type.</li>
-            <li>After filling the data, click the <strong>Save</strong> button at the bottom of each section to store your entries.</li>
-        </ul>
-    </div>
-
-    {{-- ================= AWARD TYPE ================= --}}
-    <select x-model="awardType" class="border rounded px-3 py-2 w-64 mb-4">
-        <option value="all">All Awards</option>
-        <option value="individual">Individual Awards</option>
-    </select>
-
-    {{-- ================= TABS ================= --}}
-    <ul class="flex border-b mb-6">
-    @foreach($tabs as $name => $tab)
-        <li>
-            <button @click="activeTab='{{ $name }}'"
-                    class="px-4 py-2 border-b-2 font-semibold"
-                    :class="activeTab==='{{ $name }}'
-                        ? 'border-blue-600 text-blue-600'
-                        : 'text-gray-500'">
-                {{ $name }}
-            </button>
-        </li>
-    @endforeach
+<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>Select the award type: <strong>All Awards</strong> for medal tallies per sport or <strong>Individual Awards</strong> for specific athletes.</li>
+        <li>Use the tabs above to switch between divisions and categories (e.g., Elementary Boys, Secondary Girls, Para Games).</li>
+        <li>For <strong>All Awards</strong>, enter the number of Gold, Silver, and Bronze medals for each SDO in the table.</li>
+        <li>For <strong>Individual Awards</strong>, select the athletes who won Gold, Silver, and Bronze for each sport and type.</li>
+        <li>After filling the data, click the <strong>Save</strong> button at the bottom of each section to store your entries.</li>
     </ul>
+</div>
 
-    @foreach($tabs as $tabName => $tab)
-        @php
-        $sports = Sport::with('types')
-            ->where('division', $tab['division'])
-            ->orderBy('name')
-            ->get();
-        $tabAthletes = $athletes
-            ->where('division', $tab['division'])
-            ->where('category', $tab['category'])
-            ->sortBy('last_name');
-        @endphp
+{{-- ================= AWARD TYPE ================= --}}
+<select x-model="awardType" class="border rounded px-3 py-2 w-64 mb-4">
+    <option value="all">All Awards</option>
+    <option value="individual">Individual Awards</option>
+</select>
+
+{{-- ================= TABS ================= --}}
+<ul class="flex border-b mb-6">
+@foreach($tabs as $name => $tab)
+    <li>
+        <button @click="activeTab='{{ $name }}'"
+                class="px-4 py-2 border-b-2 font-semibold"
+                :class="activeTab==='{{ $name }}'
+                    ? 'border-blue-600 text-blue-600'
+                    : 'text-gray-500'">
+            {{ $name }}
+        </button>
+    </li>
+@endforeach
+</ul>
+
+@foreach($tabs as $tabName => $tab)
+    @php
+        $sportsQuery = \App\Models\Sport::with('types')->where('division', $tab['division'])->orderBy('name');
+        if ($user->role->name !== 'Super Admin') {
+            $sportsQuery->whereIn('id', $user->sports_access);
+        }
+        $sports = $sportsQuery->get();
+
+        $tabAthletes = $athletes->filter(fn($a) =>
+            $a->division == $tab['division'] &&
+            ($tab['category'] ? $a->category == $tab['category'] : true) &&
+            ($user->role->name === 'Super Admin' || $a->sdo == $user->division_name)
+        )->sortBy('last_name');
+    @endphp
 
         <div x-show="activeTab==='{{ $tabName }}'" x-cloak>
 
