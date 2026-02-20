@@ -15,26 +15,50 @@ class UserController extends Controller
    public function index(Request $request)
 {
     $search = $request->input('search');
+    $roleFilter = $request->input('role');
+    $levelFilter = $request->input('level');
+    $divisionFilter = $request->input('division');
 
-    $users = User::with('role')
-        ->when($search, function ($query, $search) {
-            $query->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhereHas('role', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%");
-                  });
-        })
-        ->orderBy('name', 'asc')
-        ->get();
+    $usersQuery = User::with('role');
 
-    // Fetch account requests only for super admin
-    $accountRequests = collect(); // default empty collection
-    if (auth()->user()->role->name === 'Super Admin') {
-        $accountRequests = AccountRequest::orderBy('created_at', 'desc')->get();
+    // Search
+    if ($search) {
+        $usersQuery->where(function($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhereHas('role', fn($r)=>$r->where('name', 'like', "%{$search}%"));
+        });
     }
 
-    return view('users.index', compact('users', 'accountRequests'));
+    // Role filter
+    if ($roleFilter) {
+        $usersQuery->where('role_id', $roleFilter);
+    }
+
+    // Level filter
+    if ($levelFilter) {
+        $usersQuery->whereJsonContains('level_access', $levelFilter);
+    }
+
+    // Division filter (match SDO name in user name or level_access)
+    if ($divisionFilter) {
+        $usersQuery->where('name', 'like', "%{$divisionFilter}%");
+    }
+
+    $users = $usersQuery->orderBy('name')->get();
+
+    $totalUsers = User::count();
+    $roles = Role::all();
+    $divisions = \App\Models\Division::orderBy('name')->get();
+
+    // Account requests for super admin
+    $accountRequests = (auth()->user()->role->name === 'Super Admin') 
+        ? \App\Models\AccountRequest::orderBy('created_at', 'desc')->get() 
+        : collect();
+
+    return view('users.index', compact('users','totalUsers','roles','divisions','accountRequests'));
 }
+
 
 
     // Show form to create user

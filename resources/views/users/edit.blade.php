@@ -8,6 +8,21 @@
 $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 @endphp
 
+{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>Update the information for an existing user account.</li>
+        <li>You can modify the <strong>Name</strong> and <strong>Email</strong> of the user.</li>
+        <li>To change the password, enter a new <strong>Password</strong> and confirm it. Leave blank if you do not want to update it.</li>
+        <li>Select a new <strong>Role</strong> from the dropdown, or create a <strong>New Role</strong> if it does not exist.</li>
+        <li>Adjust <strong>Access</strong> permissions, including <strong>Level Access</strong>, <strong>Category Access</strong>, and <strong>Sports Access</strong> as needed.</li>
+        <li>Click <strong>Update User</strong> to save changes. All modifications will update the user’s account and permissions accordingly.</li>
+        <li>After updating, you can return to the <strong>Users list</strong> to view, reset passwords, or delete accounts.</li>
+    </ul>
+</div>
+
+
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Edit User</h1>
     <p class="text-sm text-gray-600 mt-1">

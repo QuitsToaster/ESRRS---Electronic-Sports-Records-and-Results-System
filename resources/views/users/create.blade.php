@@ -4,6 +4,22 @@
 
 @section('content')
 
+{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
+    <ul class="list-disc list-inside text-sm space-y-1">
+        <li>Fill out the form to create a new user account in the system.</li>
+        <li>Enter <strong>Name</strong> and <strong>Email</strong> for the user.</li>
+        <li>Set a <strong>Password</strong> and confirm it. This will be the user’s initial login password.</li>
+        <li>Select a <strong>Role</strong> from the dropdown. If the role does not exist, you can create a new one in the <strong>New Role</strong> field.</li>
+        <li>Choose the appropriate <strong>Access</strong> options (e.g., results, admin panels) for the user.</li>
+        <li>Select <strong>Level Access</strong> (Elementary, Secondary, Paragames) and <strong>Category Access</strong> (Boys/Girls) if applicable.</li>
+        <li>Choose <strong>Sports Access</strong> and/or <strong>Divisions</strong> that this user should manage.</li>
+        <li>Click <strong>Create User</strong> to save. The new user will receive permissions and access according to the selections.</li>
+        <li>After creation, you can edit the user’s information or reset their password from the Users list.</li>
+    </ul>
+</div>
+
 <div class="mb-6">
     <p class="text-sm text-gray-600 mt-1">
         Create a user and assign role and system access.
