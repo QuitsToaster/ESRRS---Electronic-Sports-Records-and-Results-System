@@ -15,51 +15,43 @@ use Illuminate\Support\Facades\Auth;
 
 class AthleteController extends Controller
 {
-public function index(Request $request)
-{
-    $search   = $request->input('search');
-    $sex      = $request->input('sex');
-    $sport    = $request->input('sport');
-    $division = $request->input('division'); // 👈 NEW FILTER
+    public function index(Request $request)
+    {
+        $search   = $request->input('search');
+        $sex      = $request->input('sex');
+        $sport    = $request->input('sport');
+        $division = $request->input('division');
 
-    $query = Athlete::with(['school', 'sport'])
-        ->when($search, function ($query, $search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('middle_initial', 'like', "%{$search}%")
-                  ->orWhere('region', 'like', "%{$search}%")
-                  ->orWhere('school_type', 'like', "%{$search}%")
-                  ->orWhere('lrn', 'like', "%{$search}%")
-                  ->orWhereHas('school', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('sport', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
-                  ->orWhere('division', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%")
-                  ->orWhere('status', 'like', "%{$search}%");
-            });
-        })
-        ->when($sex, fn($q) => $q->where('sex', $sex))
-        ->when($sport, fn($q) => $q->where('sport_id', $sport))
-        ->when($division, fn($q) => $q->where('division', $division))
-        ->orderBy('last_name')
-        ->orderBy('first_name');
+        $query = Athlete::with(['school', 'sport'])
+            ->when($search, function ($query, $search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
+                      ->orWhere('last_name', 'like', "%{$search}%")
+                      ->orWhere('middle_initial', 'like', "%{$search}%")
+                      ->orWhere('region', 'like', "%{$search}%")
+                      ->orWhere('school_type', 'like', "%{$search}%")
+                      ->orWhere('lrn', 'like', "%{$search}%")
+                      ->orWhereHas('school', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
+                      ->orWhereHas('sport', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
+                      ->orWhere('division', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%")
+                      ->orWhere('status', 'like', "%{$search}%");
+                });
+            })
+            ->when($sex, fn($q) => $q->where('sex', $sex))
+            ->when($sport, fn($q) => $q->where('sport_id', $sport))
+            ->when($division, fn($q) => $q->where('division', $division))
+            ->orderBy('last_name')
+            ->orderBy('first_name');
 
-    // Total count even with filters
-    $athleteCount = $query->count();
+        $athleteCount = $query->count();
+        $athletes = $query->paginate(25);
+        $athletes->appends($request->all());
 
-    // Pagination
-    $athletes = $query->paginate(25);
-    $athletes->appends($request->all());
+        $sports = Sport::orderBy('name')->get();
 
-    $sports = Sport::orderBy('name')->get();
-
-    return view('athletes.index', compact('athletes', 'sports', 'athleteCount'));
-}
-
-
-
-
-
+        return view('athletes.index', compact('athletes', 'sports', 'athleteCount'));
+    }
 
     public function create()
     {
@@ -103,8 +95,8 @@ public function index(Request $request)
             $school = School::firstOrCreate(
                 ['name' => $request->school_name],
                 [
-                    'division'       => $request->division,          // Elementary/Secondary/Paragames
-                    'school_division'=> $request->school_division,   // City/Region
+                    'division'       => $request->division,
+                    'school_division'=> $request->school_division,
                     'school_type'    => $request->school_type,
                     'school_address' => $request->school_address,
                     'school_code'    => $request->school_code,
@@ -117,19 +109,9 @@ public function index(Request $request)
             $schoolId = $request->school_id;
         }
 
-        /* ================= SPORT AUTO-CREATE ================= */
-        if (!$request->sport_id && $request->sport_name) {
-            $sport = Sport::firstOrCreate(
-                ['name' => $request->sport_name],
-                [
-                    'division' => $request->division,   // athlete's division
-                    'category' => $request->category,   // athlete's category
-                ]
-            );
-            $sportId = $sport->id;
-        } else {
-            $sportId = $request->sport_id;
-        }
+        /* ================= SPORT SELECT ONLY ================= */
+        // ⚠️ Important: Manual creation only. Bulk uploads will bypass this.
+        $sportId = $request->sport_id ?? null;
 
         /* ================= ATHLETE PHOTO ================= */
         $photoPath = null;
@@ -143,21 +125,17 @@ public function index(Request $request)
             'last_name'         => $request->last_name,
             'sex'               => $request->sex,
             'birthdate'         => $request->birthdate,
-
             'school_id'         => $schoolId,
             'sport_id'          => $sportId,
-
             'division'          => $request->division,
             'category'          => $request->category,
             'status'            => $request->status,
-
             'region'            => $request->region,
             'school_type'       => $request->school_type,
             'school_address'    => $request->school_address,
             'school_division'   => $request->school_division,
             'school_code'       => $request->school_code,
             'lrn'               => $request->lrn,
-
             'profile_photo'     => $photoPath,
         ]);
 
@@ -251,31 +229,29 @@ public function index(Request $request)
     }
 
     public function bulkUpload(Request $request)
-{
-    $request->validate([
-        'file' => 'required|mimes:csv,xlsx'
-    ]);
+    {
+        $request->validate([
+            'file' => 'required|mimes:csv,xlsx'
+        ]);
 
-    Excel::import(new AthletesImport, $request->file('file'));
+        // ✅ Bulk import: No auto-creation of sports
+        Excel::import(new AthletesImport, $request->file('file'));
 
-    return redirect()->route('athletes.index')
-        ->with('success', 'Athletes uploaded successfully!');
-}
+        return redirect()->route('athletes.index')
+            ->with('success', 'Athletes uploaded successfully!');
+    }
 
-public function exportIdPdf()
-{
-    $athletes = Athlete::with(['school', 'sport'])
-        ->orderBy('last_name')
-        ->orderBy('first_name')
-        ->limit(25)
-        ->get();
+    public function exportIdPdf()
+    {
+        $athletes = Athlete::with(['school', 'sport'])
+            ->orderBy('last_name')
+            ->orderBy('first_name')
+            ->limit(25)
+            ->get();
 
-    $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
-        ->setPaper('letter', 'portrait'); // IMPORTANT
+        $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
+            ->setPaper('letter', 'portrait');
 
-    return $pdf->download('athlete-id-cards.pdf');
-}
-
-
-
+        return $pdf->download('athlete-id-cards.pdf');
+    }
 }

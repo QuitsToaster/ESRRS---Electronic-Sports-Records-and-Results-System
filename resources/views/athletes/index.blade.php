@@ -188,7 +188,7 @@
     <td class="px-4 py-2">{{ $athlete->division }}</td>
     <td class="px-4 py-2">{{ $athlete->category }}</td>
     <td class="px-4 py-2">{{ $athlete->region ?? '—' }}</td>
-    <td class="px-4 py-2">{{ $athlete->sport->name ?? '—' }}</td>
+    <td class="px-4 py-2">{{ $athlete->event ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school->name ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school_type ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school_address ?? '—' }}</td>

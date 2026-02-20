@@ -33,13 +33,9 @@ class AthletesImport implements ToCollection, WithHeadingRow
             );
 
             /* ================= SPORT ================= */
-            $sport = Sport::firstOrCreate(
-                ['name' => strtoupper($row['event'])],
-                [
-                    'division' => ucfirst(strtolower($row['level'])),
-                    'category' => $row['sex'] === 'M' ? 'Boys' : 'Girls',
-                ]
-            );
+            // ⚠️ Lookup sport only, do NOT create
+            $sport = Sport::whereRaw('UPPER(name) = ?', [strtoupper($row['event'])])->first();
+            $sportId = $sport ? $sport->id : null;
 
             /* ================= ATHLETE ================= */
             Athlete::create([
@@ -55,7 +51,7 @@ class AthletesImport implements ToCollection, WithHeadingRow
                 'event'           => $row['event'],
 
                 'school_id'       => $school->id,
-                'sport_id'        => $sport->id,
+                'sport_id'        => $sportId,
 
                 'school_name'     => $row['schoolname'],
                 'school_type'     => ucfirst(strtolower($row['school_type'])),
