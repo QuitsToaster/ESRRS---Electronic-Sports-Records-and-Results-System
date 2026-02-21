@@ -81,23 +81,27 @@ class DivisionController extends Controller
                 foreach ($rolesToCreate as $roleName => $roleInitials) {
                     $role = Role::firstOrCreate(['name' => $roleName]);
 
-                    // Create email
+                    // ---------------- SANITIZE SPORT NAME FOR EMAIL ----------------
+                    $cleanSportName = preg_replace('/[^a-z0-9]/i', '', strtolower($sport->name));
+
+                    // SDO code (3 letters, lowercase)
                     $sdoCode = strtolower(substr(str_replace('SDO - ', '', $division->name), 0, 3));
-                    $email = strtolower(
-                        substr($level, 0, 4) .
-                        ($category ? substr($category, 0, 1) : 'P') .
-                        strtolower(str_replace(' ', '', $sport->name)) .
-                        '.' .
-                        $roleInitials .
-                        '.' . $sdoCode .
-                        '@gmail.com'
-                    );
+
+                    // Category initial (B/G/P)
+                    $categoryInitial = $category ? substr($category, 0, 1) : 'P';
+
+                    // Level code (first 4 letters)
+                    $levelCode = substr(strtolower($level), 0, 4);
+
+                    // Build email safely
+                    $email = "{$levelCode}{$categoryInitial}{$cleanSportName}.{$roleInitials}.{$sdoCode}@gmail.com";
 
                     // Display name
                     $name = $division->name . ' - ' . $level;
                     if ($category) $name .= ' ' . $category;
                     $name .= ' ' . $sport->name . ' ' . $roleName;
 
+                    // Create or fetch user
                     User::firstOrCreate(
                         ['email' => $email],
                         [
@@ -107,7 +111,7 @@ class DivisionController extends Controller
                             'division_name' => $division->name,
                             'access' => ['results'],
                             'level_access' => [$level],
-                            'category_access' => [$category], // ✅ now not empty
+                            'category_access' => [$category], // now not empty
                             'sports_access' => [$sport->id],
                         ]
                     );
@@ -116,6 +120,7 @@ class DivisionController extends Controller
         }
     }
 }
+
 
 
     private function storeLargeImage($image)
