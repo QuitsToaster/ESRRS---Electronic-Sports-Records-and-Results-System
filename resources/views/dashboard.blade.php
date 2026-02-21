@@ -173,6 +173,7 @@
 
     // 2️⃣ Fetch medal counts grouped by division and medal
     $raw = AllAwardResult::select('sdo', 'medal', \DB::raw('SUM(`count`) as total'))
+            ->where('status', 'approved')
             ->groupBy('sdo','medal')
             ->get()
             ->groupBy('sdo');

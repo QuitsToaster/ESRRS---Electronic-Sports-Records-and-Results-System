@@ -296,6 +296,7 @@ function closePrivacyBanner() {
 
     // Get medal counts per SDO from all_award_results
     $raw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
+        ->where('status', 'approved')
         ->groupBy('sdo','medal')
         ->get()
         ->groupBy('sdo');

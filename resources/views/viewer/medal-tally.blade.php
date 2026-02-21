@@ -24,6 +24,7 @@
                 'medal',
                 \DB::raw('SUM(`count`) as total')
             )
+            ->where('status', 'approved')
             ->groupBy('sdo','medal')
             ->get()
             ->groupBy('sdo');
@@ -95,6 +96,7 @@
                 @foreach($sports as $sport)
                     @php
                         $rows = $individualResults
+                            ->where('status', 'approved')
                             ->where('division', $division)
                             ->where('sport_id', $sport->id);
                     @endphp
