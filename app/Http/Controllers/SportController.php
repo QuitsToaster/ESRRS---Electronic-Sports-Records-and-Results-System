@@ -257,28 +257,33 @@ class SportController extends Controller
     }
 
     public function paraStore(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|unique:sports,name',
-            'type_of_game.*' => 'nullable|string',
-        ]);
+{
+    $request->validate([
+        'name' => 'required|string|unique:sports,name',
+        'category' => 'required|in:Boys,Girls', // ✅ validate category
+        'type_of_game.*' => 'nullable|string',
+    ]);
 
-        $sport = Sport::create([
-            'name'     => $request->name,
-            'division' => 'Paragames',
-        ]);
+    // Create the para sport and save category
+    $sport = Sport::create([
+        'name'     => $request->name,
+        'division' => 'Paragames',
+        'category' => $request->category, // ✅ save category
+    ]);
 
-        if ($request->type_of_game) {
-            foreach ($request->type_of_game as $type) {
-                if ($type) {
-                    $sport->types()->create(['type_name' => $type]);
-                }
+    // Create types if provided
+    if ($request->type_of_game) {
+        foreach ($request->type_of_game as $type) {
+            if ($type) {
+                $sport->types()->create(['type_name' => $type]);
             }
         }
-
-        return redirect()->route('para-sports.index')
-            ->with('success', 'Para Game added successfully.');
     }
+
+    return redirect()->route('para-sports.index')
+        ->with('success', 'Para Game added successfully.');
+}
+
 
     public function paraEdit(Sport $sport)
     {
@@ -286,27 +291,47 @@ class SportController extends Controller
     }
 
     public function paraUpdate(Request $request, Sport $sport)
-    {
-        $request->validate([
-            'name' => 'required|string|unique:sports,name,' . $sport->id,
-            'type_of_game.*' => 'nullable|string',
-        ]);
+{
+    // Validate name and category
+    $request->validate([
+        'name' => 'required|string|unique:sports,name,' . $sport->id,
+        'category' => 'required|in:Boys,Girls', // ✅ validate category
+        'type_of_game.*' => 'nullable|string',
+    ]);
 
-        $sport->update(['name' => $request->name]);
+    // Save old values for audit logging
+    $oldValues = $sport->toArray();
 
-        $sport->types()->delete();
+    // Update name and category
+    $sport->update([
+        'name' => $request->name,
+        'category' => $request->category, // ✅ save updated category
+    ]);
 
-        if ($request->type_of_game) {
-            foreach ($request->type_of_game as $type) {
-                if ($type) {
-                    $sport->types()->create(['type_name' => $type]);
-                }
+    // Delete old types and create new ones
+    $sport->types()->delete();
+    if ($request->type_of_game) {
+        foreach ($request->type_of_game as $type) {
+            if ($type) {
+                $sport->types()->create(['type_name' => $type]);
             }
         }
-
-        return redirect()->route('para-sports.index')
-            ->with('success', 'Para Game updated successfully.');
     }
+
+    // Optional: Audit log for Para Games
+    AuditLog::create([
+        'model_type' => 'Sport',
+        'model_id' => $sport->id,
+        'user_id' => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($sport->toArray()),
+        'action' => 'Updated Para Game: ' . $sport->name,
+    ]);
+
+    return redirect()->route('para-sports.index')
+        ->with('success', 'Para Game updated successfully.');
+}
+
 
     public function paraDestroy(Sport $sport)
     {

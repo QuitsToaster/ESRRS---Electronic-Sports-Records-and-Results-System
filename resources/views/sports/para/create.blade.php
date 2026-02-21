@@ -26,6 +26,18 @@
           class="space-y-6 w-full">
         @csrf
 
+        <!-- Category -->
+        <div>
+            <label class="block text-gray-700 font-semibold mb-2">
+                Category
+            </label>
+            <select name="category" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="">-- Select Category --</option>
+                <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
+                <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
+            </select>
+        </div>
+
         <!-- Para Game Name -->
         <div>
             <label class="block text-gray-700 font-semibold mb-2">

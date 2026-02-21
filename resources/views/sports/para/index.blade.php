@@ -77,6 +77,9 @@
                 <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
                     Type of Game
                 </th>
+                <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
+                    Category
+                </th>
                 <th class="px-6 py-3 text-right text-xs font-semibold uppercase">
                     Actions
                 </th>
@@ -113,6 +116,9 @@
                                 No type added
                             </span>
                         @endif
+                    </td>
+                    <td class="px-6 py-4 font-medium text-gray-800">
+                        {{ $sport->category }}
                     </td>
 
                     <td class="px-6 py-4 text-right whitespace-nowrap">

@@ -54,67 +54,69 @@ class DivisionController extends Controller
     }
 
     private function createDivisionAccounts(Division $division)
-    {
-        $rolesToCreate = [
-            'Tournament Secretary' => 'ts',
-            'Tournament Manager' => 'tm'
-        ];
+{
+    $rolesToCreate = [
+        'Tournament Secretary' => 'ts',
+        'Tournament Manager' => 'tm'
+    ];
 
-        $levels = ['Elementary', 'Secondary', 'Paragames'];
+    $levels = ['Elementary', 'Secondary', 'Paragames'];
 
-        foreach ($levels as $level) {
-            // Get sports for this level
-            $sports = Sport::where('division', $level)->get();
+    foreach ($levels as $level) {
+        // Get sports for this level
+        $sports = Sport::where('division', $level)->get();
 
-            foreach ($sports as $sport) {
-                // Determine categories
-                $categories = strtolower($level) === 'paragames' ? [null] : ['Boys', 'Girls'];
+        foreach ($sports as $sport) {
+            // For Paragames, assign default category same as sport's category if exists
+            $categories = strtolower($level) === 'paragames'
+                ? [$sport->category ?? 'Boys']  // default to sport's category or 'Boys'
+                : ['Boys', 'Girls'];
 
-                foreach ($categories as $category) {
-                    // Skip if category doesn't match sport's category
-                    if ($category && $sport->category && strtolower($category) !== strtolower($sport->category)) {
-                        continue;
-                    }
+            foreach ($categories as $category) {
+                // Skip if category doesn't match sport's category (for Elementary/Secondary)
+                if ($category && $sport->category && strtolower($category) !== strtolower($sport->category)) {
+                    continue;
+                }
 
-                    foreach ($rolesToCreate as $roleName => $roleInitials) {
-                        $role = Role::firstOrCreate(['name' => $roleName]);
+                foreach ($rolesToCreate as $roleName => $roleInitials) {
+                    $role = Role::firstOrCreate(['name' => $roleName]);
 
-                        // Create email
-                        $sdoCode = strtolower(substr(str_replace('SDO - ', '', $division->name), 0, 3));
-                        $email = strtolower(
-                            substr($level, 0, 4) .
-                            ($category ? substr($category, 0, 1) : 'P') .
-                            strtolower(str_replace(' ', '', $sport->name)) .
-                            '.' .
-                            $roleInitials .
-                            '.' . $sdoCode .
-                            '@gmail.com'
-                        );
+                    // Create email
+                    $sdoCode = strtolower(substr(str_replace('SDO - ', '', $division->name), 0, 3));
+                    $email = strtolower(
+                        substr($level, 0, 4) .
+                        ($category ? substr($category, 0, 1) : 'P') .
+                        strtolower(str_replace(' ', '', $sport->name)) .
+                        '.' .
+                        $roleInitials .
+                        '.' . $sdoCode .
+                        '@gmail.com'
+                    );
 
-                        // Display name
-                        $name = $division->name . ' - ' . $level;
-                        if ($category) $name .= ' ' . $category;
-                        $name .= ' ' . $sport->name . ' ' . $roleName;
+                    // Display name
+                    $name = $division->name . ' - ' . $level;
+                    if ($category) $name .= ' ' . $category;
+                    $name .= ' ' . $sport->name . ' ' . $roleName;
 
-                        // ✅ Create user with division_name
-                        User::firstOrCreate(
-                            ['email' => $email],
-                            [
-                                'name' => $name,
-                                'password' => Hash::make('ESRRS@2026'),
-                                'role_id' => $role->id,
-                                'division_name' => $division->name, // store actual division name
-                                'access' => ['results'],
-                                'level_access' => [$level],
-                                'category_access' => $category ? [$category] : [],
-                                'sports_access' => [$sport->id],
-                            ]
-                        );
-                    }
+                    User::firstOrCreate(
+                        ['email' => $email],
+                        [
+                            'name' => $name,
+                            'password' => Hash::make('ESRRS@2026'),
+                            'role_id' => $role->id,
+                            'division_name' => $division->name,
+                            'access' => ['results'],
+                            'level_access' => [$level],
+                            'category_access' => [$category], // ✅ now not empty
+                            'sports_access' => [$sport->id],
+                        ]
+                    );
                 }
             }
         }
     }
+}
+
 
     private function storeLargeImage($image)
     {
