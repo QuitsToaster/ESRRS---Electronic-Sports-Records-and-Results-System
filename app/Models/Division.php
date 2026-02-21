@@ -38,4 +38,18 @@ public function resultsDivisions()
     return $this->hasMany(\App\Models\ResultDivision::class, 'sdo', 'name');
 }
 
+// Results in AllAwardResult table
+    public function allAwardResults()
+    {
+        return $this->hasMany(\App\Models\AllAwardResult::class, 'division', 'name');
+        // 'division' column in all_award_results matches 'name' in divisions table
+    }
+
+    // Results in IndividualAwardResult table
+    public function individualAwardResults()
+    {
+        return $this->hasMany(\App\Models\IndividualAwardResult::class, 'division', 'name');
+        // 'division' column in individual_award_results matches 'name' in divisions table
+    }
+
 }
