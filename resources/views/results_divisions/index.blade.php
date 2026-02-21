@@ -39,58 +39,81 @@ use App\Models\Division;
 use App\Models\AllAwardResult;
 use App\Models\IndividualAwardResult;
 
+// ===========================
 // Get all divisions
+// ===========================
 $allDivisions = Division::orderBy('name')->get();
 
-// ---------------------------
-// Preload all awards for medal tables
-// ---------------------------
-$allAwards = AllAwardResult::all()->groupBy(function($item) {
-    return $item->division . '|' . ($item->category ?? 'none') . '|' . ($item->sdo ?? 'none') . '|' . $item->medal;
-});
+// ===========================
+// Preload ALL APPROVED awards for medal tables
+// ===========================
+$allAwards = AllAwardResult::where('status', 'approved') // ✅ ONLY APPROVED
+    ->get()
+    ->groupBy(function($item) {
+        return $item->division . '|' .
+               ($item->category ?? 'none') . '|' .
+               ($item->sdo ?? 'none') . '|' .
+               $item->medal;
+    });
 
-// Function to get medal count from preloaded data
+// ===========================
+// Function to get medal count
+// ===========================
 function medalCountFromPreloaded($allAwards, $division, $category, $sdo, $medal) {
     $key = $division . '|' . ($category ?? 'none') . '|' . ($sdo ?? 'none') . '|' . $medal;
-    return isset($allAwards[$key]) ? $allAwards[$key]->sum('count') : 0;
+    return isset($allAwards[$key])
+        ? $allAwards[$key]->sum('count')
+        : 0;
 }
 
-// ---------------------------
-// Map Overall Summary (Elementary + Secondary only, Boys & Girls)
-// ---------------------------
+// ===========================
+// MAP OVERALL SUMMARY
+// (Elementary + Secondary, Boys & Girls)
+// ===========================
 $overall = $allDivisions->map(function ($division) use ($allAwards) {
-    $division->total_gold   = medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold')
-                            + medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold')
-                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold')
-                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Gold');
 
-    $division->total_silver = medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Silver')
-                            + medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Silver')
-                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Silver')
-                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Silver');
+    $division->total_gold =
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold') +
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Gold');
 
-    $division->total_bronze = medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Bronze')
-                            + medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Bronze')
-                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze')
-                            + medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze');
+    $division->total_silver =
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Silver') +
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Silver') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Silver') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Silver');
 
-    $division->total_points = ($division->total_gold * 3)
-                            + ($division->total_silver * 2)
-                            + ($division->total_bronze * 1);
+    $division->total_bronze =
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Bronze') +
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Bronze') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze');
+
+    $division->total_points =
+        ($division->total_gold * 3) +
+        ($division->total_silver * 2) +
+        ($division->total_bronze * 1);
 
     return $division;
+
 })->sort(function($a, $b) {
     if ($a->total_gold !== $b->total_gold) return $b->total_gold <=> $a->total_gold;
     if ($a->total_silver !== $b->total_silver) return $b->total_silver <=> $a->total_silver;
     return $b->total_bronze <=> $a->total_bronze;
 })->values();
 
-// ---------------------------
-// Individual Awards
-// ---------------------------
-$individualAwards = IndividualAwardResult::with('athlete','sport','event')->orderBy('event_id')->get();
+// ===========================
+// INDIVIDUAL AWARDS (APPROVED ONLY)
+// ===========================
+$individualAwards = IndividualAwardResult::with('athlete','sport','event')
+    ->where('status', 'approved') // ✅ ONLY APPROVED
+    ->orderBy('event_id')
+    ->get();
+
 $awardsByMedal = $individualAwards->groupBy('medal');
 @endphp
+
 
 {{-- ================= OVERALL SUMMARY WITH LOGO ================= --}}
 <div class="mb-20">
