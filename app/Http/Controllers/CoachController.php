@@ -61,7 +61,7 @@ class CoachController extends Controller
     }
 
     // Generate unique QR code string
-    $data['qr_code'] = 'CEMS-COACH-' . strtoupper(Str::random(8));
+    $data['qr_code'] = 'eSRRS-COACH-' . strtoupper(Str::random(8));
 
     $coach = Coach::create($data);
 

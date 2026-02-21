@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\Auth;
 
 class AthleteController extends Controller
 {
-    public function index(Request $request)
+   public function index(Request $request)
 {
+    $user = auth()->user(); // get logged in user
+
     $search   = $request->input('search');
     $sex      = $request->input('sex');
     $sport    = $request->input('sport');
@@ -42,10 +44,20 @@ class AthleteController extends Controller
         ->when($sex, fn($q) => $q->where('sex', $sex))
         ->when($sport, fn($q) => $q->where('sport_id', $sport))
         ->when($division, fn($q) => $q->where('division', $division))
-        // NEW: Filter by school_division
-        ->when($schoolDivision, fn($q) => $q->whereHas('school', fn($sq) => $sq->where('school_division', $schoolDivision)))
-        ->orderBy('last_name')
-        ->orderBy('first_name');
+        // FILTER by dropdown school_division (raw DB value)
+        ->when($schoolDivision, fn($q) => $q->where('school_division', $schoolDivision));
+
+    // ======================
+    // NEW: Division Official restriction
+    // ======================
+    if ($user->role->name === 'Division Official') {
+        // e.g., "SDO - Batanes Official Account"
+        if (preg_match('/SDO - (.+) Official Account/', $user->name, $matches)) {
+            $officialSdo = trim($matches[1]); // "Batanes"
+            // Match directly to school_division in DB (without "SDO - " prefix)
+            $query->where('school_division', $officialSdo);
+        }
+    }
 
     $athleteCount = $query->count();
     $athletes = $query->paginate(25);
@@ -53,7 +65,7 @@ class AthleteController extends Controller
 
     $sports = Sport::orderBy('name')->get();
 
-    // NEW: Get all unique school_divisions for the filter dropdown
+    // GET all school_divisions for the dropdown filter
     $divisions = \App\Models\School::select('school_division')
                     ->distinct()
                     ->orderBy('school_division')
@@ -61,6 +73,7 @@ class AthleteController extends Controller
 
     return view('athletes.index', compact('athletes', 'sports', 'athleteCount', 'divisions'));
 }
+
 
 
     public function create()
@@ -252,16 +265,31 @@ class AthleteController extends Controller
     }
 
     public function exportIdPdf()
-    {
-        $athletes = Athlete::with(['school', 'sport'])
-            ->orderBy('last_name')
-            ->orderBy('first_name')
-            ->limit(25)
-            ->get();
+{
+    $user = auth()->user();
 
-        $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
-            ->setPaper('letter', 'portrait');
+    $query = Athlete::with(['school', 'sport'])
+        ->orderBy('last_name')
+        ->orderBy('first_name');
 
-        return $pdf->download('athlete-id-cards.pdf');
+    // ======================
+    // Division Official restriction
+    // ======================
+    if ($user->role->name === 'Division Official') {
+        // e.g., "SDO - Batanes Official Account"
+        if (preg_match('/SDO - (.+) Official Account/', $user->name, $matches)) {
+            $officialSdo = trim($matches[1]); // "Batanes"
+            // Match directly to school_division in DB (without "SDO - " prefix)
+            $query->where('school_division', $officialSdo);
+        }
     }
+
+    $athletes = $query->get(); // get all matching athletes
+
+    $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
+        ->setPaper('letter', 'portrait');
+
+    return $pdf->download('athlete-id-cards.pdf');
+}
+
 }

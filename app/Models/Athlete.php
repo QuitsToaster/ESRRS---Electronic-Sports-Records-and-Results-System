@@ -45,7 +45,7 @@ class Athlete extends Model
 {
     static::creating(function ($athlete) {
         if (empty($athlete->qr_code)) {
-            $athlete->qr_code = 'CEMS-' . strtoupper(Str::uuid());
+            $athlete->qr_code = 'eSRRS-' . strtoupper(Str::uuid());
         }
     });
 }
