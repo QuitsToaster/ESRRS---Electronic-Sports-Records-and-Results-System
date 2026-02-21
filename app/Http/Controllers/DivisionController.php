@@ -46,11 +46,42 @@ class DivisionController extends Controller
         // Create division
         $division = Division::create($data);
 
+        // 1️⃣ Create official division account
+        $this->createOfficialDivisionAccount($division);
+
         // Automatically create accounts for this division
         $this->createDivisionAccounts($division);
 
         return redirect()->route('divisions.index')
             ->with('success', 'Division created successfully, and user accounts generated.');
+    }
+
+    /**
+     * Create official division account for the division itself
+     */
+    private function createOfficialDivisionAccount(Division $division)
+    {
+        $role = Role::firstOrCreate(['name' => 'Division Official']);
+
+        // Sanitize division name for email (remove spaces & special characters)
+        $cleanName = preg_replace('/[^a-z0-9]/i', '', str_replace(' ', '', $division->name));
+        $email = "{$cleanName}@gmail.com";
+
+        $name = $division->name . ' Official Account';
+
+        User::firstOrCreate(
+            ['email' => strtolower($email)],
+            [
+                'name' => $name,
+                'password' => Hash::make('ESRRS@2026'),
+                'role_id' => $role->id,
+                'division_name' => $division->name,
+                'access' => ['athletes'],
+                'level_access' => [],
+                'category_access' => [],
+                'sports_access' => [],
+            ]
+        );
     }
 
     private function createDivisionAccounts(Division $division)
