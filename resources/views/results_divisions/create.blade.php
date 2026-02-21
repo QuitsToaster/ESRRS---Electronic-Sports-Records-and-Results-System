@@ -138,9 +138,10 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 <div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
     <h3 class="font-semibold mb-2">Pending Awards Needing Approval</h3>
 
-    {{-- All Awards --}}
+    {{-- ================= ALL AWARDS ================= --}}
     @if($pendingResults->count())
         <h4 class="font-semibold mt-2 mb-1">All Awards</h4>
+
         <table class="w-full border text-sm mb-4">
             <thead class="bg-yellow-200 text-center">
                 <tr>
@@ -149,9 +150,11 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                     <th class="border px-2">SDO</th>
                     <th class="border px-2">Medal</th>
                     <th class="border px-2">Count</th>
+                    <th class="border px-2">Validation File</th>
                     <th class="border px-2">Action</th>
                 </tr>
             </thead>
+
             <tbody>
                 @foreach($pendingResults as $r)
                     <tr class="text-center">
@@ -160,6 +163,33 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                         <td class="border px-2">{{ $r->sdo }}</td>
                         <td class="border px-2">{{ $r->medal }}</td>
                         <td class="border px-2">{{ $r->count }}</td>
+
+                        {{-- ✅ CLICKABLE VALIDATION FILE --}}
+                        <td class="border px-2">
+                            @if($r->validation_file)
+                                @php
+                                    $fileUrl = asset('storage/' . $r->validation_file);
+                                    $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                                @endphp
+
+                                @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
+                                    <a href="{{ $fileUrl }}" target="_blank">
+                                        <img src="{{ $fileUrl }}"
+                                             class="h-12 mx-auto rounded shadow cursor-pointer hover:scale-105 transition"
+                                             alt="Validation Image">
+                                    </a>
+                                @else
+                                    <a href="{{ $fileUrl }}"
+                                       target="_blank"
+                                       class="text-blue-600 underline font-semibold">
+                                        View PDF
+                                    </a>
+                                @endif
+                            @else
+                                <span class="text-gray-400 italic">No file</span>
+                            @endif
+                        </td>
+
                         <td class="border px-2">
                             <button
                                 class="bg-green-500 text-white px-3 py-1 rounded"
@@ -173,9 +203,10 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         </table>
     @endif
 
-    {{-- Individual Awards --}}
+    {{-- ================= INDIVIDUAL AWARDS ================= --}}
     @if($pendingIndividual->count())
         <h4 class="font-semibold mt-2 mb-1">Individual Awards</h4>
+
         <table class="w-full border text-sm">
             <thead class="bg-yellow-200 text-center">
                 <tr>
@@ -184,9 +215,11 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                     <th class="border px-2">SDO</th>
                     <th class="border px-2">Medal</th>
                     <th class="border px-2">Athlete</th>
+                    <th class="border px-2">Validation File</th>
                     <th class="border px-2">Action</th>
                 </tr>
             </thead>
+
             <tbody>
                 @foreach($pendingIndividual as $r)
                     <tr class="text-center">
@@ -198,6 +231,33 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                             @php $ath = $athletes->find($r->athlete_id); @endphp
                             {{ $ath ? $ath->last_name . ', ' . $ath->first_name : '-' }}
                         </td>
+
+                        {{-- ✅ CLICKABLE VALIDATION FILE --}}
+                        <td class="border px-2">
+                            @if($r->validation_file)
+                                @php
+                                    $fileUrl = asset('storage/' . $r->validation_file);
+                                    $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                                @endphp
+
+                                @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
+                                    <a href="{{ $fileUrl }}" target="_blank">
+                                        <img src="{{ $fileUrl }}"
+                                             class="h-12 mx-auto rounded shadow cursor-pointer hover:scale-105 transition"
+                                             alt="Validation Image">
+                                    </a>
+                                @else
+                                    <a href="{{ $fileUrl }}"
+                                       target="_blank"
+                                       class="text-blue-600 underline font-semibold">
+                                        View PDF
+                                    </a>
+                                @endif
+                            @else
+                                <span class="text-gray-400 italic">No file</span>
+                            @endif
+                        </td>
+
                         <td class="border px-2">
                             <button
                                 class="bg-green-500 text-white px-3 py-1 rounded"
@@ -215,6 +275,8 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         <p>No pending awards to approve for your division/event.</p>
     @endif
 </div>
+
+
 
 {{-- ================= APPROVE CONFIRMATION MODAL ================= --}}
 <div
@@ -316,81 +378,85 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                 </table>
             </div>
 
-            {{-- ================= ALL AWARDS FORM ================= --}}
-<form method="POST" action="{{ route('results_all_awards.store') }}" x-data="{ showConfirm: false }">
+          {{-- ================================================= --}}
+{{-- 🏆 ALL AWARDS FORM --}}
+{{-- ================================================= --}}
+<form method="POST"
+      action="{{ route('results_all_awards.store') }}"
+      enctype="multipart/form-data"
+      x-show="awardType==='all'"
+      x-data="{ showConfirm:false }">
 @csrf
 
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 
 @foreach($sports as $sport)
-    <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
+<h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
 
-    <table class="w-full border text-sm mt-2">
-        <thead>
-            <tr class="bg-gray-200 text-center">
-                <th class="border">Event Type</th>
-                @foreach($divisions as $d)
-                    <th class="border bg-yellow-300">G</th>
-                    <th class="border bg-gray-300">S</th>
-                    <th class="border bg-orange-200">B</th>
-                @endforeach
-            </tr>
-        </thead>
+<table class="w-full border text-sm mt-2">
+<thead class="bg-gray-200 text-center">
+<tr>
+    <th class="border">Event Type</th>
+    @foreach($divisions as $d)
+        <th class="border bg-yellow-300">G</th>
+        <th class="border bg-gray-300">S</th>
+        <th class="border bg-orange-200">B</th>
+    @endforeach
+</tr>
+</thead>
 
-        <tbody>
-        @foreach($sport->types as $type)
-            <tr>
-                <td class="border px-2">{{ $type->type_name }}</td>
-
-                @foreach($divisions as $d)
-                    @foreach(['Gold','Silver','Bronze'] as $medal)
-                        <td class="border text-center">
-                            <input
-                                type="number"
-                                min="0"
-                                value="0"
-                                class="w-16 border rounded text-center"
-                                name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]"
-                            >
-                        </td>
-                    @endforeach
-                @endforeach
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
+<tbody>
+@foreach($sport->types as $type)
+<tr>
+<td class="border px-2">{{ $type->type_name }}</td>
+@foreach($divisions as $d)
+@foreach(['Gold','Silver','Bronze'] as $medal)
+<td class="border text-center">
+<input type="number" min="0" value="0"
+    class="w-16 border rounded text-center"
+    name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]">
+</td>
+@endforeach
+@endforeach
+</tr>
+@endforeach
+</tbody>
+</table>
 @endforeach
 
-{{-- ================= BUTTON ================= --}}
 <div class="flex justify-end mt-6">
-    @if($user->role->name === 'Tournament Secretary')
-        {{-- Forward for Validation button --}}
-        <button type="button"
-                class="bg-yellow-500 text-white px-6 py-2 rounded"
-                @click="showConfirm = true">
-            Forward for Validation
-        </button>
+@if($user->role->name === 'Tournament Secretary')
+<button type="button"
+    class="bg-yellow-500 text-white px-6 py-2 rounded"
+    @click="showConfirm=true">
+    Forward for Validation
+</button>
 
-        {{-- Confirmation Modal --}}
-        <div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-white rounded shadow p-6 w-96">
-                <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
-                <p class="mb-6">Are you sure you want to forward all awards for validation? This action cannot be undone.</p>
-                <div class="flex justify-end space-x-3">
-                    <button type="button" class="px-4 py-2 border rounded" @click="showConfirm=false">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded">Yes, Forward</button>
-                </div>
-            </div>
-        </div>
-    @else
-        {{-- Regular Save button for other roles --}}
-        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
-            Save All Awards
-        </button>
-    @endif
+{{-- MODAL --}}
+<div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+<div class="bg-white rounded shadow p-6 w-96">
+<h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
+
+<p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
+
+<input type="file"
+       name="validation_file"
+       accept=".pdf,image/*"
+       class="w-full border rounded mb-4">
+
+<div class="flex justify-end gap-2">
+<button type="button" class="border px-4 py-2 rounded" @click="showConfirm=false">Cancel</button>
+<button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Yes, Forward</button>
 </div>
-
+</div>
+</div>
+@else
+<button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
+Save All Awards
+</button>
+@endif
+</div>
 </form>
 
 
@@ -429,7 +495,20 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         $tabAthletes = $athletes->filter(fn($a) => $a->division == $tab['division'] && ($tab['category'] ? $a->category == $tab['category'] : true));
     @endphp
 
-    {{-- ================= SUMMARY TABLE ================= --}}
+    {{-- ================================================= --}}
+{{-- 🏅 INDIVIDUAL AWARDS FORM --}}
+{{-- ================================================= --}}
+<form method="POST"
+      action="{{ route('results_individual.store') }}"
+      enctype="multipart/form-data"
+      x-show="awardType==='individual'"
+      x-data="{ showConfirm:false }">
+@csrf
+
+<input type="hidden" name="division" value="{{ $tab['division'] }}">
+<input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
+
+{{-- ================= SUMMARY TABLE ================= --}}
     <div class="overflow-x-auto mb-6">
         <h3 class="text-lg font-bold mb-2">Individual Awards Summary</h3>
         <table class="w-full border text-sm">
@@ -469,66 +548,62 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         </table>
     </div>
 
-    {{-- ================= SELECTION FORM ================= --}}
-    @foreach($sports as $sport)
-        <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
-        <table class="w-full border text-sm mt-2">
-            <tbody>
-                @foreach($sport->types as $type)
-                    @php $typeKey = $type->id ?? 0; @endphp
-                    <tr>
-                        <td class="border px-2 font-semibold">{{ $type->type_name }}</td>
-                        @foreach(['Gold','Silver','Bronze'] as $medal)
-                            <td class="border px-1">
-                                <select class="w-full border rounded text-sm"
-                                        x-model="individualResults['{{ $tabName }}']['{{ $sport->id }}']['{{ $typeKey }}']['{{ $medal }}']"
-                                        name="individual_results[{{ $sport->id }}][{{ $typeKey }}][{{ $medal }}]">
-                                    <option value="">-- Select Athlete --</option>
-                                    @foreach($tabAthletes as $athlete)
-                                        <option value="{{ $athlete->id }}"
-                                            {{ (isset($summary[$sport->id][$typeKey][$medal]) && $summary[$sport->id][$typeKey][$medal]->id == $athlete->id) ? 'selected' : '' }}>
-                                            {{ $athlete->last_name }}, {{ $athlete->first_name }}
-                                        </option>
-                                    @endforeach
-                                </select>
-                            </td>
-                        @endforeach
-                    </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endforeach
+@foreach($sports as $sport)
+<h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
+<table class="w-full border text-sm mt-2">
+<tbody>
+@foreach($sport->types as $type)
+<tr>
+<td class="border px-2">{{ $type->type_name }}</td>
+@foreach(['Gold','Silver','Bronze'] as $medal)
+<td class="border px-1">
+<select class="w-full border rounded text-sm"
+    name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]">
+<option value="">-- Select Athlete --</option>
+@foreach($athletes as $a)
+<option value="{{ $a->id }}">{{ $a->last_name }}, {{ $a->first_name }}</option>
+@endforeach
+</select>
+</td>
+@endforeach
+</tr>
+@endforeach
+</tbody>
+</table>
+@endforeach
 
-    {{-- ================= BUTTON ================= --}}
-    <div class="flex justify-end mt-6">
-        @if($user->role->name === 'Tournament Secretary')
-            {{-- Forward for Validation button --}}
-            <button type="button"
-                    class="bg-yellow-500 text-white px-6 py-2 rounded"
-                    @click="showConfirm = true">
-                Forward for Validation
-            </button>
+<div class="flex justify-end mt-6">
+@if($user->role->name === 'Tournament Secretary')
+<button type="button"
+    class="bg-yellow-500 text-white px-6 py-2 rounded"
+    @click="showConfirm=true">
+    Forward for Validation
+</button>
 
-            {{-- Confirmation Modal --}}
-            <div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div class="bg-white rounded shadow p-6 w-96">
-                    <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
-                    <p class="mb-6">Are you sure you want to forward all individual awards for validation? This action cannot be undone.</p>
-                    <div class="flex justify-end space-x-3">
-                        <button type="button" class="px-4 py-2 border rounded" @click="showConfirm=false">Cancel</button>
-                        <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded">Yes, Forward</button>
-                    </div>
-                </div>
-            </div>
-        @else
-            {{-- Regular Save button for other roles --}}
-            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
-                Save Individual Awards
-            </button>
-        @endif
-    </div>
+<div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+<div class="bg-white rounded shadow p-6 w-96">
+<h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
+
+<p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
+
+<input type="file"
+       name="validation_file"
+       accept=".pdf,image/*"
+       class="w-full border rounded mb-4">
+
+<div class="flex justify-end gap-2">
+<button type="button" class="border px-4 py-2 rounded" @click="showConfirm=false">Cancel</button>
+<button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Yes, Forward</button>
+</div>
+</div>
+</div>
+@else
+<button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
+Save Individual Awards
+</button>
+@endif
+</div>
 </form>
-
 
 
         </div>
