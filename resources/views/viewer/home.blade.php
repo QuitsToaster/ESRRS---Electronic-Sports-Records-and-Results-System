@@ -266,7 +266,7 @@ function closePrivacyBanner() {
 </section>
 
 
-         {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
+    {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
 <section
     x-data="{
         activeTab: 'regular',
@@ -275,6 +275,7 @@ function closePrivacyBanner() {
         medals: { gold: [], silver: [], bronze: [] },
 
         switchTab(tab) { this.activeTab = tab },
+
         openModal(div, results) {
             this.division = div;
             this.medals = {
@@ -287,159 +288,281 @@ function closePrivacyBanner() {
     }"
     class="order-1 lg:order-2 flex flex-col justify-start h-full"
 >
-    @php
-    use App\Models\AllAwardResult;
-    use App\Models\Division;
+@php
+use App\Models\AllAwardResult;
+use App\Models\Division;
 
-    // Get all divisions (no type filter)
-    $allDivisions = Division::orderBy('name')->get();
+/*
+|--------------------------------------------------------------------------
+| ALL DIVISIONS (always shown)
+|--------------------------------------------------------------------------
+*/
+$divisions = Division::orderBy('name')->get();
 
-    // Get medal counts per SDO from all_award_results
-    $raw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
-        ->where('status', 'approved')
-        ->groupBy('sdo','medal')
-        ->get()
-        ->groupBy('sdo');
+/*
+|--------------------------------------------------------------------------
+| REGULAR MEDAL TALLY (Elementary + Secondary)
+|--------------------------------------------------------------------------
+*/
+$regularRaw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
+    ->where('status', 'approved')
+    ->whereIn('division', ['Elementary', 'Secondary'])
+    ->groupBy('sdo','medal')
+    ->get()
+    ->groupBy('sdo');
 
-    // Merge counts into all divisions
-    $medalTally = $allDivisions->map(function($division) use ($raw) {
-        $rows = $raw->get($division->name, collect());
+$medalTallyRegular = $divisions->map(function($division) use ($regularRaw) {
+    $rows = $regularRaw->get($division->name, collect());
 
-        $gold   = $rows->where('medal','Gold')->sum('total');
-        $silver = $rows->where('medal','Silver')->sum('total');
-        $bronze = $rows->where('medal','Bronze')->sum('total');
+    $gold   = $rows->where('medal','Gold')->sum('total');
+    $silver = $rows->where('medal','Silver')->sum('total');
+    $bronze = $rows->where('medal','Bronze')->sum('total');
 
-        return (object)[
-            'name'   => $division->name,
-            'logo'   => $division->logo,
-            'gold'   => $gold,
-            'silver' => $silver,
-            'bronze' => $bronze,
-            'total'  => $gold + $silver + $bronze,
-            'results'=> AllAwardResult::with(['sport','event'])
-                            ->where('sdo',$division->name)
-                            ->get(),
-        ];
-    });
+    return (object)[
+        'name'   => $division->name,
+        'logo'   => $division->logo,
+        'gold'   => $gold,
+        'silver' => $silver,
+        'bronze' => $bronze,
+        'total'  => $gold + $silver + $bronze,
+        'results'=> AllAwardResult::with(['sport','event'])
+                        ->where('status','approved')
+                        ->whereIn('division',['Elementary','Secondary'])
+                        ->where('sdo',$division->name)
+                        ->get(),
+    ];
+});
 
-    // Sort by Gold → Silver → Bronze
-    $medalTally = $medalTally->sort(function($a,$b){
-        if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
-        if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
-        return $b->bronze <=> $a->bronze;
-    })->values();
+/*
+|--------------------------------------------------------------------------
+| PARA MEDAL TALLY (Paragames)
+|--------------------------------------------------------------------------
+*/
+$paraRaw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
+    ->where('status', 'approved')
+    ->where('division', 'Paragames')
+    ->groupBy('sdo','medal')
+    ->get()
+    ->groupBy('sdo');
 
-    // If you want Para Games separately, you can filter by name or another column you actually have
-    // Example: $medalTallyPara = $medalTally->filter(fn($d)=> str_contains($d->name,'Para'))->values();
+$medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
+    $rows = $paraRaw->get($division->name, collect());
+
+    $gold   = $rows->where('medal','Gold')->sum('total');
+    $silver = $rows->where('medal','Silver')->sum('total');
+    $bronze = $rows->where('medal','Bronze')->sum('total');
+
+    return (object)[
+        'name'   => $division->name,
+        'logo'   => $division->logo,
+        'gold'   => $gold,
+        'silver' => $silver,
+        'bronze' => $bronze,
+        'total'  => $gold + $silver + $bronze,
+        'results'=> AllAwardResult::with(['sport','event'])
+                        ->where('status','approved')
+                        ->where('division','Paragames')
+                        ->where('sdo',$division->name)
+                        ->get(),
+    ];
+});
+
+/*
+|--------------------------------------------------------------------------
+| SORTING (Gold → Silver → Bronze)
+|--------------------------------------------------------------------------
+*/
+$sortFn = fn($a,$b) =>
+    $b->gold <=> $a->gold
+    ?: $b->silver <=> $a->silver
+    ?: $b->bronze <=> $a->bronze;
+
+$medalTallyRegular = $medalTallyRegular->sort($sortFn)->values();
+$medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 @endphp
 
-
-    <div class="relative w-full h-full">
-        {{-- Medal Tally Background --}}
-        <div class="relative bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 overflow-hidden shadow-lg h-full">
-            <div class="absolute inset-0">
-                <img src="{{ asset('storage/medalbg.jpg') }}" class="w-full h-full object-cover brightness-75 blur-sm">
-                <div class="absolute inset-0 bg-black/30"></div>
-            </div>
-
-            <div class="relative px-6 py-6 max-h-[600px] overflow-y-auto overflow-x-hidden">
-
-                {{-- Tabs --}}
-                <div class="flex gap-4 mb-6 text-white font-semibold">
-                    <button
-                        :class="{'bg-black/40': activeTab==='regular','bg-black/20': activeTab!=='regular'}"
-                        class="px-4 py-2 rounded"
-                        @click="switchTab('regular')">Regular</button>
-                    <button
-                        :class="{'bg-black/40': activeTab==='para','bg-black/20': activeTab!=='para'}"
-                        class="px-4 py-2 rounded"
-                        @click="switchTab('para')">Para Games</button>
-                </div>
-
-                {{-- Medal Rows --}}
-                <div class="space-y-4 md:space-y-6">
-
-                    {{-- Regular Medal Tally --}}
-                    <template x-if="activeTab === 'regular'">
-                        <div>
-                            @foreach($medalTally as $index => $division)
-                                @include('viewer.partials.medal-row', ['division' => $division, 'index' => $index])
-                            @endforeach
-                        </div>
-                    </template>
-
-                    {{-- Para Medal Tally --}}
-                    <template x-if="activeTab === 'para'">
-                        <div>
-                            @foreach($medalTallyPara as $index => $division)
-                                @include('viewer.partials.medal-row', ['division' => $division, 'index' => $index])
-                            @endforeach
-                        </div>
-                    </template>
-
-                </div>
-            </div>
+<div class="relative w-full h-full">
+    <div class="relative bg-gradient-to-r from-yellow-300 via-yellow-400 to-amber-500 overflow-hidden shadow-lg h-full">
+        <div class="absolute inset-0">
+            <img src="{{ asset('storage/medalbg.jpg') }}" class="w-full h-full object-cover brightness-75 blur-sm">
+            <div class="absolute inset-0 bg-black/30"></div>
         </div>
-    </div>
 
-    {{-- ================= MODAL ================= --}}
-    <div
-        x-show="open"
-        x-transition
-        @keydown.escape.window="open = false"
-        class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+        <div class="relative px-6 py-6 max-h-[600px] overflow-y-auto overflow-x-hidden">
+
+            {{-- Tabs --}}
+<div class="flex gap-4 mb-6 text-white font-semibold">
+    <button
+        @click="switchTab('regular')"
+        class="px-5 py-2 rounded-lg transition-all duration-200 border"
+        :class="activeTab === 'regular'
+            ? 'bg-black/60 border-white shadow-lg scale-105'
+            : 'bg-black/20 border-transparent hover:bg-black/30'"
     >
-        <div @click.away="open = false"
-             class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-200">
-             {{-- Header --}}
-             <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
-                <h3 class="text-2xl font-semibold text-gray-800" x-text="division?.name + ' — Medal Details'"></h3>
-                <button @click="open = false" class="text-gray-400 hover:text-gray-700 text-2xl">&times;</button>
-             </div>
+        Regular
+        <div
+            x-show="activeTab === 'regular'"
+            x-transition
+            class="h-1 mt-1 bg-yellow-400 rounded-full"
+        ></div>
+    </button>
 
-             {{-- Medal Sections --}}
-             <template x-for="(list, type) in medals" :key="type">
-                <div class="mb-6">
-                    <h4 class="text-lg font-semibold mb-3 flex items-center gap-2"
-                        :class="{
-                            'text-yellow-600': type === 'gold',
-                            'text-gray-600': type === 'silver',
-                            'text-orange-500': type === 'bronze'
-                        }">
-                        <span x-text="type.toUpperCase()"></span>
-                        <span class="text-sm text-gray-400" x-text="list.length + ' medals'"></span>
-                    </h4>
+    <button
+        @click="switchTab('para')"
+        class="px-5 py-2 rounded-lg transition-all duration-200 border"
+        :class="activeTab === 'para'
+            ? 'bg-black/60 border-white shadow-lg scale-105'
+            : 'bg-black/20 border-transparent hover:bg-black/30'"
+    >
+        Para Games
+        <div
+            x-show="activeTab === 'para'"
+            x-transition
+            class="h-1 mt-1 bg-yellow-400 rounded-full"
+        ></div>
+    </button>
+</div>
 
-                    <div class="space-y-2">
-                        <template x-for="m in list" :key="m.id">
-                            <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
-                                <div class="flex justify-between items-center">
-                                    <strong class="text-gray-800" x-text="m.event?.name ?? 'Event'"></strong>
-                                    <span class="text-gray-500 text-sm font-bold" x-text="m.sport?.name ?? 'Sport'"></span>
-                                </div>
-                                <div class="flex flex-wrap text-xs text-gray-500 gap-3 mt-1">
-                                    <span>Level: <strong x-text="m.event?.age_group ?? 'N/A'"></strong></span>
-                                    <span>Category: <strong x-text="m.event?.category ?? 'N/A'"></strong></span>
-                                    <span>Schedule: <strong x-text="m.event?.start_date ? new Date(m.event.start_date).toLocaleDateString('en-US',{month:'short',day:'2-digit',year:'numeric'}) : 'N/A'"></strong></span>
-                                    <span>
-    Award Date: 
-    <strong x-text="m.created_at 
-        ? new Date(m.created_at).toLocaleDateString('en-US', {month:'short', day:'2-digit', year:'numeric'}) 
-        : 'N/A'">
-    </strong>
-</span>
 
-                                </div>
+            {{-- Medal Rows --}}
+            <div class="space-y-4 md:space-y-6">
+
+                {{-- Regular --}}
+                <template x-if="activeTab === 'regular'">
+                    <div>
+                        @foreach($medalTallyRegular as $index => $division)
+                            <div @click="openModal(@js($division), @js($division->results))">
+                                @include('viewer.partials.medal-row', compact('division','index'))
                             </div>
-                        </template>
-
-                        <p x-show="list.length === 0" class="text-gray-400 italic text-sm">No medals</p>
+                        @endforeach
                     </div>
-                </div>
-             </template>
+                </template>
+
+                {{-- Para --}}
+                <template x-if="activeTab === 'para'">
+                    <div>
+                        @foreach($medalTallyPara as $index => $division)
+                            <div @click="openModal(@js($division), @js($division->results))">
+                                @include('viewer.partials.medal-row', compact('division','index'))
+                            </div>
+                        @endforeach
+                    </div>
+                </template>
+
+            </div>
         </div>
     </div>
+</div>
+
+{{-- ================= MODAL ================= --}}
+<div
+    x-show="open"
+    x-transition
+    @keydown.escape.window="open = false"
+    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+>
+    <div
+        @click.away="open = false"
+        class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-200"
+    >
+        {{-- Header --}}
+        <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
+            <h3
+                class="text-2xl font-semibold text-gray-800"
+                x-text="division?.name + ' — Medal Details'"
+            ></h3>
+            <button
+                @click="open = false"
+                class="text-gray-400 hover:text-gray-700 text-2xl"
+            >
+                &times;
+            </button>
+        </div>
+
+        {{-- Medal Sections --}}
+        <template x-for="(list, type) in medals" :key="type">
+            <div class="mb-6">
+                <h4
+                    class="text-lg font-semibold mb-3 flex items-center gap-2"
+                    :class="{
+                        'text-yellow-600': type === 'gold',
+                        'text-gray-600': type === 'silver',
+                        'text-orange-500': type === 'bronze'
+                    }"
+                >
+                    <span x-text="type.toUpperCase()"></span>
+                    <span
+                        class="text-sm text-gray-400"
+                        x-text="list.length + ' medals'"
+                    ></span>
+                </h4>
+
+                <div class="space-y-2">
+                    <template x-for="m in list" :key="m.id">
+                        <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
+                            <div class="flex justify-between items-center">
+                                <strong
+                                    class="text-gray-800"
+                                    x-text="m.event?.name ?? 'Event'"
+                                ></strong>
+                                <span
+                                    class="text-gray-500 text-sm font-bold"
+                                    x-text="m.sport?.name ?? 'Sport'"
+                                ></span>
+                            </div>
+
+                            <div class="flex flex-wrap text-xs text-gray-500 gap-3 mt-1">
+                                <span>
+                                    Level:
+                                    <strong x-text="m.event?.age_group ?? 'N/A'"></strong>
+                                </span>
+
+                                <span>
+                                    Category:
+                                    <strong x-text="m.event?.category ?? 'N/A'"></strong>
+                                </span>
+
+                                <span>
+                                    Schedule:
+                                    <strong
+                                        x-text="m.event?.start_date
+                                            ? new Date(m.event.start_date).toLocaleDateString(
+                                                'en-US',
+                                                { month: 'short', day: '2-digit', year: 'numeric' }
+                                            )
+                                            : 'N/A'"
+                                    ></strong>
+                                </span>
+
+                                <span>
+                                    Award Date:
+                                    <strong
+                                        x-text="m.created_at
+                                            ? new Date(m.created_at).toLocaleDateString(
+                                                'en-US',
+                                                { month: 'short', day: '2-digit', year: 'numeric' }
+                                            )
+                                            : 'N/A'"
+                                    ></strong>
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p
+                        x-show="list.length === 0"
+                        class="text-gray-400 italic text-sm"
+                    >
+                        No medals
+                    </p>
+                </div>
+            </div>
+        </template>
+    </div>
+</div>
+
 </section>
+
 
 
 

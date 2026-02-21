@@ -165,53 +165,85 @@
 
 
 @php
-    use App\Models\AllAwardResult;
-    use App\Models\Division;
+use App\Models\AllAwardResult;
+use App\Models\Division;
 
-    // 1️⃣ Fetch all divisions (SDOs)
-    $allDivisions = Division::orderBy('name')->get();
+/* =========================================================
+ | REGULAR MEDAL TALLY (Elementary + Secondary)
+ ========================================================= */
+$regularRaw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
+    ->where('status','approved')
+    ->whereIn('division',['Elementary','Secondary'])
+    ->groupBy('sdo','medal')
+    ->get()
+    ->groupBy('sdo');
 
-    // 2️⃣ Fetch medal counts grouped by division and medal
-    $raw = AllAwardResult::select('sdo', 'medal', \DB::raw('SUM(`count`) as total'))
-            ->where('status', 'approved')
-            ->groupBy('sdo','medal')
-            ->get()
-            ->groupBy('sdo');
+$medalTallyRegular = Division::orderBy('name')->get()->map(function($division) use ($regularRaw) {
+    $rows = $regularRaw->get($division->name, collect());
 
-    // 3️⃣ Merge counts into divisions
-    $medalTally = $allDivisions->map(function($division) use ($raw) {
-        $rows = $raw->get($division->name, collect());
+    $gold   = $rows->where('medal','Gold')->sum('total');
+    $silver = $rows->where('medal','Silver')->sum('total');
+    $bronze = $rows->where('medal','Bronze')->sum('total');
 
-        $gold   = $rows->where('medal','Gold')->sum('total');
-        $silver = $rows->where('medal','Silver')->sum('total');
-        $bronze = $rows->where('medal','Bronze')->sum('total');
+    return (object)[
+        'name'   => $division->name,
+        'logo'   => $division->logo,
+        'gold'   => $gold,
+        'silver' => $silver,
+        'bronze' => $bronze,
+        'total'  => $gold + $silver + $bronze,
+        'results'=> AllAwardResult::with(['sport','event'])
+                        ->whereIn('division',['Elementary','Secondary'])
+                        ->where('sdo',$division->name)
+                        ->get(),
+    ];
+})->sort(function($a,$b){
+    if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
+    if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
+    return $b->bronze <=> $a->bronze;
+})->values();
 
-        return (object)[
-            'name'   => $division->name,
-            'logo'   => $division->logo,
-            'gold'   => $gold,
-            'silver' => $silver,
-            'bronze' => $bronze,
-            'total'  => $gold + $silver + $bronze,
-            'results'=> AllAwardResult::with(['sport','event'])
-                            ->where('sdo',$division->name)
-                            ->get(),
-        ];
-    });
+/* =========================================================
+ | PARA GAMES MEDAL TALLY
+ ========================================================= */
+$paraRaw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
+    ->where('status','approved')
+    ->where('division','Paragames')
+    ->groupBy('sdo','medal')
+    ->get()
+    ->groupBy('sdo');
 
-    // 4️⃣ Sort by Gold → Silver → Bronze
-    $medalTally = $medalTally->sort(function($a,$b){
-        if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
-        if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
-        return $b->bronze <=> $a->bronze;
-    })->values();
+$medalTallyPara = Division::orderBy('name')->get()->map(function($division) use ($paraRaw) {
+    $rows = $paraRaw->get($division->name, collect());
+
+    $gold   = $rows->where('medal','Gold')->sum('total');
+    $silver = $rows->where('medal','Silver')->sum('total');
+    $bronze = $rows->where('medal','Bronze')->sum('total');
+
+    return (object)[
+        'name'   => $division->name,
+        'logo'   => $division->logo,
+        'gold'   => $gold,
+        'silver' => $silver,
+        'bronze' => $bronze,
+        'total'  => $gold + $silver + $bronze,
+        'results'=> AllAwardResult::with(['sport','event'])
+                        ->where('division','Paragames')
+                        ->where('sdo',$division->name)
+                        ->get(),
+    ];
+})->sort(function($a,$b){
+    if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
+    if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
+    return $b->bronze <=> $a->bronze;
+})->values();
 @endphp
 
-{{-- Medal Tally --}}
+{{-- ================= REGULAR MEDAL TALLY ================= --}}
 <div class="mt-6">
-    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Medal Tally</h2>
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Medal Tally (Regular)</h2>
 
-    @if($medalTally->isEmpty())
+    @if($medalTallyRegular->isEmpty())
         <div class="text-gray-500 text-center py-6">No medal data available.</div>
     @else
         <div class="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
@@ -227,7 +259,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($medalTally as $index => $division)
+                    @foreach($medalTallyRegular as $index => $division)
                         <tr class="hover:bg-gray-50 transition">
                             {{-- Rank --}}
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
@@ -265,6 +297,66 @@
         </div>
     @endif
 </div>
+
+{{-- ================= PARAGAMES MEDAL TALLY ================= --}}
+<div class="mt-12">
+    <h2 class="text-2xl font-semibold text-gray-800 mb-4">Paragames Medal Tally</h2>
+
+    @if($medalTallyPara->isEmpty())
+        <div class="text-gray-500 text-center py-6">No medal data available.</div>
+    @else
+        <div class="overflow-x-auto rounded-lg shadow-lg border border-gray-200">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Gold</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Silver</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Bronze</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($medalTallyPara as $index => $division)
+                        <tr class="hover:bg-gray-50 transition">
+                            {{-- Rank --}}
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+                                {{ $index + 1 }}
+                            </td>
+
+                            {{-- Division --}}
+                            <td class="px-6 py-4 flex items-center space-x-3">
+                                @if($division->logo)
+                                    <img src="{{ asset('storage/' . $division->logo) }}" alt="{{ $division->name }} Logo"
+                                         class="w-10 h-10 object-cover rounded-full border">
+                                @else
+                                    <div class="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-400 font-bold">
+                                        {{ strtoupper(substr($division->name, 0, 2)) }}
+                                    </div>
+                                @endif
+                                <span class="text-sm font-semibold text-gray-800">{{ $division->name }}</span>
+                            </td>
+
+                            {{-- Gold --}}
+                            <td class="px-6 py-4 text-center text-yellow-500 font-bold">{{ $division->gold }}</td>
+
+                            {{-- Silver --}}
+                            <td class="px-6 py-4 text-center text-gray-400 font-bold">{{ $division->silver }}</td>
+
+                            {{-- Bronze --}}
+                            <td class="px-6 py-4 text-center text-orange-500 font-bold">{{ $division->bronze }}</td>
+
+                            {{-- Total --}}
+                            <td class="px-6 py-4 text-center text-gray-700 font-bold">{{ $division->total }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    @endif
+</div>
+
 
 
 

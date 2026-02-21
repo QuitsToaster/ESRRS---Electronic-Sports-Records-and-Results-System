@@ -4,7 +4,8 @@
 
 @section('content')
 <section class="relative py-10 min-h-screen -mt-16">
-    {{-- Background --}}
+
+    {{-- ================= BACKGROUND ================= --}}
     <div class="absolute inset-0">
         <img src="{{ asset('storage/medalbg.jpg') }}"
              class="w-full h-full object-cover brightness-75 blur-sm">
@@ -15,23 +16,22 @@
         use App\Models\AllAwardResult;
         use App\Models\Division;
 
-        // 1️⃣ Get all SDOS / divisions
-        $allDivisions = Division::orderBy('name')->get();
-
-        // 2️⃣ Get medal counts per SDO from all_award_results
-        $raw = AllAwardResult::select(
+        /* =========================================================
+         | REGULAR MEDAL TALLY (Elementary + Secondary)
+         ========================================================= */
+        $regularRaw = AllAwardResult::select(
                 'sdo',
                 'medal',
                 \DB::raw('SUM(`count`) as total')
             )
-            ->where('status', 'approved')
+            ->where('status','approved')
+            ->whereIn('division',['Elementary','Secondary'])
             ->groupBy('sdo','medal')
             ->get()
             ->groupBy('sdo');
 
-        // 3️⃣ Merge counts into all divisions
-        $medalTally = $allDivisions->map(function($division) use ($raw) {
-            $rows = $raw->get($division->name, collect());
+        $medalTallyRegular = Division::orderBy('name')->get()->map(function($division) use ($regularRaw) {
+            $rows = $regularRaw->get($division->name, collect());
 
             $gold   = $rows->where('medal','Gold')->sum('total');
             $silver = $rows->where('medal','Silver')->sum('total');
@@ -45,13 +45,52 @@
                 'bronze' => $bronze,
                 'total'  => $gold + $silver + $bronze,
                 'results'=> AllAwardResult::with(['sport','event'])
+                                ->where('status','approved')
+                                ->whereIn('division',['Elementary','Secondary'])
                                 ->where('sdo',$division->name)
                                 ->get(),
             ];
-        });
+        })->sort(function($a,$b){
+            if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
+            if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
+            return $b->bronze <=> $a->bronze;
+        })->values();
 
-        // 4️⃣ Sort by Gold → Silver → Bronze
-        $medalTally = $medalTally->sort(function($a,$b){
+        /* =========================================================
+         | PARA GAMES MEDAL TALLY
+         ========================================================= */
+        $paraRaw = AllAwardResult::select(
+                'sdo',
+                'medal',
+                \DB::raw('SUM(`count`) as total')
+            )
+            ->where('status','approved')
+            ->where('division','Paragames')
+            ->groupBy('sdo','medal')
+            ->get()
+            ->groupBy('sdo');
+
+        $medalTallyPara = Division::orderBy('name')->get()->map(function($division) use ($paraRaw) {
+            $rows = $paraRaw->get($division->name, collect());
+
+            $gold   = $rows->where('medal','Gold')->sum('total');
+            $silver = $rows->where('medal','Silver')->sum('total');
+            $bronze = $rows->where('medal','Bronze')->sum('total');
+
+            return (object)[
+                'name'   => $division->name,
+                'logo'   => $division->logo,
+                'gold'   => $gold,
+                'silver' => $silver,
+                'bronze' => $bronze,
+                'total'  => $gold + $silver + $bronze,
+                'results'=> AllAwardResult::with(['sport','event'])
+                                ->where('status','approved')
+                                ->where('division','Paragames')
+                                ->where('sdo',$division->name)
+                                ->get(),
+            ];
+        })->sort(function($a,$b){
             if($a->gold !== $b->gold) return $b->gold <=> $a->gold;
             if($a->silver !== $b->silver) return $b->silver <=> $a->silver;
             return $b->bronze <=> $a->bronze;
@@ -87,7 +126,7 @@
 
         <div class="mt-20">
             <h2 class="text-center text-6xl font-extrabold mb-10 text-yellow-400">
-                All Medals Awarded
+                Individual Awards
             </h2>
 
             @foreach(['Elementary','Secondary','Paragames'] as $division)
@@ -140,12 +179,13 @@
             @endforeach
         </div>
 
-
-        {{-- ================= MEDAL TALLY ================= --}}
+        {{-- =========================================================
+         | REGULAR MEDAL TALLY HEADER
+         ========================================================= --}}
         <div class="hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white
                     bg-black/20 backdrop-blur-md px-6 py-3 rounded-xl">
             <div></div>
-            <h2 class="text-3xl font-bold">Medal Tally</h2>
+            <h2 class="text-3xl font-bold">Medal Tally (Regular)</h2>
             <div class="grid grid-cols-3 text-center font-semibold text-lg">
                 <span class="text-yellow-400">Gold</span>
                 <span class="text-gray-300">Silver</span>
@@ -154,7 +194,7 @@
             <div class="text-center font-bold text-4xl text-red-600">Total</div>
         </div>
 
-        @forelse($medalTally as $index => $division)
+        @foreach($medalTallyRegular as $index => $division)
             <div
                 @click="openModal({ name: '{{ $division->name }}' }, @json($division->results))"
                 class="hidden md:grid grid-cols-[40px_1fr_420px_96px]
@@ -163,14 +203,13 @@
 
                 <div class="text-white font-bold text-lg text-center">{{ $index + 1 }}</div>
 
-                {{-- Division Logo + Name --}}
                 <div class="flex items-center gap-4">
                     @if($division->logo)
                         <img src="{{ asset('storage/' . $division->logo) }}"
                              class="w-12 h-12 object-cover rounded-full border border-white/30">
                     @else
-                        <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center text-gray-600 font-bold">
-                            {{ strtoupper(substr($division->name ?? 'NA',0,2)) }}
+                        <div class="w-12 h-12 rounded-full bg-gray-300 flex items-center justify-center font-bold">
+                            {{ strtoupper(substr($division->name,0,2)) }}
                         </div>
                     @endif
                     <span class="text-white font-semibold text-lg">{{ $division->name }}</span>
@@ -186,37 +225,106 @@
                     {{ $division->total }}
                 </div>
             </div>
-        @empty
-            <p class="text-center text-gray-300">No medal data available.</p>
-        @endforelse
+        @endforeach
+
+       {{-- =========================================================
+ | PARA GAMES MEDAL TALLY
+ ========================================================= --}}
+<div class="mt-20 hidden md:grid grid-cols-[40px_1fr_420px_96px] items-center mb-6 text-white
+            bg-black/30 backdrop-blur-md px-6 py-3 rounded-xl">
+    <div></div>
+    <h2 class="text-3xl font-bold">Paragames Medal Tally</h2>
+    <div class="grid grid-cols-3 text-center font-semibold text-lg">
+        <span class="text-yellow-400">Gold</span>
+        <span class="text-gray-300">Silver</span>
+        <span class="text-orange-400">Bronze</span>
+    </div>
+    <div class="text-center font-bold text-4xl text-red-600">Total</div>
+</div>
+
+@foreach($medalTallyPara as $index => $division)
+    <div
+        @click="openModal({ name: '{{ $division->name }}' }, @json($division->results))"
+        class="hidden md:grid grid-cols-[40px_1fr_420px_96px]
+               items-center p-6 bg-white/10 backdrop-blur-md
+               rounded-xl shadow-lg cursor-pointer mb-4">
+
+        {{-- Rank --}}
+        <div class="text-white font-bold text-lg text-center">
+            {{ $index + 1 }}
+        </div>
+
+        {{-- Division Logo + Name --}}
+        <div class="flex items-center gap-4">
+            @if($division->logo)
+                <img
+                    src="{{ asset('storage/' . $division->logo) }}"
+                    class="w-12 h-12 object-cover rounded-full border border-white/30"
+                    alt="{{ $division->name }}"
+                >
+            @else
+                <div class="w-12 h-12 rounded-full bg-gray-300
+                            flex items-center justify-center
+                            text-gray-700 font-bold">
+                    {{ strtoupper(substr($division->name ?? 'NA', 0, 2)) }}
+                </div>
+            @endif
+
+            <span class="text-white font-semibold text-lg">
+                {{ $division->name }}
+            </span>
+        </div>
+
+        {{-- Medal Counts --}}
+        <div class="grid grid-cols-3 text-center font-extrabold text-4xl">
+            <span class="text-yellow-400">{{ $division->gold }}</span>
+            <span class="text-gray-300">{{ $division->silver }}</span>
+            <span class="text-orange-400">{{ $division->bronze }}</span>
+        </div>
+
+        {{-- Total --}}
+        <div class="text-center text-red-700 font-extrabold text-6xl">
+            {{ $division->total }}
+        </div>
+    </div>
+@endforeach
+
 
         {{-- ================= MODAL ================= --}}
-        <div x-show="open" class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center px-4">
-            <div @click.away="open=false"
-                 class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full p-6 overflow-y-auto">
+<div
+    x-cloak
+    x-show="open"
+    x-transition.opacity
+    @keydown.escape.window="open=false"
+    class="fixed inset-0 bg-black/70 z-[9999] flex items-center justify-center px-4">
 
-                <div class="flex justify-between mb-4">
-                    <h3 class="text-2xl font-bold"
-                        x-text="division?.name + ' — Medal Details'"></h3>
-                    <button @click="open=false" class="text-3xl">&times;</button>
-                </div>
+    <div
+        @click.stop
+        class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6">
 
-                <template x-for="(list,type) in medals" :key="type">
-                    <div class="mb-6">
-                        <h4 class="text-xl font-bold mb-2" x-text="type.toUpperCase()"></h4>
+        <div class="flex justify-between items-center mb-4 border-b pb-2">
+            <h3 class="text-2xl font-bold"
+                x-text="division?.name + ' — Medal Details'"></h3>
+            <button @click="open=false" class="text-3xl">&times;</button>
+        </div>
 
-                        <template x-for="m in list" :key="m.id">
-                            <div class="p-3 bg-gray-100 rounded-lg text-sm">
-                                <strong x-text="m.event?.name"></strong>
-                                — <span x-text="m.sport?.name"></span>
-                            </div>
-                        </template>
+        <template x-for="(list,type) in medals" :key="type">
+            <div class="mb-6">
+                <h4 class="text-xl font-bold mb-2" x-text="type.toUpperCase()"></h4>
 
-                        <p x-show="list.length === 0" class="italic text-gray-400">No medals</p>
+                <template x-for="m in list" :key="m.id">
+                    <div class="p-3 bg-gray-100 rounded-lg text-sm mb-2">
+                        <strong x-text="m.event?.name ?? 'Event'"></strong>
+                        — <span x-text="m.sport?.name ?? 'Sport'"></span>
                     </div>
                 </template>
+
+                <p x-show="list.length === 0" class="italic text-gray-400">No medals</p>
             </div>
-        </div>
+        </template>
+    </div>
+</div>
+
     </div>
 </section>
 @endsection
