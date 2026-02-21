@@ -6,9 +6,12 @@ use Illuminate\Http\Request;
 use App\Models\Sport;
 use App\Models\AuditLog;
 use App\Models\AllAwardResult;
-use Illuminate\Validation\Rule;
 use App\Models\IndividualAwardResult;
+use App\Models\User;
+use App\Models\Role;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class SportController extends Controller
 {
@@ -38,7 +41,7 @@ class SportController extends Controller
 
 
 
-    public function store(Request $request)
+   public function store(Request $request)
 {
     $request->validate([
         'name' => [
@@ -53,6 +56,7 @@ class SportController extends Controller
         'type_of_game.*' => 'nullable|string',
     ]);
 
+    // Create the sport
     $sport = Sport::create([
         'name'     => $request->name,
         'division' => $request->level,
@@ -60,6 +64,7 @@ class SportController extends Controller
         'category' => $request->category,
     ]);
 
+    // Create sport types
     if ($request->type_of_game) {
         foreach ($request->type_of_game as $type) {
             if ($type) {
@@ -68,6 +73,10 @@ class SportController extends Controller
         }
     }
 
+    // Create tournament accounts for this sport
+    $this->createSportAccounts($sport);  // <-- Add this line
+
+    // Log in audit
     AuditLog::create([
         'model_type' => 'Sport',
         'model_id'   => $sport->id,
@@ -80,6 +89,72 @@ class SportController extends Controller
     return redirect()->route('sports.index')
         ->with('success', 'Sport added successfully!');
 }
+
+
+public function create()
+{
+    return view('sports.create'); // make sure this view exists
+}
+
+/**
+     * Create tournament accounts automatically for the new sport
+     */
+   private function createSportAccounts(Sport $sport)
+{
+    $rolesToCreate = [
+        'Tournament Secretary' => 'ts',
+        'Tournament Manager' => 'tm',
+    ];
+
+    $divisions = \App\Models\Division::all();
+
+    $levels = [$sport->division]; // use division column as level
+    $categories = ['Boys', 'Girls'];
+
+    foreach ($divisions as $division) {
+        foreach ($levels as $level) {
+            foreach ($categories as $category) {
+                if (strtolower($category) !== strtolower($sport->category)) {
+                    continue;
+                }
+
+                foreach ($rolesToCreate as $roleName => $roleInitials) {
+                    $role = Role::firstOrCreate(['name' => $roleName]);
+
+                    // Email with level + category
+                    $sdoCode = strtolower(substr(str_replace('SDO - ', '', $division->name), 0, 3));
+                    $email = strtolower(
+                        substr($level, 0, 4) .
+                        substr($category, 0, 1) .
+                        strtolower(str_replace(' ', '', $sport->name)) .
+                        '.' . $roleInitials .
+                        '.' . $sdoCode .
+                        '@gmail.com'
+                    );
+
+                    $name = $division->name . ' - ' . $level . ' ' . $category . ' ' . strtoupper($sport->name) . ' ' . $roleName;
+
+                    User::firstOrCreate(
+                        ['email' => $email],
+                        [
+                            'name' => $name,
+                            'password' => Hash::make('ESRRS@2026'),
+                            'role_id' => $role->id,
+                            'division_name' => $division->name,
+                            'access' => ['results'],
+                            'level_access' => [$level], // fixed
+                            'category_access' => [$category],
+                            'sports_access' => [$sport->id],
+                        ]
+                    );
+                }
+            }
+        }
+    }
+}
+
+
+
 
 
    public function edit($id)
