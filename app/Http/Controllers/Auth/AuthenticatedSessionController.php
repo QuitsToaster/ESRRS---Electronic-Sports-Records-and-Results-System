@@ -38,7 +38,7 @@ class AuthenticatedSessionController extends Controller
             $moduleRoutes = [
                 'dashboard' => 'dashboard',
                 'attendance' => 'attendance.index',
-                'results' => 'results.index',
+                'results'        => 'results_divisions.index',
                 'teams' => 'participants.index',
                 'events' => 'events.index',
                 'sports' => 'sports.index',
