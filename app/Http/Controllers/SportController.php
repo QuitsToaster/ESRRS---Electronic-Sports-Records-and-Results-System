@@ -16,39 +16,43 @@ use Illuminate\Support\Facades\Hash;
 class SportController extends Controller
 {
     public function index(Request $request)
-{
-    // Get filter values from query
-    $level = $request->query('level');      // Elementary / Secondary
-    $category = $request->query('category'); // Boys / Girls
+    {
+        // Get filter values from query
+        $level = $request->query('level');      // Elementary / Secondary
+        $category = $request->query('category'); // Boys / Girls
 
-    $query = Sport::with('types')->whereIn('division', ['Elementary', 'Secondary']);
+        $query = Sport::with('types')->whereIn('division', ['Elementary', 'Secondary']);
 
-    if ($level) {
-        $query->where('division', $level);
+        if ($level) {
+            $query->where('division', $level);
+        }
+
+        if ($category) {
+            $query->where('category', $category);
+        }
+
+        $sports = $query->orderBy('name')->get();
+
+        // Total count of filtered sports
+        $totalSports = $sports->count();
+
+        return view('sports.index', compact('sports', 'totalSports', 'level', 'category'));
     }
 
-    if ($category) {
-        $query->where('category', $category);
+    public function create()
+    {
+        return view('sports.create');
     }
 
-    $sports = $query->orderBy('name')->get();
-
-    // Total count of filtered sports
-    $totalSports = $sports->count();
-
-    return view('sports.index', compact('sports', 'totalSports', 'level', 'category'));
-}
-
-
-
-   public function store(Request $request)
+    public function store(Request $request)
 {
     $request->validate([
         'name' => [
             'required',
             'string',
             Rule::unique('sports')->where(function ($query) use ($request) {
-                return $query->where('division', $request->level);
+                return $query->where('division', $request->level)
+                             ->where('category', $request->category); // include category in uniqueness
             }),
         ],
         'level' => 'required|in:Elementary,Secondary',
@@ -73,10 +77,7 @@ class SportController extends Controller
         }
     }
 
-    // Create tournament accounts for this sport
-    $this->createSportAccounts($sport);  // <-- Add this line
-
-    // Log in audit
+    // Audit log
     AuditLog::create([
         'model_type' => 'Sport',
         'model_id'   => $sport->id,
@@ -91,73 +92,73 @@ class SportController extends Controller
 }
 
 
-public function create()
-{
-    return view('sports.create'); // make sure this view exists
-}
 
-/**
-     * Create tournament accounts automatically for the new sport
+
+    /**
+     * ❌ DISABLED: Create tournament accounts automatically
+     * (commented, not removed)
      */
-   private function createSportAccounts(Sport $sport)
-{
-    $rolesToCreate = [
-        'Tournament Secretary' => 'ts',
-        'Tournament Manager' => 'tm',
-    ];
+    /*
+    private function createSportAccounts(Sport $sport)
+    {
+        $rolesToCreate = [
+            'Tournament Secretary' => 'ts',
+            'Tournament Manager' => 'tm',
+        ];
 
-    $divisions = \App\Models\Division::all();
+        $divisions = \App\Models\Division::all();
+        $levels = [$sport->division];
+        $categories = ['Boys', 'Girls'];
 
-    $levels = [$sport->division]; // use division column as level
-    $categories = ['Boys', 'Girls'];
+        foreach ($divisions as $division) {
+            foreach ($levels as $level) {
+                foreach ($categories as $category) {
 
-    foreach ($divisions as $division) {
-        foreach ($levels as $level) {
-            foreach ($categories as $category) {
-                if (strtolower($category) !== strtolower($sport->category)) {
-                    continue;
-                }
+                    if (strtolower($category) !== strtolower($sport->category)) {
+                        continue;
+                    }
 
-                foreach ($rolesToCreate as $roleName => $roleInitials) {
-                    $role = Role::firstOrCreate(['name' => $roleName]);
+                    foreach ($rolesToCreate as $roleName => $roleInitials) {
+                        $role = Role::firstOrCreate(['name' => $roleName]);
 
-                    // Email with level + category
-                    $sdoCode = strtolower(substr(str_replace('SDO - ', '', $division->name), 0, 3));
-                    $email = strtolower(
-                        substr($level, 0, 4) .
-                        substr($category, 0, 1) .
-                        strtolower(str_replace(' ', '', $sport->name)) .
-                        '.' . $roleInitials .
-                        '.' . $sdoCode .
-                        '@gmail.com'
-                    );
+                        $sdoCode = strtolower(substr(str_replace('SDO - ', '', $division->name), 0, 3));
 
-                    $name = $division->name . ' - ' . $level . ' ' . $category . ' ' . strtoupper($sport->name) . ' ' . $roleName;
+                        $email = strtolower(
+                            substr($level, 0, 4) .
+                            substr($category, 0, 1) .
+                            str_replace(' ', '', strtolower($sport->name)) .
+                            '.' . $roleInitials .
+                            '.' . $sdoCode .
+                            '@gmail.com'
+                        );
 
-                    User::firstOrCreate(
-                        ['email' => $email],
-                        [
-                            'name' => $name,
-                            'password' => Hash::make('ESRRS@2026'),
-                            'role_id' => $role->id,
-                            'division_name' => $division->name,
-                            'access' => ['results'],
-                            'level_access' => [$level], // fixed
-                            'category_access' => [$category],
-                            'sports_access' => [$sport->id],
-                        ]
-                    );
+                        $name = $division->name . ' - ' .
+                                $level . ' ' .
+                                $category . ' ' .
+                                strtoupper($sport->name) . ' ' .
+                                $roleName;
+
+                        User::firstOrCreate(
+                            ['email' => $email],
+                            [
+                                'name' => $name,
+                                'password' => Hash::make('ESRRS@2026'),
+                                'role_id' => $role->id,
+                                'division_name' => $division->name,
+                                'access' => ['results'],
+                                'level_access' => [$level],
+                                'category_access' => [$category],
+                                'sports_access' => [$sport->id],
+                            ]
+                        );
+                    }
                 }
             }
         }
     }
-}
+    */
 
-
-
-
-
-   public function edit($id)
+    public function edit($id)
     {
         $sport = Sport::with('types')->findOrFail($id);
 
@@ -178,8 +179,8 @@ public function create()
             'string',
             Rule::unique('sports')->where(function ($query) use ($request, $sport) {
                 return $query->where('division', $request->level)
-                             ->where('id', '<>', $sport->id);
-            }),
+                             ->where('category', $request->category);
+            })->ignore($sport->id),
         ],
         'level' => 'required|in:Elementary,Secondary',
         'category' => 'required|in:Boys,Girls',
@@ -225,24 +226,18 @@ public function create()
             abort(403, 'Use Para Games module.');
         }
 
-        // Detach athletes from this sport
         $sport->events()->update(['sport_id' => null]);
         \App\Models\Athlete::where('sport_id', $sport->id)->update(['sport_id' => null]);
 
-        // Delete related award results
         AllAwardResult::where('sport_id', $sport->id)->delete();
         IndividualAwardResult::where('sport_id', $sport->id)->delete();
 
-        // Delete sport types
         $sport->types()->delete();
-
-        // Delete sport itself
         $sport->delete();
 
         return redirect()->route('sports.index')
             ->with('success', 'Sport deleted successfully!');
     }
-
 
     // ---------------- PARA GAMES ----------------
 
@@ -300,6 +295,7 @@ public function create()
         $sport->update(['name' => $request->name]);
 
         $sport->types()->delete();
+
         if ($request->type_of_game) {
             foreach ($request->type_of_game as $type) {
                 if ($type) {
@@ -314,7 +310,6 @@ public function create()
 
     public function paraDestroy(Sport $sport)
     {
-        // Delete related award results first
         AllAwardResult::where('sport_id', $sport->id)->delete();
         IndividualAwardResult::where('sport_id', $sport->id)->delete();
 
@@ -325,9 +320,8 @@ public function create()
             ->with('success', 'Para Game deleted successfully.');
     }
 
-    /**
-     * Bulk Delete Sports
-     */
+    // -------- BULK DELETE --------
+
     public function bulkDelete(Request $request)
     {
         $request->validate([
@@ -350,9 +344,6 @@ public function create()
             ->with('success', 'Selected sports deleted successfully!');
     }
 
-    /**
-     * Bulk Delete Para Games
-     */
     public function paraBulkDelete(Request $request)
     {
         $request->validate([
