@@ -9,7 +9,7 @@
     <ul class="list-disc list-inside text-sm space-y-1">
         <li>View all registered athletes in the system, including their school, region, and assigned sport.</li>
         <li>Use the search box to find athletes by name, school, or sport.</li>
-        <li>Apply filters for <strong>Sex</strong>, <strong>Sport</strong>, or <strong>Level</strong> to narrow down the list.</li>
+        <li>Apply filters for <strong>Division</strong>, <strong>Sex</strong>, <strong>Sport</strong>, or <strong>Level</strong> to narrow down the list.</li>
         <li>Click <strong>+ Add Athlete</strong> to register a new athlete manually, or use <strong>Upload CSV</strong> for bulk registration.</li>
         <li>Click <strong>Export ID PDF</strong> to generate ID cards for all listed athletes.</li>
         <li>Click on the QR image to view the athlete’s QR code and details in a modal.</li>
@@ -77,7 +77,7 @@
 
     {{-- FILTER SCHOOL DIVISION (SDO) --}}
 <div class="min-w-[200px]">
-    <label class="text-xs text-gray-500">School Division</label>
+    <label class="text-xs text-gray-500">Division</label>
     <select name="school_division" class="w-full border rounded px-3 py-2">
         <option value="">All SDOs</option>
         @foreach($divisions as $division)
