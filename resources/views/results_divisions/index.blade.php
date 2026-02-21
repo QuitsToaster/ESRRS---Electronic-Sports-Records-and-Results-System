@@ -47,7 +47,7 @@ $allDivisions = Division::orderBy('name')->get();
 // ===========================
 // Preload ALL APPROVED awards for medal tables
 // ===========================
-$allAwards = AllAwardResult::where('status', 'approved') // ✅ ONLY APPROVED
+$allAwards = AllAwardResult::where('status', 'approved')
     ->get()
     ->groupBy(function($item) {
         return $item->division . '|' .
@@ -68,7 +68,6 @@ function medalCountFromPreloaded($allAwards, $division, $category, $sdo, $medal)
 
 // ===========================
 // MAP OVERALL SUMMARY
-// (Elementary + Secondary, Boys & Girls)
 // ===========================
 $overall = $allDivisions->map(function ($division) use ($allAwards) {
 
@@ -104,14 +103,21 @@ $overall = $allDivisions->map(function ($division) use ($allAwards) {
 })->values();
 
 // ===========================
-// INDIVIDUAL AWARDS (APPROVED ONLY)
+// INDIVIDUAL AWARDS
 // ===========================
 $individualAwards = IndividualAwardResult::with('athlete','sport','event')
-    ->where('status', 'approved') // ✅ ONLY APPROVED
+    ->where('status', 'approved')
     ->orderBy('event_id')
     ->get();
 
 $awardsByMedal = $individualAwards->groupBy('medal');
+
+// ===========================
+// PARA GAMES MEDAL TABLE
+// ===========================
+$allAwardsPara = AllAwardResult::where('status','approved')
+                ->where('division','Paragames')
+                ->get();
 @endphp
 
 
@@ -293,7 +299,7 @@ $awardsByMedal = $individualAwards->groupBy('medal');
     </div>
 </div>
 
-{{-- ================= PARA GAMES ================= --}}
+{{-- ================= PARA GAMES MEDAL SUMMARY ================= --}}
 <div class="mb-16">
     <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-8 border-blue-600 pl-4">
         Para Games Division Medal Summary
@@ -311,13 +317,16 @@ $awardsByMedal = $individualAwards->groupBy('medal');
             </thead>
             <tbody>
                 @foreach($allDivisions as $division)
+                    @php
+                        $gold   = $allAwardsPara->where('sdo', $division->name)->where('medal','Gold')->sum('count');
+                        $silver = $allAwardsPara->where('sdo', $division->name)->where('medal','Silver')->sum('count');
+                        $bronze = $allAwardsPara->where('sdo', $division->name)->where('medal','Bronze')->sum('count');
+                    @endphp
                     <tr class="border-t hover:bg-gray-50">
                         <td class="px-4 py-3 text-left font-semibold">{{ $division->name }}</td>
-
-                        {{-- Para Games ignore category --}}
-                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Para Games', null, $division->name, 'Gold') }}</td>
-                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Para Games', null, $division->name, 'Silver') }}</td>
-                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Para Games', null, $division->name, 'Bronze') }}</td>
+                        <td class="font-bold text-yellow-500">{{ $gold }}</td>
+                        <td class="font-bold text-gray-500">{{ $silver }}</td>
+                        <td class="font-bold text-orange-500">{{ $bronze }}</td>
                     </tr>
                 @endforeach
             </tbody>
