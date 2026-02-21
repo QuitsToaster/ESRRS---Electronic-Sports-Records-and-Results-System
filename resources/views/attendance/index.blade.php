@@ -43,7 +43,7 @@
                     <tr>
                         <th class="px-2 py-1 text-left">Name</th>
                         <th class="px-2 py-1 text-left">Role</th>
-                        <th class="px-2 py-1 text-left">School</th>
+                        <th class="px-2 py-1 text-left">Division</th>
                         <th class="px-2 py-1 text-left">Time In</th>
                         <th class="px-2 py-1 text-left">Time Out</th>
                     </tr>
@@ -58,7 +58,7 @@
                                 {{ $record->athlete ? 'Athlete' : ($record->coach ? 'Coach' : '-') }}
                             </td>
                             <td class="px-2 py-1">
-                                {{ $record->athlete->school->name ?? $record->coach->school->name ?? 'N/A' }}
+                                SDO - {{ $record->athlete->school_division ?? $record->coach->school->division ?? 'N/A' }}
                             </td>
                             <td class="px-2 py-1">
                                 {{ $record->time_in ?? '-' }}
@@ -87,14 +87,14 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="px-2 py-1 text-left">Name</th>
-                        <th class="px-2 py-1 text-left">School</th>
+                        <th class="px-2 py-1 text-left">Division</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($notAttended as $athlete)
                         <tr class="border-b border-gray-200 hover:bg-gray-50">
                             <td class="px-2 py-1">{{ $athlete->full_name }}</td>
-                            <td class="px-2 py-1">{{ $athlete->school->name ?? 'N/A' }}</td>
+                            <td class="px-2 py-1">SDO - {{ $athlete->school_division ?? 'N/A' }}</td>
                         </tr>
                     @empty
                         <tr>

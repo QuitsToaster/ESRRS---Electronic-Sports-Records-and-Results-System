@@ -107,8 +107,7 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-3 py-2 font-medium">Name</th>
-                    <th class="px-3 py-2 font-medium">School</th>
-                    <th class="px-3 py-2 font-medium">Region</th>
+                    <th class="px-3 py-2 font-medium">Division</th>
                     <th class="px-3 py-2 font-medium">Time In</th>
                     <th class="px-3 py-2 font-medium">Time Out</th>
                 </tr>
@@ -122,12 +121,12 @@ body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
                     $school = $user->school_name ?? '—';
                 @endphp
                 <tr class="hover:bg-gray-50 transition">
-                    <td class="px-3 py-2 font-medium">{{ $name }}</td>
-                    <td class="px-3 py-2">{{ $school }}</td>
-                    <td class="px-3 py-2">{{ $region }}</td>
-                    <td class="px-3 py-2">{{ $r->time_in ? Carbon::parse($r->time_in)->format('h:i A') : '—' }}</td>
-                    <td class="px-3 py-2">{{ $r->time_out ? Carbon::parse($r->time_out)->format('h:i A') : '—' }}</td>
-                </tr>
+    <td class="px-3 py-2 font-medium">{{ $name }}</td>
+    <td class="px-3 py-2">SDO - {{ $user->school_division ?? $user->school->school_division ?? '—' }}</td>
+    <td class="px-3 py-2">{{ $r->time_in ? Carbon::parse($r->time_in)->format('h:i A') : '—' }}</td>
+    <td class="px-3 py-2">{{ $r->time_out ? Carbon::parse($r->time_out)->format('h:i A') : '—' }}</td>
+</tr>
+
                 @empty
                 <tr>
                     <td colspan="5" class="px-3 py-4 text-center text-gray-400">No attendance records today</td>
