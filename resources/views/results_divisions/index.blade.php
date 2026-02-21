@@ -17,17 +17,22 @@
 
     {{-- ADD RESULT + EXPORT BUTTONS --}}
     <div class="text-center md:text-right flex flex-col md:flex-row gap-2 md:gap-4">
+        {{-- Add Result (unchanged / visible to all who already had access) --}}
         <a href="{{ route('results_divisions.create') }}"
-        class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-xl shadow hover:bg-green-700 transition">
+           class="inline-flex items-center gap-2 px-6 py-3 bg-green-600 text-white font-semibold rounded-xl shadow hover:bg-green-700 transition">
             ➕ Add Result
         </a>
 
-        <a href="{{ route('results_divisions.export') }}" target="_blank"
-        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
-            📄 Export PDF
-        </a>
+        {{-- Export PDF (ONLY Tournament Secretary & Super Admin) --}}
+        @if(in_array(auth()->user()->role->name, ['Tournament Manager', 'Super Admin']))
+            <a href="{{ route('results_divisions.export') }}" target="_blank"
+               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
+                📄 Export PDF
+            </a>
+        @endif
     </div>
 </div>
+
 
 @php
 use App\Models\Division;
