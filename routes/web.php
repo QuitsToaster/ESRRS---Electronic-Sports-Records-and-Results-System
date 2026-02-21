@@ -14,6 +14,8 @@ use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResultDivisionController;
+use App\Http\Controllers\ResultAllAwardController;
+use App\Http\Controllers\ResultIndividualAwardController;
 use App\Http\Controllers\ViewerController;
 use App\Http\Controllers\DivisionController;
 use App\Http\Controllers\AttendanceController;
@@ -215,12 +217,14 @@ Route::resource('sports', SportController::class);
         Route::get('/export', [ResultDivisionController::class, 'export'])->name('export');
     });
 
-    Route::post('/results/all-awards', [ResultDivisionController::class, 'storeAllAwards'])
+   Route::post('/results/all-awards', [ResultAllAwardController::class, 'store'])
     ->name('results_all_awards.store');
-    // Individual awards
-Route::post('/results/individual-awards', [ResultDivisionController::class, 'storeIndividualAwards'])
+
+Route::post('/results/individual-awards', [ResultIndividualAwardController::class, 'store'])
     ->name('results_individual.store');
 
+Route::post('/approve-all-award', [ResultAllAwardController::class, 'approveAll'])->name('approve_all_awards');
+Route::post('/approve-individual-award', [ResultIndividualAwardController::class, 'approveIndividual'])->name('approve_individual_awards');
 
     /*
     |--------------------------------------------------------------------------

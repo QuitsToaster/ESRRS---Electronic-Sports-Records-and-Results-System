@@ -9,6 +9,7 @@ use App\Models\Sport;
 use App\Models\AllAwardResult;
 use App\Models\IndividualAwardResult;
 use App\Models\Athlete;
+use App\Models\Event; 
 
 $user = auth()->user();
 
@@ -43,10 +44,12 @@ if ($user->role->name !== 'Super Admin') {
 // ====================== ALL ATHLETES ======================
 $athletes = \App\Models\Athlete::orderBy('last_name')->get();
 
-// ================= PREFILL ALL AWARDS RESULTS =================
+// ================= PREFILL ALL AWARDS RESULTS (ONLY APPROVED) =================
 $prefillResults = [];
 foreach ($tabs as $tabName => $tab) {
-    $query = AllAwardResult::where('division', $tab['division']);
+    $query = AllAwardResult::where('division', $tab['division'])
+        ->where('status', 'approved'); // <-- only approved awards
+
     if (!is_null($tab['category'])) {
         $query->where('category', $tab['category']);
     } else {
@@ -59,18 +62,16 @@ foreach ($tabs as $tabName => $tab) {
     }
 
     foreach ($query->get() as $r) {
-        $prefillResults[$tabName]
-            [$r->sport_id]
-            [$r->type_id ?? 0]
-            [$r->sdo]
-            [$r->medal] = $r->count;
+        $prefillResults[$tabName][$r->sport_id][$r->type_id ?? 0][$r->sdo][$r->medal] = $r->count;
     }
 }
 
-// ================= PREFILL INDIVIDUAL AWARDS =================
+// ================= PREFILL INDIVIDUAL AWARDS (ONLY APPROVED) =================
 $prefillIndividual = [];
 foreach ($tabs as $tabName => $tab) {
-    $query = IndividualAwardResult::where('division', $tab['division']);
+    $query = IndividualAwardResult::where('division', $tab['division'])
+        ->where('status', 'approved'); // <-- only approved awards
+
     if (!is_null($tab['category'])) {
         $query->where('category', $tab['category']);
     } else {
@@ -83,13 +84,39 @@ foreach ($tabs as $tabName => $tab) {
     }
 
     foreach ($query->get() as $r) {
-        $prefillIndividual[$tabName]
-            [$r->sport_id]
-            [$r->type_id ?? 0]
-            [$r->sdo]
-            [$r->medal] = $r->athlete_id;
+        $prefillIndividual[$tabName][$r->sport_id][$r->type_id ?? 0][$r->sdo][$r->medal] = $r->athlete_id;
     }
 }
+
+
+// ================= PENDING AWARDS FOR TOURNAMENT MANAGER / SUPER ADMIN =================
+$pendingResults = collect();
+$pendingIndividual = collect();
+
+if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin') {
+    $activeEventId = Event::where('is_active', 1)->value('id');
+
+    if ($activeEventId) {
+        $pendingResultsQuery = AllAwardResult::where('status','pending')
+            ->where('event_id', $activeEventId);
+
+        $pendingIndividualQuery = IndividualAwardResult::where('status','pending')
+            ->where('event_id', $activeEventId);
+
+        // Apply filters only if not Super Admin
+        if ($user->role->name !== 'Super Admin') {
+            $pendingResultsQuery->where('sdo', $user->division_name)
+                                ->whereIn('sport_id', $user->sports_access);
+
+            $pendingIndividualQuery->where('sdo', $user->division_name)
+                                   ->whereIn('sport_id', $user->sports_access);
+        }
+
+        $pendingResults = $pendingResultsQuery->get();
+        $pendingIndividual = $pendingIndividualQuery->get();
+    }
+}
+
 @endphp
 
 <div x-data="awardApp()" class="p-4 space-y-6">
@@ -105,6 +132,114 @@ foreach ($tabs as $tabName => $tab) {
         <li>After filling the data, click the <strong>Save</strong> button at the bottom of each section to store your entries.</li>
     </ul>
 </div>
+
+{{-- ================= PENDING AWARDS FOR TOURNAMENT MANAGER / SUPER ADMIN ================= --}}
+@if($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin')
+<div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-2">Pending Awards Needing Approval</h3>
+
+    {{-- All Awards --}}
+    @if($pendingResults->count())
+        <h4 class="font-semibold mt-2 mb-1">All Awards</h4>
+        <table class="w-full border text-sm mb-4">
+            <thead class="bg-yellow-200 text-center">
+                <tr>
+                    <th class="border px-2">Sport</th>
+                    <th class="border px-2">Event Type</th>
+                    <th class="border px-2">SDO</th>
+                    <th class="border px-2">Medal</th>
+                    <th class="border px-2">Count</th>
+                    <th class="border px-2">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($pendingResults as $r)
+                    <tr class="text-center">
+                        <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
+                        <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+                        <td class="border px-2">{{ $r->sdo }}</td>
+                        <td class="border px-2">{{ $r->medal }}</td>
+                        <td class="border px-2">{{ $r->count }}</td>
+                        <td class="border px-2">
+                            <button
+                                class="bg-green-500 text-white px-3 py-1 rounded"
+                                @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'all' })">
+                                Approve
+                            </button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
+    {{-- Individual Awards --}}
+    @if($pendingIndividual->count())
+        <h4 class="font-semibold mt-2 mb-1">Individual Awards</h4>
+        <table class="w-full border text-sm">
+            <thead class="bg-yellow-200 text-center">
+                <tr>
+                    <th class="border px-2">Sport</th>
+                    <th class="border px-2">Event Type</th>
+                    <th class="border px-2">SDO</th>
+                    <th class="border px-2">Medal</th>
+                    <th class="border px-2">Athlete</th>
+                    <th class="border px-2">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($pendingIndividual as $r)
+                    <tr class="text-center">
+                        <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
+                        <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+                        <td class="border px-2">{{ $r->sdo }}</td>
+                        <td class="border px-2">{{ $r->medal }}</td>
+                        <td class="border px-2">
+                            @php $ath = $athletes->find($r->athlete_id); @endphp
+                            {{ $ath ? $ath->last_name . ', ' . $ath->first_name : '-' }}
+                        </td>
+                        <td class="border px-2">
+                            <button
+                                class="bg-green-500 text-white px-3 py-1 rounded"
+                                @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })">
+                                Approve
+                            </button>
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
+    @if($pendingResults->count() === 0 && $pendingIndividual->count() === 0)
+        <p>No pending awards to approve for your division/event.</p>
+    @endif
+</div>
+
+{{-- ================= APPROVE CONFIRMATION MODAL ================= --}}
+<div
+    x-data="{ showModal: false, awardId: null, awardType: null }"
+    x-on:open-modal.window="showModal = true; awardId = $event.detail.awardId; awardType = $event.detail.type;"
+    x-cloak
+>
+    <div x-show="showModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        <div class="bg-white rounded shadow p-6 w-96">
+            <h3 class="text-lg font-bold mb-4">Confirm Approval</h3>
+            <p class="mb-6">Are you sure you want to approve this award? This action cannot be undone.</p>
+            <div class="flex justify-end space-x-3">
+                <button type="button" class="px-4 py-2 border rounded" @click="showModal=false">Cancel</button>
+
+                <form :action="awardType === 'all' ? '{{ route('approve_all_awards') }}' : '{{ route('approve_individual_awards') }}'" method="POST">
+                    @csrf
+                    <input type="hidden" name="award_id" :value="awardId">
+                    <button type="submit" class="px-4 py-2 bg-green-500 text-white rounded">Yes, Approve</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 
 {{-- ================= AWARD TYPE ================= --}}
 <select x-model="awardType" class="border rounded px-3 py-2 w-64 mb-4">
@@ -181,62 +316,88 @@ foreach ($tabs as $tabName => $tab) {
                 </table>
             </div>
 
-            {{-- ========================================================= --}}
-            {{-- 📝 ALL AWARDS FORM --}}
-            {{-- ========================================================= --}}
-            <form x-show="awardType==='all'" method="POST" action="{{ route('results_all_awards.store') }}">
-                @csrf
-                <input type="hidden" name="division" value="{{ $tab['division'] }}">
-                @if(!is_null($tab['category']))
-                <input type="hidden" name="category" value="{{ $tab['category'] }}">
-                @endif
+            {{-- ================= ALL AWARDS FORM ================= --}}
+<form method="POST" action="{{ route('results_all_awards.store') }}" x-data="{ showConfirm: false }">
+@csrf
 
-                @foreach($sports as $sport)
-                    <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
-                    <table class="w-full border text-sm mt-2">
-                        <thead>
-                            <tr class="bg-gray-200 text-center">
-                                <th rowspan="2" class="border px-2">Event Type</th>
-                                @foreach($divisions as $d)
-                                    <th colspan="3" class="border">{{ $d->name }}</th>
-                                @endforeach
-                            </tr>
-                            <tr>
-                                @foreach($divisions as $d)
-                                    <th class="border bg-yellow-300">G</th>
-                                    <th class="border bg-gray-300">S</th>
-                                    <th class="border bg-orange-200">B</th>
-                                @endforeach
-                            </tr>
-                        </thead>
-                        <tbody>
-                        @foreach($sport->types as $type)
-                            <tr>
-                                <td class="border px-2">{{ $type->type_name }}</td>
-                                @foreach($divisions as $d)
-                                    @foreach(['Gold','Silver','Bronze'] as $medal)
-                                        <td class="border text-center">
-                                            <input type="number" min="0" class="w-16 border rounded text-center"
-                                            x-model.number="results['{{ $tabName }}']['{{ $sport->id }}']['{{ $type->id }}']['{{ $d->name }}']['{{ $medal }}']"
-                                            name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]">
-                                        </td>
-                                    @endforeach
-                                @endforeach
-                            </tr>
-                        @endforeach
-                        </tbody>
-                    </table>
+<input type="hidden" name="division" value="{{ $tab['division'] }}">
+<input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
+
+@foreach($sports as $sport)
+    <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
+
+    <table class="w-full border text-sm mt-2">
+        <thead>
+            <tr class="bg-gray-200 text-center">
+                <th class="border">Event Type</th>
+                @foreach($divisions as $d)
+                    <th class="border bg-yellow-300">G</th>
+                    <th class="border bg-gray-300">S</th>
+                    <th class="border bg-orange-200">B</th>
                 @endforeach
+            </tr>
+        </thead>
 
-                <div class="flex justify-end mt-6">
-                    <button class="bg-blue-600 text-white px-6 py-2 rounded">Save All Awards</button>
+        <tbody>
+        @foreach($sport->types as $type)
+            <tr>
+                <td class="border px-2">{{ $type->type_name }}</td>
+
+                @foreach($divisions as $d)
+                    @foreach(['Gold','Silver','Bronze'] as $medal)
+                        <td class="border text-center">
+                            <input
+                                type="number"
+                                min="0"
+                                value="0"
+                                class="w-16 border rounded text-center"
+                                name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]"
+                            >
+                        </td>
+                    @endforeach
+                @endforeach
+            </tr>
+        @endforeach
+        </tbody>
+    </table>
+@endforeach
+
+{{-- ================= BUTTON ================= --}}
+<div class="flex justify-end mt-6">
+    @if($user->role->name === 'Tournament Secretary')
+        {{-- Forward for Validation button --}}
+        <button type="button"
+                class="bg-yellow-500 text-white px-6 py-2 rounded"
+                @click="showConfirm = true">
+            Forward for Validation
+        </button>
+
+        {{-- Confirmation Modal --}}
+        <div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div class="bg-white rounded shadow p-6 w-96">
+                <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
+                <p class="mb-6">Are you sure you want to forward all awards for validation? This action cannot be undone.</p>
+                <div class="flex justify-end space-x-3">
+                    <button type="button" class="px-4 py-2 border rounded" @click="showConfirm=false">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded">Yes, Forward</button>
                 </div>
-            </form>
+            </div>
+        </div>
+    @else
+        {{-- Regular Save button for other roles --}}
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
+            Save All Awards
+        </button>
+    @endif
+</div>
+
+</form>
+
 
             {{-- ========================================================= --}}
 {{-- 🏅 INDIVIDUAL AWARDS FORM (Gold, Silver, Bronze per sport) --}}
 {{-- ========================================================= --}}
-<form x-show="awardType==='individual'" method="POST" action="{{ route('results_individual.store') }}">
+<form x-show="awardType==='individual'" method="POST" action="{{ route('results_individual.store') }}" x-data="{ showConfirm: false }">
     @csrf
     <input type="hidden" name="division" value="{{ $tab['division'] }}">
     @if(!is_null($tab['category']))
@@ -338,10 +499,36 @@ foreach ($tabs as $tabName => $tab) {
         </table>
     @endforeach
 
+    {{-- ================= BUTTON ================= --}}
     <div class="flex justify-end mt-6">
-        <button class="bg-green-600 text-white px-6 py-2 rounded">Save Individual Awards</button>
+        @if($user->role->name === 'Tournament Secretary')
+            {{-- Forward for Validation button --}}
+            <button type="button"
+                    class="bg-yellow-500 text-white px-6 py-2 rounded"
+                    @click="showConfirm = true">
+                Forward for Validation
+            </button>
+
+            {{-- Confirmation Modal --}}
+            <div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div class="bg-white rounded shadow p-6 w-96">
+                    <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
+                    <p class="mb-6">Are you sure you want to forward all individual awards for validation? This action cannot be undone.</p>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" class="px-4 py-2 border rounded" @click="showConfirm=false">Cancel</button>
+                        <button type="submit" class="px-4 py-2 bg-yellow-500 text-white rounded">Yes, Forward</button>
+                    </div>
+                </div>
+            </div>
+        @else
+            {{-- Regular Save button for other roles --}}
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
+                Save Individual Awards
+            </button>
+        @endif
     </div>
 </form>
+
 
 
         </div>

@@ -198,104 +198,117 @@ class ResultDivisionController extends Controller
 }
 
 
-public function storeAllAwards(Request $request)
-{
-    $eventId = \App\Models\Event::where('is_active', 1)
-        ->where('age_group', $request->division)
-        ->value('id');
+// public function storeAllAwards(Request $request)
+// {
+//     $user = auth()->user();
 
-    if (!$eventId) {
-        return back()->with('error', "No active event found for division: {$request->division}");
-    }
+//     $eventId = Event::where('is_active', 1)
+//         ->where('age_group', $request->division)
+//         ->value('id');
 
-    foreach ($request->results ?? [] as $sportId => $types) {
-        foreach ($types as $typeId => $sdos) {
-            $typeId = $typeId == 0 ? null : $typeId;
+//     if (!$eventId) {
+//         return back()->with('error', "No active event found for division: {$request->division}");
+//     }
 
-            foreach ($sdos as $sdo => $medals) {
-                foreach ($medals as $medal => $count) {
-                    // Remove previous
-                    \App\Models\AllAwardResult::where([
-                        'event_id' => $eventId,
-                        'sport_id' => $sportId,
-                        'type_id' => $typeId,
-                        'division' => $request->division,
-                        'category' => $request->category,
-                        'sdo' => $sdo,
-                        'medal' => $medal,
-                    ])->delete();
+//     // 🔑 STATUS RULE
+//     $status = ($user->role->name === 'Tournament Secretary')
+//         ? 'pending'
+//         : 'approved';
 
-                    // Insert if > 0
-                    if ($count > 0) {
-                        \App\Models\AllAwardResult::create([
-                            'event_id' => $eventId,
-                            'sport_id' => $sportId,
-                            'type_id' => $typeId,
-                            'division' => $request->division,
-                            'category' => $request->category,
-                            'sdo' => $sdo,
-                            'medal' => $medal,
-                            'count' => $count,
-                            'awarded_by' => auth()->id(),
-                        ]);
-                    }
-                }
-            }
-        }
-    }
+//     foreach ($request->results ?? [] as $sportId => $types) {
+//         foreach ($types as $typeId => $sdos) {
 
-    return back()->with('success', 'All Awards results saved successfully.');
-}
+//             $typeId = $typeId == 0 ? null : $typeId;
 
-public function storeIndividualAwards(Request $request)
-{
-    $eventId = \App\Models\Event::where('is_active', 1)
-        ->where('age_group', $request->division)
-        ->value('id');
+//             foreach ($sdos as $sdo => $medals) {
+//                 foreach ($medals as $medal => $count) {
 
-    if (!$eventId) {
-        return back()->with('error', "No active event found for division: {$request->division}");
-    }
+//                     AllAwardResult::where([
+//                         'event_id' => $eventId,
+//                         'sport_id' => $sportId,
+//                         'type_id' => $typeId,
+//                         'division' => $request->division,
+//                         'category' => $request->category,
+//                         'sdo' => $sdo,
+//                         'medal' => $medal,
+//                     ])->delete();
 
-    $individualResults = $request->input('individual_results', []);
+//                     if ($count > 0) {
+//                         AllAwardResult::create([
+//                             'event_id' => $eventId,
+//                             'sport_id' => $sportId,
+//                             'type_id' => $typeId,
+//                             'division' => $request->division,
+//                             'category' => $request->category,
+//                             'sdo' => $sdo,
+//                             'medal' => $medal,
+//                             'count' => $count,
+//                             'awarded_by' => $user->id,
+//                             'status' => $status, // ✅ HERE
+//                         ]);
+//                     }
+//                 }
+//             }
+//         }
+//     }
 
-    foreach ($individualResults as $sportId => $types) {
-        foreach ($types as $typeId => $medals) {
-            // Convert 0 back to null if needed
-            $typeId = $typeId == 0 ? null : $typeId;
+//     return back()->with('success', 'All Awards submitted successfully (Pending Approval).');
+// }
 
-            foreach ($medals as $medal => $athleteId) {
-                if ($athleteId) {
-                    // Remove previous award for same sport/type/medal/division/category
-                    \App\Models\IndividualAwardResult::where([
-                        'event_id' => $eventId,
-                        'sport_id' => $sportId,
-                        'type_id' => $typeId,
-                        'division' => $request->division,
-                        'category' => $request->category,
-                        'medal' => $medal,
-                    ])->delete();
 
-                    \App\Models\IndividualAwardResult::create([
-                        'event_id'   => $eventId,
-                        'sport_id'   => $sportId,
-                        'type_id'    => $typeId,
-                        'division'   => $request->division,
-                        'category'   => $request->category,
-                        'sdo'        => null, // truly optional
-                        'medal'      => $medal,
-                        'athlete_id' => $athleteId,
-                        'awarded_by' => auth()->id(),
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                }
-            }
-        }
-    }
+// public function storeIndividualAwards(Request $request)
+// {
+//     $user = auth()->user();
 
-    return back()->with('success', 'Individual awards saved successfully.');
-}
+//     $eventId = Event::where('is_active', 1)
+//         ->where('age_group', $request->division)
+//         ->value('id');
+
+//     if (!$eventId) {
+//         return back()->with('error', "No active event found for division: {$request->division}");
+//     }
+
+//     $status = ($user->role->name === 'Tournament Secretary')
+//         ? 'pending'
+//         : 'approved';
+
+//     foreach ($request->individual_results ?? [] as $sportId => $types) {
+//         foreach ($types as $typeId => $medals) {
+
+//             $typeId = $typeId == 0 ? null : $typeId;
+
+//             foreach ($medals as $medal => $athleteId) {
+
+//                 if (!$athleteId) continue;
+
+//                 IndividualAwardResult::where([
+//                     'event_id' => $eventId,
+//                     'sport_id' => $sportId,
+//                     'type_id' => $typeId,
+//                     'division' => $request->division,
+//                     'category' => $request->category,
+//                     'medal' => $medal,
+//                 ])->delete();
+
+//                 IndividualAwardResult::create([
+//                     'event_id'   => $eventId,
+//                     'sport_id'   => $sportId,
+//                     'type_id'    => $typeId,
+//                     'division'   => $request->division,
+//                     'category'   => $request->category,
+//                     'sdo'        => null,
+//                     'medal'      => $medal,
+//                     'athlete_id' => $athleteId,
+//                     'awarded_by' => $user->id,
+//                     'status'     => $status, // ✅ HERE
+//                 ]);
+//             }
+//         }
+//     }
+
+//     return back()->with('success', 'Individual Awards submitted successfully (Pending Approval).');
+// }
+
 
 
 
