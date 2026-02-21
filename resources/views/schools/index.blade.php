@@ -93,7 +93,7 @@
 
                     {{-- Division --}}
                     <td class="px-4 py-3 text-gray-700">
-                        {{ $school->division ?? '-' }}
+                        SDO - {{ $school->school_division ?? '-' }}
                     </td>
 
                     {{-- Address --}}

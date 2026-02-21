@@ -75,6 +75,21 @@
                class="w-full border rounded px-3 py-2">
     </div>
 
+    {{-- FILTER SCHOOL DIVISION (SDO) --}}
+<div class="min-w-[200px]">
+    <label class="text-xs text-gray-500">School Division</label>
+    <select name="school_division" class="w-full border rounded px-3 py-2">
+        <option value="">All SDOs</option>
+        @foreach($divisions as $division)
+            <option value="{{ $division }}"
+                {{ request('school_division') == $division ? 'selected' : '' }}>
+                SDO - {{ $division }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
+
     {{-- FILTER SEX --}}
     <div class="min-w-[150px]">
         <label class="text-xs text-gray-500">Sex</label>
@@ -146,12 +161,11 @@
     <th class="px-4 py-2 text-left">Birthday</th>
     <th class="px-4 py-2 text-left">Level</th>
     <th class="px-4 py-2 text-left">Category</th>
-    <th class="px-4 py-2 text-left">Region</th>
+    <th class="px-4 py-2 text-left">Division</th>
     <th class="px-4 py-2 text-left">Event</th>
     <th class="px-4 py-2 text-left">School</th>
     <th class="px-4 py-2 text-left">School Type</th>
     <th class="px-4 py-2 text-left">School Address</th>
-    <th class="px-4 py-2 text-left">School Division</th>
     <th class="px-4 py-2 text-left">School Code</th>
     <th class="px-4 py-2 text-left">LRN</th>
     <th class="px-4 py-2 text-left">Status</th>
@@ -187,12 +201,11 @@
     <td class="px-4 py-2">{{ $athlete->birthdate ? \Carbon\Carbon::parse($athlete->birthdate)->format('M. d, Y') : '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->division }}</td>
     <td class="px-4 py-2">{{ $athlete->category }}</td>
-    <td class="px-4 py-2">{{ $athlete->region ?? '—' }}</td>
+    <td class="px-4 py-2">SDO - {{ $athlete->school_division ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->event ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school->name ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school_type ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school_address ?? '—' }}</td>
-    <td class="px-4 py-2">{{ $athlete->school_division ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school_code ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->lrn ?? '—' }}</td>
     <td class="px-4 py-2 font-semibold">{{ $athlete->status }}</td>

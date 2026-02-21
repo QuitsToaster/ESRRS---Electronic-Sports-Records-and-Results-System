@@ -287,7 +287,7 @@ document.addEventListener('DOMContentLoaded', () => {
         class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
         {{ request()->routeIs('schools.*') ? 'bg-blue-900 font-semibold' : '' }}"
     >
-        Teams / Schools
+        Schools
         <span x-text="openMenu === 'schools' ? '▾' : '▸'"></span>
     </button>
 
@@ -295,13 +295,13 @@ document.addEventListener('DOMContentLoaded', () => {
         <a href="{{ route('schools.index') }}"
            class="block px-4 py-2 rounded hover:bg-blue-600
            {{ request()->routeIs('schools.index') ? 'bg-blue-700 font-semibold' : '' }}">
-            All Teams / Schools
+            All Schools
         </a>
 
         <a href="{{ route('schools.create') }}"
            class="block px-4 py-2 rounded hover:bg-blue-600
            {{ request()->routeIs('schools.create') ? 'bg-blue-700 font-semibold' : '' }}">
-            Add Teams / Schools
+            Add Schools
         </a>
     </div>
 </div>
