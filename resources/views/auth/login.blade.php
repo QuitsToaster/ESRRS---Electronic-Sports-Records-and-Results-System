@@ -8,6 +8,9 @@
     <title>Login - {{ config('app.name') }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
+    <!-- Alpine.js for modal functionality -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <style>
         body { font-family: 'Inter', sans-serif; }
         .glass-card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.2); }
@@ -16,37 +19,37 @@
         .input-nba { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; }
         .input-nba::placeholder { color: rgba(255,255,255,0.7); }
         .overlay-dark { background: rgba(0,0,0,0.5); }
+        [x-cloak] { display: none !important; }
     </style>
 </head>
+
 <body class="relative min-h-screen flex flex-col justify-center items-center bg-gray-900"
       x-data="accountRequests()">
 
     {{-- Background --}}
     <div class="absolute inset-0"
-         style="background-image: url('{{ $welcomeBg ? asset('storage/' . $welcomeBg->value) : asset('images/cavraa.jpg') }}'); 
+         style="background-image: url('{{ $welcomeBg ? asset('storage/' . $welcomeBg->value) : asset('images/cavraa.jpg') }}');
                 background-size: cover; background-position: center;">
         <div class="absolute inset-0 overlay-dark backdrop-blur-sm"></div>
     </div>
 
-    {{-- ================= INSTRUCTIONS & DATA PRIVACY ================= --}}
-<div class="max-w-md w-full mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm relative z-10">
-    <h2 class="font-semibold mb-2 text-lg">Login Instructions & Data Privacy Notice</h2>
-    <ul class="list-disc list-inside text-sm space-y-1">
-        <li>Please enter your registered <strong>Email</strong> and <strong>Password</strong> to log in.</li>
-        <li>Your login data is encrypted and securely stored. We will not share your personal information with unauthorized parties.</li>
-        <li>By logging in, you consent to the processing of your data for authentication and attendance tracking purposes only.</li>
-        <li>If you encounter any issues, contact the system administrator.</li>
-    </ul>
-</div>
+    {{-- INFO BOX --}}
+    <div class="max-w-md w-full mb-4 p-4 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm relative z-10">
+        <h2 class="font-semibold mb-2 text-lg">Login Instructions & Data Privacy Notice</h2>
+        <ul class="list-disc list-inside text-sm space-y-1">
+            <li>Please enter your registered <strong>Email</strong> and <strong>Password</strong>.</li>
+            <li>Your data is encrypted and protected.</li>
+            <li>Contact the administrator if you encounter issues.</li>
+        </ul>
+    </div>
 
-
-    {{-- Login Form Card --}}
+    {{-- LOGIN CARD --}}
     <div class="max-w-md w-full p-8 rounded-xl shadow-xl glass-card relative z-10">
-        <h1 class="text-3xl font-bold mb-6 text-center text-white drop-shadow-lg" style="font-family: 'Poppins', sans-serif;">
+        <h1 class="text-3xl font-bold mb-6 text-center text-white">
             {{ config('app.name') }} Login
         </h1>
 
-        {{-- Errors --}}
+        {{-- ERRORS --}}
         @if ($errors->any())
             <div class="mb-4 bg-red-800/50 text-red-100 p-3 rounded-lg border border-red-600">
                 <ul class="list-disc pl-5">
@@ -61,103 +64,123 @@
             @csrf
 
             <div>
-                <label for="email" class="block text-white font-semibold mb-1" style="font-family: 'Poppins', sans-serif;">Email</label>
-                <input id="email" type="email" name="email" value="{{ old('email') }}" required autofocus
-                    placeholder="you@example.com"
-                    class="input-nba block w-full p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <label class="block text-white font-semibold mb-1">Email</label>
+                <input type="email" name="email" required autofocus
+                       class="input-nba block w-full p-3 rounded-md"
+                       placeholder="you@example.com">
             </div>
 
             <div>
-                <label for="password" class="block text-white font-semibold mb-1" style="font-family: 'Poppins', sans-serif;">Password</label>
-                <input id="password" type="password" name="password" required
-                    placeholder="••••••••"
-                    class="input-nba block w-full p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <label class="block text-white font-semibold mb-1">Password</label>
+                <input type="password" name="password" required
+                       class="input-nba block w-full p-3 rounded-md"
+                       placeholder="••••••••">
             </div>
 
-            <div class="flex items-center justify-between text-white text-sm">
-                <a href="#" @click.prevent="openModal('forgot_password')" class="hover:underline text-blue-400">Forgot password?</a>
+            <div class="flex justify-between text-sm text-white">
+                <a href="#" @click.prevent="openModal('forgot_password')" class="text-blue-400 hover:underline">
+                    Forgot password?
+                </a>
             </div>
 
-            <button type="submit" class="w-full py-3 rounded-md bg-green-600 hover:bg-green-700 text-lg text-white hover:text-gray-300 font-semibold" style="font-family: 'Poppins', sans-serif;">
+            <button type="submit"
+                    class="w-full py-3 rounded-md bg-green-600 hover:bg-green-700 text-lg text-white font-semibold">
                 Login
             </button>
         </form>
 
         <p class="mt-6 text-center text-white/80">
-            Don't have an account? 
-            <a href="#" @click.prevent="openModal('new_account')" class="text-blue-400 hover:underline font-semibold">Request Account</a>
+            Don’t have an account?
+            <a href="#" @click.prevent="openModal('new_account')" class="text-blue-400 hover:underline font-semibold">
+                Request Account
+            </a>
         </p>
     </div>
 
-    {{-- Modal --}}
-    <div x-show="showModal" x-cloak class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    {{-- MODAL --}}
+    <div x-show="showModal" x-cloak
+         class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div class="bg-white rounded-lg shadow-lg max-w-md w-full p-6">
-            <h2 class="text-xl font-bold mb-4" x-text="modalTitle"></h2>
-            <p class="mb-4" x-text="modalMessage"></p>
+            <h2 class="text-xl font-bold mb-2" x-text="modalTitle"></h2>
+            <p class="text-gray-600 mb-4" x-text="modalMessage"></p>
+
             <form @submit.prevent="submitRequest">
-                <input type="email" x-model="email" placeholder="Enter your email" required
-                       class="w-full border border-gray-300 rounded px-3 py-2 mb-4">
+                <input type="email" x-model="email" required
+                       placeholder="Enter your email"
+                       class="w-full border border-gray-300 rounded px-3 py-2 mb-3">
+
+                <textarea x-model="message" rows="3"
+                          placeholder="Enter your message (optional)"
+                          class="w-full border border-gray-300 rounded px-3 py-2 mb-4"></textarea>
+
                 <div class="flex justify-end gap-2">
-                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                        Submit
-                    </button>
-                    <button type="button" @click="showModal=false" class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">
+                    <button type="button" @click="showModal=false"
+                            class="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded">
                         Cancel
+                    </button>
+                    <button type="submit"
+                            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                        Submit
                     </button>
                 </div>
             </form>
         </div>
     </div>
 
+    {{-- ALPINE SCRIPT --}}
     <script>
-    function accountRequests() {
-        return {
-            showModal: false,
-            modalType: '',
-            modalTitle: '',
-            modalMessage: '',
-            email: '',
+        function accountRequests() {
+            return {
+                showModal: false,
+                modalType: '',
+                modalTitle: '',
+                modalMessage: '',
+                email: '',
+                message: '',
 
-            openModal(type) {
-                this.modalType = type;
-                this.email = '';
-                if (type === 'forgot_password') {
-                    this.modalTitle = 'Password Reset Request';
-                    this.modalMessage = 'Enter your email to request a password reset:';
-                } else if (type === 'new_account') {
-                    this.modalTitle = 'Account Request';
-                    this.modalMessage = 'Enter your email to request a new account:';
+                openModal(type) {
+                    this.modalType = type;
+                    this.email = '';
+                    this.message = '';
+
+                    if (type === 'forgot_password') {
+                        this.modalTitle = 'Password Reset Request';
+                        this.modalMessage = 'Please enter your email and reason for password reset.';
+                    } else {
+                        this.modalTitle = 'Account Request';
+                        this.modalMessage = 'Please enter your email and request message.';
+                    }
+
+                    this.showModal = true;
+                },
+
+                submitRequest() {
+                    fetch("{{ route('account-request.store') }}", {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            email: this.email,
+                            message: this.message,
+                            type: this.modalType
+                        })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        this.modalTitle = 'Request Submitted';
+                        this.modalMessage = data.message;
+                        this.email = '';
+                        this.message = '';
+                    })
+                    .catch(() => {
+                        this.modalTitle = 'Error';
+                        this.modalMessage = 'Something went wrong. Please try again.';
+                    });
                 }
-                this.showModal = true;
-            },
-
-            submitRequest() {
-                if (!this.email) return;
-
-                fetch("{{ route('account-request.store') }}", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ email: this.email, type: this.modalType })
-                })
-                .then(res => res.json())
-                .then(data => {
-                    this.modalTitle = this.modalType === 'forgot_password' ? 'Password Reset Request Sent' : 'Account Request Sent';
-                    this.modalMessage = data.message;
-                    this.showModal = true;
-                })
-                .catch(err => {
-                    this.modalTitle = 'Error';
-                    this.modalMessage = 'Something went wrong. Please try again.';
-                    this.showModal = true;
-                    console.error(err);
-                });
             }
         }
-    }
     </script>
-
 </body>
 </html>

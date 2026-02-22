@@ -9,5 +9,5 @@ class AccountRequest extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['email', 'type', 'message', 'processed'];
+    protected $fillable = ['email', 'type', 'message', 'status', 'processed'];
 }

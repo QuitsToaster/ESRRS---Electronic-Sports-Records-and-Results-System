@@ -580,49 +580,129 @@ document.addEventListener('DOMContentLoaded', () => {
         {{-- Header --}}
         <h3 id="settingsTitle" class="text-lg font-semibold text-center mb-4"></h3>
 
-        {{-- PROFILE FORM --}}
-        <div id="profileForm" class="hidden">
-            <form method="POST" action="{{ route('users.updateProfile') }}">
-                @csrf
-                @method('PUT')
+       {{-- PROFILE FORM --}}
+<div id="profileForm" class="hidden" x-data="passwordValidator()">
+    <form method="POST" action="{{ route('users.updateProfile') }}">
+        @csrf
+        @method('PUT')
 
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Name</label>
-                    <input type="text" name="name"
-                           value="{{ auth()->user()->name }}"
-                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                           required>
-                </div>
+        @php
+            $isSuperAdmin = auth()->user()->role->name === 'Super Admin';
+        @endphp
 
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Email</label>
-                    <input type="email" name="email"
-                           value="{{ auth()->user()->email }}"
-                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                           required>
-                </div>
-
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Password</label>
-                    <input type="password" name="password"
-                           class="mt-1 block w-full border-gray-300 rounded shadow-sm"
-                           placeholder="Leave blank to keep current password">
-                </div>
-
-                <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
-                    <input type="password" name="password_confirmation"
-                           class="mt-1 block w-full border-gray-300 rounded shadow-sm">
-                </div>
-
-                <div class="flex justify-end mt-4">
-                    <button type="submit"
-                            class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                        Save Changes
-                    </button>
-                </div>
-            </form>
+        {{-- NAME --}}
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Name</label>
+            <input
+                type="text"
+                name="name"
+                value="{{ auth()->user()->name }}"
+                class="mt-1 block w-full rounded shadow-sm
+                    {{ $isSuperAdmin
+                        ? 'border-gray-300'
+                        : 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed'
+                    }}"
+                {{ $isSuperAdmin ? '' : 'readonly' }}
+                required
+            >
         </div>
+
+        {{-- EMAIL --}}
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Email</label>
+            <input
+                type="email"
+                name="email"
+                value="{{ auth()->user()->email }}"
+                class="mt-1 block w-full rounded shadow-sm
+                    {{ $isSuperAdmin
+                        ? 'border-gray-300'
+                        : 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed'
+                    }}"
+                {{ $isSuperAdmin ? '' : 'readonly' }}
+                required
+            >
+        </div>
+
+        {{-- PASSWORD --}}
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Password</label>
+            <input
+                type="password"
+                name="password"
+                x-model="password"
+                @input="check()"
+                class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+                placeholder="Leave blank to keep current password"
+            >
+        </div>
+
+        {{-- CONFIRM PASSWORD --}}
+        <div class="mb-3">
+            <label class="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <input
+                type="password"
+                name="password_confirmation"
+                x-model="confirm"
+                class="mt-1 block w-full border-gray-300 rounded shadow-sm"
+            >
+        </div>
+
+        {{-- PASSWORD REQUIREMENTS --}}
+        <div class="mb-4 text-sm">
+            <p class="font-medium text-gray-600 mb-1">Password must contain:</p>
+            <ul class="space-y-1">
+                <li :class="valid.length ? 'text-green-600' : 'text-gray-400'">
+                    • At least 6 characters
+                </li>
+                <li :class="valid.upper ? 'text-green-600' : 'text-gray-400'">
+                    • One uppercase letter
+                </li>
+                <li :class="valid.lower ? 'text-green-600' : 'text-gray-400'">
+                    • One lowercase letter
+                </li>
+                <li :class="valid.special ? 'text-green-600' : 'text-gray-400'">
+                    • One special character
+                </li>
+            </ul>
+        </div>
+
+        {{-- SAVE BUTTON --}}
+        <div class="flex justify-end mt-4">
+            <button
+                type="submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+{{-- ALPINE SCRIPT --}}
+<script>
+function passwordValidator() {
+    return {
+        password: '',
+        confirm: '',
+        valid: {
+            length: false,
+            upper: false,
+            lower: false,
+            special: false,
+        },
+        check() {
+            const p = this.password;
+            this.valid.length = p.length >= 6;
+            this.valid.upper = /[A-Z]/.test(p);
+            this.valid.lower = /[a-z]/.test(p);
+            this.valid.special = /[^A-Za-z0-9]/.test(p);
+        }
+    }
+}
+</script>
+
+
 
         {{-- SWITCH ACCOUNT FORM --}}
         <div id="switchAccountForm" class="hidden">

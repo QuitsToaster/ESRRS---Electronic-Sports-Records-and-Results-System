@@ -244,7 +244,7 @@ public function resetPassword(Request $request, User $user)
     $user->save();
 
     return response()->json([
-        'message' => "Password for {$user->email} has been reset to CEMS12345"
+        'message' => "Password for {$user->email} has been reset to ESRRS@2026"
     ]);
 }
 
