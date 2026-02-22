@@ -732,9 +732,11 @@ document.addEventListener('click', function (e) {
         </main>
 
         {{-- FOOTER --}}
-        <footer class="bg-white shadow p-4 text-center text-gray-600">
-            © {{ date('Y') }} CAVRAA Monitoring System - SDO Santiago City
-        </footer>
+<footer class="bg-white shadow p-4 text-center text-gray-600">
+    © {{ date('Y') }} eSRRS - Electronic Sports Records and Results System. All rights reserved. <br>
+    Developed by Bryan Lloyd T. Tan
+</footer>
+
 
     </div>
 </div>

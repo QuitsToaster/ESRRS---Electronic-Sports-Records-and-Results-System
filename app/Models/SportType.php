@@ -7,12 +7,16 @@ use Illuminate\Database\Eloquent\Model;
 
 class SportType extends Model
 {
-    use HasFactory;
+    protected $table = 'sport_types'; // ✅ FORCE TABLE
 
-    protected $fillable = ['sport_id', 'type_name'];
+    protected $fillable = [
+        'sport_id',
+        'type_name',
+    ];
 
     public function sport()
     {
         return $this->belongsTo(Sport::class);
     }
 }
+

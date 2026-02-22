@@ -129,7 +129,8 @@ function closePrivacyBanner() {
                             @forelse($events as $event)
                                 <div class="p-3 bg-gray-100 rounded shadow flex flex-col sm:flex-row justify-between items-start sm:items-center">
                                     <div>
-                                        <div class="font-semibold">{{ $event->name }}</div>
+                                        <div class="font-extrabold">{{ $event->name }}</div>
+                                        <div class="font-semibold text-gray-700 text-sm">{{ $event->age_group }} {{ $event->category }}</div>
                                         <div class="text-sm text-gray-700">{{ $event->start_date?->format('M d, Y') ?? 'TBA' }} | {{ $event->venue ?? 'TBA' }}</div>
                                         @if($event->status_reason)
                                             <div class="text-xs text-red-600 mt-1">Reason: {{ $event->status_reason }}</div>
@@ -502,9 +503,15 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                         <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
                             <div class="flex justify-between items-center">
                                 <strong
-                                    class="text-gray-800"
-                                    x-text="m.event?.name ?? 'Event'"
-                                ></strong>
+    class="text-gray-800"
+    x-text="
+        m.division === 'Paragames'
+            ? (m.sport_type?.type_name ?? 'Paragames Event')
+            : (m.event?.name ?? 'Event')
+    "
+></strong>
+
+
                                 <span
                                     class="text-gray-500 text-sm font-bold"
                                     x-text="m.sport?.name ?? 'Sport'"

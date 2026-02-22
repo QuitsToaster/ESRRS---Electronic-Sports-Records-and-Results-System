@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\SportType;
 
 class AllAwardResult extends Model
 {
@@ -30,4 +31,15 @@ class AllAwardResult extends Model
     {
         return $this->belongsTo(\App\Models\SportType::class, 'type_id');
     }
+
+
+public function sportType()
+{
+    return $this->belongsTo(
+        \App\Models\SportType::class,
+        'type_id', // FK in all_award_result
+        'id'       // PK in sport_types
+    );
+}
+
 }

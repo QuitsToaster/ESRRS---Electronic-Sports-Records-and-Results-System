@@ -54,12 +54,14 @@ public function home()
         $collection->transform(function ($division) {
             $division->total = $division->gold + $division->silver + $division->bronze;
             $division->results = $division->resultsDivisions()
-                ->with([
-                    'sport',
-                    'event' => fn ($q) => $q->select(
-                        'id','name','age_group','category','award_date','start_date'
-                    )
-                ])->get();
+    ->with([
+        'sport',
+        'sportType', // ✅ ADD THIS
+        'event' => fn ($q) => $q->select(
+            'id', 'name', 'age_group', 'category', 'award_date', 'start_date'
+        )
+    ])->get();
+
             return $division;
         });
         $collection = $collection->sortByDesc(fn ($d) => [$d->total, $d->gold, $d->silver, $d->bronze])->values();
