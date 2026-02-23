@@ -33,44 +33,62 @@
             <table class="min-w-full border-collapse">
                 <thead class="bg-gray-100 border-b border-gray-300">
                     <tr>
-                        <th>ID</th>
-                        <th>Email</th>
-                        <th>Type</th>
-                        <th>Message</th>
-                        <th>Status</th>
-                        <th>Created At</th>
-                        <th>Actions</th>
+                        <th class="px-4 py-2 text-left">ID</th>
+                        <th class="px-4 py-2 text-left">Email</th>
+                        <th class="px-4 py-2 text-left">Type</th>
+                        <th class="px-4 py-2 text-left">Message</th>
+                        <th class="px-4 py-2 text-left">Status</th>
+                        <th class="px-4 py-2 text-left">Created At</th>
+                        <th class="px-4 py-2 text-left">Actions</th>
                     </tr>
                 </thead>
+
                 <tbody>
                     @foreach($accountRequests as $accountRequest)
-                    <tr class="{{ $loop->even ? 'bg-gray-50' : 'bg-white' }} hover:bg-gray-100 transition">
-                        <td>{{ $accountRequest->id }}</td>
-                        <td>{{ $accountRequest->email }}</td>
-                        <td>{{ $accountRequest->type }}</td>
-                        <td>{{ $accountRequest->message ?? '-' }}</td>
-                        <td>{{ $accountRequest->processed ? 'Processed' : 'Pending' }}</td>
-                        <td>{{ $accountRequest->created_at->format('Y-m-d H:i') }}</td>
-                        <td>
-                            @if(!$accountRequest->processed)
-                            <form action="{{ route('account-requests.done', $accountRequest->id) }}" method="POST">
-                                @csrf
-                                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">
-                                    Mark as Processed
-                                </button>
-                            </form>
-                            @else
-                                <span class="text-gray-500">Processed</span>
-                            @endif
-                        </td>
-                    </tr>
+                        <tr class="{{ $loop->even ? 'bg-gray-50' : 'bg-white' }} hover:bg-gray-100 transition">
+                            <td class="px-4 py-2">{{ $accountRequest->id }}</td>
+                            <td class="px-4 py-2">{{ $accountRequest->email }}</td>
+                            <td class="px-4 py-2 capitalize">
+                                {{ str_replace('_', ' ', $accountRequest->type) }}
+                            </td>
+                            <td class="px-4 py-2">{{ $accountRequest->message ?? '-' }}</td>
+
+                            {{-- ✅ STATUS FIX --}}
+                            <td class="px-4 py-2 font-semibold">
+                                @if($accountRequest->status === 'done')
+                                    <span class="text-green-600">Processed</span>
+                                @else
+                                    <span class="text-yellow-600">Pending</span>
+                                @endif
+                            </td>
+
+                            <td class="px-4 py-2">
+                                {{ $accountRequest->created_at->format('Y-m-d H:i') }}
+                            </td>
+
+                            <td class="px-4 py-2">
+                                @if($accountRequest->status !== 'done')
+                                    <form action="{{ route('account-requests.done', $accountRequest->id) }}" method="POST">
+                                        @csrf
+                                        <button type="submit"
+                                            class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded">
+                                            Mark as Processed
+                                        </button>
+                                    </form>
+                                @else
+                                    <span class="text-gray-500 italic">Processed</span>
+                                @endif
+                            </td>
+                        </tr>
                     @endforeach
                 </tbody>
+
             </table>
         </div>
     @endif
 </div>
 @endif
+
 
 
 <div class="flex justify-between items-center mt-12 mb-6">
