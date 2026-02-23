@@ -392,7 +392,12 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 
 @foreach($sports as $sport)
-<h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
+    <h3 class="font-semibold mt-6">
+        {{ strtoupper($sport->name) }}
+        @if(strtolower($sport->division) === 'paragames')
+            — {{ $sport->category ?? 'N/A' }}
+        @endif
+    </h3>
 
 <table class="w-full border text-sm mt-2">
 <thead class="bg-gray-200 text-center">
