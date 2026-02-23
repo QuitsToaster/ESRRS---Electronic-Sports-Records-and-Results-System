@@ -24,7 +24,7 @@
 
 <body class="bg-gray-100 font-sans overflow-x-hidden">
 
-{{-- FULL PAGE LOADER --}}
+<!-- {{-- FULL PAGE LOADER --}}
 <div
     x-data="{ loading: true }"
     x-init="
@@ -66,7 +66,7 @@
             loadingText.textContent = phrases[index];
         }, 1500); // change every 1.5 seconds
     });
-</script>
+</script> -->
 
 </div>
 

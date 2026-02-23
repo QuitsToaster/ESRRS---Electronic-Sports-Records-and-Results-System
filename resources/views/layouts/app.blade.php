@@ -30,7 +30,7 @@ html, body {
 
 <body class="font-sans antialiased bg-gray-100">
 
-{{-- FULL PAGE LOADER --}}
+<!-- {{-- FULL PAGE LOADER --}}
 <div
     x-data="{ loading: true }"
     x-init="
@@ -55,7 +55,7 @@ html, body {
             Loading ESRRS…
         </p>
     </div>
-</div>
+</div> -->
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
