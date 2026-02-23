@@ -89,7 +89,16 @@
                                ($award->medal === 'Silver' ? 'text-gray-600' : 'text-orange-600') }}">
                             {{ $award->medal }}
                         </td>
-                        <td class="px-4 py-3">{{ $award->event?->name ?? 'N/A' }}</td>
+                        <td class="px-4 py-2 text-gray-700">
+    <strong>
+        @if($award->sport && $award->sport->division === 'Paragames')
+            {{ $award->type_name ?? 'Paragames Event' }}
+        @else
+            {{ $award->event?->name ?? 'Event' }}
+        @endif
+    </strong>
+</td>
+
                         <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
                         <td class="px-4 py-3">{{ $award->category }}</td>
                         <td class="px-4 py-3">

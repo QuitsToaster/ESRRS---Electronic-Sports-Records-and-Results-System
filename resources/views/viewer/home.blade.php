@@ -368,6 +368,7 @@ $medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
     ];
 });
 
+
 /*
 |--------------------------------------------------------------------------
 | SORTING (Gold → Silver → Bronze)
@@ -502,14 +503,14 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                     <template x-for="m in list" :key="m.id">
                         <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
                             <div class="flex justify-between items-center">
-                                <strong
-    class="text-gray-800"
+                               <strong class="text-gray-800"
     x-text="
         m.division === 'Paragames'
-            ? (m.sport_type?.type_name ?? 'Paragames Event')
+            ? (m.type_name ?? 'Paragames Event')   {{-- ✅ use type_name from the controller --}}
             : (m.event?.name ?? 'Event')
     "
 ></strong>
+
 
 
                                 <span

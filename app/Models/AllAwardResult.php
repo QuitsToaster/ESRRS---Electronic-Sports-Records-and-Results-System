@@ -28,18 +28,14 @@ class AllAwardResult extends Model
     }
 
     public function type()
-    {
-        return $this->belongsTo(\App\Models\SportType::class, 'type_id');
-    }
-
+{
+    return $this->belongsTo(\App\Models\SportType::class, 'type_id', 'id');
+}
 
 public function sportType()
 {
-    return $this->belongsTo(
-        \App\Models\SportType::class,
-        'type_id', // FK in all_award_result
-        'id'       // PK in sport_types
-    );
+    return $this->belongsTo(\App\Models\SportType::class, 'type_id', 'id');
 }
+
 
 }

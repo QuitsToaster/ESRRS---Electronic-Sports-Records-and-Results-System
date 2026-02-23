@@ -109,10 +109,10 @@ public function home()
 
 
 
-   public function participantShow(Division $division, Request $request)
+  public function participantShow(Division $division, Request $request)
 {
     /* ================= TEAM / AGGREGATED MEDALS ================= */
-    $teamResults = AllAwardResult::with(['sport','event'])
+    $teamResults = AllAwardResult::with(['sport', 'event', 'sportType', 'type'])
         ->where('sdo', $division->name)
         ->get();
 
@@ -128,6 +128,7 @@ public function home()
                 'medal'    => $r->medal,
                 'event'    => $r->event,
                 'sport'    => $r->sport,
+                'type_name'=> $r->sportType?->type_name, // ✅ include type_name here
                 'category' => 'Team',
                 'date'     => $r->created_at,
             ])
@@ -137,6 +138,7 @@ public function home()
                 'medal'    => $r->medal,
                 'event'    => $r->event,
                 'sport'    => $r->sport,
+                'type_name'=> $r->sportType?->type_name, // ✅ include type_name here too
                 'category' => 'Individual',
                 'date'     => $r->created_at,
             ])
@@ -157,6 +159,7 @@ public function home()
         'medalCounts'
     ));
 }
+
 
 
 
@@ -392,7 +395,15 @@ public function gallery(Request $request)
         $division->total = $division->gold + $division->silver + $division->bronze;
 
         // Load the actual ResultDivision rows for the modal
-        $division->results = $division->resultsDivisions()->with(['sport', 'event'])->get();
+        $division->results = $division->resultsDivisions()
+    ->with([
+        'sport',
+        'event',
+        'sportType', // ✅ ensure sportType is loaded
+        'type'       // ✅ optional: in case type_id is directly needed
+    ])
+    ->get();
+
 
         return $division;
     });
