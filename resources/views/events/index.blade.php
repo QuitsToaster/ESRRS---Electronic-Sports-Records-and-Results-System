@@ -14,7 +14,7 @@
         <li>Use the search box to quickly find competitions by name, sport, division, or venue.</li>
         <li>Click <strong>+ Add Competition</strong> to register a new event.</li>
         <li>Update the event status using the dropdown: <strong>Upcoming</strong>, <strong>Ongoing</strong>, <strong>Delayed</strong>, or <strong>Finished</strong>. Provide a reason if delayed.</li>
-        <li>Manage matches and winners by clicking <strong>Manage</strong> in the Actions column.</li>
+        <li>Manage matches by clicking <strong>Manage</strong> in the Actions column.</li>
         <li>Edit or delete competitions directly from the Actions column as needed.</li>
     </ul>
 </div>
@@ -78,7 +78,6 @@
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Matches</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Venue</th>
-                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Winners</th>
                 <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Actions</th>
             </tr>
         </thead>
@@ -168,25 +167,6 @@
                     {{-- Venue --}}
                     <td class="px-4 py-3 text-gray-700">
                         {{ $event->venue ?? 'TBA' }}
-                    </td>
-
-                    {{-- Winners --}}
-                    <td class="px-4 py-3 text-sm">
-                        @if($event->goldWinner || $event->silverWinner || $event->bronzeWinner)
-                            <div class="flex flex-col gap-1">
-                                @if($event->goldWinner)
-                                    <span class="text-yellow-500 font-semibold">🥇 {{ $event->goldWinner->name }}</span>
-                                @endif
-                                @if($event->silverWinner)
-                                    <span class="text-gray-500 font-semibold">🥈 {{ $event->silverWinner->name }}</span>
-                                @endif
-                                @if($event->bronzeWinner)
-                                    <span class="text-orange-500 font-semibold">🥉 {{ $event->bronzeWinner->name }}</span>
-                                @endif
-                            </div>
-                        @else
-                            <span class="text-gray-400 italic">No winners yet</span>
-                        @endif
                     </td>
 
                     {{-- Actions --}}

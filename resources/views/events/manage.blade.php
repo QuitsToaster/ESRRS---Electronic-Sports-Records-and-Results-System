@@ -114,48 +114,4 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 
-{{-- 🏅 MEDAL WINNERS --}}
-<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6">
-    <h3 class="text-lg font-semibold mb-4">
-        Medal Winners
-    </h3>
-
-    <form method="POST"
-          action="{{ route('events.winners', $event->id) }}"
-          class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        @csrf
-
-        @foreach(['Gold','Silver','Bronze'] as $medal)
-    @php $field = strtolower($medal) . '_division_id'; @endphp
-
-    <div>
-        <label class="block font-medium mb-1
-            {{ strtolower($medal) === 'gold' ? 'text-yellow-700' :
-               (strtolower($medal) === 'silver' ? 'text-gray-700' : 'text-amber-700') }}">
-            {{ $medal }} Medal
-        </label>
-
-        <select name="{{ $field }}" required
-                class="w-full border rounded px-3 py-2">
-            <option value="">Select Division (SDO)</option>
-            @foreach($event->divisions as $division)
-                <option value="{{ $division->id }}"
-                    {{ old($field, $event->$field) == $division->id ? 'selected' : '' }}>
-                    {{ $division->name }}
-                </option>
-            @endforeach
-        </select>
-    </div>
-@endforeach
-
-
-        <div class="md:col-span-3 flex justify-end mt-4">
-            <button type="submit"
-                    class="px-6 py-2 bg-blue-600 text-white rounded font-semibold">
-                Save Winners
-            </button>
-        </div>
-    </form>
-</div>
-
 @endsection
