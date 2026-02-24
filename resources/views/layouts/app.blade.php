@@ -196,8 +196,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
             </div>
         @endif
-
-        {{-- Results --}}
+{{-- Results --}}
 @if(in_array('results', $access))
     <div x-data="{ isOpen: {{ request()->routeIs('results_divisions.*') ? 'true' : 'false' }} }">
         <button data-nav @click="isOpen = !isOpen"
@@ -208,21 +207,23 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
 
         <div x-show="isOpen" x-cloak class="pl-6 mt-1 space-y-1">
-    {{-- Show Official Results only if NOT Tournament Secretary --}}
-    @if(auth()->user()->role->name !== 'Tournament Secretary')
-    <a href="{{ route('results_divisions.index') }}"
-       class="block px-4 py-2 rounded hover:bg-blue-600
-       {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
-        Official Results
-    </a>
-@endif
 
-<a href="{{ route('results_divisions.create') }}"
-   class="block px-4 py-2 rounded hover:bg-blue-600
-   {{ request()->routeIs('results_divisions.create') ? 'bg-blue-700 font-semibold' : '' }}">
-    Award Medal
-</a>
-</div>
+            {{-- Official Results: only for roles that are NOT Tournament Secretary --}}
+            @if(auth()->check() && auth()->user()->role->name !== 'Tournament Secretary')
+                <a href="{{ route('results_divisions.index') }}"
+                   class="block px-4 py-2 rounded hover:bg-blue-600
+                   {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
+                    Official Results
+                </a>
+            @endif
+
+            {{-- Award Medal: visible to all users with 'results' access --}}
+            <a href="{{ route('results_divisions.create') }}"
+               class="block px-4 py-2 rounded hover:bg-blue-600
+               {{ request()->routeIs('results_divisions.create') ? 'bg-blue-700 font-semibold' : '' }}">
+                Award Medal
+            </a>
+        </div>
     </div>
 @endif
 
