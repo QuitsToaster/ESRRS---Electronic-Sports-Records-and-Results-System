@@ -77,6 +77,7 @@
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Level</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Category</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Matches</th>
+                <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Game Winners</th>
                 <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Venue</th>
                 <th class="px-4 py-3 text-right text-sm font-semibold text-gray-700">Actions</th>
             </tr>
@@ -159,6 +160,27 @@
         </ul>
     @else
         TBA
+    @endif
+</td>
+
+{{-- Category --}}
+                    <td class="px-4 py-3 text-gray-700">
+    @if(is_array($event->game_winners) && count($event->game_winners))
+        <ul class="list-disc list-inside text-sm">
+            @foreach($event->game_winners as $gameIndex => $divisionId)
+                @php
+                    $division = $event->divisions->firstWhere('id', $divisionId);
+                @endphp
+                <li class="list-none p-0 m-0" >
+                    <strong>Game {{ $gameIndex + 1 }}:</strong>
+                    <span>
+                        {{ $division?->name ?? 'TBA' }}
+                    </span>
+                </li>
+            @endforeach
+        </ul>
+    @else
+        <span class="italic text-gray-400">TBA</span>
     @endif
 </td>
 

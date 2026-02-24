@@ -97,6 +97,65 @@
     </form>
 </div>
 
+{{-- GAME WINNERS --}}
+<div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 mb-6">
+    <h3 class="text-lg font-semibold mb-4">
+        Game Winners
+    </h3>
+
+    @if(empty($event->games))
+        <p class="text-sm text-gray-500">No games available for this event.</p>
+    @else
+        <form method="POST" action="{{ route('events.saveGameWinners', $event->id) }}">
+            @csrf
+
+            <div class="space-y-4">
+                @foreach($event->games as $index => $game)
+                    @php
+                        // 🔥 Split game string: "SDO - A vs SDO - B"
+                        $participants = collect(
+                            preg_split('/\s+vs\s+/i', $game)
+                        )->map(fn ($v) => trim($v));
+
+                        // 🔥 Filter only divisions involved in this game
+                        $gameDivisions = $event->divisions->filter(function ($division) use ($participants) {
+                            return $participants->contains($division->name);
+                        });
+                    @endphp
+
+                    <div class="border rounded p-4">
+                        <p class="font-semibold mb-2">
+                            Game {{ $index + 1 }}: {{ $game }}
+                        </p>
+
+                        <select name="game_winners[{{ $index }}]"
+                                class="w-full border rounded px-3 py-2"
+                                {{ $gameDivisions->isEmpty() ? 'disabled' : '' }}>
+                            <option value="">-- Select Winner --</option>
+
+                            @forelse($gameDivisions as $division)
+                                <option value="{{ $division->id }}"
+                                    {{ ($event->game_winners[$index] ?? null) == $division->id ? 'selected' : '' }}>
+                                    {{ $division->name }}
+                                </option>
+                            @empty
+                                <option disabled>No matching divisions found</option>
+                            @endforelse
+                        </select>
+                    </div>
+                @endforeach
+            </div>
+
+            <div class="flex justify-end mt-6">
+                <button type="submit"
+                        class="px-6 py-2 bg-green-600 text-white rounded font-semibold">
+                    Save Game Winners
+                </button>
+            </div>
+        </form>
+    @endif
+</div>
+
 {{-- Add JS to toggle reason field --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {

@@ -279,5 +279,27 @@ public function updateStatus(Request $request, Event $event)
     return back()->with('success', 'Event status updated successfully.');
 }
 
+public function saveGameWinners(Request $request, Event $event)
+{
+    $request->validate([
+        'game_winners' => 'required|array',
+        'game_winners.*' => 'nullable|exists:divisions,id',
+    ]);
+
+    $event->update([
+        'game_winners' => $request->game_winners,
+    ]);
+
+    AuditLog::create([
+        'model_type' => 'Event',
+        'model_id'   => $event->id,
+        'user_id'    => auth()->id(),
+        'old_values' => null,
+        'new_values' => json_encode($request->game_winners),
+        'action'     => 'Updated Game Winners',
+    ]);
+
+    return back()->with('success', 'Game winners saved successfully.');
+}
 
 }

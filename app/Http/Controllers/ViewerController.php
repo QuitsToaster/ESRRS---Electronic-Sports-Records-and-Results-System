@@ -173,19 +173,28 @@ public function home()
             'goldWinner',
             'silverWinner',
             'bronzeWinner',
-            'sport',
-            'games'
+            'sport'
         ])
-        ->when($search, function ($q) use ($search) {
-            $q->where('name', 'like', "%{$search}%");
-        })
-        ->when($status, function ($q) use ($status) {
-            $q->where('status', $status);
-        })
-        ->orderBy('start_date', 'asc')
+        ->when($search, fn ($q) =>
+            $q->where('name', 'like', "%{$search}%")
+        )
+        ->when($status, fn ($q) =>
+            $q->where('status', $status)
+        )
+        ->orderBy('start_date')
         ->get();
 
     $eventsJson = $events->map(function ($event) {
+
+        $resolvedGameWinners = [];
+
+        if (is_array($event->game_winners)) {
+            foreach ($event->game_winners as $index => $divisionId) {
+                $division = $event->divisions->firstWhere('id', $divisionId);
+                $resolvedGameWinners[$index] = $division?->name;
+            }
+        }
+
         return [
             'id'           => $event->id,
             'name'         => $event->name,
@@ -194,11 +203,8 @@ public function home()
             'age_group'    => $event->age_group,
             'category'     => $event->category,
             'games'        => $event->games ?? [],
+            'game_winners' => $resolvedGameWinners,
             'sport'        => $event->sport ? ['name' => $event->sport->name] : null,
-            'divisions'    => $event->divisions->map(fn ($d) => [
-                'id' => $d->id,
-                'name' => $d->name
-            ])->toArray(),
             'goldWinner'   => $event->goldWinner ? ['name' => $event->goldWinner->name] : null,
             'silverWinner' => $event->silverWinner ? ['name' => $event->silverWinner->name] : null,
             'bronzeWinner' => $event->bronzeWinner ? ['name' => $event->bronzeWinner->name] : null,

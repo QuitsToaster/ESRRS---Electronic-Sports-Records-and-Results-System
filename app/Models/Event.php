@@ -25,6 +25,7 @@ class Event extends Model
     'bronze_division_id',
     'award_date',
     'games', 
+    'game_winners',
 ];
 
     protected $casts = [
@@ -32,6 +33,7 @@ class Event extends Model
         'award_date' => 'datetime',
         'is_ball_game'  => 'boolean',
         'games' => 'array',
+        'game_winners' => 'array', 
     ];
 
     public function sport()
