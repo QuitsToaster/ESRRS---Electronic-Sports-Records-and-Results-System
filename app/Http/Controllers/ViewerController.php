@@ -324,6 +324,7 @@ public function gallery(Request $request)
     public function announcements(Request $request)
 {
     $search = $request->input('search');
+    $type   = $request->input('type');
 
     $announcements = Announcement::with('event')
         ->when($search, function($query, $search) {
@@ -333,12 +334,14 @@ public function gallery(Request $request)
                       $q->where('name', 'like', "%{$search}%");
                   });
         })
+        ->when($type, function($query, $type) {
+            $query->where('type', $type);
+        })
         ->latest()
         ->get();
 
     return view('viewer.announcements', compact('announcements'));
 }
-
 
      // Feedback Page
     public function feedbacks()

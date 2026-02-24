@@ -12,15 +12,30 @@
             <p class="text-gray-600 mt-2 text-lg" style="font-family: 'Poppins', sans-serif;">Stay up-to-date with the latest announcements, schedules, and results</p>
         </div>
 
-        {{-- Search Form --}}
+        {{-- Search & Filter Form --}}
         <form method="GET" action="{{ route('viewer.announcements') }}" class="flex flex-wrap gap-2 items-center">
             <input type="text" name="search" value="{{ request('search') ?? '' }}"
                    placeholder="Search announcements..."
                    class="w-full sm:w-64 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition">
+
+            {{-- Filter by Type --}}
+            <select name="type"
+                    class="w-full sm:w-48 border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-blue-500 transition">
+                <option value="">All Types</option>
+                @php
+                    $types = ['General','Schedule Update','Venue Update','Results'];
+                @endphp
+                @foreach($types as $type)
+                    <option value="{{ $type }}" {{ request('type') === $type ? 'selected' : '' }}>
+                        {{ $type }}
+                    </option>
+                @endforeach
+            </select>
+
             <button type="submit" class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md shadow font-semibold transition">
                 Search
             </button>
-            @if(request('search'))
+            @if(request('search') || request('type'))
                 <a href="{{ route('viewer.announcements') }}" class="text-gray-500 hover:text-gray-700 px-2 py-2 transition">
                     Clear
                 </a>
@@ -74,13 +89,11 @@
                                 @endphp
 
                                 @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
-                                    {{-- Clickable image preview --}}
                                     <button @click="openModal = true; image='{{ asset('storage/'.$file->file_path) }}'"
                                             class="block w-20 h-20 overflow-hidden rounded shadow hover:scale-105 transform transition focus:outline-none">
                                         <img src="{{ asset('storage/'.$file->file_path) }}" alt="Attachment" class="w-full h-full object-cover">
                                     </button>
                                 @else
-                                    {{-- Document/PDF icon preview --}}
                                     <a href="{{ asset('storage/'.$file->file_path) }}" target="_blank"
                                        class="flex items-center justify-center w-20 h-20 bg-gray-100 rounded shadow text-xs text-gray-800 font-semibold hover:bg-gray-200 transition text-center p-1">
                                         {{ strtoupper($ext) }}
