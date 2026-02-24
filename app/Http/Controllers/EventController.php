@@ -47,54 +47,67 @@ class EventController extends Controller
        CREATE
     ========================= */
     public function create()
-{
-    $sports = Sport::with('sportTypes')->orderBy('name')->get();
-    $divisions = Division::orderBy('name')->get();
+    {
+        $sports = Sport::with('sportTypes')->orderBy('name')->get();
+        $divisions = Division::orderBy('name')->get();
 
-    return view('events.create', compact('sports', 'divisions'));
-}
+        return view('events.create', compact('sports', 'divisions'));
+    }
 
+   /* =========================
+       STORE
+    ========================= */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'sport_id'      => 'required|exists:sports,id',
+            'sport_type_id' => 'required|exists:sport_types,id',
+            'age_group'     => 'required|string',
+            'category'      => 'nullable|string',
+            'venue'         => 'nullable|string|max:255',
+            'start_date'    => 'nullable|date',
+            'divisions'     => 'required|array|min:1',
+            'divisions.*'   => 'exists:divisions,id',
+            'games'         => 'nullable|array',
+            'games.*'       => 'nullable|string|max:255',
+        ]);
 
-   public function store(Request $request)
-{
-    $request->validate([
-        'sport_id'      => 'required|exists:sports,id',
-        'sport_type_id' => 'required|exists:sport_types,id',
-        'age_group'     => 'required|string',
-        'category'      => 'nullable|string',
-        'venue'         => 'nullable|string|max:255',
-        'start_date'    => 'nullable|date',
-        'divisions'     => 'required|array|min:1',
-        'divisions.*'   => 'exists:divisions,id',
-        'games'   => 'nullable|array',
-        'games.*' => 'nullable|string|max:255',
-    ]);
+        $sport     = Sport::findOrFail($request->sport_id);
+        $sportType = \App\Models\SportType::findOrFail($request->sport_type_id);
 
-    $sport     = Sport::findOrFail($request->sport_id);
-    $sportType = \App\Models\SportType::findOrFail($request->sport_type_id);
+        $ageGroup = $sport->division === 'Para Games'
+            ? 'Para Games'
+            : $request->age_group;
 
-    // 🔥 FORCE PARA LEVEL
-    $ageGroup = $sport->division === 'Para Games'
-        ? 'Para Games'
-        : $request->age_group;
+        $event = Event::create([
+            'sport_id'      => $sport->id,
+            'sport_type_id' => $sportType->id,
+            'name'          => $sportType->type_name,
+            'status'        => 'Upcoming',
+            'age_group'     => $ageGroup,
+            'category'      => $request->category,
+            'venue'         => $request->venue,
+            'start_date'    => $request->start_date,
+            'games'         => array_values(array_filter($request->games ?? [])),
+        ]);
 
-    $event = Event::create([
-        'sport_id'      => $sport->id,
-        'sport_type_id' => $sportType->id,
-        'name'          => $sportType->type_name,
-        'status'        => 'Upcoming', // DEFAULT
-        'age_group'     => $ageGroup,
-        'category'      => $request->category,
-        'venue'         => $request->venue,
-        'start_date'    => $request->start_date,
-        'games'         => array_values(array_filter($request->games ?? [])),
-    ]);
+        $event->divisions()->sync($request->divisions);
 
-    $event->divisions()->sync($request->divisions);
+        // -------------------------------
+        // CREATE ANNOUNCEMENT FOR NEW EVENT
+        // -------------------------------
+        Announcement::create([
+            'title'        => "New Event: {$event->name}",
+            'content'      => "Event: {$event->name}\nSport ID: {$event->sport_id}\nStart Date: {$event->start_date}\nGames: " . implode(', ', $event->games) . "\nStatus: {$event->status}\nStatus Reason: {$event->status_reason}",
+            'type'         => 'Event',
+            'event_id'     => $event->id,
+            'user_id'      => Auth::id(),
+            'published_at' => now(),
+        ]);
 
-    return redirect()->route('events.index')
-        ->with('success', 'Event created successfully!');
-}
+        return redirect()->route('events.index')
+            ->with('success', 'Event created successfully and announcement added!');
+    }
 
 
 
@@ -106,8 +119,6 @@ class EventController extends Controller
     {
         $sports    = Sport::with('sportTypes')->get();
         $divisions = Division::orderBy('name')->get();
-
-        // 🔥 THIS IS WHAT WAS MISSING
         $event->load('divisions');
 
         return view('events.edit', compact('event', 'sports', 'divisions'));
@@ -144,7 +155,7 @@ class EventController extends Controller
             'is_ball_game'  => $request->boolean('is_ball_game'),
             'venue'         => $request->venue,
             'start_date'    => $request->start_date,
-            'games'         => array_values(array_filter($request->games ?? [])), // 🔥 Save games here
+            'games'         => array_values(array_filter($request->games ?? [])),
         ]);
 
         $event->divisions()->sync($request->divisions);
@@ -158,7 +169,22 @@ class EventController extends Controller
             'action'     => 'Updated Event: ' . $event->name,
         ]);
 
-        return redirect()->route('events.index')->with('success', 'Event updated successfully!');
+        // -------------------------------
+        // CREATE OR UPDATE ANNOUNCEMENT FOR EVENT UPDATE
+        // -------------------------------
+        $announcementContent = "Event has been updated: {$event->name}\nSport ID: {$event->sport_id}\nStart Date: {$event->start_date}\nGames: " . implode(', ', $event->games) . "\nStatus: {$event->status}\nStatus Reason: {$event->status_reason}";
+
+        $announcement = Announcement::updateOrCreate(
+            ['event_id' => $event->id, 'type' => 'Event'],
+            [
+                'title'        => "Event Updated: {$event->name}",
+                'content'      => $announcementContent,
+                'user_id'      => Auth::id(),
+                'published_at' => now(),
+            ]
+        );
+
+        return redirect()->route('events.index')->with('success', 'Event updated successfully and announcement updated!');
     }
 
 
@@ -254,31 +280,49 @@ public function saveWinners(Request $request, Event $event)
     return back()->with('success', 'Winners saved successfully.');
 }
 
-public function updateStatus(Request $request, Event $event)
-{
-    $request->validate([
-        'status' => 'required|in:Upcoming,Ongoing,Delayed,Finished',
-        'status_reason' => 'nullable|string|max:500',
-    ]);
+/* =========================
+       UPDATE STATUS
+    ========================= */
+    public function updateStatus(Request $request, Event $event)
+    {
+        $request->validate([
+            'status' => 'required|in:Upcoming,Ongoing,Delayed,Finished',
+            'status_reason' => 'nullable|string|max:500',
+        ]);
 
-    $oldValues = $event->toArray();
+        $oldValues = $event->toArray();
 
-    $event->update([
-        'status' => $request->status,
-        'status_reason' => $request->status === 'Delayed' ? $request->status_reason : null,
-    ]);
+        $event->update([
+            'status' => $request->status,
+            'status_reason' => $request->status === 'Delayed' ? $request->status_reason : null,
+        ]);
 
-    AuditLog::create([
-        'model_type' => 'Event',
-        'model_id'   => $event->id,
-        'user_id'    => Auth::id(),
-        'old_values' => json_encode($oldValues),
-        'new_values' => json_encode($event->toArray()),
-        'action'     => 'Updated Event Status: ' . $event->name,
-    ]);
+        AuditLog::create([
+            'model_type' => 'Event',
+            'model_id'   => $event->id,
+            'user_id'    => Auth::id(),
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($event->toArray()),
+            'action'     => 'Updated Event Status: ' . $event->name,
+        ]);
 
-    return back()->with('success', 'Event status updated successfully.');
-}
+        // -------------------------------
+        // ANNOUNCEMENT FOR STATUS CHANGE
+        // -------------------------------
+        $announcementContent = "Event status updated: {$event->name}\nStatus: {$event->status}\nStatus Reason: {$event->status_reason}";
+
+        $announcement = Announcement::updateOrCreate(
+            ['event_id' => $event->id, 'type' => 'Event'],
+            [
+                'title'        => "Event Status Updated: {$event->name}",
+                'content'      => $announcementContent,
+                'user_id'      => Auth::id(),
+                'published_at' => now(),
+            ]
+        );
+
+        return back()->with('success', 'Event status updated and announcement created/updated.');
+    }
 
 public function saveGameWinners(Request $request, Event $event)
 {
