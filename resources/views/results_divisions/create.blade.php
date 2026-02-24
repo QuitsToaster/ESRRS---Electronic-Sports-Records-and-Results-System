@@ -604,8 +604,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                     </tbody>
                 </table>
             </div>
-
-         {{-- ================================================= --}}
+{{-- ================================================= --}}
 {{-- 🏆 ALL AWARDS FORM --}}
 {{-- ================================================= --}}
 <form method="POST"
@@ -635,99 +634,106 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         @endif
     </h3>
 
-<table class="w-full border text-sm mt-2
-    {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
+    <table class="w-full border text-sm mt-2
+        {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
 
-<thead class="bg-gray-200 text-center">
-<tr>
-    <th class="border">Event Type</th>
-    @foreach($divisions as $d)
-        <th class="border bg-yellow-300">G</th>
-        <th class="border bg-gray-300">S</th>
-        <th class="border bg-orange-200">B</th>
-    @endforeach
-</tr>
-</thead>
+        <thead class="bg-gray-200 text-center">
+            <tr>
+                <th class="border">Event Type</th>
+                @foreach($divisions as $d)
+                    {{-- Division/SDO Label above G/S/B --}}
+                    <th colspan="3" class="border bg-green-100">{{ $d->name }}</th>
+                @endforeach
+            </tr>
+            <tr>
+                <th class="border"></th>
+                @foreach($divisions as $d)
+                    <th class="border bg-yellow-300">G</th>
+                    <th class="border bg-gray-300">S</th>
+                    <th class="border bg-orange-200">B</th>
+                @endforeach
+            </tr>
+        </thead>
 
-<tbody>
-@foreach($sport->types as $type)
-<tr>
-<td class="border px-2">{{ $type->type_name }}</td>
+        <tbody>
+            @foreach($sport->types as $type)
+                <tr>
+                    <td class="border px-2">{{ $type->type_name }}</td>
 
-@foreach($divisions as $d)
-@foreach(['Gold','Silver','Bronze'] as $medal)
-<td class="border text-center">
-<input type="number"
-       min="0"
-       value="0"
-       class="w-16 border rounded text-center"
-       name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]"
-       {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-</td>
-@endforeach
-@endforeach
+                    @foreach($divisions as $d)
+                        @foreach(['Gold','Silver','Bronze'] as $medal)
+                            <td class="border text-center">
+                                <input type="number"
+                                       min="0"
+                                       value="0"
+                                       class="w-16 border rounded text-center"
+                                       name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]"
+                                       {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
+                            </td>
+                        @endforeach
+                    @endforeach
+                </tr>
+            @endforeach
+        </tbody>
 
-</tr>
-@endforeach
-</tbody>
-</table>
+    </table>
 @endforeach
 
 {{-- ================= ACTION BUTTONS ================= --}}
 <div class="flex justify-end mt-6">
 
-{{-- 🟡 TOURNAMENT SECRETARY --}}
-@if($user->role->name === 'Tournament Secretary')
-<button type="button"
-    class="bg-yellow-500 text-white px-6 py-2 rounded"
-    @click="showConfirm=true">
-    Forward for Validation
-</button>
+    {{-- 🟡 TOURNAMENT SECRETARY --}}
+    @if($user->role->name === 'Tournament Secretary')
+        <button type="button"
+            class="bg-yellow-500 text-white px-6 py-2 rounded"
+            @click="showConfirm=true">
+            Forward for Validation
+        </button>
 
-{{-- MODAL --}}
-<div x-show="showConfirm"
-     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+        {{-- MODAL --}}
+        <div x-show="showConfirm"
+             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
 
-    <div class="bg-white rounded shadow p-6 w-96">
-        <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
+            <div class="bg-white rounded shadow p-6 w-96">
+                <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
 
-        <p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
+                <p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
 
-        <input type="file"
-               name="validation_file"
-               accept=".pdf,image/*"
-               class="w-full border rounded mb-4">
+                <input type="file"
+                       name="validation_file"
+                       accept=".pdf,image/*"
+                       class="w-full border rounded mb-4">
 
-        <div class="flex justify-end gap-2">
-            <button type="button"
-                    class="border px-4 py-2 rounded"
-                    @click="showConfirm=false">
-                Cancel
-            </button>
+                <div class="flex justify-end gap-2">
+                    <button type="button"
+                            class="border px-4 py-2 rounded"
+                            @click="showConfirm=false">
+                        Cancel
+                    </button>
 
-            <button type="submit"
-                    class="bg-yellow-500 text-white px-4 py-2 rounded">
-                Yes, Forward
-            </button>
+                    <button type="submit"
+                            class="bg-yellow-500 text-white px-4 py-2 rounded">
+                        Yes, Forward
+                    </button>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
-{{-- 🔵 SUPER ADMIN --}}
-@elseif($user->role->name === 'Super Admin')
-<button type="submit"
-        class="bg-blue-600 text-white px-6 py-2 rounded">
-    Save All Awards
-</button>
+    {{-- 🔵 SUPER ADMIN --}}
+    @elseif($user->role->name === 'Super Admin')
+        <button type="submit"
+                class="bg-blue-600 text-white px-6 py-2 rounded">
+            Save All Awards
+        </button>
 
-{{-- 🚫 TOURNAMENT MANAGER --}}
-@else
-<button type="button"
-        disabled
-        class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
-    Editing Disabled
-</button>
-@endif
+    {{-- 🚫 TOURNAMENT MANAGER --}}
+    @else
+        <button type="button"
+                disabled
+                class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
+            Editing Disabled
+        </button>
+    @endif
 
 </div>
 </form>
