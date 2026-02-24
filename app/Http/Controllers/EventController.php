@@ -8,6 +8,7 @@ use App\Models\Division;
 use App\Models\AuditLog;
 use App\Models\Result;
 use App\Models\ResultDivision;
+use App\Models\Announcement;
 use App\Models\Game;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -286,20 +287,82 @@ public function saveGameWinners(Request $request, Event $event)
         'game_winners.*' => 'nullable|exists:divisions,id',
     ]);
 
+    $oldValues = $event->game_winners;
+
+    // Update event game winners
     $event->update([
         'game_winners' => $request->game_winners,
     ]);
 
+    // Audit Log for event update
     AuditLog::create([
         'model_type' => 'Event',
         'model_id'   => $event->id,
         'user_id'    => auth()->id(),
-        'old_values' => null,
+        'old_values' => json_encode($oldValues),
         'new_values' => json_encode($request->game_winners),
         'action'     => 'Updated Game Winners',
     ]);
 
-    return back()->with('success', 'Game winners saved successfully.');
+    // -------------------------------
+    // CREATE OR UPDATE ANNOUNCEMENT FOR WINNERS
+    // -------------------------------
+    $announcementContent = "Game winners have been updated for the event: {$event->name}.\n\n";
+    foreach ($request->game_winners as $index => $divisionId) {
+        if ($divisionId) {
+            $division = Division::find($divisionId);
+            $announcementContent .= "Game " . ($index + 1) . " Winner: " . $division->name . "\n";
+        }
+    }
+
+    if (!empty(trim($announcementContent))) {
+        // Check if a Results announcement already exists for this event
+        $announcement = Announcement::where('event_id', $event->id)
+            ->where('type', 'Results')
+            ->first();
+
+        if ($announcement) {
+            // Update existing announcement
+            $oldAnnouncement = $announcement->toArray();
+
+            $announcement->update([
+                'content'      => $announcementContent,
+                'published_at' => now(),
+                'user_id'      => auth()->id(),
+                'title'        => "Results Updated: {$event->name}",
+            ]);
+
+            AuditLog::create([
+                'model_type' => 'Announcement',
+                'model_id'   => $announcement->id,
+                'user_id'    => auth()->id(),
+                'old_values' => json_encode($oldAnnouncement),
+                'new_values' => json_encode($announcement->fresh()->toArray()),
+                'action'     => 'Updated Results Announcement',
+            ]);
+        } else {
+            // Create new announcement
+            $announcement = Announcement::create([
+                'title'        => "Results Updated: {$event->name}",
+                'content'      => $announcementContent,
+                'type'         => 'Results',
+                'event_id'     => $event->id,
+                'user_id'      => auth()->id(),
+                'published_at' => now(),
+            ]);
+
+            AuditLog::create([
+                'model_type' => 'Announcement',
+                'model_id'   => $announcement->id,
+                'user_id'    => auth()->id(),
+                'old_values' => null,
+                'new_values' => json_encode($announcement->toArray()),
+                'action'     => 'Created Results Announcement',
+            ]);
+        }
+    }
+
+    return back()->with('success', 'Game winners saved successfully and announcement updated.');
 }
 
 }
