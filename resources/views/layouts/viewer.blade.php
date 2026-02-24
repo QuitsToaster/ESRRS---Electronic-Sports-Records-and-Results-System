@@ -193,52 +193,76 @@ document.addEventListener('DOMContentLoaded', () => {
         time: new Date(),
         modalOpen: false,
         modalContent: null,
+        showScrollTop: false,
         openModal(content) { this.modalContent = content; this.modalOpen = true },
-        closeModal() { this.modalOpen = false; this.modalContent = null }
+        closeModal() { this.modalOpen = false; this.modalContent = null },
+        handleScroll() { 
+            this.showScrollTop = window.scrollY + window.innerHeight >= document.body.scrollHeight * 0.8;
+        }
     }"
-     x-init="setInterval(() => time = new Date(), 1000)"
-     class="fixed bottom-0 left-0 right-0 z-[70] flex items-center shadow-lg overflow-hidden font-[Poppins]">
+     x-init="setInterval(() => time = new Date(), 1000); window.addEventListener('scroll', handleScroll)"
+     class="fixed bottom-0 left-0 right-0 z-[70] font-[Poppins]">
 
-    {{-- LIVE + Time Container --}}
-    <div class="flex-shrink-0 flex flex-col">
-        {{-- LIVE/NEWS Badge --}}
-        <div class="px-2 py-2 bg-red-700 text-white font-bold uppercase text-xl text-center">
-            Breaking News
+    {{-- DESKTOP VIEW --}}
+    <div class="hidden sm:flex w-full items-center shadow-lg overflow-hidden">
+        {{-- LIVE + Time Container --}}
+        <div class="flex-shrink-0 flex flex-col">
+            {{-- LIVE/NEWS Badge --}}
+            <div class="px-2 py-2 bg-red-700 text-white font-bold uppercase text-xl text-center">
+                Breaking News
+            </div>
+
+            {{-- Time Box --}}
+            <div class="px-2 py-2 bg-yellow-500 text-black text-sm font-bold flex items-center gap-2">
+                <div x-text="time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })"></div>
+                <div>|</div>
+                <div x-text="time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })"></div>
+            </div>
         </div>
 
-        {{-- Time Box --}}
-        <div class="px-2 py-2 bg-yellow-500 text-black text-sm font-bold flex items-center gap-2">
-            <div x-text="time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })"></div>
-            <div>|</div>
-            <div x-text="time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })"></div>
-        </div>
-    </div>
-
-    {{-- Marquee --}}
-    <div class="overflow-hidden flex-1 relative bg-white pb-6">
-        <div class="flex gap-8 animate-marquee p-2 items-center">
-            @foreach([$announcements, $announcements] as $announcementSet)
-                @foreach($announcementSet as $announcement)
-                    <span @click="openModal({{ json_encode($announcement) }})"
-                          class="cursor-pointer text-gray-800 text-sm sm:text-base flex items-center gap-1">
-                        {{-- Display only the title or event_name --}}
-                        {{ $announcement->event_name ?? $announcement->title ?? 'Announcement' }}
-                        <span class="mx-2 font-semibold">|</span>
-                    </span>
+        {{-- Marquee --}}
+        <div class="overflow-hidden flex-1 relative bg-white pb-6">
+            <div class="flex gap-8 animate-marquee p-2 items-center">
+                @foreach([$announcements, $announcements] as $announcementSet)
+                    @foreach($announcementSet as $announcement)
+                        <span @click="openModal({{ json_encode($announcement) }})"
+                              class="cursor-pointer text-gray-800 text-sm sm:text-base flex items-center gap-1">
+                            {{ $announcement->event_name ?? $announcement->title ?? 'Announcement' }}
+                            <span class="mx-2 font-semibold">|</span>
+                        </span>
+                    @endforeach
                 @endforeach
-            @endforeach
-        </div>
+            </div>
 
-        {{-- Secondary info bar --}}
-        <div class="absolute bottom-0 left-0 w-full bg-blue-900 text-white text-xs px-2 py-1">
-            Latest announcements • Click for details
+            {{-- Secondary info bar --}}
+            <div class="absolute bottom-0 left-0 w-full bg-blue-900 text-white text-xs px-2 py-1">
+                Latest announcements • Click for details
+            </div>
         </div>
     </div>
 
-    {{-- Scroll To Top Button --}}
-    <button x-show="true"
+    {{-- MOBILE VIEW --}}
+    <div class="flex sm:hidden w-full overflow-hidden bg-white shadow-lg">
+        <div class="flex-1 overflow-hidden relative">
+            <div class="flex gap-6 animate-marquee-mobile p-2 items-center">
+                @foreach([$announcements, $announcements] as $announcementSet)
+                    @foreach($announcementSet as $announcement)
+                        <span @click="openModal({{ json_encode($announcement) }})"
+                              class="cursor-pointer text-gray-900 text-base font-semibold flex items-center gap-1">
+                            {{ $announcement->event_name ?? $announcement->title ?? 'Announcement' }}
+                            <span class="mx-2 font-bold">|</span>
+                        </span>
+                    @endforeach
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    {{-- Scroll To Top Button (appears when near bottom) --}}
+    <button x-show="showScrollTop"
+            x-transition
             @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-            class="flex-shrink-0 ml-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-r-lg text-white font-semibold shadow-lg">
+            class="fixed bottom-16 right-4 z-[80] px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold shadow-lg">
         ↑ Top
     </button>
 
@@ -273,6 +297,10 @@ document.addEventListener('DOMContentLoaded', () => {
     0% { transform: translateX(0%); }
     100% { transform: translateX(-50%); }
 }
+@keyframes marquee-mobile {
+    0% { transform: translateX(0%); }
+    100% { transform: translateX(-100%); }
+}
 .animate-marquee {
     display: inline-flex;
     gap: 2rem;
@@ -280,6 +308,16 @@ document.addEventListener('DOMContentLoaded', () => {
     animation: marquee 60s linear infinite;
 }
 .animate-marquee:hover {
+    animation-play-state: paused;
+}
+.animate-marquee-mobile {
+    display: inline-flex;
+    gap: 1.5rem;
+    white-space: nowrap;
+    font-size: 1.1rem;
+    animation: marquee-mobile 90s linear infinite;
+}
+.animate-marquee-mobile:hover {
     animation-play-state: paused;
 }
 </style>
