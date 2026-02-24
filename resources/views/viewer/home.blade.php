@@ -123,11 +123,13 @@ function closePrivacyBanner() {
 
             {{-- Modal Body --}}
             <div class="p-4 space-y-3 text-black">
+                {{-- Only show events for the selected status --}}
                 @foreach($statusCounts as $status => $events)
                     <template x-if="activeStatus === '{{ $status }}'">
                         <div class="space-y-2">
                             @forelse($events as $event)
-                                <div class="p-3 bg-gray-100 rounded shadow flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                                <a href="{{ route('viewer.events', ['event' => $event->id]) }}" 
+                                   class="block p-3 bg-gray-100 rounded shadow flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-200 transition cursor-pointer">
                                     <div>
                                         <div class="font-extrabold">{{ $event->name }}</div>
                                         <div class="font-semibold text-gray-700 text-sm">{{ $event->age_group }} {{ $event->category }}</div>
@@ -135,9 +137,23 @@ function closePrivacyBanner() {
                                         @if($event->status_reason)
                                             <div class="text-xs text-red-600 mt-1">Reason: {{ $event->status_reason }}</div>
                                         @endif
+
+                                        @if($event->status === 'Finished' && !empty($event->game_winners))
+                                            <div class="text-xs text-green-700 mt-1">
+                                                <span class="font-semibold">Game Winners:</span>
+                                                <ul class="list-disc list-inside">
+                                                    @foreach($event->game_winners as $index => $divisionId)
+                                                        @if($divisionId)
+                                                            @php $division = \App\Models\Division::find($divisionId); @endphp
+                                                            <li>Game {{ $index + 1 }}: {{ $division->name }}</li>
+                                                        @endif
+                                                    @endforeach
+                                                </ul>
+                                            </div>
+                                        @endif
                                     </div>
                                     <div class="mt-2 sm:mt-0 text-sm font-medium text-gray-800">{{ $status }}</div>
-                                </div>
+                                </a>
                             @empty
                                 <div class="text-gray-500 italic text-center py-4">No events available.</div>
                             @endforelse
@@ -150,30 +166,28 @@ function closePrivacyBanner() {
 
 </div>
 
-
 <style>
     .gold-shimmer {
-    background: linear-gradient(
-        90deg,
-        #a16207,
-        #fde047,
-        #facc15,
-        #fde047,
-        #a16207
-    );
-    background-size: 200% auto;
-    color: transparent;
-    background-clip: text;
-    -webkit-background-clip: text;
-    animation: shimmer 2.5s linear infinite;
-}
-
-@keyframes shimmer {
-    to {
-        background-position: 200% center;
+        background: linear-gradient(
+            90deg,
+            #a16207,
+            #fde047,
+            #facc15,
+            #fde047,
+            #a16207
+        );
+        background-size: 200% auto;
+        color: transparent;
+        background-clip: text;
+        -webkit-background-clip: text;
+        animation: shimmer 2.5s linear infinite;
     }
-}
 
+    @keyframes shimmer {
+        to {
+            background-position: 200% center;
+        }
+    }
 </style>
 
 {{-- ================= DASHBOARD STRIP ================= --}}
