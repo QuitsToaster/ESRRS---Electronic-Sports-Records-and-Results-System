@@ -133,9 +133,175 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
     </ul>
 </div>
 
+{{-- ================= PENDING AWARDS FOR TOURNAMENT SECRETARY ================= --}}
+@if($user->role->name === 'Tournament Secretary')
+@php
+    $activeEventId = \App\Models\Event::where('is_active', 1)->value('id');
+
+    $pendingResultsSecretary = collect();
+    $pendingIndividualSecretary = collect();
+
+    if ($activeEventId) {
+        $pendingResultsSecretary = \App\Models\AllAwardResult::where('status','needs_revision')
+            ->where('event_id', $activeEventId)
+            ->where('sdo', $user->division_name)
+            ->whereIn('sport_id', $user->sports_access)
+            ->get();
+
+        $pendingIndividualSecretary = \App\Models\IndividualAwardResult::where('status','needs_revision')
+            ->where('event_id', $activeEventId)
+            ->where('sdo', $user->division_name)
+            ->whereIn('sport_id', $user->sports_access)
+            ->get();
+    }
+@endphp
+
+<div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-2">Pending Awards Needing Revision</h3>
+
+    {{-- ================= ALL AWARDS ================= --}}
+@if($pendingResultsSecretary->count())
+    <h4 class="font-semibold mt-2 mb-1">All Awards</h4>
+
+    <table class="w-full border text-sm mb-4">
+        <thead class="bg-yellow-200 text-center">
+            <tr>
+                <th class="border px-2">Sport</th>
+                <th class="border px-2">Event Type</th>
+                <th class="border px-2">Medal</th>
+                <th class="border px-2">Count</th>
+                <th class="border px-2">Validation File</th>
+                <th class="border px-2">Action</th> {{-- New column --}}
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach($pendingResultsSecretary as $r)
+                <tr class="text-center">
+                    <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
+                    <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+                    <td class="border px-2">{{ $r->medal }}</td>
+                    <td class="border px-2">{{ $r->count }}</td>
+                    <td class="border px-2">
+                        @if($r->validation_file)
+                            @php
+                                $fileUrl = asset('storage/' . $r->validation_file);
+                                $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                            @endphp
+                            @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
+                                <a href="{{ $fileUrl }}" target="_blank">
+                                    <img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow hover:scale-105 transition">
+                                </a>
+                            @else
+                                <a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline font-semibold">View PDF</a>
+                            @endif
+                        @else
+                            <span class="text-gray-400 italic">No file</span>
+                        @endif
+                    </td>
+                    <td class="border px-2">
+                        <form action="{{ route('results_all_awards.revise', $r->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revise this award? It will be deleted.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">Revise</button>
+                        </form>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endif
+
+{{-- ================= INDIVIDUAL AWARDS ================= --}}
+@if($pendingIndividualSecretary->count())
+    <h4 class="font-semibold mt-2 mb-1">Individual Awards</h4>
+
+    <table class="w-full border text-sm">
+        <thead class="bg-yellow-200 text-center">
+            <tr>
+                <th class="border px-2">Sport</th>
+                <th class="border px-2">Event Type</th>
+                <th class="border px-2">Medal</th>
+                <th class="border px-2">Athlete</th>
+                <th class="border px-2">Validation File</th>
+                <th class="border px-2">Action</th> {{-- New column --}}
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach($pendingIndividualSecretary as $r)
+                <tr class="text-center">
+                    <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
+                    <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+                    <td class="border px-2">{{ $r->medal }}</td>
+                    <td class="border px-2">
+                        @php $ath = $athletes->find($r->athlete_id); @endphp
+                        {{ $ath ? $ath->last_name . ', ' . $ath->first_name : '-' }}
+                    </td>
+                    <td class="border px-2">
+                        @if($r->validation_file)
+                            @php
+                                $fileUrl = asset('storage/' . $r->validation_file);
+                                $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                            @endphp
+                            @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
+                                <a href="{{ $fileUrl }}" target="_blank">
+                                    <img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow hover:scale-105 transition" alt="Validation Image">
+                                </a>
+                            @else
+                                <a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline font-semibold">View PDF</a>
+                            @endif
+                        @else
+                            <span class="text-gray-400 italic">No file</span>
+                        @endif
+                    </td>
+                    <td class="border px-2">
+                        <form action="{{ route('results_individual.revise', $r->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revise this award? It will be deleted.');">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">Revise</button>
+                        </form>
+                    </td>
+                </tr>
+            @endforeach
+        </tbody>
+    </table>
+@endif
+
+    @if($pendingResultsSecretary->count() === 0 && $pendingIndividualSecretary->count() === 0)
+        <p>No pending awards requiring revision for your division.</p>
+    @endif
+</div>
+@endif
+
 {{-- ================= PENDING AWARDS FOR TOURNAMENT MANAGER / SUPER ADMIN ================= --}}
 @if($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin')
+
+{{-- ================= SUCCESS MODAL ================= --}}
+@if(session('success'))
+<div x-data="{ open: true }"
+     x-show="open"
+     class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+
+    <div class="bg-white w-full max-w-md rounded-lg p-6 text-center shadow-xl">
+        <h3 class="text-lg font-bold text-green-700 mb-2">
+            Success
+        </h3>
+
+        <p class="text-gray-800 mb-4">
+            {{ session('success') }}
+        </p>
+
+        <button @click="open = false"
+                class="px-4 py-2 bg-green-600 text-white rounded">
+            OK
+        </button>
+    </div>
+</div>
+@endif
+
 <div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
+
     <h3 class="font-semibold mb-2">Pending Awards Needing Approval</h3>
 
     {{-- ================= ALL AWARDS ================= --}}
@@ -164,7 +330,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                         <td class="border px-2">{{ $r->medal }}</td>
                         <td class="border px-2">{{ $r->count }}</td>
 
-                        {{-- ✅ CLICKABLE VALIDATION FILE --}}
+                        {{-- VALIDATION FILE --}}
                         <td class="border px-2">
                             @if($r->validation_file)
                                 @php
@@ -175,12 +341,10 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                                 @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
                                     <a href="{{ $fileUrl }}" target="_blank">
                                         <img src="{{ $fileUrl }}"
-                                             class="h-12 mx-auto rounded shadow cursor-pointer hover:scale-105 transition"
-                                             alt="Validation Image">
+                                             class="h-12 mx-auto rounded shadow hover:scale-105 transition">
                                     </a>
                                 @else
-                                    <a href="{{ $fileUrl }}"
-                                       target="_blank"
+                                    <a href="{{ $fileUrl }}" target="_blank"
                                        class="text-blue-600 underline font-semibold">
                                         View PDF
                                     </a>
@@ -190,18 +354,81 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                             @endif
                         </td>
 
-                        <td class="border px-2">
+                        {{-- ACTIONS --}}
+                        <td class="border px-2 space-x-1">
+
+                            {{-- APPROVE --}}
+                            <form method="POST"
+                                  action="{{ route('approve_all_awards') }}"
+                                  class="inline">
+                                @csrf
+                                <input type="hidden" name="award_id" value="{{ $r->id }}">
+                                <button class="bg-green-600 text-white px-3 py-1 rounded">
+                                    Approve
+                                </button>
+                            </form>
+
+                            {{-- REJECT --}}
                             <button
-                                class="bg-green-500 text-white px-3 py-1 rounded"
-                                @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'all' })">
-                                Approve
+                                @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'all' })"
+                                class="bg-red-600 text-white px-3 py-1 rounded">
+                                Reject
                             </button>
+
                         </td>
                     </tr>
                 @endforeach
             </tbody>
         </table>
     @endif
+
+    {{-- ================= REJECT MODAL ================= --}}
+    <div x-data="{ open:false, awardId:null, awardType:null, message:'' }"
+         x-on:open-reject.window="
+            open=true;
+            awardId=$event.detail.id;
+            awardType=$event.detail.type;
+         ">
+
+        <div x-show="open"
+             class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+
+            <div class="bg-white w-full max-w-md rounded-lg p-6">
+                <h3 class="font-bold text-lg mb-3">Reject Award</h3>
+
+                <textarea x-model="message"
+                          class="w-full border rounded p-2 mb-4"
+                          placeholder="Enter revision message..."
+                          required></textarea>
+
+                <form method="POST"
+                      :action="awardType === 'all'
+                        ? '{{ route('reject_all_awards') }}'
+                        : '{{ route('reject_individual_awards') }}'">
+
+                    @csrf
+                    <input type="hidden" name="award_id" :value="awardId">
+                    <input type="hidden" name="message" :value="message">
+
+                    <div class="flex justify-end gap-2">
+                        <button type="button"
+                                @click="open=false"
+                                class="px-4 py-2 bg-gray-400 rounded">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                class="px-4 py-2 bg-red-600 text-white rounded">
+                            Reject
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+
+
 
     {{-- ================= INDIVIDUAL AWARDS ================= --}}
     @if($pendingIndividual->count())
@@ -378,7 +605,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                 </table>
             </div>
 
-          {{-- ================================================= --}}
+         {{-- ================================================= --}}
 {{-- 🏆 ALL AWARDS FORM --}}
 {{-- ================================================= --}}
 <form method="POST"
@@ -386,10 +613,19 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
       enctype="multipart/form-data"
       x-show="awardType==='all'"
       x-data="{ showConfirm:false }">
+
 @csrf
 
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
+
+{{-- 🚫 DISABLED NOTICE FOR TOURNAMENT MANAGER --}}
+@if($user->role->name === 'Tournament Manager')
+<div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+    <strong>Read Only:</strong>
+    Tournament Managers cannot modify or submit Awards.
+</div>
+@endif
 
 @foreach($sports as $sport)
     <h3 class="font-semibold mt-6">
@@ -399,7 +635,9 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         @endif
     </h3>
 
-<table class="w-full border text-sm mt-2">
+<table class="w-full border text-sm mt-2
+    {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
+
 <thead class="bg-gray-200 text-center">
 <tr>
     <th class="border">Event Type</th>
@@ -415,22 +653,30 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 @foreach($sport->types as $type)
 <tr>
 <td class="border px-2">{{ $type->type_name }}</td>
+
 @foreach($divisions as $d)
 @foreach(['Gold','Silver','Bronze'] as $medal)
 <td class="border text-center">
-<input type="number" min="0" value="0"
-    class="w-16 border rounded text-center"
-    name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]">
+<input type="number"
+       min="0"
+       value="0"
+       class="w-16 border rounded text-center"
+       name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]"
+       {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
 </td>
 @endforeach
 @endforeach
+
 </tr>
 @endforeach
 </tbody>
 </table>
 @endforeach
 
+{{-- ================= ACTION BUTTONS ================= --}}
 <div class="flex justify-end mt-6">
+
+{{-- 🟡 TOURNAMENT SECRETARY --}}
 @if($user->role->name === 'Tournament Secretary')
 <button type="button"
     class="bg-yellow-500 text-white px-6 py-2 rounded"
@@ -439,28 +685,50 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 </button>
 
 {{-- MODAL --}}
-<div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-<div class="bg-white rounded shadow p-6 w-96">
-<h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
+<div x-show="showConfirm"
+     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
 
-<p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
+    <div class="bg-white rounded shadow p-6 w-96">
+        <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
 
-<input type="file"
-       name="validation_file"
-       accept=".pdf,image/*"
-       class="w-full border rounded mb-4">
+        <p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
 
-<div class="flex justify-end gap-2">
-<button type="button" class="border px-4 py-2 rounded" @click="showConfirm=false">Cancel</button>
-<button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Yes, Forward</button>
+        <input type="file"
+               name="validation_file"
+               accept=".pdf,image/*"
+               class="w-full border rounded mb-4">
+
+        <div class="flex justify-end gap-2">
+            <button type="button"
+                    class="border px-4 py-2 rounded"
+                    @click="showConfirm=false">
+                Cancel
+            </button>
+
+            <button type="submit"
+                    class="bg-yellow-500 text-white px-4 py-2 rounded">
+                Yes, Forward
+            </button>
+        </div>
+    </div>
 </div>
-</div>
-</div>
+
+{{-- 🔵 SUPER ADMIN --}}
+@elseif($user->role->name === 'Super Admin')
+<button type="submit"
+        class="bg-blue-600 text-white px-6 py-2 rounded">
+    Save All Awards
+</button>
+
+{{-- 🚫 TOURNAMENT MANAGER --}}
 @else
-<button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
-Save All Awards
+<button type="button"
+        disabled
+        class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
+    Editing Disabled
 </button>
 @endif
+
 </div>
 </form>
 
@@ -508,54 +776,63 @@ Save All Awards
       enctype="multipart/form-data"
       x-show="awardType==='individual'"
       x-data="{ showConfirm:false }">
+
 @csrf
 
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 
-{{-- ================= SUMMARY TABLE ================= --}}
-    <div class="overflow-x-auto mb-6">
-        <h3 class="text-lg font-bold mb-2">Individual Awards Summary</h3>
-        <table class="w-full border text-sm">
-            <thead class="bg-gray-200 text-center">
-                <tr>
-                    <th class="border px-2">Sport</th>
-                    <th class="border px-2">Event Type</th>
-                    <th class="border px-2">Gold</th>
-                    <th class="border px-2">Silver</th>
-                    <th class="border px-2">Bronze</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach($sports as $sport)
-                    @foreach($sport->types as $type)
-                        @php $typeKey = $type->id ?? 0; @endphp
-                        <tr>
-                            <td class="border px-2 font-semibold">{{ strtoupper($sport->name) }}</td>
-                            <td class="border px-2 font-semibold">{{ $type->type_name }}</td>
-                            @foreach(['Gold','Silver','Bronze'] as $medal)
-                                <td class="border px-2 text-left align-top">
-                                    @if(isset($summary[$sport->id][$typeKey][$medal]))
-                                        @php $ath = $summary[$sport->id][$typeKey][$medal]; @endphp
-                                        <strong>{{ $ath->last_name }}, {{ $ath->first_name }}</strong><br>
-                                        <small>Region: {{ $ath->region }}</small><br>
-                                        <small>School: {{ $ath->school_name }}</small><br>
-                                        <small>Birthdate: {{ $ath->birthdate }}</small>
-                                    @else
-                                        --
-                                    @endif
-                                </td>
-                            @endforeach
-                        </tr>
-                    @endforeach
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+{{-- 🚫 DISABLED NOTICE FOR TOURNAMENT MANAGER --}}
+@if($user->role->name === 'Tournament Manager')
+<div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+    <strong>Read Only:</strong> Tournament Managers cannot modify or submit Individual Awards.
+</div>
+@endif
 
+{{-- ================= SUMMARY TABLE ================= --}}
+<div class="overflow-x-auto mb-6">
+    <h3 class="text-lg font-bold mb-2">Individual Awards Summary</h3>
+    <table class="w-full border text-sm {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
+        <thead class="bg-gray-200 text-center">
+            <tr>
+                <th class="border px-2">Sport</th>
+                <th class="border px-2">Event Type</th>
+                <th class="border px-2">Gold</th>
+                <th class="border px-2">Silver</th>
+                <th class="border px-2">Bronze</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach($sports as $sport)
+                @foreach($sport->types as $type)
+                    @php $typeKey = $type->id ?? 0; @endphp
+                    <tr>
+                        <td class="border px-2 font-semibold">{{ strtoupper($sport->name) }}</td>
+                        <td class="border px-2 font-semibold">{{ $type->type_name }}</td>
+                        @foreach(['Gold','Silver','Bronze'] as $medal)
+                            <td class="border px-2 text-left align-top">
+                                @if(isset($summary[$sport->id][$typeKey][$medal]))
+                                    @php $ath = $summary[$sport->id][$typeKey][$medal]; @endphp
+                                    <strong>{{ $ath->last_name }}, {{ $ath->first_name }}</strong><br>
+                                    <small>Region: {{ $ath->region }}</small><br>
+                                    <small>School: {{ $ath->school_name }}</small><br>
+                                    <small>Birthdate: {{ $ath->birthdate }}</small>
+                                @else
+                                    --
+                                @endif
+                            </td>
+                        @endforeach
+                    </tr>
+                @endforeach
+            @endforeach
+        </tbody>
+    </table>
+</div>
+
+{{-- ================= INPUT TABLE ================= --}}
 @foreach($sports as $sport)
 <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
-<table class="w-full border text-sm mt-2">
+<table class="w-full border text-sm mt-2 {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
 <tbody>
 @foreach($sport->types as $type)
 <tr>
@@ -563,7 +840,8 @@ Save All Awards
 @foreach(['Gold','Silver','Bronze'] as $medal)
 <td class="border px-1">
 <select class="w-full border rounded text-sm"
-    name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]">
+    name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
+    {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
 <option value="">-- Select Athlete --</option>
 @foreach($athletes as $a)
 <option value="{{ $a->id }}">{{ $a->last_name }}, {{ $a->first_name }}</option>
@@ -577,7 +855,10 @@ Save All Awards
 </table>
 @endforeach
 
+{{-- ================= ACTION BUTTONS ================= --}}
 <div class="flex justify-end mt-6">
+
+{{-- 🟡 TOURNAMENT SECRETARY --}}
 @if($user->role->name === 'Tournament Secretary')
 <button type="button"
     class="bg-yellow-500 text-white px-6 py-2 rounded"
@@ -585,6 +866,7 @@ Save All Awards
     Forward for Validation
 </button>
 
+{{-- MODAL --}}
 <div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
 <div class="bg-white rounded shadow p-6 w-96">
 <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
@@ -602,11 +884,20 @@ Save All Awards
 </div>
 </div>
 </div>
-@else
+
+{{-- 🔵 SUPER ADMIN --}}
+@elseif($user->role->name === 'Super Admin')
 <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
 Save Individual Awards
 </button>
+
+{{-- 🚫 TOURNAMENT MANAGER --}}
+@else
+<button type="button" disabled class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
+Editing Disabled
+</button>
 @endif
+
 </div>
 </form>
 

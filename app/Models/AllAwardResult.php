@@ -11,7 +11,7 @@ class AllAwardResult extends Model
     use HasFactory;
 
     protected $fillable = [
-        'event_id','sport_id','type_id','division','category','sdo','medal','count','awarded_by','status','validation_file'
+        'event_id','sport_id','type_id','division','category','sdo','medal','count','awarded_by','status','validation_file', 'revision_message'
     ];
 
     // -----------------------------

@@ -208,17 +208,21 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
 
         <div x-show="isOpen" x-cloak class="pl-6 mt-1 space-y-1">
-            <a href="{{ route('results_divisions.index') }}"
-               class="block px-4 py-2 rounded hover:bg-blue-600
-               {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                Official Results
-            </a>
-            <a href="{{ route('results_divisions.create') }}"
-               class="block px-4 py-2 rounded hover:bg-blue-600
-               {{ request()->routeIs('results_divisions.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                Award Medal
-            </a>
-        </div>
+    {{-- Show Official Results only if NOT Tournament Secretary --}}
+    @if(auth()->user()->role->name !== 'Tournament Secretary')
+    <a href="{{ route('results_divisions.index') }}"
+       class="block px-4 py-2 rounded hover:bg-blue-600
+       {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
+        Official Results
+    </a>
+@endif
+
+<a href="{{ route('results_divisions.create') }}"
+   class="block px-4 py-2 rounded hover:bg-blue-600
+   {{ request()->routeIs('results_divisions.create') ? 'bg-blue-700 font-semibold' : '' }}">
+    Award Medal
+</a>
+</div>
     </div>
 @endif
 

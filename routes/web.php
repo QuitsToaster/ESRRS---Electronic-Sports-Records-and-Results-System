@@ -228,7 +228,21 @@ Route::post('/results/individual-awards', [ResultIndividualAwardController::clas
 
 Route::post('/approve-all-award', [ResultAllAwardController::class, 'approveAll'])->name('approve_all_awards');
 Route::post('/approve-individual-award', [ResultIndividualAwardController::class, 'approveIndividual'])->name('approve_individual_awards');
+Route::post('/reject-all-award', [ResultAllAwardController::class, 'reject'])
+    ->name('reject_all_awards');
 
+Route::post('/reject-individual-award', [ResultIndividualAwardController::class, 'reject'])
+    ->name('reject_individual_awards');
+
+    // All Awards
+Route::delete('/results/all-awards/{award}', [ResultAllAwardController::class, 'revise'])
+    ->name('results_all_awards.revise');
+
+// Individual Awards
+Route::delete('/results/individual-awards/{award}', [ResultIndividualAwardController::class, 'revise'])
+    ->name('results_individual.revise');
+
+    
     /*
     |--------------------------------------------------------------------------
     | Audit Logs
