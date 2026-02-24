@@ -200,61 +200,40 @@ document.addEventListener('DOMContentLoaded', () => {
      class="fixed bottom-0 left-0 right-0 z-[70] flex items-center shadow-lg overflow-hidden font-[Poppins]">
 
     {{-- LIVE + Time Container --}}
-<div class="flex-shrink-0 flex flex-col">
-    {{-- LIVE/NEWS Badge --}}
-    <div class="px-2 py-2 bg-red-700 text-white font-bold uppercase text-xl text-center">
-        Breaking News
+    <div class="flex-shrink-0 flex flex-col">
+        {{-- LIVE/NEWS Badge --}}
+        <div class="px-2 py-2 bg-red-700 text-white font-bold uppercase text-xl text-center">
+            Breaking News
+        </div>
+
+        {{-- Time Box --}}
+        <div class="px-2 py-2 bg-yellow-500 text-black text-sm font-bold flex items-center gap-2">
+            <div x-text="time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })"></div>
+            <div>|</div>
+            <div x-text="time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })"></div>
+        </div>
     </div>
 
-    {{-- Time Box --}}
-<div class="px-2 py-2 bg-yellow-500 text-black text-sm font-bold flex items-center gap-2">
-    {{-- Date --}}
-    <div x-text="time.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })"></div>
-    
-    {{-- Separator --}}
-    <div>|</div>
-    
-    {{-- Time --}}
-    <div x-text="time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })"></div>
-</div>
-</div>
-
-{{-- Marquee --}}
-<div class="overflow-hidden flex-1 relative bg-white pb-6">
-    <div class="flex gap-4 animate-marquee p-2">
-        @foreach([$announcements, $announcements] as $announcementSet)
-            @foreach($announcementSet as $announcement)
-                @php
-                    $lines = collect(explode(PHP_EOL, $announcement->content))
-                             ->filter(fn($line) => !empty(trim($line)));
-                @endphp
-                @foreach($lines as $line)
-                    <div @click="openModal({{ json_encode($announcement) }})"
-                         class="cursor-pointer flex items-center gap-2 px-4 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 transition transform hover:scale-105 shadow-sm">
-                        {{-- Include event name if exists --}}
-                        @if(!empty($announcement->event_name))
-                            <span class="text-blue-700 font-semibold">{{ $announcement->event_name }}</span>:
-                        @endif
-                        {{-- Display line content --}}
-                        <span class="text-gray-800 text-sm sm:text-base">
-                            @if(!empty($announcement->event_name))
-                                {{ $announcement->event_name }} - {{ $line }}
-                            @else
-                                {{ $line }}
-                            @endif
-                        </span>
-                        <span class="text-gray-500 text-xs font-medium">{{ $announcement->type }}</span>
-                    </div>
+    {{-- Marquee --}}
+    <div class="overflow-hidden flex-1 relative bg-white pb-6">
+        <div class="flex gap-8 animate-marquee p-2 items-center">
+            @foreach([$announcements, $announcements] as $announcementSet)
+                @foreach($announcementSet as $announcement)
+                    <span @click="openModal({{ json_encode($announcement) }})"
+                          class="cursor-pointer text-gray-800 text-sm sm:text-base flex items-center gap-1">
+                        {{-- Display only the title or event_name --}}
+                        {{ $announcement->event_name ?? $announcement->title ?? 'Announcement' }}
+                        <span class="mx-2 font-semibold">|</span>
+                    </span>
                 @endforeach
             @endforeach
-        @endforeach
-    </div>
+        </div>
 
-    {{-- Secondary info bar --}}
-    <div class="absolute bottom-0 left-0 w-full bg-blue-900 text-white text-xs px-2 py-1">
-        Latest announcements • Click for details
+        {{-- Secondary info bar --}}
+        <div class="absolute bottom-0 left-0 w-full bg-blue-900 text-white text-xs px-2 py-1">
+            Latest announcements • Click for details
+        </div>
     </div>
-</div>
 
     {{-- Scroll To Top Button --}}
     <button x-show="true"
@@ -263,16 +242,26 @@ document.addEventListener('DOMContentLoaded', () => {
         ↑ Top
     </button>
 
-    {{-- Modal --}}
+    {{-- Modal (TV-like design) --}}
     <div x-show="modalOpen" x-transition.opacity
-         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/50">
+         class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60">
         <div @click.away="closeModal()"
-             class="bg-white rounded-xl shadow-2xl max-w-lg w-full p-6 relative">
-            <button @click="closeModal()" 
-                    class="absolute top-3 right-3 text-gray-600 hover:text-gray-900 font-bold text-lg">&times;</button>
-            <h2 class="text-xl font-bold mb-2" x-text="modalContent ? modalContent.event_name : ''"></h2>
-            <p class="text-gray-700 mb-4" x-text="modalContent ? modalContent.content : ''"></p>
-            <span class="text-sm text-gray-500" x-text="modalContent ? modalContent.type : ''"></span>
+             class="bg-gray-900 rounded-xl shadow-2xl max-w-lg w-full border-4 border-red-700 overflow-hidden">
+            {{-- Header --}}
+            <div class="bg-red-700 px-4 py-3">
+                <h2 class="text-white text-lg font-bold" x-text="modalContent ? (modalContent.event_name ?? modalContent.title) : ''"></h2>
+            </div>
+
+            {{-- Body --}}
+            <div class="bg-gray-100 px-4 py-4 text-gray-800 text-sm sm:text-base">
+                <p x-text="modalContent ? modalContent.content : ''"></p>
+            </div>
+
+            {{-- Footer / Type --}}
+            <div class="bg-gray-800 px-4 py-2 text-white text-xs flex justify-between items-center">
+                <span x-text="modalContent ? modalContent.type : ''"></span>
+                <span class="italic">eSRRS • Click anywhere to close</span>
+            </div>
         </div>
     </div>
 </div>
@@ -286,9 +275,9 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 .animate-marquee {
     display: inline-flex;
-    gap: 1rem;
+    gap: 2rem;
     white-space: nowrap;
-    animation: marquee 50s linear infinite;
+    animation: marquee 60s linear infinite;
 }
 .animate-marquee:hover {
     animation-play-state: paused;
