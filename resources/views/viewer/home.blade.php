@@ -309,14 +309,14 @@ use App\Models\Division;
 
 /*
 |--------------------------------------------------------------------------
-| ALL DIVISIONS (always shown)
+| ALL DIVISIONS
 |--------------------------------------------------------------------------
 */
 $divisions = Division::orderBy('name')->get();
 
 /*
 |--------------------------------------------------------------------------
-| REGULAR MEDAL TALLY (Elementary + Secondary)
+| REGULAR MEDAL TALLY
 |--------------------------------------------------------------------------
 */
 $regularRaw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
@@ -334,6 +334,7 @@ $medalTallyRegular = $divisions->map(function($division) use ($regularRaw) {
     $bronze = $rows->where('medal','Bronze')->sum('total');
 
     return (object)[
+        'id'     => $division->id, // ✅ FIX ADDED
         'name'   => $division->name,
         'logo'   => $division->logo,
         'gold'   => $gold,
@@ -350,7 +351,7 @@ $medalTallyRegular = $divisions->map(function($division) use ($regularRaw) {
 
 /*
 |--------------------------------------------------------------------------
-| PARA MEDAL TALLY (Paragames)
+| PARA MEDAL TALLY
 |--------------------------------------------------------------------------
 */
 $paraRaw = AllAwardResult::select('sdo','medal', \DB::raw('SUM(`count`) as total'))
@@ -368,6 +369,7 @@ $medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
     $bronze = $rows->where('medal','Bronze')->sum('total');
 
     return (object)[
+        'id'     => $division->id, // ✅ FIX ADDED
         'name'   => $division->name,
         'logo'   => $division->logo,
         'gold'   => $gold,
@@ -382,10 +384,9 @@ $medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
     ];
 });
 
-
 /*
 |--------------------------------------------------------------------------
-| SORTING (Gold → Silver → Bronze)
+| SORTING
 |--------------------------------------------------------------------------
 */
 $sortFn = fn($a,$b) =>
@@ -470,119 +471,151 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
     </div>
 </div>
 
-{{-- ================= MODAL ================= --}}
+{{-- ================= TV NEWS STYLE MODAL (LIGHT THEME) ================= --}}
 <div
     x-show="open"
-    x-transition
+    x-transition.opacity
     @keydown.escape.window="open = false"
-    class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 px-4"
+    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
 >
     <div
         @click.away="open = false"
-        class="bg-white rounded-xl shadow-xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 border border-gray-200"
+        class="bg-white text-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-y-auto border-4 border-red-600"
     >
-        {{-- Header --}}
-        <div class="flex justify-between items-center mb-6 border-b border-gray-200 pb-3">
-            <h3
-                class="text-2xl font-semibold text-gray-800"
-                x-text="division?.name + ' — Medal Details'"
-            ></h3>
+
+        {{-- 🔴 TOP BREAKING NEWS BAR --}}
+        <div class="bg-red-600 flex items-center justify-between px-5 py-3 text-white">
+            <div class="flex items-center gap-3">
+                <span class="bg-yellow-400 text-black px-3 py-1 text-xs font-extrabold tracking-widest rounded">
+                    eSRRS
+                </span>
+                <h3
+                    class="text-lg md:text-xl font-extrabold uppercase tracking-wide"
+                    x-text="division?.name + ' — Medal Update'"
+                ></h3>
+            </div>
+
             <button
                 @click="open = false"
-                class="text-gray-400 hover:text-gray-700 text-2xl"
+                class="text-white text-2xl font-bold hover:text-gray-200"
             >
                 &times;
             </button>
         </div>
 
-        {{-- Medal Sections --}}
-        <template x-for="(list, type) in medals" :key="type">
-            <div class="mb-6">
-                <h4
-                    class="text-lg font-semibold mb-3 flex items-center gap-2"
-                    :class="{
-                        'text-yellow-600': type === 'gold',
-                        'text-gray-600': type === 'silver',
-                        'text-orange-500': type === 'bronze'
-                    }"
-                >
-                    <span x-text="type.toUpperCase()"></span>
-                    <span
-                        class="text-sm text-gray-400"
-                        x-text="list.length + ' medals'"
-                    ></span>
-                </h4>
+        {{-- 📺 STUDIO CONTENT --}}
+        <div class="p-5 space-y-8 bg-gray-50">
 
-                <div class="space-y-2">
-                    <template x-for="m in list" :key="m.id">
-                        <div class="bg-gray-50 p-3 rounded-lg shadow-sm flex flex-col gap-1 hover:shadow-md transition">
-                            <div class="flex justify-between items-center">
-                               <strong class="text-gray-800"
-    x-text="
-        m.division === 'Paragames'
-            ? (m.type_name ?? 'Paragames Event')   {{-- ✅ use type_name from the controller --}}
-            : (m.event?.name ?? 'Event')
-    "
-></strong>
+            {{-- Medal Sections --}}
+            <template x-for="(list, type) in medals" :key="type">
+                <div>
 
-
-
-                                <span
-                                    class="text-gray-500 text-sm font-bold"
-                                    x-text="m.sport?.name ?? 'Sport'"
-                                ></span>
-                            </div>
-
-                            <div class="flex flex-wrap text-xs text-gray-500 gap-3 mt-1">
-                                <span>
-                                    Level:
-                                    <strong x-text="m.event?.age_group ?? 'N/A'"></strong>
-                                </span>
-
-                                <span>
-                                    Category:
-                                    <strong x-text="m.event?.category ?? 'N/A'"></strong>
-                                </span>
-
-                                <span>
-                                    Schedule:
-                                    <strong
-                                        x-text="m.event?.start_date
-                                            ? new Date(m.event.start_date).toLocaleDateString(
-                                                'en-US',
-                                                { month: 'short', day: '2-digit', year: 'numeric' }
-                                            )
-                                            : 'N/A'"
-                                    ></strong>
-                                </span>
-
-                                <span>
-                                    Award Date:
-                                    <strong
-                                        x-text="m.created_at
-                                            ? new Date(m.created_at).toLocaleDateString(
-                                                'en-US',
-                                                { month: 'short', day: '2-digit', year: 'numeric' }
-                                            )
-                                            : 'N/A'"
-                                    ></strong>
-                                </span>
-                            </div>
-                        </div>
-                    </template>
-
-                    <p
-                        x-show="list.length === 0"
-                        class="text-gray-400 italic text-sm"
+                    {{-- LOWER THIRD BANNER --}}
+                    <div
+                        class="flex items-center justify-between px-4 py-2 mb-4 rounded-md font-bold uppercase tracking-wide text-sm"
+                        :class="{
+                            'bg-yellow-400 text-black': type === 'gold',
+                            'bg-gray-300 text-black': type === 'silver',
+                            'bg-orange-400 text-black': type === 'bronze'
+                        }"
                     >
-                        No medals
-                    </p>
+                        <span x-text="type + ' Medal Results'"></span>
+                        <span x-text="list.length + ' Awarded'"></span>
+                    </div>
+
+                    {{-- RESULTS LIST --}}
+                    <div class="space-y-3">
+                        <template x-for="m in list" :key="m.id">
+    <div
+        class="bg-white border-l-4 p-4 rounded-md shadow-sm hover:shadow-md hover:bg-gray-100 transition cursor-pointer"
+        :class="{
+            'border-yellow-500': type === 'gold',
+            'border-gray-400': type === 'silver',
+            'border-orange-500': type === 'bronze'
+        }"
+        @click="window.location.href = `/viewer/participants/${division.id}`"
+    >
+        {{-- Headline --}}
+        <div class="flex justify-between items-center mb-2">
+            <strong
+                class="text-lg font-semibold text-gray-800"
+                x-text="
+                    m.division === 'Paragames'
+                        ? (m.type_name ?? 'Paragames Event')
+                        : (m.event?.name ?? 'Event')
+                "
+            ></strong>
+
+            <span
+                class="text-sm font-bold text-red-600 uppercase"
+                x-text="m.sport?.name ?? 'Sport'"
+            ></span>
+        </div>
+
+        {{-- Info Strip --}}
+        <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-600">
+            <span>
+                Level:
+                <strong class="text-gray-800" x-text="m.event?.age_group ?? 'N/A'"></strong>
+            </span>
+
+            <span>
+                Category:
+                <strong class="text-gray-800" x-text="m.event?.category ?? 'N/A'"></strong>
+            </span>
+
+            <span>
+                Event Date:
+                <strong class="text-gray-800"
+                    x-text="m.event?.start_date
+                        ? new Date(m.event.start_date).toLocaleDateString(
+                            'en-US',
+                            { month: 'short', day: '2-digit', year: 'numeric' }
+                        )
+                        : 'N/A'"
+                ></strong>
+            </span>
+
+            <span>
+                Awarded:
+                <strong class="text-gray-800"
+                    x-text="m.created_at
+                        ? new Date(m.created_at).toLocaleDateString(
+                            'en-US',
+                            { month: 'short', day: '2-digit', year: 'numeric' }
+                        )
+                        : 'N/A'"
+                ></strong>
+            </span>
+        </div>
+    </div>
+</template>
+
+                        {{-- EMPTY STATE --}}
+                        <p
+                            x-show="list.length === 0"
+                            class="text-gray-500 italic text-sm text-center py-4"
+                        >
+                            No medals awarded
+                        </p>
+                    </div>
                 </div>
-            </div>
-        </template>
+            </template>
+
+        </div>
+
+        {{-- 📡 FOOTER TICKER --}}
+        <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 flex justify-between items-center border-t">
+            <span class=" tracking-wide font-semibold">
+                eSRRS • Official Medal Records
+            </span>
+            <span class="italic">
+                Press ESC or click outside to close
+            </span>
+        </div>
+
     </div>
 </div>
-
 </section>
 
 
