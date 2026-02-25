@@ -16,12 +16,11 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
         <li>You can modify the <strong>Name</strong> and <strong>Email</strong> of the user.</li>
         <li>To change the password, enter a new <strong>Password</strong> and confirm it. Leave blank if you do not want to update it.</li>
         <li>Select a new <strong>Role</strong> from the dropdown, or create a <strong>New Role</strong> if it does not exist.</li>
-        <li>Adjust <strong>Access</strong> permissions, including <strong>Level Access</strong>, <strong>Category Access</strong>, and <strong>Sports Access</strong> as needed.</li>
+        <li>Adjust <strong>Access</strong> permissions, including <strong>Level Access</strong>, <strong>Category Access</strong>, <strong>Sports Access</strong>, and <strong>Sport Type Access</strong> as needed.</li>
         <li>Click <strong>Update User</strong> to save changes. All modifications will update the user’s account and permissions accordingly.</li>
         <li>After updating, you can return to the <strong>Users list</strong> to view, reset passwords, or delete accounts.</li>
     </ul>
 </div>
-
 
 <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Edit User</h1>
@@ -70,6 +69,16 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
             </option>
         @endforeach
     </select>
+</div>
+
+{{-- New Role --}}
+<div>
+    <label class="block text-sm font-semibold mb-1">Or Add New Role</label>
+    <input type="text"
+           name="new_role"
+           value="{{ old('new_role') }}"
+           class="w-full border rounded px-3 py-2"
+           placeholder="Enter new role name">
 </div>
 
 {{-- ACCESS --}}
@@ -166,6 +175,26 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
     </div>
 </div>
 
+{{-- SPORT TYPE ACCESS --}}
+<div>
+    <label class="flex items-center gap-2 font-semibold mb-2">
+        <input type="checkbox" id="selectAllSportTypes">
+        Select All Sport Types
+    </label>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+        @foreach($sportTypes as $type)
+            <label class="flex items-center gap-2">
+                <input type="checkbox" class="sportTypeCheckbox"
+                       name="sport_type_access[]"
+                       value="{{ $type->id }}"
+                       {{ $isSuperAdmin || in_array($type->id, old('sport_type_access', $user->sport_type_access ?? [])) ? 'checked' : '' }}>
+                {{ $type->type_name }}
+            </label>
+        @endforeach
+    </div>
+</div>
+
 {{-- Actions --}}
 <div class="flex justify-end gap-3 pt-4 border-t">
     <a href="{{ route('users.index') }}" class="px-4 py-2 border rounded">Cancel</a>
@@ -184,25 +213,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    bindSelectAll(
-        document.getElementById('selectAllAccess'),
-        document.querySelectorAll('.moduleCheckbox')
-    );
-
-    bindSelectAll(
-        document.getElementById('selectAllLevels'),
-        document.querySelectorAll('.levelCheckbox')
-    );
-
-    bindSelectAll(
-        document.getElementById('selectAllCategories'),
-        document.querySelectorAll('.categoryCheckbox')
-    );
-
-    bindSelectAll(
-        document.getElementById('selectAllSports'),
-        document.querySelectorAll('.sportCheckbox')
-    );
+    bindSelectAll(document.getElementById('selectAllAccess'), document.querySelectorAll('.moduleCheckbox'));
+    bindSelectAll(document.getElementById('selectAllLevels'), document.querySelectorAll('.levelCheckbox'));
+    bindSelectAll(document.getElementById('selectAllCategories'), document.querySelectorAll('.categoryCheckbox'));
+    bindSelectAll(document.getElementById('selectAllSports'), document.querySelectorAll('.sportCheckbox'));
+    bindSelectAll(document.getElementById('selectAllSportTypes'), document.querySelectorAll('.sportTypeCheckbox'));
 });
 </script>
 

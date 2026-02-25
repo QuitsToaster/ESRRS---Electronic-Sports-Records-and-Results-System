@@ -121,6 +121,27 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 
 <div x-data="awardApp()" class="p-4 space-y-6">
 
+{{-- ================= SUCCESS MODAL FOR FORWARD ================= --}}
+@if(session('success'))
+<div x-data="{ open: true }"
+     x-show="open"
+     class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center"
+     x-cloak>
+    <div class="bg-white w-full max-w-md rounded-lg p-6 text-center shadow-xl">
+        <h3 class="text-lg font-bold text-green-700 mb-2">
+            Success
+        </h3>
+        <p class="text-gray-800 mb-4">
+            {{ session('success') }}
+        </p>
+        <button @click="open = false"
+                class="px-4 py-2 bg-green-600 text-white rounded">
+            OK
+        </button>
+    </div>
+</div>
+@endif
+
 {{-- ================= INSTRUCTIONS / NOTES ================= --}}
 <div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
     <h3 class="font-semibold mb-1">How to Use This Page:</h3>
@@ -275,7 +296,48 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 @endif
 
 {{-- ================= PENDING AWARDS FOR TOURNAMENT MANAGER / SUPER ADMIN ================= --}}
-@if($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin')
+@php
+
+$pendingResults = collect();
+$pendingIndividual = collect();
+
+if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin') {
+    $activeEventId = Event::where('is_active', 1)->value('id');
+
+    if ($activeEventId) {
+
+        // All Awards Pending
+        $pendingResultsQuery = AllAwardResult::where('status','pending')
+            ->where('event_id', $activeEventId);
+
+        // Individual Awards Pending
+        $pendingIndividualQuery = IndividualAwardResult::where('status','pending')
+            ->where('event_id', $activeEventId);
+
+        if ($user->role->name !== 'Super Admin') {
+            // Filter by user's access
+            $pendingResultsQuery->whereIn('sport_id', $user->sports_access)
+                                ->whereIn('type_id', $user->sport_type_access ?? [])
+                                ->whereIn('division', $user->level_access)
+                                ->where(function($q) use ($user) {
+                                    $q->whereNull('category')
+                                      ->orWhereIn('category', $user->category_access ?? []);
+                                });
+
+            $pendingIndividualQuery->whereIn('sport_id', $user->sports_access)
+                                   ->whereIn('type_id', $user->sport_type_access ?? [])
+                                   ->whereIn('division', $user->level_access)
+                                   ->where(function($q) use ($user) {
+                                        $q->whereNull('category')
+                                          ->orWhereIn('category', $user->category_access ?? []);
+                                   });
+        }
+
+        $pendingResults = $pendingResultsQuery->get();
+        $pendingIndividual = $pendingIndividualQuery->get();
+    }
+}
+@endphp
 
 {{-- ================= SUCCESS MODAL ================= --}}
 @if(session('success'))
@@ -356,7 +418,6 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 
                         {{-- ACTIONS --}}
                         <td class="border px-2 space-x-1">
-
                             {{-- APPROVE --}}
                             <form method="POST"
                                   action="{{ route('approve_all_awards') }}"
@@ -374,7 +435,6 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                                 class="bg-red-600 text-white px-3 py-1 rounded">
                                 Reject
                             </button>
-
                         </td>
                     </tr>
                 @endforeach
@@ -426,9 +486,6 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
             </div>
         </div>
     </div>
-    
-
-
 
     {{-- ================= INDIVIDUAL AWARDS ================= --}}
     @if($pendingIndividual->count())
@@ -459,7 +516,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                             {{ $ath ? $ath->last_name . ', ' . $ath->first_name : '-' }}
                         </td>
 
-                        {{-- ✅ CLICKABLE VALIDATION FILE --}}
+                        {{-- VALIDATION FILE --}}
                         <td class="border px-2">
                             @if($r->validation_file)
                                 @php
@@ -503,8 +560,6 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
     @endif
 </div>
 
-
-
 {{-- ================= APPROVE CONFIRMATION MODAL ================= --}}
 <div
     x-data="{ showModal: false, awardId: null, awardType: null }"
@@ -527,7 +582,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         </div>
     </div>
 </div>
-@endif
+
 
 
 {{-- ================= AWARD TYPE ================= --}}
@@ -645,7 +700,6 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 @endif
 
 {{-- ================= DIVISION SELECTOR ================= --}}
-@if($user->role->name === 'Tournament Secretary')
 <div class="mb-6 flex items-center gap-4">
     <div>
         <label class="block text-sm font-semibold mb-1">
@@ -653,10 +707,11 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         </label>
         <select name="selected_sdo"
                 class="border rounded px-3 py-2 w-64"
-                required>
+                {{ $user->role->name === 'Tournament Manager' ? 'disabled' : 'required' }}>
             <option value="">-- Choose Division --</option>
             @foreach(\App\Models\Division::orderBy('name')->get() as $divisionOption)
-                <option value="{{ $divisionOption->name }}">
+                <option value="{{ $divisionOption->name }}"
+                    {{ $tab['division'] === $divisionOption->name ? 'selected' : '' }}>
                     {{ $divisionOption->name }}
                 </option>
             @endforeach
@@ -664,13 +719,24 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
     </div>
 
     <div class="text-sm text-gray-600 mt-6">
-        <strong>Note:</strong> Enter <span class="font-bold text-green-600">1</span> on
-        Gold, Silver, or Bronze to forward.
+        <strong>Note:</strong> Enter <span class="font-bold text-green-600">1</span> on Gold, Silver, or Bronze to forward.
     </div>
 </div>
-@endif
 
-@foreach($sports as $sport)
+{{-- ================= SPORTS TABLE ================= --}}
+@php
+    if($user->role->name === 'Tournament Manager') {
+        // Decode sports_access JSON to array of IDs
+        $accessibleSportIds = is_string($user->sports_access) ? json_decode($user->sports_access, true) : $user->sports_access;
+        $accessibleSports = \App\Models\Sport::whereIn('id', $accessibleSportIds)->get();
+        $accessibleTypeIds = is_string($user->sport_type_access) ? json_decode($user->sport_type_access, true) : $user->sport_type_access;
+    } else {
+        $accessibleSports = $sports;
+        $accessibleTypeIds = null;
+    }
+@endphp
+
+@foreach($accessibleSports as $sport)
     <h3 class="font-semibold mt-6">
         {{ strtoupper($sport->name) }}
         @if(strtolower($sport->division) === 'paragames')
@@ -680,7 +746,6 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 
     <table class="w-full border text-sm mt-2
         {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
-
         <thead class="bg-gray-200 text-center">
             <tr>
                 <th class="border">Event Type</th>
@@ -689,12 +754,10 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                 <th class="border bg-orange-200">Bronze</th>
             </tr>
         </thead>
-
         <tbody>
-            @foreach($sport->types as $type)
+            @foreach($sport->types->whereIn('id', $accessibleTypeIds ?? $sport->types->pluck('id')->toArray()) as $type)
                 <tr>
                     <td class="border px-2">{{ $type->type_name }}</td>
-
                     @foreach(['Gold','Silver','Bronze'] as $medal)
                         <td class="border text-center">
                             <input type="number"
@@ -769,8 +832,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 </div>
 </form>
 
-
-            {{-- ========================================================= --}}
+{{-- ========================================================= --}}
 {{-- 🏅 INDIVIDUAL AWARDS FORM (Gold, Silver, Bronze per sport) --}}
 {{-- ========================================================= --}}
 <form x-show="awardType==='individual'" method="POST" action="{{ route('results_individual.store') }}" x-data="{ showConfirm: false }">
@@ -803,32 +865,19 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 
         // Filter athletes per tab for the select options
         $tabAthletes = $athletes->filter(fn($a) => $a->division == $tab['division'] && ($tab['category'] ? $a->category == $tab['category'] : true));
+
+        // Accessible sports for Tournament Manager
+        if($user->role->name === 'Tournament Manager') {
+            $accessibleSportIds = is_string($user->sports_access) ? json_decode($user->sports_access, true) : $user->sports_access;
+            $accessibleSports = \App\Models\Sport::whereIn('id', $accessibleSportIds)->get();
+            $accessibleTypeIds = is_string($user->sport_type_access) ? json_decode($user->sport_type_access, true) : $user->sport_type_access;
+        } else {
+            $accessibleSports = $sports;
+            $accessibleTypeIds = null;
+        }
     @endphp
 
-    {{-- ================================================= --}}
-{{-- 🏅 INDIVIDUAL AWARDS FORM (WITH SDO SELECT) --}}
-{{-- ================================================= --}}
-<form method="POST"
-      action="{{ route('results_individual.store') }}"
-      enctype="multipart/form-data"
-      x-show="awardType==='individual'"
-      x-data="{ showConfirm:false }">
-
-@csrf
-
-<input type="hidden" name="division" value="{{ $tab['division'] }}">
-<input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
-
-{{-- 🚫 READ ONLY NOTICE --}}
-@if($user->role->name === 'Tournament Manager')
-<div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-    <strong>Read Only:</strong>
-    Tournament Managers cannot modify or submit Individual Awards.
-</div>
-@endif
-
-{{-- ================= SELECT SDO ================= --}}
-@if($user->role->name === 'Tournament Secretary')
+{{-- ================= DIVISION SELECTOR ================= --}}
 <div class="mb-6 flex items-center gap-4">
     <div>
         <label class="block text-sm font-semibold mb-1">
@@ -836,10 +885,11 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         </label>
         <select name="selected_sdo"
                 class="border rounded px-3 py-2 w-64"
-                required>
+                {{ $user->role->name === 'Tournament Manager' ? 'disabled' : 'required' }}>
             <option value="">-- Choose Division --</option>
             @foreach(\App\Models\Division::orderBy('name')->get() as $divisionOption)
-                <option value="{{ $divisionOption->name }}">
+                <option value="{{ $divisionOption->name }}"
+                    {{ $tab['division'] === $divisionOption->name ? 'selected' : '' }}>
                     {{ $divisionOption->name }}
                 </option>
             @endforeach
@@ -850,39 +900,36 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         <strong>Note:</strong> Select one athlete per medal.
     </div>
 </div>
-@endif
 
-{{-- ================= INPUT TABLE ================= --}}
-@foreach($sports as $sport)
-<h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
+{{-- ================= SPORTS TABLE ================= --}}
+@foreach($accessibleSports as $sport)
+    <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
 
-<table class="w-full border text-sm mt-2
-    {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
-<tbody>
+    <table class="w-full border text-sm mt-2
+        {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
+        <tbody>
+            @foreach($sport->types->whereIn('id', $accessibleTypeIds ?? $sport->types->pluck('id')->toArray()) as $type)
+            <tr>
+                <td class="border px-2">{{ $type->type_name }}</td>
 
-@foreach($sport->types as $type)
-<tr>
-    <td class="border px-2">{{ $type->type_name }}</td>
-
-    @foreach(['Gold','Silver','Bronze'] as $medal)
-    <td class="border px-1">
-        <select class="w-full border rounded text-sm"
-            name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
-            {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-            <option value="">-- Select Athlete --</option>
-            @foreach($tabAthletes as $a)
-                <option value="{{ $a->id }}">
-                    {{ $a->last_name }}, {{ $a->first_name }}
-                </option>
+                @foreach(['Gold','Silver','Bronze'] as $medal)
+                    <td class="border px-1">
+                        <select class="w-full border rounded text-sm"
+                                name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
+                                {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
+                            <option value="">-- Select Athlete --</option>
+                            @foreach($tabAthletes as $a)
+                                <option value="{{ $a->id }}">
+                                    {{ $a->last_name }}, {{ $a->first_name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </td>
+                @endforeach
+            </tr>
             @endforeach
-        </select>
-    </td>
-    @endforeach
-</tr>
-@endforeach
-
-</tbody>
-</table>
+        </tbody>
+    </table>
 @endforeach
 
 {{-- ================= ACTION BUTTONS ================= --}}

@@ -123,6 +123,7 @@ $allAwardsPara = AllAwardResult::where('status','approved')
 @endphp
 
 
+
 {{-- ================= OVERALL SUMMARY WITH LOGO ================= --}}
 <div class="mb-20">
     <h2 class="text-3xl font-bold text-gray-900 mb-8 border-l-8 border-green-600 pl-4">

@@ -132,14 +132,20 @@ class UserController extends Controller
 
 
     // Show form to edit user
-    public function edit(User $user)
-    {
-        $roles = Role::all();
-        return view('users.edit', compact('user', 'roles'));
-    }
+public function edit(User $user)
+{
+    $roles = Role::all();
+    $sports = Sport::orderBy('division')
+        ->orderBy('category')
+        ->orderBy('name')
+        ->get();
+    $sportTypes = SportType::orderBy('type_name')->get();
 
-    // Update existing user
-    public function update(Request $request, User $user)
+    return view('users.edit', compact('user', 'roles', 'sports', 'sportTypes'));
+}
+
+// Update existing user
+public function update(Request $request, User $user)
 {
     $request->validate([
         'name'             => 'required|string|max:255',
@@ -151,6 +157,7 @@ class UserController extends Controller
         'level_access'     => 'nullable|array',
         'category_access'  => 'nullable|array',
         'sports_access'    => 'nullable|array',
+        'sport_type_access'=> 'nullable|array',
     ]);
 
     $oldValues = $user->toArray();
@@ -162,19 +169,18 @@ class UserController extends Controller
     }
 
     $user->update([
-        'name'            => $request->name,
-        'email'           => $request->email,
-        'role_id'         => $role->id,
-        'access'          => $request->access ?? [],
-        'level_access'    => $request->level_access ?? [],
-        'category_access' => $request->category_access ?? [],
-        'sports_access'   => $request->sports_access ?? [],
+        'name'             => $request->name,
+        'email'            => $request->email,
+        'role_id'          => $role->id,
+        'access'           => $request->access ?? [],
+        'level_access'     => $request->level_access ?? [],
+        'category_access'  => $request->category_access ?? [],
+        'sports_access'    => $request->sports_access ?? [],
+        'sport_type_access'=> $request->sport_type_access ?? [],
     ]);
 
     if ($request->filled('password')) {
-        $user->update([
-            'password' => Hash::make($request->password)
-        ]);
+        $user->update(['password' => Hash::make($request->password)]);
     }
 
     AuditLog::create([
