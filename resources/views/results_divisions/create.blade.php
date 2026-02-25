@@ -553,11 +553,27 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 
 @foreach($tabs as $tabName => $tab)
     @php
-        $sportsQuery = \App\Models\Sport::with('types')->where('division', $tab['division'])->orderBy('name');
-        if ($user->role->name !== 'Super Admin') {
-            $sportsQuery->whereIn('id', $user->sports_access);
+       $sportsQuery = \App\Models\Sport::with(['types' => function ($q) use ($user) {
+
+        // 🔒 FILTER SPORT TYPES FOR TOURNAMENT SECRETARY
+        if (
+            $user->role->name === 'Tournament Secretary' &&
+            !empty($user->sport_type_access)
+        ) {
+            $q->whereIn('id', $user->sport_type_access);
         }
-        $sports = $sportsQuery->get();
+
+    }])->where('division', $tab['division'])
+      ->orderBy('name');
+
+    // 🔒 FILTER SPORTS FOR NON–SUPER ADMIN
+    if ($user->role->name !== 'Super Admin') {
+        $sportsQuery->whereIn('id', $user->sports_access ?? []);
+    }
+
+    $sports = $sportsQuery->get()
+        // ❗ Remove sports with NO allowed types (important)
+        ->filter(fn($sport) => $sport->types->count() > 0);
 
         $tabAthletes = $athletes->filter(fn($a) =>
             $a->division == $tab['division'] &&
@@ -604,8 +620,10 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                     </tbody>
                 </table>
             </div>
+
+            
 {{-- ================================================= --}}
-{{-- 🏆 ALL AWARDS FORM --}}
+{{-- 🏆 ALL AWARDS FORM (UPDATED WITH DIVISION SELECT) --}}
 {{-- ================================================= --}}
 <form method="POST"
       action="{{ route('results_all_awards.store') }}"
@@ -618,11 +636,37 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 
-{{-- 🚫 DISABLED NOTICE FOR TOURNAMENT MANAGER --}}
+{{-- 🚫 READ ONLY NOTICE --}}
 @if($user->role->name === 'Tournament Manager')
 <div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
     <strong>Read Only:</strong>
     Tournament Managers cannot modify or submit Awards.
+</div>
+@endif
+
+{{-- ================= DIVISION SELECTOR ================= --}}
+@if($user->role->name === 'Tournament Secretary')
+<div class="mb-6 flex items-center gap-4">
+    <div>
+        <label class="block text-sm font-semibold mb-1">
+            Select Division (SDO)
+        </label>
+        <select name="selected_sdo"
+                class="border rounded px-3 py-2 w-64"
+                required>
+            <option value="">-- Choose Division --</option>
+            @foreach(\App\Models\Division::orderBy('name')->get() as $divisionOption)
+                <option value="{{ $divisionOption->name }}">
+                    {{ $divisionOption->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div class="text-sm text-gray-600 mt-6">
+        <strong>Note:</strong> Enter <span class="font-bold text-green-600">1</span> on
+        Gold, Silver, or Bronze to forward.
+    </div>
 </div>
 @endif
 
@@ -640,18 +684,9 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         <thead class="bg-gray-200 text-center">
             <tr>
                 <th class="border">Event Type</th>
-                @foreach($divisions as $d)
-                    {{-- Division/SDO Label above G/S/B --}}
-                    <th colspan="3" class="border bg-green-100">{{ $d->name }}</th>
-                @endforeach
-            </tr>
-            <tr>
-                <th class="border"></th>
-                @foreach($divisions as $d)
-                    <th class="border bg-yellow-300">G</th>
-                    <th class="border bg-gray-300">S</th>
-                    <th class="border bg-orange-200">B</th>
-                @endforeach
+                <th class="border bg-yellow-300">Gold</th>
+                <th class="border bg-gray-300">Silver</th>
+                <th class="border bg-orange-200">Bronze</th>
             </tr>
         </thead>
 
@@ -660,80 +695,76 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                 <tr>
                     <td class="border px-2">{{ $type->type_name }}</td>
 
-                    @foreach($divisions as $d)
-                        @foreach(['Gold','Silver','Bronze'] as $medal)
-                            <td class="border text-center">
-                                <input type="number"
-                                       min="0"
-                                       value="0"
-                                       class="w-16 border rounded text-center"
-                                       name="results[{{ $sport->id }}][{{ $type->id }}][{{ $d->name }}][{{ $medal }}]"
-                                       {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-                            </td>
-                        @endforeach
+                    @foreach(['Gold','Silver','Bronze'] as $medal)
+                        <td class="border text-center">
+                            <input type="number"
+                                   min="0"
+                                   max="1"
+                                   value="0"
+                                   class="w-16 border rounded text-center"
+                                   name="results[{{ $sport->id }}][{{ $type->id }}][__SDO__][{{ $medal }}]"
+                                   oninput="this.value = this.value > 1 ? 1 : this.value"
+                                   {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
+                        </td>
                     @endforeach
                 </tr>
             @endforeach
         </tbody>
-
     </table>
 @endforeach
 
 {{-- ================= ACTION BUTTONS ================= --}}
 <div class="flex justify-end mt-6">
 
-    {{-- 🟡 TOURNAMENT SECRETARY --}}
-    @if($user->role->name === 'Tournament Secretary')
-        <button type="button"
+@if($user->role->name === 'Tournament Secretary')
+    <button type="button"
             class="bg-yellow-500 text-white px-6 py-2 rounded"
             @click="showConfirm=true">
-            Forward for Validation
-        </button>
+        Forward for Validation
+    </button>
 
-        {{-- MODAL --}}
-        <div x-show="showConfirm"
-             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    {{-- MODAL --}}
+    <div x-show="showConfirm"
+         class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
 
-            <div class="bg-white rounded shadow p-6 w-96">
-                <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
+        <div class="bg-white rounded shadow p-6 w-96">
+            <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
 
-                <p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
+            <p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
 
-                <input type="file"
-                       name="validation_file"
-                       accept=".pdf,image/*"
-                       class="w-full border rounded mb-4">
+            <input type="file"
+                   name="validation_file"
+                   accept=".pdf,image/*"
+                   class="w-full border rounded mb-4">
 
-                <div class="flex justify-end gap-2">
-                    <button type="button"
-                            class="border px-4 py-2 rounded"
-                            @click="showConfirm=false">
-                        Cancel
-                    </button>
+            <div class="flex justify-end gap-2">
+                <button type="button"
+                        class="border px-4 py-2 rounded"
+                        @click="showConfirm=false">
+                    Cancel
+                </button>
 
-                    <button type="submit"
-                            class="bg-yellow-500 text-white px-4 py-2 rounded">
-                        Yes, Forward
-                    </button>
-                </div>
+                <button type="submit"
+                        class="bg-yellow-500 text-white px-4 py-2 rounded">
+                    Yes, Forward
+                </button>
             </div>
         </div>
+    </div>
 
-    {{-- 🔵 SUPER ADMIN --}}
-    @elseif($user->role->name === 'Super Admin')
-        <button type="submit"
-                class="bg-blue-600 text-white px-6 py-2 rounded">
-            Save All Awards
-        </button>
+@elseif($user->role->name === 'Super Admin')
+    <button type="submit"
+            class="bg-blue-600 text-white px-6 py-2 rounded">
+        Save All Awards
+    </button>
 
-    {{-- 🚫 TOURNAMENT MANAGER --}}
-    @else
-        <button type="button"
-                disabled
-                class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
-            Editing Disabled
-        </button>
-    @endif
+@else
+    <button type="button"
+            disabled
+            class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
+        Editing Disabled
+    </button>
+@endif
 
 </div>
 </form>
@@ -775,7 +806,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
     @endphp
 
     {{-- ================================================= --}}
-{{-- 🏅 INDIVIDUAL AWARDS FORM --}}
+{{-- 🏅 INDIVIDUAL AWARDS FORM (WITH SDO SELECT) --}}
 {{-- ================================================= --}}
 <form method="POST"
       action="{{ route('results_individual.store') }}"
@@ -788,75 +819,68 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 
-{{-- 🚫 DISABLED NOTICE FOR TOURNAMENT MANAGER --}}
+{{-- 🚫 READ ONLY NOTICE --}}
 @if($user->role->name === 'Tournament Manager')
 <div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-    <strong>Read Only:</strong> Tournament Managers cannot modify or submit Individual Awards.
+    <strong>Read Only:</strong>
+    Tournament Managers cannot modify or submit Individual Awards.
 </div>
 @endif
 
-{{-- ================= SUMMARY TABLE ================= --}}
-<div class="overflow-x-auto mb-6">
-    <h3 class="text-lg font-bold mb-2">Individual Awards Summary</h3>
-    <table class="w-full border text-sm {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
-        <thead class="bg-gray-200 text-center">
-            <tr>
-                <th class="border px-2">Sport</th>
-                <th class="border px-2">Event Type</th>
-                <th class="border px-2">Gold</th>
-                <th class="border px-2">Silver</th>
-                <th class="border px-2">Bronze</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($sports as $sport)
-                @foreach($sport->types as $type)
-                    @php $typeKey = $type->id ?? 0; @endphp
-                    <tr>
-                        <td class="border px-2 font-semibold">{{ strtoupper($sport->name) }}</td>
-                        <td class="border px-2 font-semibold">{{ $type->type_name }}</td>
-                        @foreach(['Gold','Silver','Bronze'] as $medal)
-                            <td class="border px-2 text-left align-top">
-                                @if(isset($summary[$sport->id][$typeKey][$medal]))
-                                    @php $ath = $summary[$sport->id][$typeKey][$medal]; @endphp
-                                    <strong>{{ $ath->last_name }}, {{ $ath->first_name }}</strong><br>
-                                    <small>Region: {{ $ath->region }}</small><br>
-                                    <small>School: {{ $ath->school_name }}</small><br>
-                                    <small>Birthdate: {{ $ath->birthdate }}</small>
-                                @else
-                                    --
-                                @endif
-                            </td>
-                        @endforeach
-                    </tr>
-                @endforeach
+{{-- ================= SELECT SDO ================= --}}
+@if($user->role->name === 'Tournament Secretary')
+<div class="mb-6 flex items-center gap-4">
+    <div>
+        <label class="block text-sm font-semibold mb-1">
+            Select Division (SDO)
+        </label>
+        <select name="selected_sdo"
+                class="border rounded px-3 py-2 w-64"
+                required>
+            <option value="">-- Choose Division --</option>
+            @foreach(\App\Models\Division::orderBy('name')->get() as $divisionOption)
+                <option value="{{ $divisionOption->name }}">
+                    {{ $divisionOption->name }}
+                </option>
             @endforeach
-        </tbody>
-    </table>
+        </select>
+    </div>
+
+    <div class="text-sm text-gray-600 mt-6">
+        <strong>Note:</strong> Select one athlete per medal.
+    </div>
 </div>
+@endif
 
 {{-- ================= INPUT TABLE ================= --}}
 @foreach($sports as $sport)
 <h3 class="font-semibold mt-6">{{ strtoupper($sport->name) }}</h3>
-<table class="w-full border text-sm mt-2 {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
+
+<table class="w-full border text-sm mt-2
+    {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
 <tbody>
+
 @foreach($sport->types as $type)
 <tr>
-<td class="border px-2">{{ $type->type_name }}</td>
-@foreach(['Gold','Silver','Bronze'] as $medal)
-<td class="border px-1">
-<select class="w-full border rounded text-sm"
-    name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
-    {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-<option value="">-- Select Athlete --</option>
-@foreach($athletes as $a)
-<option value="{{ $a->id }}">{{ $a->last_name }}, {{ $a->first_name }}</option>
-@endforeach
-</select>
-</td>
-@endforeach
+    <td class="border px-2">{{ $type->type_name }}</td>
+
+    @foreach(['Gold','Silver','Bronze'] as $medal)
+    <td class="border px-1">
+        <select class="w-full border rounded text-sm"
+            name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}]"
+            {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
+            <option value="">-- Select Athlete --</option>
+            @foreach($tabAthletes as $a)
+                <option value="{{ $a->id }}">
+                    {{ $a->last_name }}, {{ $a->first_name }}
+                </option>
+            @endforeach
+        </select>
+    </td>
+    @endforeach
 </tr>
 @endforeach
+
 </tbody>
 </table>
 @endforeach
@@ -864,43 +888,53 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 {{-- ================= ACTION BUTTONS ================= --}}
 <div class="flex justify-end mt-6">
 
-{{-- 🟡 TOURNAMENT SECRETARY --}}
 @if($user->role->name === 'Tournament Secretary')
 <button type="button"
-    class="bg-yellow-500 text-white px-6 py-2 rounded"
-    @click="showConfirm=true">
+        class="bg-yellow-500 text-white px-6 py-2 rounded"
+        @click="showConfirm=true">
     Forward for Validation
 </button>
 
-{{-- MODAL --}}
-<div x-show="showConfirm" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-<div class="bg-white rounded shadow p-6 w-96">
-<h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
+{{-- CONFIRM MODAL --}}
+<div x-show="showConfirm"
+     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
 
-<p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
+    <div class="bg-white rounded shadow p-6 w-96">
+        <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
 
-<input type="file"
-       name="validation_file"
-       accept=".pdf,image/*"
-       class="w-full border rounded mb-4">
+        <p class="text-sm mb-3">Optional: upload validation file</p>
 
-<div class="flex justify-end gap-2">
-<button type="button" class="border px-4 py-2 rounded" @click="showConfirm=false">Cancel</button>
-<button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Yes, Forward</button>
+        <input type="file"
+               name="validation_file"
+               accept=".pdf,image/*"
+               class="w-full border rounded mb-4">
+
+        <div class="flex justify-end gap-2">
+            <button type="button"
+                    class="border px-4 py-2 rounded"
+                    @click="showConfirm=false">
+                Cancel
+            </button>
+
+            <button type="submit"
+                    class="bg-yellow-500 text-white px-4 py-2 rounded">
+                Yes, Forward
+            </button>
+        </div>
+    </div>
 </div>
-</div>
-</div>
 
-{{-- 🔵 SUPER ADMIN --}}
 @elseif($user->role->name === 'Super Admin')
-<button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
-Save Individual Awards
+<button type="submit"
+        class="bg-green-600 text-white px-6 py-2 rounded">
+    Save Individual Awards
 </button>
 
-{{-- 🚫 TOURNAMENT MANAGER --}}
 @else
-<button type="button" disabled class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
-Editing Disabled
+<button type="button"
+        disabled
+        class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
+    Editing Disabled
 </button>
 @endif
 

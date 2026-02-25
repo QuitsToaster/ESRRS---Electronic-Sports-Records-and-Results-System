@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\Role;
 use App\Models\AccountRequest;
 use App\Models\Sport;
+use App\Models\SportType;
 use App\Models\AuditLog;
 use Illuminate\Support\Facades\Hash;
 
@@ -62,15 +63,18 @@ class UserController extends Controller
 
 
     // Show form to create user
-   public function create()
+  public function create()
 {
     $roles = Role::all();
+
     $sports = Sport::orderBy('division')
         ->orderBy('category')
         ->orderBy('name')
         ->get();
 
-    return view('users.create', compact('roles', 'sports'));
+    $sportTypes = SportType::orderBy('type_name')->get();
+
+    return view('users.create', compact('roles', 'sports', 'sportTypes'));
 }
 
 
@@ -87,6 +91,8 @@ class UserController extends Controller
         'access'           => 'nullable|array',
         'sports_access'    => 'nullable|array',
         'sports_access.*'  => 'exists:sports,id',
+        'sport_type_access'   => 'nullable|array',
+        'sport_type_access.*' => 'exists:sport_types,id',
         'level_access'     => 'nullable|array',
         'category_access'  => 'nullable|array',
     ]);
@@ -106,6 +112,7 @@ class UserController extends Controller
         'role_id'         => $role->id,
         'access'          => $request->access ?? [],
         'sports_access'   => $request->sports_access ?? [],
+        'sport_type_access'  => $request->sport_type_access ?? [],
         'level_access'    => $request->level_access ?? [],
         'category_access' => $request->category_access ?? [],
     ]);

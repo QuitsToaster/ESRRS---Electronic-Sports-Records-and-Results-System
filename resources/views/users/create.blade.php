@@ -186,6 +186,31 @@
     @endforeach
 </div>
 
+{{-- SPORT TYPE ACCESS --}}
+<div>
+    <label class="flex items-center gap-2 font-semibold mb-2">
+        <input type="checkbox" id="selectAllSportTypes">
+        Select All Sport Types
+    </label>
+
+    <p class="text-xs text-gray-500 mb-3">
+        Grant access based on <strong>Sport Types</strong>.
+    </p>
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+        @foreach($sportTypes as $type)
+            <label class="flex items-center gap-2">
+                <input type="checkbox"
+                       class="sportTypeCheckbox"
+                       name="sport_type_access[]"
+                       value="{{ $type->id }}"
+                       {{ in_array($type->id, old('sport_type_access', [])) ? 'checked' : '' }}>
+                {{ $type->type_name }}
+            </label>
+        @endforeach
+    </div>
+</div>
+
 {{-- Actions --}}
 <div class="flex justify-end gap-3 pt-4 border-t">
     <a href="{{ route('users.index') }}"
@@ -229,6 +254,11 @@ document.addEventListener('DOMContentLoaded', () => {
     bind(
         document.getElementById('selectAllSports'),
         document.querySelectorAll('.sportCheckbox')
+    );
+
+    bind(
+        document.getElementById('selectAllSportTypes'),
+        document.querySelectorAll('.sportTypeCheckbox')
     );
 });
 </script>

@@ -15,11 +15,23 @@ class ResultIndividualAwardController extends Controller
 {
     $user = auth()->user();
 
+    // ✅ VALIDATION
+    if ($user->role->name === 'Tournament Secretary') {
+        $request->validate([
+            'selected_sdo' => 'required|string',
+            'individual_results' => 'required|array',
+        ]);
+    }
+
     $status = $user->role->name === 'Tournament Secretary'
         ? 'pending'
         : 'approved';
 
     $eventId = Event::where('is_active', 1)->value('id');
+
+    if (!$eventId) {
+        return back()->with('error', 'No active event found.');
+    }
 
     // ✅ OPTIONAL FILE UPLOAD
     $filePath = null;
@@ -28,44 +40,48 @@ class ResultIndividualAwardController extends Controller
             ->store('award-validations', 'public');
     }
 
-   foreach ($request->individual_results as $sportId => $types) {
-    foreach ($types as $typeId => $medals) {
-        foreach ($medals as $medal => $athleteId) {
+    $selectedSdo = $request->selected_sdo;
 
-            if (!$athleteId) continue;
+    foreach ($request->individual_results as $sportId => $types) {
 
-            $award = IndividualAwardResult::updateOrCreate(
-                [
-                    'event_id' => $eventId,
-                    'division' => $request->division,
-                    'category' => $request->category,
-                    'sport_id' => $sportId,
-                    'type_id' => $typeId,
-                    'medal' => $medal,
-                ],
-                [
-                    'athlete_id' => $athleteId,
-                    'sdo' => $user->division_name,
-                    'status' => $status,
-                    'awarded_by' => $user->id,
-                    'validation_file' => $filePath,
-                ]
-            );
+        foreach ($types as $typeId => $medals) {
 
-            // 🔹 Audit log for Tournament Secretary forwarding
-            if ($user->role->name === 'Tournament Secretary') {
-                AuditLog::create([
-                    'model_type' => 'IndividualAwardResult',
-                    'model_id' => $award->id,
-                    'user_id' => $user->id,
-                    'old_values' => json_encode([]),
-                    'new_values' => json_encode($award->toArray()),
-                    'action' => 'Forwarded Individual Award for Approval',
-                ]);
+            foreach ($medals as $medal => $athleteId) {
+
+                if (!$athleteId) continue;
+
+                $award = IndividualAwardResult::updateOrCreate(
+                    [
+                        'event_id' => $eventId,
+                        'division' => $request->division,
+                        'category' => $request->category ?: null,
+                        'sport_id' => $sportId,
+                        'type_id'  => $typeId,
+                        'medal'    => $medal,
+                        'sdo'      => $selectedSdo,
+                    ],
+                    [
+                        'athlete_id' => $athleteId,
+                        'status' => $status,
+                        'awarded_by' => $user->id,
+                        'validation_file' => $filePath,
+                    ]
+                );
+
+                // 🔹 AUDIT LOG
+                if ($user->role->name === 'Tournament Secretary') {
+                    AuditLog::create([
+                        'model_type' => 'IndividualAwardResult',
+                        'model_id' => $award->id,
+                        'user_id' => $user->id,
+                        'action' => 'Forwarded Individual Award for Approval',
+                        'old_values' => null,
+                        'new_values' => json_encode($award->toArray()),
+                    ]);
+                }
             }
         }
     }
-}
 
     return back()->with('success', 'Individual awards forwarded successfully.');
 }

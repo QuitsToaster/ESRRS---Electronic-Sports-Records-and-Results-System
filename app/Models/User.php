@@ -18,6 +18,7 @@ class User extends Authenticatable
         'role_id',
         'access',
         'sports_access',
+        'sport_type_access', 
         'level_access',      // ✅ FIX
         'category_access', 
         'division_name',  // ✅ FIX
@@ -31,6 +32,7 @@ class User extends Authenticatable
     protected $casts = [
         'access'          => 'array',
         'sports_access'   => 'array',
+        'sport_type_access'  => 'array',
         'level_access'    => 'array',   // ✅ FIX
         'category_access' => 'array',   // ✅ FIX
         'email_verified_at' => 'datetime',
