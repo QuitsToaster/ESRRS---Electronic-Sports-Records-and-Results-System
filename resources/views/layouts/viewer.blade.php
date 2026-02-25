@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="flex-shrink-0 flex flex-col">
             {{-- LIVE/NEWS Badge --}}
             <div class="px-2 py-2 bg-red-700 text-white font-bold  text-xl text-center">
-                eSRRS NEWS
+                eSRRS
             </div>
 
             {{-- Time Box --}}
