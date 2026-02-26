@@ -127,17 +127,20 @@ public function participantShow(Division $division, Request $request)
 
 
     /* =========================================================
-       INDIVIDUAL AWARDS (individual_award_results)
-    ========================================================== */
+   INDIVIDUAL AWARDS (individual_award_results)
+========================================================== */
 
-    $individualRegular = IndividualAwardResult::with(['sport','event','athlete'])
-        ->where('division', ['Elementary','Secondary'])
-        ->get();
+// Regular Individual Awards filtered by SDO
+$individualRegular = IndividualAwardResult::with(['sport','event','athlete'])
+    ->whereIn('division', ['Elementary','Secondary'])
+    ->where('sdo', $division->name)
+    ->get();
 
-    $individualParagames = IndividualAwardResult::with(['sport','event','athlete'])
-        ->where('division', 'Paragames')
-        ->where('sdo', $division->name)
-        ->get();
+// Paragames Individual Awards filtered by SDO
+$individualParagames = IndividualAwardResult::with(['sport','event','athlete'])
+    ->where('division', 'Paragames')
+    ->where('sdo', $division->name)
+    ->get();
 
 
     /* =========================================================
