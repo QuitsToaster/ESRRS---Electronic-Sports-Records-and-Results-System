@@ -865,7 +865,6 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
             $accessibleTypeIds = null;
         }
 
-        // Pass athletes safely to JS
         $athletesJson = $athletes->map(fn($a) => [
             'id' => $a->id,
             'name' => $a->last_name . ', ' . $a->first_name,
@@ -873,99 +872,81 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         ])->values();
     @endphp
 
-{{-- ================= NOTE ================= --}}
 <div class="mb-4 text-sm text-gray-600">
-    <strong>Note:</strong> Athletes are filtered automatically based on the selected Division (SDO).
+    <strong>Note:</strong> You may award any medal independently. Unfilled medals will be ignored.
 </div>
 
-{{-- ================= SPORTS TABLE ================= --}}
 @foreach($accessibleSports as $sport)
-    <h3 class="font-semibold mt-6 text-lg">
-        {{ strtoupper($sport->name) }}
-    </h3>
+<h3 class="font-semibold mt-6 text-lg">{{ strtoupper($sport->name) }}</h3>
 
-    <table class="w-full border text-sm mt-2">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="border px-2 py-2">Event Type</th>
-                <th class="border px-2 py-2 bg-yellow-100">Gold</th>
-                <th class="border px-2 py-2 bg-gray-200">Silver</th>
-                <th class="border px-2 py-2 bg-orange-200">Bronze</th>
-            </tr>
-        </thead>
+<table class="w-full border text-sm mt-2">
+<thead class="bg-gray-100">
+<tr>
+    <th class="border px-2 py-2">Event Type</th>
+    <th class="border px-2 py-2 bg-yellow-100">Gold</th>
+    <th class="border px-2 py-2 bg-gray-200">Silver</th>
+    <th class="border px-2 py-2 bg-orange-200">Bronze</th>
+</tr>
+</thead>
 
-        <tbody>
-        @foreach($sport->types->whereIn('id', $accessibleTypeIds ?? $sport->types->pluck('id')->toArray()) as $type)
-            <tr>
-                <td class="border px-3 py-3 font-medium">
-                    {{ $type->type_name }}
-                </td>
+<tbody>
+@foreach($sport->types->whereIn('id', $accessibleTypeIds ?? $sport->types->pluck('id')->toArray()) as $type)
+<tr>
+<td class="border px-3 py-3 font-medium">{{ $type->type_name }}</td>
 
-                @foreach(['Gold','Silver','Bronze'] as $medal)
-                <td class="border px-3 py-3 align-top">
+@foreach(['Gold','Silver','Bronze'] as $medal)
+<td class="border px-3 py-3 align-top">
 
-                    <div x-data="{
-                        selectedSDO: '',
-                        athletes: {{ json_encode($athletesJson) }},
-                        get filteredAthletes() {
-                            if (!this.selectedSDO) return [];
+<div x-data="{
+    selectedSDO: '',
+    athletes: {{ json_encode($athletesJson) }},
+    get filteredAthletes() {
+        if (!this.selectedSDO) return [];
+        const cleanSDO = this.selectedSDO
+            .replace(/^SDO\s*-\s*/i, '')
+            .trim()
+            .toUpperCase();
+        return this.athletes.filter(a => a.school_division === cleanSDO);
+    }
+}">
 
-                            const cleanSDO = this.selectedSDO
-                                .replace(/^SDO\s*-\s*/i, '')
-                                .trim()
-                                .toUpperCase();
+<label class="block text-xs font-semibold mb-1">
+    {{ $medal }} Division (SDO)
+</label>
 
-                            return this.athletes.filter(a =>
-                                a.school_division === cleanSDO
-                            );
-                        }
-                    }">
+<select x-model="selectedSDO"
+        name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][sdo]"
+        class="w-full border rounded px-2 py-1 text-sm mb-2"
+        {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
+    <option value="">-- Optional --</option>
+    @foreach($divisions as $divisionOption)
+        <option value="{{ $divisionOption->name }}">{{ $divisionOption->name }}</option>
+    @endforeach
+</select>
 
-                        {{-- MEDAL LABEL --}}
-                        <label class="block text-xs font-semibold mb-1">
-                            {{ $medal }} Division (SDO)
-                        </label>
+<label class="block text-xs font-semibold mb-1">
+    {{ $medal }} Athlete
+</label>
 
-                        {{-- DIVISION SELECT --}}
-                        <select x-model="selectedSDO"
-                                name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][sdo]"
-                                class="w-full border rounded px-2 py-1 text-sm mb-2"
-                                {{ $user->role->name === 'Tournament Manager' ? 'disabled' : 'required' }}>
-                            <option value="">-- Select Division --</option>
-                            @foreach($divisions as $divisionOption)
-                                <option value="{{ $divisionOption->name }}">
-                                    {{ $divisionOption->name }}
-                                </option>
-                            @endforeach
-                        </select>
+<select name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][athlete]"
+        class="w-full border rounded px-2 py-1 text-sm"
+        :disabled="!selectedSDO"
+        {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
+    <option value="">-- Optional --</option>
 
-                        {{-- ATHLETE LABEL --}}
-                        <label class="block text-xs font-semibold mb-1">
-                            {{ $medal }} Athlete
-                        </label>
+    <template x-for="athlete in filteredAthletes" :key="athlete.id">
+        <option :value="athlete.id" x-text="athlete.name"></option>
+    </template>
+</select>
 
-                        {{-- ATHLETE SELECT --}}
-                        <select name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][athlete]"
-                                class="w-full border rounded px-2 py-1 text-sm"
-                                :disabled="!selectedSDO"
-                                {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-                            <option value="">-- Select Athlete --</option>
+</div>
 
-                            <template x-for="athlete in filteredAthletes" :key="athlete.id">
-                                <option :value="athlete.id"
-                                        x-text="athlete.name">
-                                </option>
-                            </template>
-                        </select>
-
-                    </div>
-
-                </td>
-                @endforeach
-            </tr>
-        @endforeach
-        </tbody>
-    </table>
+</td>
+@endforeach
+</tr>
+@endforeach
+</tbody>
+</table>
 @endforeach
 
 {{-- ================= ACTION BUTTONS ================= --}}
@@ -979,44 +960,30 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 </button>
 
 <div x-show="showConfirm"
-     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+     class="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+<div class="bg-white rounded shadow p-6 w-96">
+    <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
 
-    <div class="bg-white rounded shadow p-6 w-96">
-        <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
+    <p class="text-sm mb-3">Optional: upload validation file</p>
 
-        <p class="text-sm mb-3">Optional: upload validation file</p>
+    <input type="file" name="validation_file"
+           accept=".pdf,image/*"
+           class="w-full border rounded mb-4">
 
-        <input type="file"
-               name="validation_file"
-               accept=".pdf,image/*"
-               class="w-full border rounded mb-4">
-
-        <div class="flex justify-end gap-2">
-            <button type="button"
-                    class="border px-4 py-2 rounded"
-                    @click="showConfirm=false">
-                Cancel
-            </button>
-
-            <button type="submit"
-                    class="bg-yellow-500 text-white px-4 py-2 rounded">
-                Yes, Forward
-            </button>
-        </div>
+    <div class="flex justify-end gap-2">
+        <button type="button" class="border px-4 py-2 rounded"
+                @click="showConfirm=false">Cancel</button>
+        <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">
+            Yes, Forward
+        </button>
     </div>
+</div>
 </div>
 
 @elseif($user->role->name === 'Super Admin')
 <button type="submit"
         class="bg-green-600 text-white px-6 py-2 rounded">
     Save Individual Awards
-</button>
-
-@else
-<button type="button"
-        disabled
-        class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
-    Editing Disabled
 </button>
 @endif
 
