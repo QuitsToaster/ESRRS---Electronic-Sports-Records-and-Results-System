@@ -15,14 +15,6 @@ class ResultIndividualAwardController extends Controller
 {
     $user = auth()->user();
 
-    // ✅ VALIDATION
-    if ($user->role->name === 'Tournament Secretary') {
-        $request->validate([
-            'selected_sdo' => 'required|string',
-            'individual_results' => 'required|array',
-        ]);
-    }
-
     $status = $user->role->name === 'Tournament Secretary'
         ? 'pending'
         : 'approved';
@@ -33,22 +25,22 @@ class ResultIndividualAwardController extends Controller
         return back()->with('error', 'No active event found.');
     }
 
-    // ✅ OPTIONAL FILE UPLOAD
     $filePath = null;
     if ($user->role->name === 'Tournament Secretary' && $request->hasFile('validation_file')) {
         $filePath = $request->file('validation_file')
             ->store('award-validations', 'public');
     }
 
-    $selectedSdo = $request->selected_sdo;
-
     foreach ($request->individual_results as $sportId => $types) {
 
         foreach ($types as $typeId => $medals) {
 
-            foreach ($medals as $medal => $athleteId) {
+            foreach ($medals as $medal => $data) {
 
-                if (!$athleteId) continue;
+                $athleteId = $data['athlete'] ?? null;
+                $sdo = $data['sdo'] ?? null;
+
+                if (!$athleteId || !$sdo) continue;
 
                 $award = IndividualAwardResult::updateOrCreate(
                     [
@@ -58,7 +50,7 @@ class ResultIndividualAwardController extends Controller
                         'sport_id' => $sportId,
                         'type_id'  => $typeId,
                         'medal'    => $medal,
-                        'sdo'      => $selectedSdo,
+                        'sdo'      => $sdo,
                     ],
                     [
                         'athlete_id' => $athleteId,
@@ -68,7 +60,6 @@ class ResultIndividualAwardController extends Controller
                     ]
                 );
 
-                // 🔹 AUDIT LOG
                 if ($user->role->name === 'Tournament Secretary') {
                     AuditLog::create([
                         'model_type' => 'IndividualAwardResult',
