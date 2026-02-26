@@ -39,17 +39,20 @@
 {{-- ================= MEDALS SECTION ================= --}}
 <section class="bg-gray-300 px-4 py-12">
 
+    {{-- ========================================================= --}}
+    {{-- 🥇 REGULAR MEDALS --}}
+    {{-- ========================================================= --}}
+
     <div class="text-center mb-10">
-        <h2 class="text-6xl md:text-8xl italic font-bold text-black">
-            Medals
+        <h2 class="text-5xl italic font-bold text-black">
+            Regular Medals
         </h2>
     </div>
 
-    {{-- ================= MEDAL CARDS ================= --}}
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
         @foreach(['Gold','Silver','Bronze'] as $medal)
             @php
-                $count = $medalCounts[$medal] ?? 0;
+                $count = $regularCounts[$medal] ?? 0;
                 $style = $medal === 'Gold'
                     ? 'from-yellow-400 to-yellow-200 text-yellow-700'
                     : ($medal === 'Silver'
@@ -64,10 +67,10 @@
         @endforeach
     </div>
 
-    {{-- ================= MEDAL SUMMARY TABLE ================= --}}
-    <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto">
+    {{-- TEAM REGULAR --}}
+    <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-16">
         <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">
-            Medal Summary
+            Regular Medals
         </h3>
 
         <table class="min-w-full text-sm">
@@ -76,45 +79,155 @@
                     <th class="px-4 py-3 text-left">Medal</th>
                     <th class="px-4 py-3 text-left">Event</th>
                     <th class="px-4 py-3 text-left">Sport</th>
-                    <th class="px-4 py-3 text-left">Category</th>
                     <th class="px-4 py-3 text-left">Date</th>
                 </tr>
             </thead>
-
             <tbody class="divide-y">
-                @forelse($awards as $award)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 font-bold
-                            {{ $award->medal === 'Gold' ? 'text-yellow-600' :
-                               ($award->medal === 'Silver' ? 'text-gray-600' : 'text-orange-600') }}">
-                            {{ $award->medal }}
-                        </td>
-                        <td class="px-4 py-2 text-gray-700">
-    <strong>
-        @if($award->sport && $award->sport->division === 'Paragames')
-            {{ $award->type_name ?? 'Paragames Event' }}
-        @else
-            {{ $award->event?->name ?? 'Event' }}
-        @endif
-    </strong>
-</td>
-
+                @forelse($regularTeamAwards as $award)
+                    <tr>
+                        <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
+                        <td class="px-4 py-3">{{ $award->event?->name ?? 'Event' }}</td>
                         <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
-                        <td class="px-4 py-3">{{ $award->category }}</td>
-                        <td class="px-4 py-3">
-                            {{ $award->date?->format('M d, Y') }}
-                        </td>
+                        <td class="px-4 py-3">{{ $award->date?->format('M d, Y') }}</td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-4 py-6 text-center text-gray-500">
-                            No medals recorded for this division.
+                        <td colspan="4" class="text-center py-6 text-gray-500">
+                            No team medals recorded.
                         </td>
                     </tr>
                 @endforelse
             </tbody>
         </table>
     </div>
+
+    {{-- INDIVIDUAL REGULAR --}}
+    <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-24">
+        <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">Individual Medals</h3>
+
+        <table class="min-w-full text-sm">
+            <thead class="bg-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left">Medal</th>
+                    <th class="px-4 py-3 text-left">Athlete</th>
+                    <th class="px-4 py-3 text-left">School</th>
+                    <th class="px-4 py-3 text-left">Event</th>
+                    <th class="px-4 py-3 text-left">Sport</th>
+                    <th class="px-4 py-3 text-left">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($individualRegular as $award)
+                    <tr>
+                        <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
+                        <td class="px-4 py-3">{{ $award->athlete?->full_name ?? 'Athlete' }}</td>
+                        <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
+                        <td class="px-4 py-3">{{ $award->event?->name ?? 'Event' }}</td>
+                        <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
+                        <td class="px-4 py-3">{{ $award->created_at?->format('M d, Y') }}</td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="text-center py-6">No individual medals.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- ========================================================= --}}
+    {{-- ♿ PARAGAMES MEDALS --}}
+    {{-- ========================================================= --}}
+
+    <div class="text-center mb-10">
+        <h2 class="text-5xl italic font-bold text-black">
+            Paragames Medals
+        </h2>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12 max-w-5xl mx-auto">
+        @foreach(['Gold','Silver','Bronze'] as $medal)
+            @php
+                $count = $paragamesCounts[$medal] ?? 0;
+                $style = $medal === 'Gold'
+                    ? 'from-yellow-400 to-yellow-200 text-yellow-700'
+                    : ($medal === 'Silver'
+                        ? 'from-gray-300 to-gray-100 text-gray-700'
+                        : 'from-orange-400 to-yellow-300 text-orange-700');
+            @endphp
+
+            <div class="bg-gradient-to-tr {{ $style }} rounded-xl p-8 shadow-lg text-center">
+                <div class="text-xl font-semibold">{{ $medal }}</div>
+                <div class="text-5xl font-bold mt-2">{{ $count }}</div>
+            </div>
+        @endforeach
+    </div>
+
+    {{-- TEAM PARAGAMES --}}
+    <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-16">
+        <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">
+            Paragames Medals
+        </h3>
+
+        <table class="min-w-full text-sm">
+            <thead class="bg-gray-200">
+                <tr>
+                    <th class="px-4 py-3 text-left">Medal</th>
+                    <th class="px-4 py-3 text-left">Event</th>
+                    <th class="px-4 py-3 text-left">Sport</th>
+                    <th class="px-4 py-3 text-left">Date</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y">
+                @forelse($paragamesTeamAwards as $award)
+                    <tr>
+                        <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
+                        <td class="px-4 py-3">{{ $award->event?->name ?? 'Paragames Event' }}</td>
+                        <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
+                        <td class="px-4 py-3">{{ $award->date?->format('M d, Y') }}</td>
+                    </tr>
+                @empty
+                    <tr>
+                        <td colspan="4" class="text-center py-6 text-gray-500">
+                            No team medals recorded.
+                        </td>
+                    </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+
+    {{-- INDIVIDUAL PARAGAMES --}}
+<div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-16">
+    <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">Individual Medals</h3>
+
+    <table class="min-w-full text-sm">
+        <thead class="bg-gray-200">
+            <tr>
+                <th class="px-4 py-3 text-left">Medal</th>
+                <th class="px-4 py-3 text-left">Athlete</th>
+                <th class="px-4 py-3 text-left">School</th>
+                <th class="px-4 py-3 text-left">Event</th>
+                <th class="px-4 py-3 text-left">Sport</th>
+                <th class="px-4 py-3 text-left">Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            @forelse($individualParagames as $award)
+                <tr>
+                    <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
+                    <td class="px-4 py-3">{{ $award->athlete?->full_name ?? 'Athlete' }}</td>
+                    <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
+                    <td class="px-4 py-3">{{ $award->event?->name ?? 'Paragames Event' }}</td>
+                    <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
+                    <td class="px-4 py-3">{{ $award->created_at?->format('M d, Y') }}</td>
+                </tr>
+            @empty
+                <tr>
+                    <td colspan="6" class="text-center py-6">No individual medals.</td>
+                </tr>
+            @endforelse
+        </tbody>
+    </table>
+</div>
 
 </section>
 

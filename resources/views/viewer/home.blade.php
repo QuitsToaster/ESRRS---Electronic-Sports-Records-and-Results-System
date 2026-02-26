@@ -70,16 +70,16 @@ function closePrivacyBanner() {
                  class="w-full h-full object-cover banner-clip">
 
             {{-- Gradient Overlay --}}
-            <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-black/20 banner-clip"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-black/90 to-black/10 banner-clip"></div>
 
             {{-- Banner Text --}}
             <div class="absolute left-4 sm:left-6 top-1/3 max-w-lg text-white">
                 <h2 class="text-4xl sm:text-4xl md:text-6xl font-bold mb-1 sm:mb-2" style="font-family: 'Poppins', sans-serif;">
-                    Where Champions Are Made.
+                    CAVRAA MEET 2026:
                 </h2>
 
-                <p class="text-xs sm:text-sm md:text-base text-white/90 leading-snug" style="font-family: 'Poppins', sans-serif;">
-                   Follow the action as it unfolds — from opening matches to championship moments.
+                <p class="text-xl sm:text-3xl text-white/90 leading-snug font-style: italic" style="font-family: 'Poppins', sans-serif;">
+                   KAISAng Lakas ng Isports sa Dos.
                 </p>
             </div>
         </div>

@@ -109,54 +109,87 @@ public function home()
 
 
 
-  public function participantShow(Division $division, Request $request)
+public function participantShow(Division $division, Request $request)
 {
-    /* ================= TEAM / AGGREGATED MEDALS ================= */
-    $teamResults = AllAwardResult::with(['sport', 'event', 'sportType', 'type'])
+    /* =========================================================
+       TEAM AWARDS (all_award_results)
+    ========================================================== */
+
+    $teamRegular = AllAwardResult::with(['sport', 'event'])
+        ->where('sdo', $division->name)
+        ->whereIn('division', ['Elementary', 'Secondary'])
+        ->get();
+
+    $teamParagames = AllAwardResult::with(['sport', 'event'])
+        ->where('sdo', $division->name)
+        ->where('division', 'Paragames')
+        ->get();
+
+
+    /* =========================================================
+       INDIVIDUAL AWARDS (individual_award_results)
+    ========================================================== */
+
+    $individualRegular = IndividualAwardResult::with(['sport','event','athlete'])
+        ->where('division', ['Elementary','Secondary'])
+        ->get();
+
+    $individualParagames = IndividualAwardResult::with(['sport','event','athlete'])
+        ->where('division', 'Paragames')
         ->where('sdo', $division->name)
         ->get();
 
-    /* ================= INDIVIDUAL MEDALS ================= */
-    $individualResults = IndividualAwardResult::with(['sport','event','athlete'])
-        ->where('division', $division->name)
-        ->get();
 
-    /* ================= MERGE RESULTS ================= */
-    $awards = collect()
-        ->merge(
-            $teamResults->map(fn ($r) => (object) [
-                'medal'    => $r->medal,
-                'event'    => $r->event,
-                'sport'    => $r->sport,
-                'type_name'=> $r->sportType?->type_name, // ✅ include type_name here
-                'category' => 'Team',
-                'date'     => $r->created_at,
-            ])
-        )
-        ->merge(
-            $individualResults->map(fn ($r) => (object) [
-                'medal'    => $r->medal,
-                'event'    => $r->event,
-                'sport'    => $r->sport,
-                'type_name'=> $r->sportType?->type_name, // ✅ include type_name here too
-                'category' => 'Individual',
-                'date'     => $r->created_at,
-            ])
-        )
-        ->sortBy(fn ($r) => array_search($r->medal, ['Gold','Silver','Bronze']))
-        ->values();
+    /* =========================================================
+       MERGED TEAM RESULTS
+    ========================================================== */
 
-    /* ================= MEDAL COUNTS ================= */
-    $medalCounts = [
-        'Gold'   => $awards->where('medal','Gold')->count(),
-        'Silver' => $awards->where('medal','Silver')->count(),
-        'Bronze' => $awards->where('medal','Bronze')->count(),
+    $regularTeamAwards = $teamRegular->map(fn ($r) => (object) [
+        'medal'  => $r->medal,
+        'event'  => $r->event,
+        'sport'  => $r->sport,
+        'date'   => $r->created_at,
+    ]);
+
+    $paragamesTeamAwards = $teamParagames->map(fn ($r) => (object) [
+        'medal'  => $r->medal,
+        'event'  => $r->event,
+        'sport'  => $r->sport,
+        'date'   => $r->created_at,
+    ]);
+
+
+    /* =========================================================
+       MEDAL COUNTS (TEAM + INDIVIDUAL)
+    ========================================================== */
+
+    $regularCounts = [
+        'Gold'   => $teamRegular->where('medal','Gold')->count()
+                    + $individualRegular->where('medal','Gold')->count(),
+        'Silver' => $teamRegular->where('medal','Silver')->count()
+                    + $individualRegular->where('medal','Silver')->count(),
+        'Bronze' => $teamRegular->where('medal','Bronze')->count()
+                    + $individualRegular->where('medal','Bronze')->count(),
     ];
+
+    $paragamesCounts = [
+        'Gold'   => $teamParagames->where('medal','Gold')->count()
+                    + $individualParagames->where('medal','Gold')->count(),
+        'Silver' => $teamParagames->where('medal','Silver')->count()
+                    + $individualParagames->where('medal','Silver')->count(),
+        'Bronze' => $teamParagames->where('medal','Bronze')->count()
+                    + $individualParagames->where('medal','Bronze')->count(),
+    ];
+
 
     return view('viewer.participants-show', compact(
         'division',
-        'awards',
-        'medalCounts'
+        'regularTeamAwards',
+        'paragamesTeamAwards',
+        'individualRegular',
+        'individualParagames',
+        'regularCounts',
+        'paragamesCounts'
     ));
 }
 
