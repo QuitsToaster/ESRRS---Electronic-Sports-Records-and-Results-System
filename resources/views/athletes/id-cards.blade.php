@@ -178,10 +178,10 @@
                     {{ $pair[0]->last_name }}, {{ $pair[0]->first_name }}
                 </div>
 
-                <div class="detail">{{ $pair[0]->sport->name ?? '—' }}</div>
+                <div class="detail">{{ $pair[0]->event ?? '—' }}</div>
                 <div class="detail">{{ $pair[0]->school->name ?? '—' }}</div>
                 <div class="detail">{{ $pair[0]->category ?? '—' }}</div>
-                <div class="detail">{{ $pair[0]->school_division ?? '—' }}</div>
+                <div class="detail">SDO - {{ $pair[0]->school_division ?? '—' }}</div>
             </div>
 
             <div class="qr">
