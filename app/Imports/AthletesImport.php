@@ -57,6 +57,7 @@ class AthletesImport implements ToCollection, WithHeadingRow
                 'school_type'     => ucfirst(strtolower($row['school_type'])),
                 'school_address'  => $row['school_address'],
                 'school_division' => $row['schdiv'],
+                'municipality' => $row['municipality'] ?? null,
                 'school_code'     => $row['school_code'],
 
                 'division'        => ucfirst(strtolower($row['level'])), // Elementary / Secondary

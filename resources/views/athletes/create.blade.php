@@ -81,7 +81,7 @@
            class="w-full border rounded px-3 py-2">
 </div>
 
-{{-- ✅ NEW: SCHOOL LOGO --}}
+{{-- SCHOOL LOGO --}}
 <div class="mb-4">
     <label class="font-medium">
         School Logo <span class="text-sm text-gray-500">(for new schools only)</span>
@@ -110,6 +110,13 @@
 <div class="mb-4">
     <label>School Address</label>
     <input name="school_address" class="w-full border rounded px-3 py-2">
+</div>
+
+{{-- ✅ NEW: MUNICIPALITY / TOWN / CITY --}}
+<div class="mb-4">
+    <label>Municipality / Town / City</label>
+    <input name="municipality"
+           class="w-full border rounded px-3 py-2">
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -152,16 +159,15 @@
            class="w-full border rounded px-3 py-2">
 </div>
 
-<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div>
         <label>Level</label>
         <select name="division" class="w-full border rounded px-3 py-2" required>
-    <option value="">Select Level</option>
-    <option value="Elementary" {{ old('division')=='Elementary' ? 'selected':'' }}>Elementary</option>
-    <option value="Secondary" {{ old('division')=='Secondary' ? 'selected':'' }}>Secondary</option>
-    <option value="Paragames" {{ old('division')=='Paragames' ? 'selected':'' }}>ParaGames</option>
-</select>
-
+            <option value="">Select Level</option>
+            <option value="Elementary">Elementary</option>
+            <option value="Secondary">Secondary</option>
+            <option value="Paragames">ParaGames</option>
+        </select>
     </div>
 
     <div>
@@ -182,7 +188,7 @@
     </div>
 </div>
 
-<button class="bg-blue-600 text-white px-6 py-2 rounded shadow">
+<button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">
     Add Athlete
 </button>
 

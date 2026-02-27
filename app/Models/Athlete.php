@@ -24,6 +24,7 @@ class Athlete extends Model
     'school_type',
     'school_address',
     'school_division',
+    'municipality',
     'school_code',
 
     'lrn',

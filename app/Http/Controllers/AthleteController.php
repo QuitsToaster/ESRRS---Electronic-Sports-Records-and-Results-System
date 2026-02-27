@@ -98,6 +98,7 @@ class AthleteController extends Controller
 
             'sport_id'        => 'nullable|exists:sports,id',
             'sport_name'      => 'nullable|string|max:255',
+            'municipality'  => 'nullable|string|max:255',
 
             'division'        => 'required|in:Elementary,Secondary,Paragames',
             'category'        => 'required|in:Boys,Girls',
@@ -152,6 +153,7 @@ class AthleteController extends Controller
             'sport_id'          => $sportId,
             'division'          => $request->division,
             'category'          => $request->category,
+            'municipality' => $request->municipality,
             'status'            => $request->status,
             'region'            => $request->region,
             'school_type'       => $request->school_type,
@@ -182,6 +184,7 @@ class AthleteController extends Controller
             'sex'              => 'required|in:Male,Female',
             'birthdate'        => 'nullable|date',
             'school_id'        => 'required|exists:schools,id',
+            'municipality' => 'nullable|string|max:255',
             'sport_id'         => 'required|exists:sports,id',
             'division'         => 'required|in:Elementary,Secondary,Paragames',
             'category'         => 'required|in:Boys,Girls',
@@ -210,6 +213,7 @@ class AthleteController extends Controller
             'school_type'       => $request->school_type,
             'school_address'    => $request->school_address,
             'school_division'   => $request->school_division,
+            'municipality' => $request->municipality,
             'school_code'       => $request->school_code,
             'lrn'               => $request->lrn,
         ]);

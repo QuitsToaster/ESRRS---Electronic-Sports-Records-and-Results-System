@@ -91,27 +91,34 @@
     </div>
 
     <div>
-        <label class="font-medium">School Division</label>
-        <input name="school_division"
-               value="{{ old('school_division',$athlete->school_division) }}"
+        <label class="font-medium">Municipality / Town / City</label>
+        <input name="municipality"
+               value="{{ old('municipality',$athlete->municipality) }}"
                class="w-full border rounded px-3 py-2">
     </div>
 </div>
 
 <div class="grid grid-cols-2 gap-4 mb-4">
     <div>
+        <label class="font-medium">School Division</label>
+        <input name="school_division"
+               value="{{ old('school_division',$athlete->school_division) }}"
+               class="w-full border rounded px-3 py-2">
+    </div>
+
+    <div>
         <label class="font-medium">School Code</label>
         <input name="school_code"
                value="{{ old('school_code',$athlete->school_code) }}"
                class="w-full border rounded px-3 py-2">
     </div>
+</div>
 
-    <div>
-        <label class="font-medium">LRN</label>
-        <input name="lrn"
-               value="{{ old('lrn',$athlete->lrn) }}"
-               class="w-full border rounded px-3 py-2">
-    </div>
+<div class="mb-4">
+    <label class="font-medium">LRN</label>
+    <input name="lrn"
+           value="{{ old('lrn',$athlete->lrn) }}"
+           class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- TEAM --}}
