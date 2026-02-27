@@ -81,24 +81,32 @@ class ResultDivisionController extends Controller
         'Para Games'        => ['division' => 'Paragames', 'category' => null],
     ];
 
-    $athletes = \App\Models\Athlete::orderBy('last_name')->get();
+    // ✅ PAGINATE SPORTS (CRITICAL FIX)
+    $sportsQuery = \App\Models\Sport::with('types')->orderBy('name');
 
-    $divisionsQuery = Division::orderBy('name');
+    if ($user->role->name !== 'Super Admin') {
+        $sportsQuery->whereIn('id', $user->sports_access ?? []);
+    }
 
-    // If user is NOT super admin, filter by user's division_name
+    $sports = $sportsQuery->paginate(10); // ✅ LIMIT TO 10 SPORTS PER PAGE
+
+    // ✅ DO NOT LOAD ALL ATHLETES (LAZY LOAD VIA AJAX LATER)
+    $athletes = collect(); // empty by default
+
+    $divisionsQuery = \App\Models\Division::orderBy('name');
+
     if ($user->role->name !== 'Super Admin') {
         $divisionsQuery->where('name', $user->division_name);
-        // Filter athletes as well
-        $athletes = $athletes->filter(function ($a) use ($user) {
-            return $a->division == $user->level_access[0] // level_access usually array
-                && ($user->category_access ? in_array($a->category, $user->category_access) : true)
-                && in_array($a->sport_id, $user->sports_access);
-        });
     }
 
     $divisions = $divisionsQuery->get();
 
-    return view('results_divisions.create', compact('divisions', 'athletes', 'tabs'));
+    return view('results_divisions.create', compact(
+        'divisions',
+        'tabs',
+        'sports',
+        'athletes'
+    ));
 }
 
 

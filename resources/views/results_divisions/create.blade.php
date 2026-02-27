@@ -42,7 +42,7 @@ if ($user->role->name !== 'Super Admin') {
 }
 
 // ====================== ALL ATHLETES ======================
-$athletes = \App\Models\Athlete::orderBy('last_name')->get();
+
 
 // ================= PREFILL ALL AWARDS RESULTS (ONLY APPROVED) =================
 $prefillResults = [];
@@ -607,35 +607,44 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 </ul>
 
 @foreach($tabs as $tabName => $tab)
-    @php
-       $sportsQuery = \App\Models\Sport::with(['types' => function ($q) use ($user) {
-
-        // 🔒 FILTER SPORT TYPES FOR TOURNAMENT SECRETARY
-        if (
-            $user->role->name === 'Tournament Secretary' &&
-            !empty($user->sport_type_access)
-        ) {
-            $q->whereIn('id', $user->sport_type_access);
-        }
-
-    }])->where('division', $tab['division'])
-      ->orderBy('name');
-
-    // 🔒 FILTER SPORTS FOR NON–SUPER ADMIN
-    if ($user->role->name !== 'Super Admin') {
-        $sportsQuery->whereIn('id', $user->sports_access ?? []);
+   @php
+// -----------------------------
+// SPORTS QUERY WITH HAS(types) FILTER
+// -----------------------------
+$sportsQuery = \App\Models\Sport::with(['types' => function ($q) use ($user) {
+    // 🔒 FILTER SPORT TYPES FOR TOURNAMENT SECRETARY
+    if ($user->role->name === 'Tournament Secretary' && !empty($user->sport_type_access)) {
+        $q->whereIn('id', $user->sport_type_access);
     }
+}])
+->where('division', $tab['division']);
 
-    $sports = $sportsQuery->get()
-        // ❗ Remove sports with NO allowed types (important)
-        ->filter(fn($sport) => $sport->types->count() > 0);
+// 🔒 FILTER SPORTS FOR NON–SUPER ADMIN
+if ($user->role->name !== 'Super Admin') {
+    $sportsQuery->whereIn('id', $user->sports_access ?? []);
+}
 
-        $tabAthletes = $athletes->filter(fn($a) =>
-            $a->division == $tab['division'] &&
-            ($tab['category'] ? $a->category == $tab['category'] : true) &&
-            ($user->role->name === 'Super Admin' || $a->sdo == $user->division_name)
-        )->sortBy('last_name');
-    @endphp
+// ✅ Only include sports that have at least one allowed type
+$sportsQuery->whereHas('types', function($q) use ($user) {
+    if ($user->role->name === 'Tournament Secretary' && !empty($user->sport_type_access)) {
+        $q->whereIn('id', $user->sport_type_access);
+    }
+});
+
+$sportsQuery->orderBy('name');
+
+// ✅ PAGINATE safely — now only sports with types are included
+$sports = $sportsQuery->paginate(10);
+
+// -----------------------------
+// FILTER ATHLETES FOR THIS TAB
+// -----------------------------
+$tabAthletes = $athletes->filter(fn($a) =>
+    $a->division == $tab['division'] &&
+    ($tab['category'] ? $a->category == $tab['category'] : true) &&
+    ($user->role->name === 'Super Admin' || $a->sdo == $user->division_name)
+)->sortBy('last_name');
+@endphp
 
         <div x-show="activeTab==='{{ $tabName }}'" x-cloak>
 
@@ -645,35 +654,40 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
             {{-- 🏆 ALL AWARDS TABLE --}}
             {{-- ========================================================= --}}
             <div x-show="awardType==='all'" class="overflow-x-auto mb-8">
-                <table class="w-full border border-collapse text-sm">
-                    <thead>
-                        <tr class="bg-gray-200 text-center">
-                            <th rowspan="2" class="border px-3">SPORT</th>
-                            @foreach($divisions as $d)
-                                <th colspan="3" class="border">{{ $d->name }}</th>
-                            @endforeach
-                        </tr>
-                        <tr>
-                            @foreach($divisions as $d)
-                                <th class="border bg-yellow-300">G</th>
-                                <th class="border bg-gray-300">S</th>
-                                <th class="border bg-orange-200">B</th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($sports as $sport)
-                        <tr>
-                            <td class="border px-3 font-semibold">{{ strtoupper($sport->name) }}</td>
-                            @foreach($divisions as $d)
-                                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Gold')"></td>
-                                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Silver')"></td>
-                                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Bronze')"></td>
-                            @endforeach
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+             <table class="w-full border border-collapse text-sm">
+    <thead>
+        <tr class="bg-gray-200 text-center">
+            <th rowspan="2" class="border px-3">SPORT</th>
+            @foreach($divisions as $d)
+                <th colspan="3" class="border">{{ $d->name }}</th>
+            @endforeach
+        </tr>
+        <tr>
+            @foreach($divisions as $d)
+                <th class="border bg-yellow-300">G</th>
+                <th class="border bg-gray-300">S</th>
+                <th class="border bg-orange-200">B</th>
+            @endforeach
+        </tr>
+    </thead>
+    <tbody>
+        @foreach($sports as $sport)
+        <tr>
+            <td class="border px-3 font-semibold">{{ strtoupper($sport->name) }}</td>
+            @foreach($divisions as $d)
+                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Gold')"></td>
+                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Silver')"></td>
+                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Bronze')"></td>
+            @endforeach
+        </tr>
+        @endforeach
+    </tbody>
+</table>
+
+{{-- PAGINATION LINKS OUTSIDE TABLE --}}
+<div class="mt-6">
+    {{ $sports->links('pagination::tailwind') }}
+</div>
             </div>
 
             
