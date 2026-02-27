@@ -78,9 +78,9 @@
         <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow">
             Upload CSV
         </button>
-        <a href="{{ asset('templates/sports_template.csv') }}" class="text-sm text-blue-600 hover:underline ml-3">
+        <!-- <a href="{{ asset('templates/sports_template.csv') }}" class="text-sm text-blue-600 hover:underline ml-3">
             Download CSV Template
-        </a>
+        </a> -->
     </form>
     <p class="text-xs text-gray-600 mt-1">CSV headers must be: <strong>Name, Type of Sport, Level, Category</strong></p>
 </div>
