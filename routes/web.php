@@ -132,6 +132,9 @@ Route::middleware('auth')->group(function() {
 Route::delete('/sports/bulk-delete', [SportController::class, 'bulkDelete'])
     ->name('sports.bulkDelete');
 
+    Route::post('/sports/bulk-upload', [SportController::class, 'bulkUpload'])
+    ->name('sports.bulkUpload')
+    ->middleware('auth');
 // Sports Resource
 Route::resource('sports', SportController::class);
 

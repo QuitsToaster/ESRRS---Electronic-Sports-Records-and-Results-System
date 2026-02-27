@@ -68,7 +68,23 @@
     </div>
 </div>
 
-
+{{-- Bulk Upload (Super Admin Only) --}}
+@if(auth()->check() && auth()->user()->role->name === 'Super Admin')
+<div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
+    <h3 class="font-semibold mb-2">Bulk Upload Sports (CSV)</h3>
+    <form action="{{ route('sports.bulkUpload') }}" method="POST" enctype="multipart/form-data" class="flex gap-2 items-center">
+        @csrf
+        <input type="file" name="file" accept=".csv" class="border rounded px-2 py-1" required>
+        <button type="submit" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded shadow">
+            Upload CSV
+        </button>
+        <a href="{{ asset('templates/sports_template.csv') }}" class="text-sm text-blue-600 hover:underline ml-3">
+            Download CSV Template
+        </a>
+    </form>
+    <p class="text-xs text-gray-600 mt-1">CSV headers must be: <strong>Name, Type of Sport, Level, Category</strong></p>
+</div>
+@endif
 
 @if(session('success'))
 <div class="bg-green-100 text-green-800 p-4 rounded mb-4">

@@ -10,6 +10,8 @@ use App\Models\IndividualAwardResult;
 use App\Models\User;
 use App\Models\Role;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\SportsImport;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 
@@ -410,4 +412,27 @@ public function paraUpdate(Request $request, Sport $sport)
         return redirect()->route('para-sports.index')
             ->with('success', 'Selected para games deleted successfully!');
     }
+
+    public function bulkUpload(Request $request)
+{
+    $user = Auth::user();
+
+    // Only Super Admin
+    if ($user->role->name !== 'Super Admin') {
+        abort(403);
+    }
+
+    $request->validate([
+        'file' => 'required|mimes:csv,txt',
+    ]);
+
+    try {
+        Excel::import(new SportsImport, $request->file('file'));
+
+        return redirect()->route('sports.index')
+            ->with('success', 'Sports uploaded successfully!');
+    } catch (\Exception $e) {
+        return back()->with('error', 'Failed to import CSV: ' . $e->getMessage());
+    }
+}
 }
