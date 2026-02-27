@@ -12,38 +12,35 @@ use Illuminate\Support\Facades\Auth;
 class ResultIndividualAwardController extends Controller
 {
     public function store(Request $request)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    $status = $user->role->name === 'Tournament Secretary'
-        ? 'pending'
-        : 'approved';
+        $status = $user->role->name === 'Tournament Secretary'
+            ? 'pending'
+            : 'approved';
 
-    $eventId = Event::where('is_active', 1)->value('id');
+        $eventId = Event::where('is_active', 1)->value('id');
 
-    if (!$eventId) {
-        return back()->with('error', 'No active event found.');
-    }
+        if (!$eventId) {
+            return back()->with('error', 'No active event found.');
+        }
 
-    $filePath = null;
-    if ($user->role->name === 'Tournament Secretary' && $request->hasFile('validation_file')) {
-        $filePath = $request->file('validation_file')
-            ->store('award-validations', 'public');
-    }
+        $filePath = null;
+        if ($user->role->name === 'Tournament Secretary' && $request->hasFile('validation_file')) {
+            $filePath = $request->file('validation_file')
+                ->store('award-validations', 'public');
+        }
 
-    foreach ($request->individual_results as $sportId => $types) {
+        foreach ($request->individual_results as $sportId => $types) {
+            foreach ($types as $typeId => $medals) {
+                foreach ($medals as $medal => $data) {
 
-        foreach ($types as $typeId => $medals) {
+                    $athleteId = $data['athlete'] ?? null;
+                    $sdo = $data['sdo'] ?? null;
 
-            foreach ($medals as $medal => $data) {
+                    if (!$athleteId || !$sdo) continue;
 
-                $athleteId = $data['athlete'] ?? null;
-                $sdo = $data['sdo'] ?? null;
-
-                if (!$athleteId || !$sdo) continue;
-
-                $award = IndividualAwardResult::updateOrCreate(
-                    [
+                    $existing = IndividualAwardResult::where([
                         'event_id' => $eventId,
                         'division' => $request->division,
                         'category' => $request->category ?: null,
@@ -51,89 +48,155 @@ class ResultIndividualAwardController extends Controller
                         'type_id'  => $typeId,
                         'medal'    => $medal,
                         'sdo'      => $sdo,
-                    ],
-                    [
-                        'athlete_id' => $athleteId,
-                        'status' => $status,
-                        'awarded_by' => $user->id,
-                        'validation_file' => $filePath,
-                    ]
-                );
+                    ])->first();
 
-                if ($user->role->name === 'Tournament Secretary') {
+                    $oldValues = $existing ? $existing->toArray() : null;
+
+                    $award = IndividualAwardResult::updateOrCreate(
+                        [
+                            'event_id' => $eventId,
+                            'division' => $request->division,
+                            'category' => $request->category ?: null,
+                            'sport_id' => $sportId,
+                            'type_id'  => $typeId,
+                            'medal'    => $medal,
+                            'sdo'      => $sdo,
+                        ],
+                        [
+                            'athlete_id' => $athleteId,
+                            'status' => $status,
+                            'awarded_by' => $user->id,
+                            'validation_file' => $filePath,
+                        ]
+                    );
+
                     AuditLog::create([
-                        'model_type' => 'IndividualAwardResult',
-                        'model_id' => $award->id,
-                        'user_id' => $user->id,
-                        'action' => 'Forwarded Individual Award for Approval',
-                        'old_values' => null,
-                        'new_values' => json_encode($award->toArray()),
-                    ]);
+    'model_type' => 'IndividualAwardResult',
+    'model_id'   => $award->id,
+    'user_id'    => $user->id,
+    'action'     => sprintf(
+        '%s | Division: %s | Category: %s | Sport ID: %s | Type ID: %s | Athlete ID: %s | Medal: %s | SDO: %s | Status: %s',
+        $actionLabel,
+        $request->division,
+        $request->category ?? 'N/A',
+        $sportId,
+        $typeId,
+        $athleteId,
+        strtoupper($medal),
+        $sdo,
+        strtoupper($status)
+    ),
+    'old_values' => $oldValues ? json_encode($oldValues) : null,
+    'new_values' => json_encode($award->toArray()),
+    'description' => json_encode([
+        'performed_by' => $user->name,
+        'role' => $user->role->name,
+        'event_id' => $eventId,
+        'division' => $request->division,
+        'category' => $request->category,
+        'sport_id' => $sportId,
+        'type_id' => $typeId,
+        'athlete_id' => $athleteId,
+        'sdo' => $sdo,
+        'medal' => $medal,
+        'status' => $status,
+        'ip_address' => request()->ip(),
+        'user_agent' => request()->userAgent(),
+    ]),
+]);
                 }
             }
         }
+
+        return back()->with('success', 'Individual awards forwarded successfully.');
     }
 
-    return back()->with('success', 'Individual awards forwarded successfully.');
-}
+    public function approveIndividual(Request $request)
+    {
+        $award = IndividualAwardResult::findOrFail($request->award_id);
+        $old = $award->toArray();
 
+        $award->update([
+            'status' => 'approved',
+            'revision_message' => null
+        ]);
 
-public function approveIndividual(Request $request)
-{
-    $award = IndividualAwardResult::findOrFail($request->award_id);
-    $old = $award->toArray();
+        AuditLog::create([
+    'model_type' => 'IndividualAwardResult',
+    'model_id' => $award->id,
+    'user_id' => Auth::id(),
+    'action' => sprintf(
+        'Approved Individual Award | Athlete ID: %s | Sport ID: %s | Medal: %s | SDO: %s',
+        $award->athlete_id,
+        $award->sport_id,
+        strtoupper($award->medal),
+        $award->sdo
+    ),
+    'old_values' => json_encode($old),
+    'new_values' => json_encode($award->toArray()),
+]);
 
-    $award->update([
-        'status' => 'approved',
-        'revision_message' => null
-    ]);
+        return back()->with('success', 'Award approved.');
+    }
 
-    AuditLog::create([
-        'model_type' => 'IndividualAwardResult',
-        'model_id' => $award->id,
-        'user_id' => Auth::id(),
-        'old_values' => json_encode($old),
-        'new_values' => json_encode($award->toArray()),
-        'action' => 'Approved Individual Award',
-    ]);
+    public function reject(Request $request)
+    {
+        $award = IndividualAwardResult::findOrFail($request->award_id);
+        $old = $award->toArray();
 
-    return back()->with('success', 'Award approved.');
-}
+        $award->update([
+            'status' => 'needs_revision',
+            'revision_message' => $request->message,
+        ]);
 
-public function reject(Request $request)
-{
-    $award = IndividualAwardResult::findOrFail($request->award_id);
-    $old = $award->toArray();
+       AuditLog::create([
+    'model_type' => 'IndividualAwardResult',
+    'model_id' => $award->id,
+    'user_id' => Auth::id(),
+    'action' => sprintf(
+        'Rejected Individual Award | Athlete ID: %s | Sport ID: %s | Medal: %s | Reason: %s',
+        $award->athlete_id,
+        $award->sport_id,
+        strtoupper($award->medal),
+        $request->message
+    ),
+    'old_values' => json_encode($old),
+    'new_values' => json_encode($award->toArray()),
+]);
 
-    $award->update([
-        'status' => 'needs_revision',
-        'revision_message' => $request->message,
-    ]);
+        return back()->with('success', 'Award marked as needs revision.');
+    }
 
-    AuditLog::create([
-        'model_type' => 'IndividualAwardResult',
-        'model_id' => $award->id,
-        'user_id' => Auth::id(),
-        'old_values' => json_encode($old),
-        'new_values' => json_encode($award->toArray()),
-        'action' => 'Rejected Individual Award',
-    ]);
-
-    return back()->with('success', 'Award marked as needs revision.');
-}
-
-public function revise($id)
+    public function revise($id)
 {
     $award = IndividualAwardResult::findOrFail($id);
+    $old = $award->toArray();
+    $user = Auth::user();
 
-    // Log deletion
     AuditLog::create([
         'model_type' => 'IndividualAwardResult',
-        'model_id' => $award->id,
-        'user_id' => Auth::id(),
-        'old_values' => json_encode($award->toArray()),
+        'model_id'   => $award->id,
+        'user_id'    => $user->id,
+        'action'     => sprintf(
+            'Deleted Individual Award for Revision | Division: %s | Category: %s | Sport ID: %s | Type ID: %s | Athlete ID: %s | Medal: %s | SDO: %s | Previous Status: %s',
+            $award->division,
+            $award->category ?? 'N/A',
+            $award->sport_id,
+            $award->type_id,
+            $award->athlete_id,
+            strtoupper($award->medal),
+            $award->sdo,
+            strtoupper($award->status)
+        ),
+        'old_values' => json_encode($old),
         'new_values' => json_encode([]),
-        'action' => 'Award deleted for revision',
+        'description' => json_encode([
+            'deleted_by' => $user->name,
+            'role' => $user->role->name,
+            'reason' => 'needs_revision',
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]),
     ]);
 
     $award->delete();
