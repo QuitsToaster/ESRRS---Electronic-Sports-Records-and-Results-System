@@ -25,20 +25,29 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+{
+    $request->authenticate();
+    $request->session()->regenerate();
 
-        $request->session()->regenerate();
+    $user = Auth::user();
+    $role = $user->role->name ?? null;
 
-        $user = Auth::user();
+    if (!empty($user->access) && is_array($user->access)) {
 
-        // If user has access, redirect to the first module they have access to
-        if (!empty($user->access) && is_array($user->access) && count($user->access) > 0) {
-            // Map module names to routes (you may need to adjust these route names)
+        foreach ($user->access as $module) {
+
+            // ✅ RESULTS MODULE (ROLE-AWARE)
+            if ($module === 'results') {
+                if (in_array($role, ['Tournament Secretary', 'Tournament Manager'])) {
+                    return redirect()->route('results_divisions.create');
+                }
+                return redirect()->route('results_divisions.index');
+            }
+
+            // ✅ OTHER MODULES
             $moduleRoutes = [
                 'dashboard' => 'dashboard',
                 'attendance' => 'attendance.index',
-                'results'        => 'results_divisions.index',
                 'teams' => 'participants.index',
                 'events' => 'events.index',
                 'sports' => 'sports.index',
@@ -53,17 +62,14 @@ class AuthenticatedSessionController extends Controller
                 'settings' => 'settings.index',
             ];
 
-            // Find the first module the user has access to that exists in the routes mapping
-            foreach ($user->access as $module) {
-                if (isset($moduleRoutes[$module])) {
-                    return redirect()->route($moduleRoutes[$module]);
-                }
+            if (isset($moduleRoutes[$module])) {
+                return redirect()->route($moduleRoutes[$module]);
             }
         }
-
-        // Default fallback
-        return redirect()->route('dashboard');
     }
+
+    return redirect()->route('dashboard');
+}
 
     /**
      * Destroy an authenticated session.

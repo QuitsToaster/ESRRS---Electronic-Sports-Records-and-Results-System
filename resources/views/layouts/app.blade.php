@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div x-show="isOpen" x-cloak class="pl-6 mt-1 space-y-1">
 
             {{-- Official Results: only for roles that are NOT Tournament Secretary --}}
-            @if(auth()->check() && auth()->user()->role->name !== 'Tournament Secretary')
+            @if(auth()->check() && !in_array(auth()->user()->role->name, ['Tournament Secretary', 'Tournament Manager']))
                 <a href="{{ route('results_divisions.index') }}"
                    class="block px-4 py-2 rounded hover:bg-blue-600
                    {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">

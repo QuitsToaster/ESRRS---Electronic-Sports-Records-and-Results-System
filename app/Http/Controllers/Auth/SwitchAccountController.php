@@ -10,31 +10,38 @@ use Illuminate\Validation\ValidationException;
 class SwitchAccountController extends Controller
 {
     public function store(Request $request)
-    {
-        // Validate input
-        $credentials = $request->validate([
-            'email' => ['required','email'],
-            'password' => ['required'],
-        ]);
+{
+    $credentials = $request->validate([
+        'email' => ['required','email'],
+        'password' => ['required'],
+    ]);
 
-        // Logout current user first
-        Auth::logout();
+    Auth::logout();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+    if (Auth::attempt($credentials)) {
+        $request->session()->regenerate();
 
-        // Attempt login with new credentials
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
+        $user = Auth::user();
+        $role = $user->role->name ?? null;
 
-            $user = Auth::user();
+        if (!empty($user->access) && is_array($user->access)) {
 
-            // Redirect based on access
-            if (!empty($user->access) && is_array($user->access) && count($user->access) > 0) {
+            foreach ($user->access as $module) {
+
+                // ✅ RESULTS MODULE (ROLE-AWARE)
+                if ($module === 'results') {
+                    if (in_array($role, ['Tournament Secretary', 'Tournament Manager'])) {
+                        return redirect()->route('results_divisions.create');
+                    }
+                    return redirect()->route('results_divisions.index');
+                }
+
+                // ✅ OTHER MODULES
                 $moduleRoutes = [
                     'dashboard' => 'dashboard',
                     'attendance' => 'attendance.index',
-                    'results'        => 'results_divisions.index',
                     'teams' => 'participants.index',
                     'events' => 'events.index',
                     'sports' => 'sports.index',
@@ -49,20 +56,17 @@ class SwitchAccountController extends Controller
                     'settings' => 'settings.index',
                 ];
 
-                foreach ($user->access as $module) {
-                    if (isset($moduleRoutes[$module])) {
-                        return redirect()->route($moduleRoutes[$module]);
-                    }
+                if (isset($moduleRoutes[$module])) {
+                    return redirect()->route($moduleRoutes[$module]);
                 }
             }
-
-            // Default fallback
-            return redirect()->route('dashboard');
         }
 
-        // Login failed
-        return back()->withErrors([
-            'email' => 'The provided credentials do not match our records.',
-        ]);
+        return redirect()->route('dashboard');
     }
+
+    return back()->withErrors([
+        'email' => 'The provided credentials do not match our records.',
+    ]);
+}
 }
