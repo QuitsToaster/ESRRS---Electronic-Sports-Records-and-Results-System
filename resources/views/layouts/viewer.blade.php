@@ -10,6 +10,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <link rel="icon" href="{{ asset('favicon.png') }}" type="image/png">
     <title>@yield('page-title', 'Viewer Dashboard')</title>
 
     @vite('resources/css/app.css')
