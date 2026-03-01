@@ -5,96 +5,64 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Athlete;
 use App\Models\Coach;
-use App\Models\LayoutSetting;
 use App\Models\Attendance;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class AttendanceController extends Controller
 {
-    // Show the attendance scanning page
-    public function index()
+    public function index(Request $request)
     {
-        // Welcome page removed — just load the scanner view
-        return view('attendance.check');
-    }
-
-
-    // Handle QR code submission from user self-scanning
-    public function store(Request $request)
-    {
-        $request->validate([
-            'qr_code' => 'required|string',
-        ]);
-
-        $qr = $request->qr_code;
-        $now = Carbon::now();
         $today = Carbon::today();
+        $selectedDivision = $request->division;
 
-        DB::beginTransaction();
+        // ================= DIVISIONS =================
+        $divisions = Athlete::whereNotNull('school_division')
+            ->distinct()
+            ->orderBy('school_division')
+            ->pluck('school_division');
 
-        try {
-            // Check athlete first
-            $athlete = Athlete::where('qr_code', $qr)->first();
-            
-            if ($athlete) {
-                return $this->handleAttendance($athlete, 'athlete', $now, $today);
-            }
-
-            // Check coach next
-            $coach = Coach::where('qr_code', $qr)->first();
-            
-            if ($coach) {
-                return $this->handleAttendance($coach, 'coach', $now, $today);
-            }
-
-            DB::rollBack();
-            return back()->with('error', 'QR code not recognized. Please try again.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'System error. Please try again.');
-        }
-    }
-
-    private function handleAttendance($user, $type, $now, $today)
-    {
-        $userIdField = $type . '_id';
-        $userName = $user->name;
-
-        // Find existing attendance for today
-        $existing = Attendance::where($userIdField, $user->id)
+        // ================= ATTENDED TODAY =================
+        $attended = Attendance::with(['athlete', 'coach.school'])
             ->whereDate('created_at', $today)
-            ->first();
+            ->when($selectedDivision, function ($query) use ($selectedDivision) {
+                $query->where(function ($q) use ($selectedDivision) {
+                    $q->whereHas('athlete', function ($q2) use ($selectedDivision) {
+                        $q2->where('school_division', $selectedDivision);
+                    })
+                    ->orWhereHas('coach.school', function ($q2) use ($selectedDivision) {
+                        $q2->where('division', $selectedDivision);
+                    });
+                });
+            })
+            ->get();
 
-        if ($existing) {
-            // User already scanned today
-            if ($existing->time_out) {
-                // Already timed out
-                DB::rollBack();
-                return back()->with('error', 
-                    "$userName has already timed out at " . 
-                    Carbon::parse($existing->time_out)->format('h:i A')
-                );
-            } else {
-                // Has time_in, needs time_out
-                $existing->update(['time_out' => $now]);
-                DB::commit();
-                return back()->with('success', 
-                    "Time out recorded for $userName at " . $now->format('h:i A')
-                );
-            }
-        } else {
-            // First scan - create time_in
-            Attendance::create([
-                $userIdField => $user->id,
-                'time_in' => $now,
-            ]);
-            
-            DB::commit();
-            return back()->with('success', 
-                "Time in recorded for $userName at " . $now->format('h:i A')
-            );
-        }
+        // ================= NOT ATTENDED ATHLETES =================
+        $notAttended = Athlete::when($selectedDivision, function ($query) use ($selectedDivision) {
+                $query->where('school_division', $selectedDivision);
+            })
+            ->whereDoesntHave('attendances', function ($query) use ($today) {
+                $query->whereDate('created_at', $today);
+            })
+            ->get();
+
+        // ================= NOT ATTENDED COACHES =================
+        $notAttendedCoaches = Coach::with('school')
+            ->when($selectedDivision, function ($query) use ($selectedDivision) {
+                $query->whereHas('school', function ($q) use ($selectedDivision) {
+                    $q->where('division', $selectedDivision);
+                });
+            })
+            ->whereDoesntHave('attendances', function ($query) use ($today) {
+                $query->whereDate('created_at', $today);
+            })
+            ->get();
+
+        return view('attendance.index', compact(
+            'attended',
+            'notAttended',
+            'notAttendedCoaches',
+            'divisions',
+            'selectedDivision'
+        ));
     }
 }

@@ -115,10 +115,17 @@ Route::middleware('auth')->group(function() {
     |--------------------------------------------------------------------------
     */
     Route::prefix('admin')->group(function () {
-        Route::get('attendance', [\App\Http\Controllers\AdminAttendanceController::class, 'index'])->name('attendance.index');
-        Route::post('attendance/generate', [\App\Http\Controllers\AdminAttendanceController::class, 'generateQr'])->name('attendance.generate');
-        Route::get('attendance/export', [\App\Http\Controllers\AdminAttendanceController::class, 'exportPdf'])->name('attendance.export');
-    });
+    Route::get('attendance', [AttendanceController::class, 'index'])
+        ->name('attendance.index');
+
+    Route::post('attendance/generate', [AttendanceController::class, 'generateQr'])
+        ->name('attendance.generate');
+
+    Route::get('attendance/export', [AttendanceController::class, 'exportPdf'])
+        ->name('attendance.export');
+});
+
+
 
 
     /*

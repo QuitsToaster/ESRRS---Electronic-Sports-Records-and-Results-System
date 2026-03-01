@@ -56,6 +56,10 @@ public function getFullNameAttribute()
     return trim("{$this->last_name}, {$this->first_name} {$this->middle_initial}");
 }
 
+public function attendances()
+{
+    return $this->hasMany(\App\Models\Attendance::class, 'athlete_id');
+}
 
 }
 
