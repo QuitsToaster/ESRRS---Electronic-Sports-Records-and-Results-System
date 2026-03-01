@@ -49,7 +49,7 @@
         </div>
     </a>
 
-    {{-- Coaches Card --}}
+    <!-- {{-- Coaches Card --}}
     <a href="{{ route('coaches.index') }}" class="block bg-red-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
         <div class="flex items-center justify-between">
             <div>
@@ -58,7 +58,7 @@
             </div>
             <div class="text-3xl font-bold text-red-800">{{ $coachesCount }}</div>
         </div>
-    </a>
+    </a> -->
 
     <!-- {{-- Total Games Card --}}
     <a href="{{ route('games.index') }}" class="block bg-teal-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
