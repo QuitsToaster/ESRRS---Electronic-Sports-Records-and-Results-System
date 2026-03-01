@@ -52,6 +52,27 @@
             </form>
         </div>
 
+        {{-- ================= EVENT COUNT ================= --}}
+<div class="grid grid-cols-1 gap-6">
+
+    <div class="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-xl">
+        <div class="text-sm text-gray-400 uppercase tracking-wide">
+            {{ $eventsLabel }}
+        </div>
+
+        <div class="mt-2 text-4xl font-bold text-white">
+            {{ $eventsCount }}
+        </div>
+
+        <div class="mt-1 text-xs text-gray-500">
+            {{ $eventsLabel === 'Total Events'
+                ? 'All events in the system'
+                : 'Based on current filters' }}
+        </div>
+    </div>
+
+</div>
+
         {{-- ================= EVENTS GRID ================= --}}
         @if($events->isEmpty())
             <div class="text-center text-gray-500 py-24 text-lg">

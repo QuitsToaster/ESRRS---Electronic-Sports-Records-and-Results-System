@@ -199,27 +199,67 @@ $individualParagames = IndividualAwardResult::with(['sport','event','athlete'])
 
 
 
-  public function events(Request $request)
+ public function events(Request $request)
 {
     $search = $request->input('search');
     $status = $request->input('status');
 
-    $events = Event::with([
-            'divisions',
-            'goldWinner',
-            'silverWinner',
-            'bronzeWinner',
-            'sport'
-        ])
+    /*
+    |--------------------------------------------------------------------------
+    | BASE QUERY
+    |--------------------------------------------------------------------------
+    */
+    $baseQuery = \App\Models\Event::with([
+        'divisions',
+        'goldWinner',
+        'silverWinner',
+        'bronzeWinner',
+        'sport'
+    ]);
+
+    /*
+    |--------------------------------------------------------------------------
+    | APPLY FILTERS
+    |--------------------------------------------------------------------------
+    */
+    $filteredQuery = (clone $baseQuery)
         ->when($search, fn ($q) =>
             $q->where('name', 'like', "%{$search}%")
         )
         ->when($status, fn ($q) =>
             $q->where('status', $status)
-        )
+        );
+
+    /*
+    |--------------------------------------------------------------------------
+    | SINGLE COUNT + LABEL
+    |--------------------------------------------------------------------------
+    */
+    $eventsCount = $filteredQuery->count();
+
+    // Dynamic label
+    if ($status) {
+        $eventsLabel = ucfirst($status) . ' Events';
+    } elseif ($search) {
+        $eventsLabel = 'Search Results';
+    } else {
+        $eventsLabel = 'Total Events';
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | FETCH EVENTS
+    |--------------------------------------------------------------------------
+    */
+    $events = $filteredQuery
         ->orderBy('start_date')
         ->get();
 
+    /*
+    |--------------------------------------------------------------------------
+    | EVENTS JSON
+    |--------------------------------------------------------------------------
+    */
     $eventsJson = $events->map(function ($event) {
 
         $resolvedGameWinners = [];
@@ -247,12 +287,14 @@ $individualParagames = IndividualAwardResult::with(['sport','event','athlete'])
         ];
     });
 
-    $gallery_photos = GalleryPhoto::latest()->get();
+    $gallery_photos = \App\Models\GalleryPhoto::latest()->get();
 
     return view('viewer.events', compact(
         'events',
         'eventsJson',
-        'gallery_photos'
+        'gallery_photos',
+        'eventsCount',
+        'eventsLabel'
     ));
 }
 
