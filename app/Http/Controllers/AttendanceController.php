@@ -7,19 +7,47 @@ use App\Models\Athlete;
 use App\Models\Coach;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
     public function index(Request $request)
     {
         $today = Carbon::today();
-        $selectedDivision = $request->division;
+        $user = Auth::user();
 
-        // ================= DIVISIONS =================
-        $divisions = Athlete::whereNotNull('school_division')
-            ->distinct()
-            ->orderBy('school_division')
-            ->pluck('school_division');
+        // ================= GET USER DIVISION =================
+        // Extract city from user name like "SDO - Santiago City Official"
+        $userDivision = null;
+
+        if ($user && stripos($user->name, 'SDO -') === 0) {
+            $afterPrefix = trim(substr($user->name, 5)); // remove "SDO - "
+            
+            // Match the actual city from athletes table
+            $allDivisions = Athlete::whereNotNull('school_division')
+                ->distinct()
+                ->pluck('school_division')
+                ->toArray();
+
+            foreach ($allDivisions as $division) {
+                if (stripos($afterPrefix, $division) !== false) {
+                    $userDivision = $division;
+                    break;
+                }
+            }
+        }
+
+        // Force division for SDO users
+        if ($userDivision) {
+            $selectedDivision = $userDivision;
+            $divisions = collect([$userDivision]);
+        } else {
+            $selectedDivision = $request->division;
+            $divisions = Athlete::whereNotNull('school_division')
+                ->distinct()
+                ->orderBy('school_division')
+                ->pluck('school_division');
+        }
 
         // ================= ATTENDED TODAY =================
         $attended = Attendance::with(['athlete', 'coach.school'])
@@ -62,7 +90,8 @@ class AttendanceController extends Controller
             'notAttended',
             'notAttendedCoaches',
             'divisions',
-            'selectedDivision'
+            'selectedDivision',
+            'userDivision'
         ));
     }
 }
