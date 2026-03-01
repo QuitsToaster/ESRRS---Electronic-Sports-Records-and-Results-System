@@ -69,10 +69,24 @@ class DashboardController extends Controller
                                         ->take(3)
                                         ->get();
 
+                                        // ================= EVENT STATUS COUNTS =================
+$eventStatusCounts = Event::select('status', \DB::raw('COUNT(*) as total'))
+    ->whereIn('status', ['Upcoming', 'Ongoing', 'Finished', 'Delayed'])
+    ->groupBy('status')
+    ->pluck('total', 'status');
+
+// Ensure all statuses exist (default 0)
+$eventStatusCounts = collect([
+    'Upcoming' => $eventStatusCounts['Upcoming'] ?? 0,
+    'Ongoing'  => $eventStatusCounts['Ongoing'] ?? 0,
+    'Finished' => $eventStatusCounts['Finished'] ?? 0,
+    'Delayed'  => $eventStatusCounts['Delayed'] ?? 0,
+]);
+
     return view('dashboard', compact(
         'athletesCount', 'eventsCount', 'sportsCount',
         'coachesCount', 'gamesCount', 'divisionsCount', 'liveGames',
-        'medalTally', 'latestAnnouncements'
+        'medalTally', 'latestAnnouncements','eventStatusCounts'
     ));
 }
 }

@@ -73,6 +73,22 @@
 
 </div>
 
+{{-- ================= EVENT STATUS GRAPH ================= --}}
+<div class="mb-10 bg-white border border-gray-200 rounded-xl shadow p-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4">
+        <h2 class="text-2xl font-semibold text-gray-800">
+            Event Status Overview
+        </h2>
+        <p class="text-sm text-gray-500 mt-1 md:mt-0">
+            Distribution of events by current status
+        </p>
+    </div>
+
+    <div class="relative w-full h-[320px]">
+        <canvas id="eventStatusChart"></canvas>
+    </div>
+</div>
+
 {{-- Newest Announcements --}}
 <div class="mt-6">
     <h2 class="text-2xl font-semibold text-gray-800 mb-4">Newest Announcements</h2>
@@ -358,7 +374,70 @@ $medalTallyPara = Division::orderBy('name')->get()->map(function($division) use 
 </div>
 
 
+{{-- ================= EVENT STATUS CHART SCRIPT ================= --}}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const ctx = document.getElementById('eventStatusChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar', // 👉 change to 'doughnut' or 'pie' if you want
+        data: {
+            labels: ['Upcoming', 'Ongoing', 'Finished', 'Delayed'],
+            datasets: [{
+                label: 'Number of Events',
+                data: [
+                    {{ $eventStatusCounts['Upcoming'] }},
+                    {{ $eventStatusCounts['Ongoing'] }},
+                    {{ $eventStatusCounts['Finished'] }},
+                    {{ $eventStatusCounts['Delayed'] }}
+                ],
+                backgroundColor: [
+                    'rgba(59, 130, 246, 0.7)',  // Blue
+                    'rgba(34, 197, 94, 0.7)',   // Green
+                    'rgba(107, 114, 128, 0.7)', // Gray
+                    'rgba(239, 68, 68, 0.7)'    // Red
+                ],
+                borderRadius: 8,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: '#111827',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    padding: 12,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    },
+                    grid: {
+                        color: '#e5e7eb'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
 
 
 @endsection
