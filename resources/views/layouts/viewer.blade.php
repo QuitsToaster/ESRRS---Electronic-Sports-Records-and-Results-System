@@ -377,10 +377,10 @@ document.addEventListener('DOMContentLoaded', () => {
         {{-- Replace the src with your actual image paths --}}
     </div>
 
-    {{-- Footer Bottom Bar --}}
+    <!-- {{-- Footer Bottom Bar --}}
     <div class="border-t border-gray-800 mt-8 py-4 text-center text-gray-500 text-sm">
         Developed by Bryan Lloyd T. Tan &copy; {{ date('Y') }}
-    </div>
+    </div> -->
 </footer>
 
 

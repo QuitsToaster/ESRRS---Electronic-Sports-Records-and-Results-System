@@ -421,11 +421,16 @@ public function gallery(Request $request)
     return view('viewer.announcements', compact('announcements'));
 }
 
-     // Feedback Page
-    public function feedbacks()
-    {
-        return view('viewer.feedbacks');
-    }
+// Feedback Page
+public function feedbacks()
+{
+    // Get developers with Full Stack Developer first
+    $developers = \App\Models\SystemDeveloper::orderByDesc(
+        \DB::raw("role LIKE '%Full Stack Developer%'")
+    )->get();
+
+    return view('viewer.feedbacks', compact('developers'));
+}
 
     // Send Feedback
     public function sendFeedback(Request $request)

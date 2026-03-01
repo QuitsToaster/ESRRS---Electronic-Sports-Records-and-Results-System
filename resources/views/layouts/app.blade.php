@@ -819,7 +819,7 @@ document.addEventListener('click', function (e) {
         {{-- FOOTER --}}
 <footer class="bg-white shadow p-4 text-center text-gray-600">
     © {{ date('Y') }} eSRRS - Electronic Sports Records and Results System. All rights reserved. <br>
-    Developed by Bryan Lloyd T. Tan
+    <!-- Developed by Bryan Lloyd T. Tan -->
 </footer>
 
 
