@@ -131,27 +131,42 @@ function closePrivacyBanner() {
                                 <a href="{{ route('viewer.events', ['event' => $event->id]) }}" 
                                    class="block p-3 bg-gray-100 rounded shadow flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-200 transition cursor-pointer">
                                     <div>
-                                        <div class="font-extrabold">{{ $event->name }}</div>
-                                        <div class="font-semibold text-gray-700 text-sm">{{ $event->age_group }} {{ $event->category }}</div>
-                                        <div class="text-sm text-gray-700">{{ $event->start_date?->format('M d, Y') ?? 'TBA' }} | {{ $event->venue ?? 'TBA' }}</div>
-                                        @if($event->status_reason)
-                                            <div class="text-xs text-red-600 mt-1">Reason: {{ $event->status_reason }}</div>
-                                        @endif
+                                        {{-- ✅ SPORT NAME --}}
+    <div class="text-xl text-blue-700 font-extrabold">
+        {{ $event->sport->name ?? 'No Sport Assigned' }}
+    </div>
 
-                                        @if($event->status === 'Finished' && !empty($event->game_winners))
-                                            <div class="text-xs text-green-700 mt-1">
-                                                <span class="font-semibold">Game Winners:</span>
-                                                <ul class="list-disc list-inside">
-                                                    @foreach($event->game_winners as $index => $divisionId)
-                                                        @if($divisionId)
-                                                            @php $division = \App\Models\Division::find($divisionId); @endphp
-                                                            <li>Game {{ $index + 1 }}: {{ $division->name }}</li>
-                                                        @endif
-                                                    @endforeach
-                                                </ul>
-                                            </div>
-                                        @endif
-                                    </div>
+    <div class="font-semibold">{{ $event->name }}</div>
+
+    <div class="font-semibold text-gray-700 text-sm">
+        {{ $event->age_group }} {{ $event->category }}
+    </div>
+
+    <div class="text-sm text-gray-700">
+        {{ $event->start_date?->format('M d, Y') ?? 'TBA' }} |
+        {{ $event->venue ?? 'TBA' }}
+    </div>
+
+    @if($event->status_reason)
+        <div class="text-xs text-red-600 mt-1">
+            Reason: {{ $event->status_reason }}
+        </div>
+    @endif
+
+    @if($event->status === 'Finished' && !empty($event->game_winners))
+        <div class="text-xs text-green-700 mt-1">
+            <span class="font-semibold">Game Winners:</span>
+            <ul class="list-disc list-inside">
+                @foreach($event->game_winners as $index => $divisionId)
+                    @if($divisionId)
+                        @php $division = \App\Models\Division::find($divisionId); @endphp
+                        <li>Game {{ $index + 1 }}: {{ $division->name }}</li>
+                    @endif
+                @endforeach
+            </ul>
+        </div>
+    @endif
+</div>
                                     <div class="mt-2 sm:mt-0 text-sm font-medium text-gray-800">{{ $status }}</div>
                                 </a>
                             @empty
