@@ -45,7 +45,7 @@
 
     <div class="text-center mb-10">
         <h2 class="text-5xl italic font-bold text-black">
-            Regular Medals
+            Regular Games Medals
         </h2>
     </div>
 
@@ -70,7 +70,7 @@
     {{-- TEAM REGULAR --}}
     <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-16">
         <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">
-            Regular Medals
+            Team Regular Games Medals
         </h3>
 
         <table class="min-w-full text-sm">
@@ -93,7 +93,7 @@
                 @empty
                     <tr>
                         <td colspan="4" class="text-center py-6 text-gray-500">
-                            No team medals recorded.
+                            No team regular games medals recorded.
                         </td>
                     </tr>
                 @endforelse
@@ -103,16 +103,17 @@
 
     {{-- INDIVIDUAL REGULAR --}}
     <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-24">
-        <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">Individual Medals</h3>
+        <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">Individual Regular Games Medals</h3>
 
         <table class="min-w-full text-sm">
             <thead class="bg-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-left">Medal</th>
                     <th class="px-4 py-3 text-left">Athlete</th>
-                    <th class="px-4 py-3 text-left">School</th>
                     <th class="px-4 py-3 text-left">Event</th>
                     <th class="px-4 py-3 text-left">Sport</th>
+                    <th class="px-4 py-3 text-left">School</th>
+                    <th class="px-4 py-3 text-left">Municipality/Town/City</th>
                     <th class="px-4 py-3 text-left">Date</th>
                 </tr>
             </thead>
@@ -121,13 +122,14 @@
                     <tr>
                         <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
                         <td class="px-4 py-3">{{ $award->athlete?->full_name ?? 'Athlete' }}</td>
-                        <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
                         <td class="px-4 py-3">{{ $award->event?->name ?? 'Event' }}</td>
                         <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
+                        <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
+                        <td class="px-4 py-3">{{ $award->athlete?->municipality ?? 'Municipality/Town/City' }}</td>
                         <td class="px-4 py-3">{{ $award->created_at?->format('M d, Y') }}</td>
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="text-center py-6">No individual medals.</td></tr>
+                    <tr><td colspan="7" class="text-center py-6 text-gray-500">No individual regular games medals.</td></tr>
                 @endforelse
             </tbody>
         </table>
@@ -139,7 +141,7 @@
 
     <div class="text-center mb-10">
         <h2 class="text-5xl italic font-bold text-black">
-            Paragames Medals
+            Para Games Medals
         </h2>
     </div>
 
@@ -164,7 +166,7 @@
     {{-- TEAM PARAGAMES --}}
     <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-16">
         <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">
-            Paragames Medals
+            Team Para Games Medals
         </h3>
 
         <table class="min-w-full text-sm">
@@ -187,7 +189,7 @@
                 @empty
                     <tr>
                         <td colspan="4" class="text-center py-6 text-gray-500">
-                            No team medals recorded.
+                            No team para games medals recorded.
                         </td>
                     </tr>
                 @endforelse
@@ -197,16 +199,17 @@
 
     {{-- INDIVIDUAL PARAGAMES --}}
 <div class="max-w-7xl mx-auto bg-white rounded-lg shadow overflow-x-auto mb-16">
-    <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">Individual Medals</h3>
+    <h3 class="text-3xl font-bold px-6 py-4 bg-gray-100">Individual Para Games Medals</h3>
 
     <table class="min-w-full text-sm">
         <thead class="bg-gray-200">
             <tr>
                 <th class="px-4 py-3 text-left">Medal</th>
                 <th class="px-4 py-3 text-left">Athlete</th>
-                <th class="px-4 py-3 text-left">School</th>
                 <th class="px-4 py-3 text-left">Event</th>
                 <th class="px-4 py-3 text-left">Sport</th>
+                <th class="px-4 py-3 text-left">School</th>
+                <th class="px-4 py-3 text-left">Municipality/Town/City</th>
                 <th class="px-4 py-3 text-left">Date</th>
             </tr>
         </thead>
@@ -215,14 +218,15 @@
                 <tr>
                     <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
                     <td class="px-4 py-3">{{ $award->athlete?->full_name ?? 'Athlete' }}</td>
-                    <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
                     <td class="px-4 py-3">{{ $award->event?->name ?? 'Paragames Event' }}</td>
                     <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
+                    <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
+                    <td class="px-4 py-3">{{ $award->athlete?->municipality ?? 'Municipality/Town/City' }}</td>
                     <td class="px-4 py-3">{{ $award->created_at?->format('M d, Y') }}</td>
                 </tr>
             @empty
                 <tr>
-                    <td colspan="6" class="text-center py-6">No individual medals.</td>
+                    <td colspan="6" class="text-center py-6">No individual para games medals.</td>
                 </tr>
             @endforelse
         </tbody>
