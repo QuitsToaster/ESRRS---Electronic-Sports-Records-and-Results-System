@@ -35,9 +35,16 @@
 </div>
 
 <div class="flex justify-between items-center mb-4">
-    <p class="text-sm text-gray-600">
-        List of para games available in the system.
-    </p>
+    <div class="flex items-center gap-4">
+        <p class="text-sm text-gray-600">
+            List of para games available in the system.
+        </p>
+
+        {{-- ✅ TOTAL PARA GAMES COUNT --}}
+        <span class="text-sm text-gray-600 font-medium">
+            Total Para Games: {{ $totalParaSports }}
+        </span>
+    </div>
 
     <div class="flex gap-2">
         <button id="bulkDeleteBtn"

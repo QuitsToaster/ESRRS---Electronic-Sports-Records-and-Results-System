@@ -244,14 +244,17 @@ class SportController extends Controller
     // ---------------- PARA GAMES ----------------
 
     public function paraIndex()
-    {
-        $sports = Sport::with('types')
-            ->where('division', 'Paragames')
-            ->orderBy('name')
-            ->get();
+{
+    $sports = Sport::with('types')
+        ->where('division', 'Paragames')
+        ->orderBy('name')
+        ->get();
 
-        return view('sports.para.index', compact('sports'));
-    }
+    // ✅ Total para games count
+    $totalParaSports = $sports->count();
+
+    return view('sports.para.index', compact('sports', 'totalParaSports'));
+}
 
     public function paraCreate()
     {
