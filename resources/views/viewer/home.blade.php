@@ -416,7 +416,7 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
             ? 'bg-black/60 border-white shadow-lg scale-105'
             : 'bg-black/20 border-transparent hover:bg-black/30'"
     >
-        Regular
+        Regular Games
         <div
             x-show="activeTab === 'regular'"
             x-transition
