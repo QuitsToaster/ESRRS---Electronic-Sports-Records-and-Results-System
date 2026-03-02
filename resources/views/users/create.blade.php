@@ -135,7 +135,7 @@
 </div>
 
 {{-- CATEGORY ACCESS --}}
-<div>
+<div id="categorySection">
     <label class="flex items-center gap-2 font-semibold mb-2">
         <input type="checkbox" id="selectAllCategories">
         Select All Categories
@@ -161,53 +161,59 @@
     </label>
 
     <p class="text-xs text-gray-500 mb-3">
-        Sports are grouped by <strong>Level</strong> and <strong>Category</strong>.
+        Sports will appear based on selected Level and Category.
     </p>
 
-    @foreach($sports->groupBy(['division','category']) as $division => $categories)
-        <div class="mb-4">
-            <h4 class="font-semibold text-sm mb-2">{{ $division }}</h4>
+    <div id="sportsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
 
-            @foreach($categories as $category => $items)
-                <p class="text-xs text-gray-600 mb-1">{{ $category }}</p>
+        @foreach($sports as $sport)
+            <label class="flex items-center gap-2 sportItem"
+                   data-level="{{ $sport->division }}"
+                   data-category="{{ $sport->category ?? '' }}"
+                   style="display:none">
 
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm mb-3">
-                    @foreach($items as $sport)
-                        <label class="flex items-center gap-2">
-                            <input type="checkbox" class="sportCheckbox"
-                                   name="sports_access[]" value="{{ $sport->id }}"
-                                   {{ in_array($sport->id, old('sports_access', [])) ? 'checked' : '' }}>
-                            {{ $sport->name }}
-                        </label>
-                    @endforeach
-                </div>
-            @endforeach
-        </div>
-    @endforeach
+                <input type="checkbox"
+                       class="sportCheckbox"
+                       name="sports_access[]"
+                       value="{{ $sport->id }}"
+                       data-sport-id="{{ $sport->id }}">
+
+                {{ $sport->name }}
+            </label>
+        @endforeach
+
+    </div>
 </div>
 
 {{-- SPORT TYPE ACCESS --}}
-<div>
+<div class="mt-6">
     <label class="flex items-center gap-2 font-semibold mb-2">
         <input type="checkbox" id="selectAllSportTypes">
         Select All Sport Types
     </label>
 
     <p class="text-xs text-gray-500 mb-3">
-        Grant access based on <strong>Sport Types</strong>.
+        Sport types will appear based on selected sport.
     </p>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+    <div id="sportTypeContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+
         @foreach($sportTypes as $type)
-            <label class="flex items-center gap-2">
+            <label class="flex items-center gap-2 sportTypeItem"
+                   data-sport-id="{{ $type->sport_id }}"
+                   data-level="{{ $type->division ?? '' }}"
+                   data-category="{{ $type->category ?? '' }}"
+                   style="display:none">
+
                 <input type="checkbox"
                        class="sportTypeCheckbox"
                        name="sport_type_access[]"
-                       value="{{ $type->id }}"
-                       {{ in_array($type->id, old('sport_type_access', [])) ? 'checked' : '' }}>
+                       value="{{ $type->id }}">
+
                 {{ $type->type_name }}
             </label>
         @endforeach
+
     </div>
 </div>
 
@@ -260,6 +266,144 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('selectAllSportTypes'),
         document.querySelectorAll('.sportTypeCheckbox')
     );
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const levelCheckboxes     = document.querySelectorAll('.levelCheckbox');
+    const categoryCheckboxes  = document.querySelectorAll('.categoryCheckbox');
+    const sportCheckboxes     = document.querySelectorAll('.sportCheckbox');
+    const sportItems          = document.querySelectorAll('.sportItem');
+    const sportTypeItems      = document.querySelectorAll('.sportTypeItem');
+
+    const categorySection     = document.getElementById('categorySection');
+
+    // --------------------------------------------------
+    // HANDLE PARAGAMES CATEGORY RULE
+    // --------------------------------------------------
+    function handleParagamesRule() {
+
+        const paragamesChecked = Array.from(levelCheckboxes)
+            .some(cb => cb.checked && cb.value === 'Paragames');
+
+        if (paragamesChecked) {
+            // Hide category section
+            categorySection.style.display = 'none';
+
+            // Uncheck all categories
+            categoryCheckboxes.forEach(cb => cb.checked = false);
+        } else {
+            categorySection.style.display = 'block';
+        }
+    }
+
+    // --------------------------------------------------
+    // FILTER SPORTS BASED ON RULES
+    // --------------------------------------------------
+    function filterSports() {
+
+        const selectedLevels = Array.from(levelCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+        const selectedCategories = Array.from(categoryCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+        sportItems.forEach(item => {
+
+            const sportLevel    = item.dataset.level;
+            const sportCategory = item.dataset.category;
+
+            let show = false;
+
+            // 🟢 PARAGAMES → CATEGORY NOT REQUIRED
+            if (
+                selectedLevels.includes('Paragames') &&
+                sportLevel === 'Paragames'
+            ) {
+                show = true;
+            }
+
+            // 🟢 ELEMENTARY / SECONDARY → CATEGORY REQUIRED
+            if (
+                selectedLevels.includes(sportLevel) &&
+                selectedCategories.includes(sportCategory)
+            ) {
+                show = true;
+            }
+
+            if (show) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+                item.querySelector('input').checked = false;
+            }
+        });
+
+        filterSportTypes();
+    }
+
+    // --------------------------------------------------
+    // FILTER SPORT TYPES
+    // --------------------------------------------------
+    function filterSportTypes() {
+
+        const selectedSports = Array.from(sportCheckboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+
+        sportTypeItems.forEach(item => {
+            const sportId = item.dataset.sportId;
+
+            if (selectedSports.includes(sportId)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+                item.querySelector('input').checked = false;
+            }
+        });
+    }
+
+    // --------------------------------------------------
+    // EVENT LISTENERS
+    // --------------------------------------------------
+    levelCheckboxes.forEach(cb => {
+        cb.addEventListener('change', () => {
+            handleParagamesRule();
+            filterSports();
+        });
+    });
+
+    categoryCheckboxes.forEach(cb =>
+        cb.addEventListener('change', filterSports)
+    );
+
+    sportCheckboxes.forEach(cb =>
+        cb.addEventListener('change', filterSportTypes)
+    );
+
+    // --------------------------------------------------
+    // SELECT ALL (VISIBLE ONLY)
+    // --------------------------------------------------
+    function bind(masterId, itemsClass) {
+        const master = document.getElementById(masterId);
+        const items = document.querySelectorAll(itemsClass);
+
+        master.addEventListener('change', () => {
+            items.forEach(cb => {
+                if (cb.closest('label').style.display !== 'none') {
+                    cb.checked = master.checked;
+                }
+            });
+        });
+    }
+
+    bind('selectAllSports', '.sportCheckbox');
+    bind('selectAllSportTypes', '.sportTypeCheckbox');
+
 });
 </script>
 
