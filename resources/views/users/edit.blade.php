@@ -8,25 +8,15 @@
 $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 @endphp
 
-{{-- ================= INSTRUCTIONS / NOTES ================= --}}
+{{-- ================= INSTRUCTIONS ================= --}}
 <div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
     <h3 class="font-semibold mb-1">How to Use This Page:</h3>
     <ul class="list-disc list-inside text-sm space-y-1">
-        <li>Update the information for an existing user account.</li>
-        <li>You can modify the <strong>Name</strong> and <strong>Email</strong> of the user.</li>
-        <li>To change the password, enter a new <strong>Password</strong> and confirm it. Leave blank if you do not want to update it.</li>
-        <li>Select a new <strong>Role</strong> from the dropdown, or create a <strong>New Role</strong> if it does not exist.</li>
-        <li>Adjust <strong>Access</strong> permissions, including <strong>Level Access</strong>, <strong>Category Access</strong>, <strong>Sports Access</strong>, and <strong>Sport Type Access</strong> as needed.</li>
-        <li>Click <strong>Update User</strong> to save changes. All modifications will update the user’s account and permissions accordingly.</li>
-        <li>After updating, you can return to the <strong>Users list</strong> to view, reset passwords, or delete accounts.</li>
+        <li>Edit user details and permissions.</li>
+        <li>Leave password blank to keep current password.</li>
+        <li>Sports and Sport Types depend on Level & Category.</li>
+        <li><strong>Paragames</strong> does not require Boys/Girls.</li>
     </ul>
-</div>
-
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Edit User</h1>
-    <p class="text-sm text-gray-600 mt-1">
-        Update user details, roles, and system access
-    </p>
 </div>
 
 <div class="bg-white shadow rounded-lg p-6 w-full">
@@ -35,32 +25,31 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 @csrf
 @method('PUT')
 
-{{-- Name --}}
+{{-- NAME --}}
 <div>
-    <label class="block text-sm font-semibold mb-1">Name</label>
-    <input type="text" name="name" required
+    <label class="block font-semibold mb-1">Name</label>
+    <input type="text" name="name"
            value="{{ old('name', $user->name) }}"
-           class="w-full border rounded px-3 py-2">
+           class="w-full border rounded px-3 py-2" required>
 </div>
 
-{{-- Email --}}
+{{-- EMAIL --}}
 <div>
-    <label class="block text-sm font-semibold mb-1">Email</label>
-    <input type="email" name="email" required
+    <label class="block font-semibold mb-1">Email</label>
+    <input type="email" name="email"
            value="{{ old('email', $user->email) }}"
-           class="w-full border rounded px-3 py-2">
+           class="w-full border rounded px-3 py-2" required>
 </div>
 
-{{-- Password --}}
+{{-- PASSWORD --}}
 <div>
-    <label class="block text-sm font-semibold mb-1">Password</label>
-    <input type="password" name="password"
-           class="w-full border rounded px-3 py-2">
+    <label class="block font-semibold mb-1">New Password (optional)</label>
+    <input type="password" name="password" class="w-full border rounded px-3 py-2">
 </div>
 
-{{-- Role --}}
+{{-- ROLE --}}
 <div>
-    <label class="block text-sm font-semibold mb-1">Role</label>
+    <label class="block font-semibold mb-1">Role</label>
     <select name="role_id" class="w-full border rounded px-3 py-2">
         @foreach($roles as $role)
             <option value="{{ $role->id }}"
@@ -71,23 +60,20 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
     </select>
 </div>
 
-{{-- New Role --}}
+{{-- NEW ROLE --}}
 <div>
-    <label class="block text-sm font-semibold mb-1">Or Add New Role</label>
-    <input type="text"
-           name="new_role"
+    <label class="block font-semibold mb-1">Or Add New Role</label>
+    <input type="text" name="new_role"
            value="{{ old('new_role') }}"
-           class="w-full border rounded px-3 py-2"
-           placeholder="Enter new role name">
+           class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- ACCESS --}}
 <div>
-    <label class="block text-sm font-semibold mb-2">System Access</label>
+    <label class="font-semibold mb-2 block">System Access</label>
 
     <label class="flex items-center gap-2 mb-2">
-        <input type="checkbox" id="selectAllAccess">
-        Select All Access
+        <input type="checkbox" id="selectAllAccess"> Select All Access
     </label>
 
     @php
@@ -111,113 +97,173 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
     </div>
 </div>
 
-{{-- LEVEL & CATEGORY --}}
-<div class="border rounded p-4 bg-gray-50">
-    <h3 class="font-semibold text-sm mb-3">Level & Category Access</h3>
+{{-- LEVEL --}}
+<div>
+    <label class="font-semibold mb-2 block">
+        <input type="checkbox" id="selectAllLevels"> Select All Levels
+    </label>
 
-    {{-- LEVEL --}}
-    <div class="mb-3">
-        <label class="flex items-center gap-2 font-semibold mb-1">
-            <input type="checkbox" id="selectAllLevels">
-            Select All Levels
-        </label>
-
+    <div class="flex gap-4 text-sm">
         @foreach(['Elementary','Secondary','Paragames'] as $level)
-            <label class="inline-flex items-center mr-4">
+            <label class="flex items-center gap-2">
                 <input type="checkbox" class="levelCheckbox"
-                       name="level_access[]"
-                       value="{{ $level }}"
-                       {{ $isSuperAdmin || in_array($level, old('level_access', $user->level_access ?? [])) ? 'checked' : '' }}>
-                <span class="ml-1">{{ $level }}</span>
+                       name="level_access[]" value="{{ $level }}"
+                       {{ in_array($level, old('level_access', $user->level_access ?? [])) ? 'checked' : '' }}>
+                {{ $level }}
             </label>
         @endforeach
     </div>
+</div>
 
-    {{-- CATEGORY --}}
-    <div>
-        <label class="flex items-center gap-2 font-semibold mb-1">
-            <input type="checkbox" id="selectAllCategories">
-            Select All Categories
-        </label>
+{{-- CATEGORY --}}
+<div>
+    <label class="font-semibold mb-2 block">
+        <input type="checkbox" id="selectAllCategories"> Select All Categories
+    </label>
 
+    <div class="flex gap-4 text-sm">
         @foreach(['Boys','Girls'] as $cat)
-            <label class="inline-flex items-center mr-4">
+            <label class="flex items-center gap-2">
                 <input type="checkbox" class="categoryCheckbox"
-                       name="category_access[]"
-                       value="{{ $cat }}"
-                       {{ $isSuperAdmin || in_array($cat, old('category_access', $user->category_access ?? [])) ? 'checked' : '' }}>
-                <span class="ml-1">{{ $cat }}</span>
+                       name="category_access[]" value="{{ $cat }}"
+                       {{ in_array($cat, old('category_access', $user->category_access ?? [])) ? 'checked' : '' }}>
+                {{ $cat }}
             </label>
         @endforeach
     </div>
 </div>
 
-{{-- SPORTS ACCESS --}}
+{{-- SPORTS --}}
 <div>
-    <label class="flex items-center gap-2 font-semibold mb-2">
-        <input type="checkbox" id="selectAllSports">
-        Select All Sports
+    <label class="font-semibold mb-2 block">
+        <input type="checkbox" id="selectAllSports"> Select All Sports
     </label>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
-        @foreach(\App\Models\Sport::orderBy('division')->orderBy('category')->orderBy('name')->get() as $sport)
-            <label class="flex items-center gap-2">
+    <div id="sportsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+        @foreach($sports as $sport)
+            <label class="flex items-center gap-2 sportItem"
+                   data-level="{{ $sport->division }}"
+                   data-category="{{ $sport->category }}"
+                   style="display:none">
+
                 <input type="checkbox" class="sportCheckbox"
-                       name="sports_access[]"
-                       value="{{ $sport->id }}"
-                       {{ $isSuperAdmin || in_array($sport->id, old('sports_access', $user->sports_access ?? [])) ? 'checked' : '' }}>
+                       name="sports_access[]" value="{{ $sport->id }}"
+                       {{ in_array($sport->id, old('sports_access', $user->sports_access ?? [])) ? 'checked' : '' }}>
+
                 {{ $sport->name }}
-                <span class="text-xs text-gray-500">
-                    ({{ $sport->division }} • {{ $sport->category }})
-                </span>
             </label>
         @endforeach
     </div>
 </div>
 
-{{-- SPORT TYPE ACCESS --}}
+{{-- SPORT TYPES --}}
 <div>
-    <label class="flex items-center gap-2 font-semibold mb-2">
-        <input type="checkbox" id="selectAllSportTypes">
-        Select All Sport Types
+    <label class="font-semibold mb-2 block">
+        <input type="checkbox" id="selectAllSportTypes"> Select All Sport Types
     </label>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+    <div id="sportTypeContainer" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
         @foreach($sportTypes as $type)
-            <label class="flex items-center gap-2">
+            <label class="flex items-center gap-2 sportTypeItem"
+                   data-sport-id="{{ $type->sport_id }}"
+                   style="display:none">
+
                 <input type="checkbox" class="sportTypeCheckbox"
-                       name="sport_type_access[]"
-                       value="{{ $type->id }}"
-                       {{ $isSuperAdmin || in_array($type->id, old('sport_type_access', $user->sport_type_access ?? [])) ? 'checked' : '' }}>
+                       name="sport_type_access[]" value="{{ $type->id }}"
+                       {{ in_array($type->id, old('sport_type_access', $user->sport_type_access ?? [])) ? 'checked' : '' }}>
+
                 {{ $type->type_name }}
             </label>
         @endforeach
     </div>
 </div>
 
-{{-- Actions --}}
+{{-- ACTIONS --}}
 <div class="flex justify-end gap-3 pt-4 border-t">
     <a href="{{ route('users.index') }}" class="px-4 py-2 border rounded">Cancel</a>
-    <button class="px-5 py-2 bg-green-600 text-white rounded">Update User</button>
+    <button class="px-5 py-2 bg-green-600 text-white rounded font-semibold">
+        Update User
+    </button>
 </div>
 
 </form>
 </div>
 
-{{-- JS --}}
+{{-- ================= JS (SAME AS CREATE) ================= --}}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const bindSelectAll = (master, items) => {
+
+    const levels = document.querySelectorAll('.levelCheckbox');
+    const categories = document.querySelectorAll('.categoryCheckbox');
+    const sports = document.querySelectorAll('.sportItem');
+    const sportCheckboxes = document.querySelectorAll('.sportCheckbox');
+    const sportTypes = document.querySelectorAll('.sportTypeItem');
+
+    function filterSports() {
+        const selectedLevels = [...levels].filter(l => l.checked).map(l => l.value);
+        const selectedCategories = [...categories].filter(c => c.checked).map(c => c.value);
+
+        sports.forEach(item => {
+            const level = item.dataset.level;
+            const category = item.dataset.category;
+
+            const isParagames = selectedLevels.includes('Paragames') && level === 'Paragames';
+
+            if (
+                (isParagames && selectedLevels.includes(level)) ||
+                (selectedLevels.includes(level) && selectedCategories.includes(category))
+            ) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+                item.querySelector('input').checked = false;
+            }
+        });
+
+        filterSportTypes();
+    }
+
+    function filterSportTypes() {
+        const selectedSports = [...sportCheckboxes]
+            .filter(s => s.checked)
+            .map(s => s.value);
+
+        sportTypes.forEach(item => {
+            const sportId = item.dataset.sportId;
+            if (selectedSports.includes(sportId)) {
+                item.style.display = 'flex';
+            } else {
+                item.style.display = 'none';
+                item.querySelector('input').checked = false;
+            }
+        });
+    }
+
+    levels.forEach(cb => cb.addEventListener('change', filterSports));
+    categories.forEach(cb => cb.addEventListener('change', filterSports));
+    sportCheckboxes.forEach(cb => cb.addEventListener('change', filterSportTypes));
+
+    // INITIAL LOAD
+    filterSports();
+
+    const bind = (masterId, className) => {
+        const master = document.getElementById(masterId);
+        const items = document.querySelectorAll(className);
+
         master.addEventListener('change', () => {
-            items.forEach(cb => cb.checked = master.checked);
+            items.forEach(cb => {
+                if (cb.closest('label').style.display !== 'none') {
+                    cb.checked = master.checked;
+                }
+            });
         });
     };
 
-    bindSelectAll(document.getElementById('selectAllAccess'), document.querySelectorAll('.moduleCheckbox'));
-    bindSelectAll(document.getElementById('selectAllLevels'), document.querySelectorAll('.levelCheckbox'));
-    bindSelectAll(document.getElementById('selectAllCategories'), document.querySelectorAll('.categoryCheckbox'));
-    bindSelectAll(document.getElementById('selectAllSports'), document.querySelectorAll('.sportCheckbox'));
-    bindSelectAll(document.getElementById('selectAllSportTypes'), document.querySelectorAll('.sportTypeCheckbox'));
+    bind('selectAllAccess', '.moduleCheckbox');
+    bind('selectAllLevels', '.levelCheckbox');
+    bind('selectAllCategories', '.categoryCheckbox');
+    bind('selectAllSports', '.sportCheckbox');
+    bind('selectAllSportTypes', '.sportTypeCheckbox');
 });
 </script>
 
