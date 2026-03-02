@@ -1,6 +1,6 @@
 @extends('layouts.viewer')
 
-@section('page-title', 'Participants')
+@section('page-title', 'SDO')
 
 @section('content')
 
