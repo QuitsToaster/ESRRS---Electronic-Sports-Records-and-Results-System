@@ -121,7 +121,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 
 <div x-data="awardApp()" class="p-4 space-y-6">
 
-{{-- ================= SUCCESS MODAL FOR FORWARD ================= --}}
+<!-- {{-- ================= SUCCESS MODAL FOR FORWARD ================= --}}
 @if(session('success'))
 <div x-data="{ open: true }"
      x-show="open"
@@ -140,7 +140,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         </button>
     </div>
 </div>
-@endif
+@endif -->
 
 {{-- ================= INSTRUCTIONS / NOTES ================= --}}
 <div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
