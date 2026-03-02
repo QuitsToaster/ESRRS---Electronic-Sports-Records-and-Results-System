@@ -16,63 +16,84 @@ use Illuminate\Support\Facades\Auth;
 class AthleteController extends Controller
 {
    public function index(Request $request)
-{
-    $user = auth()->user(); // get logged in user
+    {
+        $user = auth()->user();
 
-    $search   = $request->input('search');
-    $sex      = $request->input('sex');
-    $sport    = $request->input('sport');
-    $division = $request->input('division');
-    $schoolDivision = $request->input('school_division');
+        $search         = $request->search;
+        $sex            = $request->sex;
+        $sport          = $request->sport;
+        $division       = $request->division;
+        $schoolDivision = $request->school_division;
 
-    $query = Athlete::with(['school', 'sport'])
-        ->when($search, function ($query, $search) {
-            $query->where(function ($q) use ($search) {
-                $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('middle_initial', 'like', "%{$search}%")
-                  ->orWhere('region', 'like', "%{$search}%")
-                  ->orWhere('school_type', 'like', "%{$search}%")
-                  ->orWhere('lrn', 'like', "%{$search}%")
-                  ->orWhereHas('school', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
-                  ->orWhereHas('sport', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
-                  ->orWhere('division', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%")
-                  ->orWhere('status', 'like', "%{$search}%");
-            });
-        })
-        ->when($sex, fn($q) => $q->where('sex', $sex))
-        ->when($sport, fn($q) => $q->where('sport_id', $sport))
-        ->when($division, fn($q) => $q->where('division', $division))
-        // FILTER by dropdown school_division (raw DB value)
-        ->when($schoolDivision, fn($q) => $q->where('school_division', $schoolDivision));
+        // ==========================
+        // DETERMINE DIVISION OFFICIAL
+        // ==========================
+        $officialDivision = null;
 
-    // ======================
-    // NEW: Division Official restriction
-    // ======================
-    if ($user->role->name === 'Division Official') {
-        // e.g., "SDO - Batanes Official Account"
-        if (preg_match('/SDO - (.+) Official Account/', $user->name, $matches)) {
-            $officialSdo = trim($matches[1]); // "Batanes"
-            // Match directly to school_division in DB (without "SDO - " prefix)
-            $query->where('school_division', $officialSdo);
+        if ($user->role && $user->role->name === 'Division Official') {
+            // Extract "Batanes" from "SDO - Batanes Official"
+            if (preg_match('/SDO\s*-\s*(.+?)\s*Official/i', $user->name, $matches)) {
+                $officialDivision = trim($matches[1]); // "Batanes"
+            }
         }
+
+        // ==========================
+        // BASE QUERY
+        // ==========================
+        $query = Athlete::with(['school', 'sport'])
+            ->when($search, function ($query) use ($search) {
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%{$search}%")
+                      ->orWhere('last_name', 'like', "%{$search}%")
+                      ->orWhere('middle_initial', 'like', "%{$search}%")
+                      ->orWhere('lrn', 'like', "%{$search}%")
+                      ->orWhere('division', 'like', "%{$search}%")
+                      ->orWhere('category', 'like', "%{$search}%")
+                      ->orWhere('status', 'like', "%{$search}%")
+                      ->orWhereHas('school', fn($sq) => $sq->where('name', 'like', "%{$search}%"))
+                      ->orWhereHas('sport', fn($sq) => $sq->where('name', 'like', "%{$search}%"));
+                });
+            })
+            ->when($sex, fn($q) => $q->where('sex', $sex))
+            ->when($sport, fn($q) => $q->where('sport_id', $sport))
+            ->when($division, fn($q) => $q->where('division', $division))
+            ->when($schoolDivision, fn($q) => $q->where('school_division', $schoolDivision));
+
+        // ==========================
+        // FORCE DIVISION RESTRICTION
+        // ==========================
+        if ($officialDivision) {
+            $query->where('school_division', $officialDivision);
+        }
+
+        $athleteCount = $query->count();
+
+        $athletes = $query->orderBy('last_name')
+            ->paginate(25)
+            ->appends($request->all());
+
+        $sports = Sport::orderBy('name')->get();
+
+        // ==========================
+        // DIVISION DROPDOWN
+        // ==========================
+        if ($officialDivision) {
+            // Only show their own division
+            $divisions = collect([$officialDivision]);
+        } else {
+            $divisions = School::whereNotNull('school_division')
+                ->distinct()
+                ->orderBy('school_division')
+                ->pluck('school_division');
+        }
+
+        return view('athletes.index', compact(
+            'athletes',
+            'sports',
+            'athleteCount',
+            'divisions'
+        ));
     }
-
-    $athleteCount = $query->count();
-    $athletes = $query->paginate(25);
-    $athletes->appends($request->all());
-
-    $sports = Sport::orderBy('name')->get();
-
-    // GET all school_divisions for the dropdown filter
-    $divisions = \App\Models\School::select('school_division')
-                    ->distinct()
-                    ->orderBy('school_division')
-                    ->pluck('school_division');
-
-    return view('athletes.index', compact('athletes', 'sports', 'athleteCount', 'divisions'));
-}
 
 
 
