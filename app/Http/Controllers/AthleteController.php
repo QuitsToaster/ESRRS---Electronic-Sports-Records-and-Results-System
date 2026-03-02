@@ -297,19 +297,13 @@ class AthleteController extends Controller
         ->orderBy('last_name')
         ->orderBy('first_name');
 
-    // ======================
-    // Division Official restriction
-    // ======================
-    if ($user->role->name === 'Division Official') {
-        // e.g., "SDO - Batanes Official Account"
-        if (preg_match('/SDO - (.+) Official Account/', $user->name, $matches)) {
-            $officialSdo = trim($matches[1]); // "Batanes"
-            // Match directly to school_division in DB (without "SDO - " prefix)
-            $query->where('school_division', $officialSdo);
+    if ($user->role && $user->role->name === 'Division Official') {
+        if (preg_match('/SDO\s*-\s*(.+?)\s*Official/i', $user->name, $matches)) {
+            $query->where('school_division', trim($matches[1]));
         }
     }
 
-    $athletes = $query->get(); // get all matching athletes
+    $athletes = $query->get();
 
     $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
         ->setPaper('letter', 'portrait');
