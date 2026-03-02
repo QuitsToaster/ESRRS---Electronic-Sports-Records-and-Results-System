@@ -359,29 +359,38 @@ document.addEventListener('DOMContentLoaded', () => {
 @endif
 
 
-            @if(in_array('athletes', $access))
-            {{-- Athletes --}}
-            <div>
-                <button data-nav @click="openMenu = openMenu === 'athletes' ? null : 'athletes'"
-                        class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
-                        {{ request()->routeIs('athletes.*') ? 'bg-blue-900 font-semibold' : '' }}">
-                    Athletes
-                    <span x-text="openMenu === 'athletes' ? '▾' : '▸'"></span>
-                </button>
-                <div x-show="openMenu === 'athletes'" x-cloak class="pl-6 mt-1 space-y-1">
-                    <a href="{{ route('athletes.index') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('athletes.index') ? 'bg-blue-700 font-semibold' : '' }}">
-                        All Athletes
-                    </a>
-                    <a href="{{ route('athletes.create') }}"
-                       class="block px-4 py-2 rounded hover:bg-blue-600
-                       {{ request()->routeIs('athletes.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                        Add Athlete
-                    </a>
-                </div>
-            </div>
+       @if(in_array('athletes', $access))
+    {{-- Athletes --}}
+    <div>
+        <button data-nav 
+                @click="openMenu = openMenu === 'athletes' ? null : 'athletes'"
+                class="w-full flex justify-between items-center px-6 py-3 rounded hover:bg-blue-700
+                {{ request()->routeIs('athletes.*') ? 'bg-blue-900 font-semibold' : '' }}">
+            Athletes
+            <span x-text="openMenu === 'athletes' ? '▾' : '▸'"></span>
+        </button>
+
+        <div x-show="openMenu === 'athletes'" x-cloak class="pl-6 mt-1 space-y-1">
+
+            {{-- Always visible --}}
+            <a href="{{ route('athletes.index') }}"
+               class="block px-4 py-2 rounded hover:bg-blue-600
+               {{ request()->routeIs('athletes.index') ? 'bg-blue-700 font-semibold' : '' }}">
+                All Athletes
+            </a>
+
+            {{-- Hidden if role contains "Division Official" --}}
+            @if(!Str::contains(strtolower(auth()->user()->role), 'division official'))
+                <a href="{{ route('athletes.create') }}"
+                   class="block px-4 py-2 rounded hover:bg-blue-600
+                   {{ request()->routeIs('athletes.create') ? 'bg-blue-700 font-semibold' : '' }}">
+                    Add Athlete
+                </a>
             @endif
+
+        </div>
+    </div>
+@endif
 
             @if(in_array('coaches', $access))
             {{-- Coaches --}}

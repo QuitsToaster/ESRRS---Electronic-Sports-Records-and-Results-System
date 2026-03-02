@@ -28,15 +28,23 @@
         </p>
     </div>
 
-    <div class="flex gap-2 items-center">
+    @php
+    use Illuminate\Support\Str;
+    $isDivisionOfficial = Str::contains(strtolower(auth()->user()->role), 'division official');
+@endphp
 
-        {{-- ADD ATHLETE --}}
+<div class="flex gap-2 items-center">
+
+    {{-- ADD ATHLETE (hidden for Division Official) --}}
+    @if(!$isDivisionOfficial)
         <a href="{{ route('athletes.create') }}"
            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
             + Add Athlete
         </a>
+    @endif
 
-        {{-- BULK CSV UPLOAD --}}
+    {{-- BULK CSV UPLOAD (hidden for Division Official) --}}
+    @if(!$isDivisionOfficial)
         <form action="{{ route('athletes.bulkUpload') }}"
               method="POST"
               enctype="multipart/form-data"
@@ -54,13 +62,15 @@
                 Upload CSV
             </button>
         </form>
+    @endif
 
-        {{-- EXPORT ID PDF --}}
-        <a href="{{ route('athletes.exportIdPdf') }}"
-           class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
-            <span>Export ID PDF</span>
-        </a>
-    </div>
+    {{-- EXPORT ID PDF (always visible) --}}
+    <a href="{{ route('athletes.exportIdPdf') }}"
+       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
+        <span>Export ID PDF</span>
+    </a>
+
+</div>
 </div>
 
 {{-- SEARCH + FILTER --}}
