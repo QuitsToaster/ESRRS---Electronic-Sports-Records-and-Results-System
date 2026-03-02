@@ -64,11 +64,76 @@
         </form>
     @endif
 
-    {{-- EXPORT ID PDF (always visible) --}}
-    <a href="{{ route('athletes.exportIdPdf') }}"
-       class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
-        <span>Export ID PDF</span>
-    </a>
+    {{-- EXPORT ID PDF --}}
+<button onclick="openExportModal()"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
+    Export ID PDF
+</button>
+
+{{-- EXPORT MODAL --}}
+<div id="exportModal"
+     class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
+
+    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6 relative">
+
+        <button onclick="closeExportModal()"
+                class="absolute top-3 right-3 text-xl text-gray-500 hover:text-black">
+            &times;
+        </button>
+
+        <h3 class="text-lg font-bold mb-2">Export Athlete ID Cards</h3>
+
+        <p class="text-sm text-gray-600 mb-4">
+            ⚠️ Exporting <strong>ALL athletes</strong> may take a long time and could slow down the system.
+        </p>
+
+        {{-- EXPORT ALL --}}
+        <a href="{{ route('athletes.exportIdPdf') }}"
+           class="block w-full text-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mb-3">
+            Export ALL Athletes (Slow)
+        </a>
+
+        <hr class="my-4">
+
+        {{-- EXPORT WITH LIMIT --}}
+        <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
+            <label class="text-sm font-medium">
+                Export only the first
+            </label>
+
+            <input type="number"
+                   name="limit"
+                   min="1"
+                   max="{{ $athleteCount }}"
+                   value="50"
+                   class="w-full border rounded px-3 py-2"
+                   required>
+
+            <p class="text-xs text-gray-500">
+                Tip: Exporting 50–100 athletes is much faster.
+            </p>
+
+            <button type="submit"
+                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                Export Selected Amount
+            </button>
+        </form>
+
+    </div>
+</div>
+
+{{-- EXPORT MODAL SCRIPT --}}
+<script>
+function openExportModal() {
+    document.getElementById('exportModal').classList.remove('hidden');
+    document.getElementById('exportModal').classList.add('flex');
+}
+
+function closeExportModal() {
+    document.getElementById('exportModal').classList.add('hidden');
+    document.getElementById('exportModal').classList.remove('flex');
+}
+</script>
 
 </div>
 </div>
