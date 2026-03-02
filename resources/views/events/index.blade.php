@@ -19,18 +19,69 @@
     </ul>
 </div>
 
-<div class="flex justify-between items-center mb-6">
-    <div>
-        <p class="text-sm text-gray-600 mt-1">
-            List of CAVRAA competitions registered in the system
-        </p>
+{{-- ================= FILTERS & TOTAL COUNT ================= --}}
+<div class="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-4 gap-4">
+
+    <div class="flex flex-wrap items-center gap-3">
+
+        {{-- SEARCH + STATUS FILTER --}}
+        <form method="GET" action="{{ route('events.index') }}" class="flex flex-wrap gap-2 items-center">
+
+            <input type="text"
+                   name="search"
+                   value="{{ request('search') }}"
+                   placeholder="Search competition, sport, venue..."
+                   class="border border-gray-300 rounded px-3 py-2 w-64">
+
+            <select name="status" class="border border-gray-300 rounded px-3 py-2">
+                <option value="">All Status</option>
+                @foreach(['Upcoming','Ongoing','Delayed','Finished'] as $s)
+                    <option value="{{ $s }}" {{ ($status ?? '') === $s ? 'selected' : '' }}>
+                        {{ $s }}
+                    </option>
+                @endforeach
+            </select>
+
+            <button type="submit"
+                    class="px-4 py-2 bg-blue-600 text-white rounded shadow">
+                Filter
+            </button>
+
+            <a href="{{ route('events.index') }}"
+               class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                Reset
+            </a>
+
+        </form>
+
+        {{-- TOTAL / FILTERED COUNT --}}
+<div class="text-sm text-gray-600 ml-2">
+    @if(request('status'))
+        <span class="font-semibold">
+            {{ request('status') }} Events:
+        </span>
+        {{ $displayCount }}
+    @elseif(request('search'))
+        <span class="font-semibold">
+            Filtered Events:
+        </span>
+        {{ $displayCount }}
+    @else
+        <span class="font-semibold">
+            Total Events:
+        </span>
+        {{ $totalEvents }}
+    @endif
+</div>
     </div>
 
+    {{-- ADD EVENT --}}
     <a href="{{ route('events.create') }}"
        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
         + Add Event
     </a>
 </div>
+
 
 {{-- Success Message --}}
 @if(session('success'))
@@ -38,25 +89,6 @@
         {{ session('success') }}
     </div>
 @endif
-
-{{-- Search Bar --}}
-<form method="GET" action="{{ route('events.index') }}" class="mb-4 flex items-center gap-2">
-    <input type="text" name="search" value="{{ request('search') }}"
-           placeholder="Search competition, sport, division, venue..."
-           class="flex-1 border border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-200 focus:border-blue-500">
-
-    <button type="submit"
-            class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow font-semibold">
-        Search
-    </button>
-
-    @if(request('search'))
-        <a href="{{ route('events.index') }}"
-           class="text-gray-500 hover:text-gray-700 ml-2">
-            Clear
-        </a>
-    @endif
-</form>
 
 {{-- Empty State --}}
 @if($events->isEmpty())

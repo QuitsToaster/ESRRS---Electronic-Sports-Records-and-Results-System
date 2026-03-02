@@ -40,7 +40,7 @@
                 </select>
 
                 <button class="bg-red-600 hover:bg-red-700 px-5 py-2.5 rounded-xl font-semibold transition">
-                    Apply
+                    Search
                 </button>
 
                 @if(request('search') || request('status'))

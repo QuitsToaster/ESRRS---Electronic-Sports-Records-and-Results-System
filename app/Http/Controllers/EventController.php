@@ -18,30 +18,57 @@ class EventController extends Controller
    /* =========================
        INDEX
     ========================= */
-    public function index(Request $request)
-    {
-        $query = Event::with(['sport', 'divisions']);
+public function index(Request $request)
+{
+    $query = Event::with(['sport', 'divisions']);
 
-        if ($request->filled('search')) {
-            $search = $request->search;
+    // -----------------------------
+    // SEARCH FILTER
+    // -----------------------------
+    if ($request->filled('search')) {
+        $search = $request->search;
 
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('age_group', 'like', "%{$search}%")
-                  ->orWhere('category', 'like', "%{$search}%")
-                  ->orWhere('venue', 'like', "%{$search}%")
-                  ->orWhereHas('sport', fn ($s) =>
-                      $s->where('name', 'like', "%{$search}%")
-                  )
-                  ->orWhereHas('divisions', fn ($d) =>
-                      $d->where('name', 'like', "%{$search}%")
-                  );
-            });
-        }
-
-        $events = $query->orderBy('start_date')->get();
-        return view('events.index', compact('events'));
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('age_group', 'like', "%{$search}%")
+              ->orWhere('category', 'like', "%{$search}%")
+              ->orWhere('venue', 'like', "%{$search}%")
+              ->orWhereHas('sport', fn ($s) =>
+                  $s->where('name', 'like', "%{$search}%")
+              )
+              ->orWhereHas('divisions', fn ($d) =>
+                  $d->where('name', 'like', "%{$search}%")
+              );
+        });
     }
+
+    // -----------------------------
+    // STATUS FILTER
+    // -----------------------------
+    $status = $request->status;
+
+    if ($request->filled('status')) {
+        $query->where('status', $status);
+    }
+
+    // -----------------------------
+    // GET EVENTS
+    // -----------------------------
+    $events = $query->orderBy('start_date')->get();
+
+    // -----------------------------
+    // COUNTS
+    // -----------------------------
+    $totalEvents = Event::count();
+    $displayCount = $events->count();
+
+    return view('events.index', compact(
+        'events',
+        'totalEvents',
+        'displayCount',
+        'status'
+    ));
+}
 
     /* =========================
        CREATE
