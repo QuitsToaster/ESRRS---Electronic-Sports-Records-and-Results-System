@@ -5,14 +5,15 @@
     <title>Athlete ID Cards</title>
 
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
         @page {
             size: letter portrait;
-            margin: 15mm;
+            margin: 10mm;
         }
 
         body {
-            font-family: DejaVu Sans, Arial, sans-serif;
-            font-size: 10px;
+            font-family: 'Poppins', sans-serif;
         }
 
         table {
@@ -21,80 +22,108 @@
         }
 
         td {
-            vertical-align: top;
-            padding: 0;
+            padding: 10px;
+            text-align: center;
         }
 
+        /* ✅ 3.5 x 5 inches */
         .card {
-            width: 67mm;
-            height: 99mm;
-            border: 1.2px solid #1f2937;
-            border-radius: 10px;
-            padding: 8px;
-            box-sizing: border-box;
+            width: 3.5in;
+            height: 5in;
             position: relative;
+            background-size: cover;
+            background-position: center;
         }
 
-        .header {
-            background: #1f2937;
-            color: #fff;
-            text-align: center;
-            font-weight: bold;
-            font-size: 11px;
-            padding: 4px;
-            border-radius: 6px;
-            margin-bottom: 6px;
-        }
-
-        .content {
-            text-align: center;
-        }
-
-        .photo img {
-            width: 28mm;
-            height: 34mm;
-            object-fit: cover;
-            border-radius: 6px;
-            border: 1px solid #1f2937;
-            margin-bottom: 6px;
-        }
-
-        .no-photo {
-            width: 28mm;
-            height: 34mm;
-            border: 1px dashed #9ca3af;
-            line-height: 34mm;
-            font-size: 8px;
-            color: #6b7280;
-            border-radius: 6px;
-            margin: 0 auto 6px;
-        }
-
+        /* FRONT TEXT */
         .name {
-            font-size: 10px;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-bottom: 4px;
-        }
-
-        .detail {
-            font-size: 9px;
-            margin-bottom: 2px;
-        }
-
-        .qr {
             position: absolute;
-            bottom: 6px;
+            top: 2.9in;
             left: 0;
             right: 0;
             text-align: center;
-            border-top: 1px dashed #9ca3af;
-            padding-top: 5px;
+            font-size: 24px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #02367B;
         }
 
-        .qr img {
-            width: 22mm;
-            height: 22mm;
+        .school {
+            position: absolute;
+            top: 3.35in;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+            color: #02367B;
+        }
+
+        .division {
+            position: absolute;
+            top: 3.55in;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+            color: #02367B;
+        }
+
+        .sport {
+            position: absolute;
+            top: 3.80in;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 32px;
+            font-weight: 700;
+            color: white;
+        }
+
+        .level {
+            position: absolute;
+            top: 4.35in;
+            left: 0;
+            right: 0;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: #02367B;
+        }
+
+        /* PHOTO */
+        .photo {
+            position: absolute;
+            top: 1.0in;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 1.3in;
+            height: 1.6in;
+            object-fit: cover;
+            border-radius: 6px;
+        }
+
+        /* BACK QR */
+        .qr-back {
+            position: absolute;
+            top: 0.7in;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .qr-back img {
+            width: 1.3in;
+            height: 1.3in;
+        }
+
+        .qr-number {
+            margin-top: 8px;
+            font-size: 10px;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 1px;
+            color: #02367B;
         }
 
         .page-break {
@@ -104,104 +133,76 @@
 </head>
 <body>
 
-@foreach($athletes->chunk(2) as $chunk)
+@foreach($athletes as $athlete)
 
-    @php
-        // 🔒 RE-INDEX SAFELY
-        $pair = $chunk->values();
-    @endphp
+<table>
+<tr>
 
-    @if($pair->isNotEmpty())
-    <table>
-        <tr>
-            {{-- ATHLETE 1 FRONT --}}
-            <td>
-                <div class="card">
-                    <div class="header">ATHLETE ID</div>
+    {{-- FRONT --}}
+    <td>
+        <div class="card"
+             style="background-image: url('{{ public_path('storage/id_templates/id-template-front.png') }}');">
 
-                    <div class="content">
-                        @if($pair->get(0)->profile_photo ?? false)
-                            <img class="photo" src="{{ public_path('storage/'.$pair->get(0)->profile_photo) }}">
-                        @else
-                            <div class="no-photo">NO PHOTO</div>
-                        @endif
+            {{-- PHOTO --}}
+            @if($athlete->profile_photo)
+                <img class="photo"
+                     src="{{ public_path('storage/'.$athlete->profile_photo) }}">
+            @endif
 
-                        <div class="name">
-                            {{ $pair->get(0)->last_name }}, {{ $pair->get(0)->first_name }}
-                        </div>
+            {{-- NAME --}}
+            <div class="name">
+                {{ $athlete->last_name }}, {{ $athlete->first_name }}
+            </div>
 
-                        <div class="detail">{{ $pair->get(0)->sport->name ?? '—' }}</div>
-                        <div class="detail">{{ $pair->get(0)->school->name ?? '—' }}</div>
-                        <div class="detail">SDO - {{ $pair->get(0)->school_division ?? '—' }}</div>
-                    </div>
+            {{-- SCHOOL --}}
+            <div class="school">
+                {{ $athlete->school->name ?? '' }}
+            </div>
 
-                    <div class="qr">
-                        <img src="data:image/png;base64,{{ base64_encode(
-                            QrCode::format('png')->size(140)->generate($pair->get(0)->qr_code)
-                        ) }}">
-                    </div>
-                </div>
-            </td>
+            {{-- DIVISION --}}
+            <div class="division">
+                SDO - {{ $athlete->school_division ?? '' }}
+            </div>
 
-            {{-- ATHLETE 1 BACK --}}
-            <td>
-                <div class="card">
-                    <div class="content">
-                        <strong>IMPORTANT NOTICE</strong><br><br>
-                        • This ID is non-transferable<br>
-                        • Present during events<br>
-                        • QR required for attendance
-                    </div>
-                </div>
-            </td>
-        </tr>
+            {{-- SPORT/EVENT --}}
+            <div class="sport">
+                {{ $athlete->event ?? '' }}
+            </div>
 
-        {{-- ATHLETE 2 (IF EXISTS) --}}
-        @if($pair->count() > 1)
-        <tr>
-            <td>
-                <div class="card">
-                    <div class="header">ATHLETE ID</div>
+            {{-- LEVEL/CATEGORY --}}
+            <div class="level">
+                {{ $athlete->level ?? '' }} {{ $athlete->category ?? '' }}
+            </div>
 
-                    <div class="content">
-                        @if($pair->get(1)->profile_photo ?? false)
-                            <img class="photo" src="{{ public_path('storage/'.$pair->get(1)->profile_photo) }}">
-                        @else
-                            <div class="no-photo">NO PHOTO</div>
-                        @endif
+        </div>
+    </td>
 
-                        <div class="name">
-                            {{ $pair->get(1)->last_name }}, {{ $pair->get(1)->first_name }}
-                        </div>
+    {{-- BACK --}}
+<td>
+    <div class="card"
+         style="background-image: url('{{ public_path('storage/id_templates/id-template-back.png') }}');">
 
-                        <div class="detail">{{ $pair->get(1)->sport->name ?? '—' }}</div>
-                        <div class="detail">SDO - {{ $pair->get(1)->school_division ?? '—' }}</div>
-                    </div>
+        <div class="qr-back">
 
-                    <div class="qr">
-                        <img src="data:image/png;base64,{{ base64_encode(
-                            QrCode::format('png')->size(140)->generate($pair->get(1)->qr_code)
-                        ) }}">
-                    </div>
-                </div>
-            </td>
+            {{-- Bigger QR --}}
+            <img src="data:image/png;base64,{{ base64_encode(
+                QrCode::format('png')->size(300)->generate($athlete->qr_code)
+            ) }}">
 
-            <td>
-                <div class="card">
-                    <div class="content">
-                        <strong>IMPORTANT NOTICE</strong><br><br>
-                        • This ID is non-transferable<br>
-                        • Present during events<br>
-                        • QR required for attendance
-                    </div>
-                </div>
-            </td>
-        </tr>
-        @endif
-    </table>
+            {{-- QR Code Text Below --}}
+            <div class="qr-number">
+                {{ $athlete->qr_code }}
+            </div>
 
-    <div class="page-break"></div>
-    @endif
+        </div>
+
+    </div>
+</td>
+
+</tr>
+</table>
+
+<div class="page-break"></div>
 
 @endforeach
 
