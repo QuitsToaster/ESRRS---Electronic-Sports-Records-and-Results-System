@@ -300,9 +300,12 @@ class AthleteController extends Controller
         ->orderBy('first_name');
 
     // 🔒 Division Official restriction
+    $officialDivision = null;
+
     if ($user->role && $user->role->name === 'Division Official') {
         if (preg_match('/SDO\s*-\s*(.+?)\s*Official/i', $user->name, $matches)) {
-            $query->where('school_division', trim($matches[1]));
+            $officialDivision = trim($matches[1]);
+            $query->where('school_division', $officialDivision);
         }
     }
 
@@ -317,6 +320,40 @@ class AthleteController extends Controller
     }
 
     $athletes = $query->get();
+
+    /* ==========================
+       📋 AUDIT LOG ENTRY
+    ========================== */
+
+    // Determine final division used
+    $exportedDivision = $officialDivision ?? $division ?? 'All Divisions';
+
+    $actionDescription = "Exported Athlete ID Cards PDF | "
+        . "Exported By: {$user->name} | "
+        . "Role: " . ($user->role->name ?? 'N/A') . " | "
+        . "Total Exported: {$athletes->count()} | "
+        . "Division: {$exportedDivision}";
+
+    if ($limit) {
+        $actionDescription .= " | Limit Applied: {$limit}";
+    }
+
+    AuditLog::create([
+        'model_type' => 'Athlete',
+        'model_id'   => 0,
+        'user_id'    => $user->id,
+        'old_values' => null,
+        'new_values' => json_encode([
+            'exported_count' => $athletes->count(),
+            'division'       => $exportedDivision,
+            'limit'          => $limit,
+        ]),
+        'action'     => $actionDescription,
+    ]);
+
+    /* ==========================
+       📄 GENERATE PDF
+    ========================== */
 
     $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
         ->setPaper('letter', 'portrait')
