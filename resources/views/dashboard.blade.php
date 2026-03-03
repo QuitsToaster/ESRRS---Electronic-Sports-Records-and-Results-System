@@ -49,6 +49,18 @@
         </div>
     </a>
 
+
+    {{-- Users Card ✅ NEW --}}
+    <a href="{{ route('users.index') }}" class="block bg-indigo-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
+        <div class="flex items-center justify-between">
+            <div>
+                <h2 class="text-lg font-semibold text-indigo-800">Accounts</h2>
+                <p class="text-gray-700 mt-2">Total number of system users</p>
+            </div>
+            <div class="text-3xl font-bold text-indigo-800">{{ $usersCount }}</div>
+        </div>
+    </a>
+
     <!-- {{-- Coaches Card --}}
     <a href="{{ route('coaches.index') }}" class="block bg-red-100 shadow rounded-lg p-6 hover:shadow-lg transition cursor-pointer">
         <div class="flex items-center justify-between">

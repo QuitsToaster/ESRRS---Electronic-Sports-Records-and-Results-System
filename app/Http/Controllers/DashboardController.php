@@ -8,6 +8,7 @@ use App\Models\Athlete;
 use App\Models\Event;
 use App\Models\Sport;
 use App\Models\Coach;
+use App\Models\User;
 use App\Models\Game;
 use App\Models\Official;
 use App\Models\Announcement;
@@ -24,6 +25,7 @@ class DashboardController extends Controller
     $coachesCount = Coach::count();
     $gamesCount = Game::count();
     $divisionsCount = Division::count();
+    $usersCount = User::count();
 
     // Live Games (Upcoming + Ongoing) - LIMIT 3
     $liveGames = Game::whereIn('status', ['Upcoming', 'Ongoing', 'Finished'])
@@ -86,7 +88,7 @@ $eventStatusCounts = collect([
     return view('dashboard', compact(
         'athletesCount', 'eventsCount', 'sportsCount',
         'coachesCount', 'gamesCount', 'divisionsCount', 'liveGames',
-        'medalTally', 'latestAnnouncements','eventStatusCounts'
+        'medalTally', 'latestAnnouncements','eventStatusCounts','usersCount'
     ));
 }
 }
