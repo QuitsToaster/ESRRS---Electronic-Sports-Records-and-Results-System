@@ -34,9 +34,17 @@
     </div>
 
     {{-- =======================
-         Developer Profiles
-    ======================== --}}
-    <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
+     Developer Profiles
+======================== --}}
+<div class="max-w-7xl mx-auto px-4 mb-16">
+
+    {{-- CENTERED H1 --}}
+    <h1 class="text-5xl font-bold text-red-600 mb-12 text-center" style="font-family: 'Poppins', sans-serif;">
+        System Developers
+    </h1>
+
+    {{-- GRID FOR DEVELOPER CARDS --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 
         {{-- Full Stack Developer (Highlighted Hero) --}}
         @if($fsDeveloper)
@@ -67,6 +75,7 @@
         @endforeach
 
     </div>
+</div>
 
     {{-- =======================
          Feedback Form (matched size)
