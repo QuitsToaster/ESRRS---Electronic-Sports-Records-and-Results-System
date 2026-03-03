@@ -289,10 +289,11 @@ class AthleteController extends Controller
             ->with('success', 'Athletes uploaded successfully!');
     }
 
-    public function exportIdPdf(Request $request)
+   public function exportIdPdf(Request $request)
 {
-    $user  = auth()->user();
-    $limit = $request->input('limit'); // optional
+    $user = auth()->user();
+    $limit = $request->input('limit');
+    $division = $request->input('school_division');
 
     $query = Athlete::with(['school', 'sport'])
         ->orderBy('last_name')
@@ -305,7 +306,12 @@ class AthleteController extends Controller
         }
     }
 
-    // 🚀 PERFORMANCE OPTIMIZATION
+    // 🟢 Super Admin Division Filter
+    if ($division) {
+        $query->where('school_division', $division);
+    }
+
+    // 🚀 Optional Limit
     if ($limit && is_numeric($limit)) {
         $query->limit((int) $limit);
     }
@@ -314,7 +320,7 @@ class AthleteController extends Controller
 
     $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))
         ->setPaper('letter', 'portrait')
-        ->setOption('dpi', 96)                 // faster rendering
+        ->setOption('dpi', 96)
         ->setOption('defaultFont', 'DejaVu Sans');
 
     return $pdf->download(

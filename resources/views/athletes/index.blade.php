@@ -30,7 +30,9 @@
 
     @php
     use Illuminate\Support\Str;
+    $user = auth()->user();
     $isDivisionOfficial = Str::contains(strtolower(auth()->user()->role), 'division official');
+    $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 @endphp
 
 <div class="flex gap-2 items-center">
@@ -84,21 +86,21 @@
         <h3 class="text-lg font-bold mb-2">Export Athlete ID Cards</h3>
 
         <p class="text-sm text-gray-600 mb-4">
-            ⚠️ Exporting <strong>ALL athletes</strong> may take a long time and could slow down the system.
+            ⚠️ Exporting many athletes may slow down the system.
         </p>
 
-        {{-- EXPORT ALL --}}
+        {{-- ================= EXPORT ALL ================= --}}
         <a href="{{ route('athletes.exportIdPdf') }}"
            class="block w-full text-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mb-3">
-            Export ALL Athletes (Slow)
+            Export ALL Athletes
         </a>
 
         <hr class="my-4">
 
-        {{-- EXPORT WITH LIMIT --}}
-        <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
+        {{-- ================= EXPORT WITH LIMIT ================= --}}
+        <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3 mb-4">
             <label class="text-sm font-medium">
-                Export only the first
+                Export first X athletes
             </label>
 
             <input type="number"
@@ -109,15 +111,50 @@
                    class="w-full border rounded px-3 py-2"
                    required>
 
-            <p class="text-xs text-gray-500">
-                Tip: Exporting 50–100 athletes is much faster.
-            </p>
-
             <button type="submit"
                     class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                Export Selected Amount
+                Export With Limit
             </button>
         </form>
+
+        {{-- ================= SUPER ADMIN ONLY ================= --}}
+        @if($isSuperAdmin)
+
+        <hr class="my-4">
+
+        <h4 class="font-semibold text-sm mb-2 text-gray-700">
+            Export by Division (Super Admin Only)
+        </h4>
+
+        <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
+
+            {{-- Select Division --}}
+            <select name="school_division"
+                    class="w-full border rounded px-3 py-2"
+                    required>
+                <option value="">Select Division</option>
+                @foreach($divisions as $division)
+                    <option value="{{ $division }}">
+                        SDO - {{ $division }}
+                    </option>
+                @endforeach
+            </select>
+
+            {{-- Optional Limit --}}
+            <input type="number"
+                   name="limit"
+                   min="1"
+                   placeholder="Optional Limit (leave blank for all)"
+                   class="w-full border rounded px-3 py-2">
+
+            <button type="submit"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                Export Selected Division
+            </button>
+
+        </form>
+
+        @endif
 
     </div>
 </div>
