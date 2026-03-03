@@ -5,34 +5,45 @@
     <title>Athlete ID Cards</title>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
-
         @page {
             size: letter portrait;
-            margin: 10mm;
+            margin: 8mm;
         }
 
         body {
-            font-family: 'Poppins', sans-serif;
+            font-family: DejaVu Sans, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* PAGE CONTAINER = EXACT HEIGHT FIT FOR 2 CARDS */
+        .page {
+            height: 10.2in; /* 5in + 5in + small allowance */
+            page-break-after: always;
         }
 
         table {
-            width: 100%;
-            border-collapse: collapse;
-        }
+    width: auto; /* prevents stretching */
+    border-collapse: collapse;
+    border-spacing: 0; /* removes hidden spacing */
+    margin: 0 auto; /* keeps centered */
+}
 
         td {
-            padding: 10px;
+            padding: 0; /* remove gap */
+            margin: 0;
             text-align: center;
+            vertical-align: top;
         }
 
-        /* ✅ 3.5 x 5 inches */
+        /* CARD SIZE */
         .card {
             width: 3.5in;
             height: 5in;
             position: relative;
             background-size: cover;
             background-position: center;
+            display: block;
         }
 
         /* FRONT TEXT */
@@ -72,7 +83,7 @@
 
         .sport {
             position: absolute;
-            top: 3.80in;
+            top: 3.70in;
             left: 0;
             right: 0;
             text-align: center;
@@ -110,6 +121,7 @@
             top: 0.7in;
             left: 50%;
             transform: translateX(-50%);
+            text-align: center;
         }
 
         .qr-back img {
@@ -121,88 +133,87 @@
             margin-top: 8px;
             font-size: 10px;
             font-weight: 600;
-            text-align: center;
             letter-spacing: 1px;
             color: #02367B;
         }
 
-        .page-break {
-            page-break-after: always;
+        .row-spacing {
+            height: 0.2in;
         }
     </style>
 </head>
 <body>
 
-@foreach($athletes as $athlete)
+@foreach($athletes->chunk(2) as $pair)
 
-<table>
-<tr>
+<div class="page">
 
-    {{-- FRONT --}}
-    <td>
-        <div class="card"
-             style="background-image: url('{{ public_path('storage/id_templates/id-template-front.png') }}');">
+    @foreach($pair as $athlete)
 
-            {{-- PHOTO --}}
-            @if($athlete->profile_photo)
-                <img class="photo"
-                     src="{{ public_path('storage/'.$athlete->profile_photo) }}">
-            @endif
+        <table>
+            <tr>
 
-            {{-- NAME --}}
-            <div class="name">
-                {{ $athlete->last_name }}, {{ $athlete->first_name }}
-            </div>
+                {{-- FRONT --}}
+                <td>
+                    <div class="card"
+                        style="background-image: url('{{ public_path('storage/id_templates/id-template-front.png') }}');">
 
-            {{-- SCHOOL --}}
-            <div class="school">
-                {{ $athlete->school->name ?? '' }}
-            </div>
+                        @if($athlete->profile_photo)
+                            <img class="photo"
+                                src="{{ public_path('storage/'.$athlete->profile_photo) }}">
+                        @endif
 
-            {{-- DIVISION --}}
-            <div class="division">
-                SDO - {{ $athlete->school_division ?? '' }}
-            </div>
+                        <div class="name">
+                            {{ $athlete->last_name }}, {{ $athlete->first_name }}
+                        </div>
 
-            {{-- SPORT/EVENT --}}
-            <div class="sport">
-                {{ $athlete->event ?? '' }}
-            </div>
+                        <div class="school">
+                            {{ $athlete->school->name ?? '' }}
+                        </div>
 
-            {{-- LEVEL/CATEGORY --}}
-            <div class="level">
-                {{ $athlete->level ?? '' }} {{ $athlete->category ?? '' }}
-            </div>
+                        <div class="division">
+                            SDO - {{ $athlete->school_division ?? '' }}
+                        </div>
 
-        </div>
-    </td>
+                        <div class="sport">
+                            {{ $athlete->event ?? '' }}
+                        </div>
 
-    {{-- BACK --}}
-<td>
-    <div class="card"
-         style="background-image: url('{{ public_path('storage/id_templates/id-template-back.png') }}');">
+                        <div class="level">
+                            {{ $athlete->level ?? '' }} {{ $athlete->category ?? '' }}
+                        </div>
 
-        <div class="qr-back">
+                    </div>
+                </td>
 
-            {{-- Bigger QR --}}
-            <img src="data:image/png;base64,{{ base64_encode(
-                QrCode::format('png')->size(300)->generate($athlete->qr_code)
-            ) }}">
+                {{-- BACK --}}
+                <td>
+                    <div class="card"
+                        style="background-image: url('{{ public_path('storage/id_templates/id-template-back.png') }}');">
 
-            {{-- QR Code Text Below --}}
-            <div class="qr-number">
-                {{ $athlete->qr_code }}
-            </div>
+                        <div class="qr-back">
 
-        </div>
+                            <img src="data:image/png;base64,{{ base64_encode(
+                                QrCode::format('png')->size(300)->generate($athlete->qr_code)
+                            ) }}">
 
-    </div>
-</td>
+                            <div class="qr-number">
+                                {{ $athlete->qr_code }}
+                            </div>
 
-</tr>
-</table>
+                        </div>
 
-<div class="page-break"></div>
+                    </div>
+                </td>
+
+            </tr>
+        </table>
+
+        <div class="row-spacing"></div>
+
+    @endforeach
+
+</div>
 
 @endforeach
 
