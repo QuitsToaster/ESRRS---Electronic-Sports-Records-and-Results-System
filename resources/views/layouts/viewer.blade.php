@@ -130,10 +130,10 @@ document.addEventListener('DOMContentLoaded', () => {
         Login
     </a>
 
-    <!-- <a href="{{ route('attendance.check') }}"
+    <a href="{{ route('attendance.check') }}"
        class="px-4 py-1.5 bg-yellow-600 hover:bg-yellow-700 rounded text-white font-semibold transition">
         Attendance
-    </a> -->
+    </a>
 </div>
 
 
@@ -167,10 +167,10 @@ document.addEventListener('DOMContentLoaded', () => {
     Login
 </a>
 
-<!-- <a href="{{ route('attendance.check') }}"
+<a href="{{ route('attendance.check') }}"
    class="block px-3 py-2 mt-2 rounded bg-yellow-600 text-white font-semibold">
     Attendance
-</a> -->
+</a>
 
 
     </div>
