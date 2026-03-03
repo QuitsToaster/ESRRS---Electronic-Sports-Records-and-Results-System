@@ -11,13 +11,15 @@ use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
 {
+    /**
+     * Admin Attendance Dashboard
+     */
     public function index(Request $request)
     {
         $today = Carbon::today();
         $user = Auth::user();
 
         // ================= GET USER DIVISION =================
-        // Extract city from user name like "SDO - Santiago City Official"
         $userDivision = null;
 
         if ($user && stripos($user->name, 'SDO -') === 0) {
@@ -93,5 +95,65 @@ class AttendanceController extends Controller
             'selectedDivision',
             'userDivision'
         ));
+    }
+
+    /**
+     * Public QR Code Scanner Page
+     */
+    public function checkAttendance()
+    {
+        return view('attendance.check'); // points to check.blade.php
+    }
+
+    /**
+     * Handle QR Code Submission
+     */
+    public function store(Request $request)
+    {
+        $request->validate([
+            'qr_code' => 'required|string',
+        ]);
+
+        $code = trim($request->qr_code);
+        $today = Carbon::today();
+
+        // Try to find Athlete first
+        $athlete = Athlete::where('qr_code', $code)->first();
+        $coach = null;
+
+        if (!$athlete) {
+            // Try Coach if no athlete found
+            $coach = Coach::where('qr_code', $code)->first();
+        }
+
+        if (!$athlete && !$coach) {
+            return redirect()->back()->with('error', 'QR code not recognized.');
+        }
+
+        // Determine if user already has attendance today
+        $attendanceQuery = Attendance::whereDate('created_at', $today);
+        $attendanceQuery->when($athlete, fn($q) => $q->where('athlete_id', $athlete->id));
+        $attendanceQuery->when($coach, fn($q) => $q->where('coach_id', $coach->id));
+        $existing = $attendanceQuery->first();
+
+        if ($existing) {
+            // If already timed in, update time_out
+            if (!$existing->time_out) {
+                $existing->time_out = now();
+                $existing->save();
+                return redirect()->back()->with('success', 'Time Out recorded successfully.');
+            } else {
+                return redirect()->back()->with('error', 'Attendance already recorded for today.');
+            }
+        } else {
+            // Record new attendance (time_in)
+            Attendance::create([
+                'athlete_id' => $athlete->id ?? null,
+                'coach_id'   => $coach->id ?? null,
+                'time_in'    => now(),
+            ]);
+
+            return redirect()->back()->with('success', 'Time In recorded successfully.');
+        }
     }
 }

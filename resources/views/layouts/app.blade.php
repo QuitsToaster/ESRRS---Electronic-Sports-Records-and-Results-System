@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div x-show="isOpen" x-cloak class="pl-6 mt-1 space-y-1">
 
             {{-- Official Results: only for roles that are NOT Tournament Secretary --}}
-            @if(auth()->check() && !in_array(auth()->user()->role->name, ['Tournament Secretary', 'Tournament Manager']))
+            @if(auth()->check() && !in_array(optional(auth()->user()->role)->name, ['Tournament Secretary', 'Tournament Manager']))
                 <a href="{{ route('results_divisions.index') }}"
                    class="block px-4 py-2 rounded hover:bg-blue-600
                    {{ request()->routeIs('results_divisions.index') ? 'bg-blue-700 font-semibold' : '' }}">
@@ -602,42 +602,43 @@ document.addEventListener('DOMContentLoaded', () => {
         @method('PUT')
 
         @php
-            $isSuperAdmin = auth()->user()->role->name === 'Super Admin';
-        @endphp
+    $user = auth()->user();
+    $isSuperAdmin = $user && optional($user->role)->name === 'Super Admin';
+@endphp
 
         {{-- NAME --}}
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700">Name</label>
-            <input
-                type="text"
-                name="name"
-                value="{{ auth()->user()->name }}"
-                class="mt-1 block w-full rounded shadow-sm
-                    {{ $isSuperAdmin
-                        ? 'border-gray-300'
-                        : 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed'
-                    }}"
-                {{ $isSuperAdmin ? '' : 'readonly' }}
-                required
-            >
-        </div>
+<div class="mb-3">
+    <label class="block text-sm font-medium text-gray-700">Name</label>
+    <input
+        type="text"
+        name="name"
+        value="{{ optional(auth()->user())->name }}"
+        class="mt-1 block w-full rounded shadow-sm
+            {{ $isSuperAdmin
+                ? 'border-gray-300'
+                : 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed'
+            }}"
+        {{ $isSuperAdmin ? '' : 'readonly' }}
+        required
+    >
+</div>
 
-        {{-- EMAIL --}}
-        <div class="mb-3">
-            <label class="block text-sm font-medium text-gray-700">Email</label>
-            <input
-                type="email"
-                name="email"
-                value="{{ auth()->user()->email }}"
-                class="mt-1 block w-full rounded shadow-sm
-                    {{ $isSuperAdmin
-                        ? 'border-gray-300'
-                        : 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed'
-                    }}"
-                {{ $isSuperAdmin ? '' : 'readonly' }}
-                required
-            >
-        </div>
+       {{-- EMAIL --}}
+<div class="mb-3">
+    <label class="block text-sm font-medium text-gray-700">Email</label>
+    <input
+        type="email"
+        name="email"
+        value="{{ optional(auth()->user())->email }}"
+        class="mt-1 block w-full rounded shadow-sm
+            {{ $isSuperAdmin
+                ? 'border-gray-300'
+                : 'bg-gray-100 border-gray-300 text-gray-500 cursor-not-allowed'
+            }}"
+        {{ $isSuperAdmin ? '' : 'readonly' }}
+        required
+    >
+</div>
 
         {{-- PASSWORD --}}
         <div class="mb-3">
