@@ -115,12 +115,12 @@ public function participantShow(Division $division, Request $request)
        TEAM AWARDS (all_award_results)
     ========================================================== */
 
-    $teamRegular = AllAwardResult::with(['sport', 'event'])
+    $teamRegular = AllAwardResult::with(['sport', 'sportType'])
         ->where('sdo', $division->name)
         ->whereIn('division', ['Elementary', 'Secondary'])
         ->get();
 
-    $teamParagames = AllAwardResult::with(['sport', 'event'])
+    $teamParagames = AllAwardResult::with(['sport', 'sportType'])
         ->where('sdo', $division->name)
         ->where('division', 'Paragames')
         ->get();

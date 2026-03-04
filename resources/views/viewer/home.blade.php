@@ -356,11 +356,11 @@ $medalTallyRegular = $divisions->map(function($division) use ($regularRaw) {
         'silver' => $silver,
         'bronze' => $bronze,
         'total'  => $gold + $silver + $bronze,
-        'results'=> AllAwardResult::with(['sport','event'])
-                        ->where('status','approved')
-                        ->whereIn('division',['Elementary','Secondary'])
-                        ->where('sdo',$division->name)
-                        ->get(),
+        'results'=> AllAwardResult::with(['sport','sportType'])
+                ->where('status','approved')
+                ->whereIn('division',['Elementary','Secondary'])
+                ->where('sdo',$division->name)
+                ->get(),
     ];
 });
 
@@ -391,11 +391,11 @@ $medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
         'silver' => $silver,
         'bronze' => $bronze,
         'total'  => $gold + $silver + $bronze,
-        'results'=> AllAwardResult::with(['sport','event'])
-                        ->where('status','approved')
-                        ->where('division','Paragames')
-                        ->where('sdo',$division->name)
-                        ->get(),
+        'results'=> AllAwardResult::with(['sport','sportType'])
+                ->where('status','approved')
+                ->where('division','Paragames')
+                ->where('sdo',$division->name)
+                ->get(),
     ];
 });
 
@@ -552,56 +552,43 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
     >
         {{-- Headline --}}
         <div class="flex justify-between items-center mb-2">
-            <strong
+            <!-- <strong
                 class="text-lg font-semibold text-gray-800"
-                x-text="
-                    m.division === 'Paragames'
-                        ? (m.type_name ?? 'Paragames Event')
-                        : (m.event?.name ?? 'Event')
-                "
-            ></strong>
-
+                x-text="m.sportType?.type_name ?? 'Event Type'"
+            ></strong> -->
             <span
-                class="text-sm font-bold text-red-600 uppercase"
+                class="text-lg font-bold text-red-600 uppercase"
                 x-text="m.sport?.name ?? 'Sport'"
             ></span>
         </div>
 
         {{-- Info Strip --}}
         <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-600">
-            <span>
-                Level:
-                <strong class="text-gray-800" x-text="m.event?.age_group ?? 'N/A'"></strong>
-            </span>
+            <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-600">
 
-            <span>
-                Category:
-                <strong class="text-gray-800" x-text="m.event?.category ?? 'N/A'"></strong>
-            </span>
+    <span>
+        Level:
+        <strong class="text-gray-800" x-text="m.division ?? 'N/A'"></strong>
+    </span>
 
-            <span>
-                Event Date:
-                <strong class="text-gray-800"
-                    x-text="m.event?.start_date
-                        ? new Date(m.event.start_date).toLocaleDateString(
-                            'en-US',
-                            { month: 'short', day: '2-digit', year: 'numeric' }
-                        )
-                        : 'N/A'"
-                ></strong>
-            </span>
+    <span>
+        Category:
+        <strong class="text-gray-800" x-text="m.category ?? 'N/A'"></strong>
+    </span>
 
-            <span>
-                Awarded:
-                <strong class="text-gray-800"
-                    x-text="m.created_at
-                        ? new Date(m.created_at).toLocaleDateString(
-                            'en-US',
-                            { month: 'short', day: '2-digit', year: 'numeric' }
-                        )
-                        : 'N/A'"
-                ></strong>
-            </span>
+    <span>
+        Awarded:
+        <strong class="text-gray-800"
+            x-text="m.created_at
+                ? new Date(m.created_at).toLocaleDateString(
+                    'en-US',
+                    { month: 'short', day: '2-digit', year: 'numeric' }
+                )
+                : 'N/A'"
+        ></strong>
+    </span>
+
+</div>
         </div>
     </div>
 </template>

@@ -27,15 +27,11 @@ class AllAwardResult extends Model
         return $this->belongsTo(\App\Models\Event::class, 'event_id');
     }
 
-    public function type()
-{
-    return $this->belongsTo(\App\Models\SportType::class, 'type_id', 'id');
-}
-
 public function sportType()
 {
-    return $this->belongsTo(\App\Models\SportType::class, 'type_id', 'id');
+    return $this->belongsTo(\App\Models\SportType::class, 'type_id');
 }
+
 
 
 }

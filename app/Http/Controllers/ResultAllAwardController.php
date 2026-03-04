@@ -15,25 +15,32 @@ class ResultAllAwardController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->role->name === 'Tournament Secretary') {
+        if (!$user) {
+            return back()->with('error', 'User not authenticated.');
+        }
+
+        $roleName = optional($user->role)->name;
+
+        if ($roleName === 'Tournament Secretary') {
             $request->validate([
                 'selected_sdo' => 'required|string',
                 'results' => 'required|array',
             ]);
         }
 
-        $status = $user->role->name === 'Tournament Secretary'
+        $status = $roleName === 'Tournament Secretary'
             ? 'pending'
             : 'approved';
 
-        $eventId = Event::where('is_active', 1)->value('id');
+        $eventId = $request->event_id;
 
-        if (!$eventId) {
-            return back()->with('error', 'No active event found.');
-        }
+if (!$eventId || !Event::where('id', $eventId)->exists()) {
+    return back()->with('error', 'Invalid event selected.');
+}
 
         $filePath = null;
-        if ($user->role->name === 'Tournament Secretary' && $request->hasFile('validation_file')) {
+
+        if ($roleName === 'Tournament Secretary' && $request->hasFile('validation_file')) {
             $filePath = $request->file('validation_file')
                 ->store('award-validations', 'public');
         }
@@ -61,7 +68,7 @@ class ResultAllAwardController extends Controller
 
                         $award = AllAwardResult::updateOrCreate(
                             [
-                                'event_id' => $eventId,
+                                'event_id' => $eventId, // ✅ added
                                 'division' => $request->division,
                                 'category' => $request->category ?: null,
                                 'sport_id' => $sportId,
@@ -78,37 +85,37 @@ class ResultAllAwardController extends Controller
                         );
 
                         AuditLog::create([
-    'model_type' => 'AllAwardResult',
-    'model_id'   => $award->id,
-    'user_id'    => $user->id,
-    'action'     => sprintf(
-        '%s | Division: %s | Category: %s | Sport ID: %s | Type ID: %s | Medal: %s | SDO: %s | Status: %s',
-        $existing ? 'Updated & Forwarded All Award' : 'Created & Forwarded All Award',
-        $request->division,
-        $request->category ?? 'N/A',
-        $sportId,
-        $typeId,
-        strtoupper($medal),
-        $selectedSdo,
-        strtoupper($status)
-    ),
-    'old_values' => $oldValues ? json_encode($oldValues) : null,
-    'new_values' => json_encode($award->toArray()),
-    'description' => json_encode([
-        'performed_by' => $user->name,
-        'role' => $user->role->name,
-        'event_id' => $eventId,
-        'division' => $request->division,
-        'category' => $request->category,
-        'sport_id' => $sportId,
-        'type_id' => $typeId,
-        'sdo' => $selectedSdo,
-        'medal' => $medal,
-        'status' => $status,
-        'ip_address' => request()->ip(),
-        'user_agent' => request()->userAgent(),
-    ]),
-]);
+                            'model_type' => 'AllAwardResult',
+                            'model_id'   => $award->id,
+                            'user_id'    => $user->id,
+                            'action'     => sprintf(
+                                '%s | Division: %s | Category: %s | Sport ID: %s | Type ID: %s | Medal: %s | SDO: %s | Status: %s',
+                                $existing ? 'Updated & Forwarded All Award' : 'Created & Forwarded All Award',
+                                $request->division,
+                                $request->category ?? 'N/A',
+                                $sportId,
+                                $typeId,
+                                strtoupper($medal),
+                                $selectedSdo,
+                                strtoupper($status)
+                            ),
+                            'old_values' => $oldValues ? json_encode($oldValues) : null,
+                            'new_values' => json_encode($award->toArray()),
+                            'description' => json_encode([
+                                'performed_by' => $user->name,
+                                'role' => $roleName,
+                                'event_id' => $eventId,
+                                'division' => $request->division,
+                                'category' => $request->category,
+                                'sport_id' => $sportId,
+                                'type_id' => $typeId,
+                                'sdo' => $selectedSdo,
+                                'medal' => $medal,
+                                'status' => $status,
+                                'ip_address' => request()->ip(),
+                                'user_agent' => request()->userAgent(),
+                            ]),
+                        ]);
                     }
                 }
             }
@@ -127,26 +134,29 @@ class ResultAllAwardController extends Controller
             'revision_message' => null
         ]);
 
-       AuditLog::create([
-    'model_type' => 'AllAwardResult',
-    'model_id' => $award->id,
-    'user_id' => Auth::id(),
-    'action' => sprintf(
-        'Approved All Award | Division: %s | Sport ID: %s | Medal: %s | SDO: %s',
-        $award->division,
-        $award->sport_id,
-        strtoupper($award->medal),
-        $award->sdo
-    ),
-    'old_values' => json_encode($old),
-    'new_values' => json_encode($award->toArray()),
-    'description' => json_encode([
-        'approved_by' => Auth::user()->name,
-        'role' => Auth::user()->role->name,
-        'ip_address' => request()->ip(),
-        'user_agent' => request()->userAgent(),
-    ]),
-]);
+        $user = Auth::user();
+        $roleName = optional($user->role)->name;
+
+        AuditLog::create([
+            'model_type' => 'AllAwardResult',
+            'model_id' => $award->id,
+            'user_id' => Auth::id(),
+            'action' => sprintf(
+                'Approved All Award | Division: %s | Sport ID: %s | Medal: %s | SDO: %s',
+                $award->division,
+                $award->sport_id,
+                strtoupper($award->medal),
+                $award->sdo
+            ),
+            'old_values' => json_encode($old),
+            'new_values' => json_encode($award->toArray()),
+            'description' => json_encode([
+                'approved_by' => $user?->name,
+                'role' => $roleName,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]),
+        ]);
 
         return back()->with('success', 'Award approved.');
     }
@@ -162,20 +172,20 @@ class ResultAllAwardController extends Controller
         ]);
 
         AuditLog::create([
-    'model_type' => 'AllAwardResult',
-    'model_id' => $award->id,
-    'user_id' => Auth::id(),
-    'action' => sprintf(
-        'Rejected All Award | Division: %s | Sport ID: %s | Medal: %s | SDO: %s | Reason: %s',
-        $award->division,
-        $award->sport_id,
-        strtoupper($award->medal),
-        $award->sdo,
-        $request->message
-    ),
-    'old_values' => json_encode($old),
-    'new_values' => json_encode($award->toArray()),
-]);
+            'model_type' => 'AllAwardResult',
+            'model_id' => $award->id,
+            'user_id' => Auth::id(),
+            'action' => sprintf(
+                'Rejected All Award | Division: %s | Sport ID: %s | Medal: %s | SDO: %s | Reason: %s',
+                $award->division,
+                $award->sport_id,
+                strtoupper($award->medal),
+                $award->sdo,
+                $request->message
+            ),
+            'old_values' => json_encode($old),
+            'new_values' => json_encode($award->toArray()),
+        ]);
 
         return back()->with('success', 'Award marked as needs revision.');
     }
@@ -186,19 +196,19 @@ class ResultAllAwardController extends Controller
         $old = $award->toArray();
 
         AuditLog::create([
-    'model_type' => 'AllAwardResult',
-    'model_id' => $award->id,
-    'user_id' => Auth::id(),
-    'action' => sprintf(
-        'Deleted All Award for Revision | Division: %s | Sport ID: %s | Medal: %s | SDO: %s',
-        $award->division,
-        $award->sport_id,
-        strtoupper($award->medal),
-        $award->sdo
-    ),
-    'old_values' => json_encode($old),
-    'new_values' => json_encode([]),
-]);
+            'model_type' => 'AllAwardResult',
+            'model_id' => $award->id,
+            'user_id' => Auth::id(),
+            'action' => sprintf(
+                'Deleted All Award for Revision | Division: %s | Sport ID: %s | Medal: %s | SDO: %s',
+                $award->division,
+                $award->sport_id,
+                strtoupper($award->medal),
+                $award->sdo
+            ),
+            'old_values' => json_encode($old),
+            'new_values' => json_encode([]),
+        ]);
 
         $award->delete();
 

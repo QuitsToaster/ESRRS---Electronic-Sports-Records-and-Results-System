@@ -77,7 +77,7 @@
             <thead class="bg-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-left">Medal</th>
-                    <th class="px-4 py-3 text-left">Event</th>
+                    <!-- <th class="px-4 py-3 text-left">Event</th> -->
                     <th class="px-4 py-3 text-left">Sport</th>
                     <th class="px-4 py-3 text-left">Date</th>
                 </tr>
@@ -86,7 +86,7 @@
                 @forelse($regularTeamAwards as $award)
                     <tr>
                         <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
-                        <td class="px-4 py-3">{{ $award->event?->name ?? 'Event' }}</td>
+                        <!-- <td class="px-4 py-3">{{ $award->sportType?->type_name ?? 'Type' }}</td> -->
                         <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
                         <td class="px-4 py-3">{{ $award->date?->format('M d, Y') }}</td>
                     </tr>
@@ -110,7 +110,7 @@
                 <tr>
                     <th class="px-4 py-3 text-left">Medal</th>
                     <th class="px-4 py-3 text-left">Athlete</th>
-                    <th class="px-4 py-3 text-left">Event</th>
+                    <!-- <th class="px-4 py-3 text-left">Event</th> -->
                     <th class="px-4 py-3 text-left">Sport</th>
                     <th class="px-4 py-3 text-left">School</th>
                     <th class="px-4 py-3 text-left">Municipality/Town/City</th>
@@ -122,7 +122,7 @@
                     <tr>
                         <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
                         <td class="px-4 py-3">{{ $award->athlete?->full_name ?? 'Athlete' }}</td>
-                        <td class="px-4 py-3">{{ $award->event?->name ?? 'Event' }}</td>
+                        <!-- <td class="px-4 py-3">{{ $award->event?->name ?? 'Event' }}</td> -->
                         <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
                         <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
                         <td class="px-4 py-3">{{ $award->athlete?->municipality ?? 'Municipality/Town/City' }}</td>
@@ -173,7 +173,7 @@
             <thead class="bg-gray-200">
                 <tr>
                     <th class="px-4 py-3 text-left">Medal</th>
-                    <th class="px-4 py-3 text-left">Event</th>
+                    <!-- <th class="px-4 py-3 text-left">Event</th> -->
                     <th class="px-4 py-3 text-left">Sport</th>
                     <th class="px-4 py-3 text-left">Date</th>
                 </tr>
@@ -182,7 +182,7 @@
                 @forelse($paragamesTeamAwards as $award)
                     <tr>
                         <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
-                        <td class="px-4 py-3">{{ $award->event?->name ?? 'Paragames Event' }}</td>
+                        <!-- <td class="px-4 py-3">{{ $award->event?->name ?? 'Paragames Event' }}</td> -->
                         <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
                         <td class="px-4 py-3">{{ $award->date?->format('M d, Y') }}</td>
                     </tr>
@@ -206,7 +206,7 @@
             <tr>
                 <th class="px-4 py-3 text-left">Medal</th>
                 <th class="px-4 py-3 text-left">Athlete</th>
-                <th class="px-4 py-3 text-left">Event</th>
+                <!-- <th class="px-4 py-3 text-left">Event</th> -->
                 <th class="px-4 py-3 text-left">Sport</th>
                 <th class="px-4 py-3 text-left">School</th>
                 <th class="px-4 py-3 text-left">Municipality/Town/City</th>
@@ -218,7 +218,7 @@
                 <tr>
                     <td class="px-4 py-3 font-bold">{{ $award->medal }}</td>
                     <td class="px-4 py-3">{{ $award->athlete?->full_name ?? 'Athlete' }}</td>
-                    <td class="px-4 py-3">{{ $award->event?->name ?? 'Paragames Event' }}</td>
+                    <!-- <td class="px-4 py-3">{{ $award->event?->name ?? 'Paragames Event' }}</td> -->
                     <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
                     <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
                     <td class="px-4 py-3">{{ $award->athlete?->municipality ?? 'Municipality/Town/City' }}</td>

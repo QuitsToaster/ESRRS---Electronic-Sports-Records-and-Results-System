@@ -113,56 +113,56 @@ class ResultDivisionController extends Controller
     // -----------------------------
     // STORE RESULTS
     // -----------------------------
-    public function store(Request $request)
-    {
-        $eventId = \App\Models\Event::where('is_active', 1)
-            ->where('age_group', $request->division)
-            ->value('id');
+    // public function store(Request $request)
+    // {
+    //     $eventId = \App\Models\Event::where('is_active', 1)
+    //         ->where('age_group', $request->division)
+    //         ->value('id');
 
-        if (!$eventId) {
-            return back()->with('error', "No active event found for division: {$request->division}");
-        }
+    //     if (!$eventId) {
+    //         return back()->with('error', "No active event found for division: {$request->division}");
+    //     }
 
-        foreach ($request->results ?? [] as $sportId => $types) {
-            foreach ($types as $typeId => $sdos) {
-                $typeId = $typeId == 0 ? null : $typeId;
+    //     foreach ($request->results ?? [] as $sportId => $types) {
+    //         foreach ($types as $typeId => $sdos) {
+    //             $typeId = $typeId == 0 ? null : $typeId;
 
-                foreach ($sdos as $sdo => $medals) {
-                    foreach ($medals as $medal => $count) {
-                        // Delete previous
-                        ResultDivision::where([
-                            'event_id' => $eventId,
-                            'sport_id' => $sportId,
-                            'type_id' => $typeId,
-                            'division' => $request->division,
-                            'sdo' => $sdo,
-                            'category' => $request->category,
-                            'medal' => $medal,
-                        ])->delete();
+    //             foreach ($sdos as $sdo => $medals) {
+    //                 foreach ($medals as $medal => $count) {
+    //                     // Delete previous
+    //                     ResultDivision::where([
+    //                         'event_id' => $eventId,
+    //                         'sport_id' => $sportId,
+    //                         'type_id' => $typeId,
+    //                         'division' => $request->division,
+    //                         'sdo' => $sdo,
+    //                         'category' => $request->category,
+    //                         'medal' => $medal,
+    //                     ])->delete();
 
-                        if ($count > 0) {
-                            ResultDivision::insert(
-                                array_fill(0, $count, [
-                                    'event_id' => $eventId,
-                                    'sport_id' => $sportId,
-                                    'type_id' => $typeId,
-                                    'division' => $request->division,
-                                    'sdo' => $sdo,
-                                    'category' => $request->category,
-                                    'medal' => $medal,
-                                    'awarded_by' => Auth::id(),
-                                    'created_at' => now(),
-                                    'updated_at' => now(),
-                                ])
-                            );
-                        }
-                    }
-                }
-            }
-        }
+    //                     if ($count > 0) {
+    //                         ResultDivision::insert(
+    //                             array_fill(0, $count, [
+    //                                 'event_id' => $eventId,
+    //                                 'sport_id' => $sportId,
+    //                                 'type_id' => $typeId,
+    //                                 'division' => $request->division,
+    //                                 'sdo' => $sdo,
+    //                                 'category' => $request->category,
+    //                                 'medal' => $medal,
+    //                                 'awarded_by' => Auth::id(),
+    //                                 'created_at' => now(),
+    //                                 'updated_at' => now(),
+    //                             ])
+    //                         );
+    //                     }
+    //                 }
+    //             }
+    //         }
+    //     }
 
-        return back()->with('success', 'Results saved successfully.');
-    }
+    //     return back()->with('success', 'Results saved successfully.');
+    // }
 
 public function export()
 {

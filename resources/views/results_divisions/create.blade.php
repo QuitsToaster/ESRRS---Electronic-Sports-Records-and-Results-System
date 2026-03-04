@@ -9,11 +9,12 @@ use App\Models\Sport;
 use App\Models\AllAwardResult;
 use App\Models\IndividualAwardResult;
 use App\Models\Athlete;
-use App\Models\Event; 
 
 $user = auth()->user();
 
-// ====================== FILTER TABS FOR TOURNAMENT SECRETARY ======================
+$currentEvent = \App\Models\Event::where('is_active', 1)->first();
+
+// ====================== FILTER TABS ======================
 $allTabs = [
     'Elementary Boys'   => ['division' => 'Elementary', 'category' => 'Boys'],
     'Elementary Girls'  => ['division' => 'Elementary', 'category' => 'Girls'],
@@ -22,11 +23,10 @@ $allTabs = [
     'Para Games'        => ['division' => 'Paragames', 'category' => null],
 ];
 
-// If not Super Admin, filter tabs based on user's level_access and category_access
 if ($user->role->name !== 'Super Admin') {
     $tabs = array_filter($allTabs, function($tab) use ($user) {
-        $levelOk = in_array($tab['division'], $user->level_access);
-        $categoryOk = is_null($tab['category']) || in_array($tab['category'], $user->category_access);
+        $levelOk = in_array($tab['division'], $user->level_access ?? []);
+        $categoryOk = is_null($tab['category']) || in_array($tab['category'], $user->category_access ?? []);
         return $levelOk && $categoryOk;
     });
 } else {
@@ -35,20 +35,20 @@ if ($user->role->name !== 'Super Admin') {
 
 // ====================== FILTER DIVISIONS ======================
 $allDivisions = \App\Models\Division::orderBy('name')->get();
+
 if ($user->role->name !== 'Super Admin') {
     $divisions = $allDivisions->filter(fn($d) => $d->name === $user->division_name);
 } else {
     $divisions = $allDivisions;
 }
 
-// ====================== ALL ATHLETES ======================
-
-
-// ================= PREFILL ALL AWARDS RESULTS (ONLY APPROVED) =================
+// ================= PREFILL ALL AWARDS (APPROVED ONLY) =================
 $prefillResults = [];
+
 foreach ($tabs as $tabName => $tab) {
+
     $query = AllAwardResult::where('division', $tab['division'])
-        ->where('status', 'approved'); // <-- only approved awards
+        ->where('status', 'approved');
 
     if (!is_null($tab['category'])) {
         $query->where('category', $tab['category']);
@@ -57,7 +57,7 @@ foreach ($tabs as $tabName => $tab) {
     }
 
     if ($user->role->name !== 'Super Admin') {
-        $query->whereIn('sport_id', $user->sports_access)
+        $query->whereIn('sport_id', $user->sports_access ?? [])
               ->where('sdo', $user->division_name);
     }
 
@@ -66,11 +66,13 @@ foreach ($tabs as $tabName => $tab) {
     }
 }
 
-// ================= PREFILL INDIVIDUAL AWARDS (ONLY APPROVED) =================
+// ================= PREFILL INDIVIDUAL AWARDS (APPROVED ONLY) =================
 $prefillIndividual = [];
+
 foreach ($tabs as $tabName => $tab) {
+
     $query = IndividualAwardResult::where('division', $tab['division'])
-        ->where('status', 'approved'); // <-- only approved awards
+        ->where('status', 'approved');
 
     if (!is_null($tab['category'])) {
         $query->where('category', $tab['category']);
@@ -79,7 +81,7 @@ foreach ($tabs as $tabName => $tab) {
     }
 
     if ($user->role->name !== 'Super Admin') {
-        $query->whereIn('sport_id', $user->sports_access)
+        $query->whereIn('sport_id', $user->sports_access ?? [])
               ->where('sdo', $user->division_name);
     }
 
@@ -88,33 +90,26 @@ foreach ($tabs as $tabName => $tab) {
     }
 }
 
-
-// ================= PENDING AWARDS FOR TOURNAMENT MANAGER / SUPER ADMIN =================
+// ================= PENDING AWARDS (NO EVENT FILTER) =================
 $pendingResults = collect();
 $pendingIndividual = collect();
 
 if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin') {
-    $activeEventId = Event::where('is_active', 1)->value('id');
 
-    if ($activeEventId) {
-        $pendingResultsQuery = AllAwardResult::where('status','pending')
-            ->where('event_id', $activeEventId);
+    $pendingResultsQuery = AllAwardResult::where('status','pending');
+    $pendingIndividualQuery = IndividualAwardResult::where('status','pending');
 
-        $pendingIndividualQuery = IndividualAwardResult::where('status','pending')
-            ->where('event_id', $activeEventId);
+    if ($user->role->name !== 'Super Admin') {
 
-        // Apply filters only if not Super Admin
-        if ($user->role->name !== 'Super Admin') {
-            $pendingResultsQuery->where('sdo', $user->division_name)
-                                ->whereIn('sport_id', $user->sports_access);
+        $pendingResultsQuery->where('sdo', $user->division_name)
+                            ->whereIn('sport_id', $user->sports_access ?? []);
 
-            $pendingIndividualQuery->where('sdo', $user->division_name)
-                                   ->whereIn('sport_id', $user->sports_access);
-        }
-
-        $pendingResults = $pendingResultsQuery->get();
-        $pendingIndividual = $pendingIndividualQuery->get();
+        $pendingIndividualQuery->where('sdo', $user->division_name)
+                               ->whereIn('sport_id', $user->sports_access ?? []);
     }
+
+    $pendingResults = $pendingResultsQuery->get();
+    $pendingIndividual = $pendingIndividualQuery->get();
 }
 
 @endphp
@@ -157,24 +152,27 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 {{-- ================= PENDING AWARDS FOR TOURNAMENT SECRETARY ================= --}}
 @if($user->role->name === 'Tournament Secretary')
 @php
-    $activeEventId = \App\Models\Event::where('is_active', 1)->value('id');
+    $pendingResultsSecretary = \App\Models\AllAwardResult::where('status','needs_revision')
+        ->where('sdo', $user->division_name)
+        ->whereIn('sport_id', $user->sports_access ?? [])
+        ->whereIn('type_id', $user->sport_type_access ?? [])
+        ->whereIn('division', $user->level_access ?? [])
+        ->where(function($q) use ($user) {
+            $q->whereNull('category')
+              ->orWhereIn('category', $user->category_access ?? []);
+        })
+        ->get();
 
-    $pendingResultsSecretary = collect();
-    $pendingIndividualSecretary = collect();
-
-    if ($activeEventId) {
-        $pendingResultsSecretary = \App\Models\AllAwardResult::where('status','needs_revision')
-            ->where('event_id', $activeEventId)
-            ->where('sdo', $user->division_name)
-            ->whereIn('sport_id', $user->sports_access)
-            ->get();
-
-        $pendingIndividualSecretary = \App\Models\IndividualAwardResult::where('status','needs_revision')
-            ->where('event_id', $activeEventId)
-            ->where('sdo', $user->division_name)
-            ->whereIn('sport_id', $user->sports_access)
-            ->get();
-    }
+    $pendingIndividualSecretary = \App\Models\IndividualAwardResult::where('status','needs_revision')
+        ->where('sdo', $user->division_name)
+        ->whereIn('sport_id', $user->sports_access ?? [])
+        ->whereIn('type_id', $user->sport_type_access ?? [])
+        ->whereIn('division', $user->level_access ?? [])
+        ->where(function($q) use ($user) {
+            $q->whereNull('category')
+              ->orWhereIn('category', $user->category_access ?? []);
+        })
+        ->get();
 @endphp
 
 <div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
@@ -302,41 +300,33 @@ $pendingResults = collect();
 $pendingIndividual = collect();
 
 if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin') {
-    $activeEventId = Event::where('is_active', 1)->value('id');
 
-    if ($activeEventId) {
+    $pendingResultsQuery = \App\Models\AllAwardResult::where('status','pending');
+    $pendingIndividualQuery = \App\Models\IndividualAwardResult::where('status','pending');
 
-        // All Awards Pending
-        $pendingResultsQuery = AllAwardResult::where('status','pending')
-            ->where('event_id', $activeEventId);
+    if ($user->role->name !== 'Super Admin') {
 
-        // Individual Awards Pending
-        $pendingIndividualQuery = IndividualAwardResult::where('status','pending')
-            ->where('event_id', $activeEventId);
+        $pendingResultsQuery->whereIn('sport_id', $user->sports_access ?? [])
+                            ->whereIn('type_id', $user->sport_type_access ?? [])
+                            ->whereIn('division', $user->level_access ?? [])
+                            ->where(function($q) use ($user) {
+                                $q->whereNull('category')
+                                  ->orWhereIn('category', $user->category_access ?? []);
+                            });
 
-        if ($user->role->name !== 'Super Admin') {
-            // Filter by user's access
-            $pendingResultsQuery->whereIn('sport_id', $user->sports_access)
-                                ->whereIn('type_id', $user->sport_type_access ?? [])
-                                ->whereIn('division', $user->level_access)
-                                ->where(function($q) use ($user) {
-                                    $q->whereNull('category')
-                                      ->orWhereIn('category', $user->category_access ?? []);
-                                });
-
-            $pendingIndividualQuery->whereIn('sport_id', $user->sports_access)
-                                   ->whereIn('type_id', $user->sport_type_access ?? [])
-                                   ->whereIn('division', $user->level_access)
-                                   ->where(function($q) use ($user) {
-                                        $q->whereNull('category')
-                                          ->orWhereIn('category', $user->category_access ?? []);
-                                   });
-        }
-
-        $pendingResults = $pendingResultsQuery->get();
-        $pendingIndividual = $pendingIndividualQuery->get();
+        $pendingIndividualQuery->whereIn('sport_id', $user->sports_access ?? [])
+                               ->whereIn('type_id', $user->sport_type_access ?? [])
+                               ->whereIn('division', $user->level_access ?? [])
+                               ->where(function($q) use ($user) {
+                                   $q->whereNull('category')
+                                     ->orWhereIn('category', $user->category_access ?? []);
+                               });
     }
+
+    $pendingResults = $pendingResultsQuery->get();
+    $pendingIndividual = $pendingIndividualQuery->get();
 }
+
 @endphp
 
 {{-- ================= SUCCESS MODAL ================= --}}
@@ -702,6 +692,7 @@ $tabAthletes = $athletes->filter(fn($a) =>
 
 @csrf
 
+<input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 
@@ -856,6 +847,7 @@ $tabAthletes = $athletes->filter(fn($a) =>
       enctype="multipart/form-data">
 
     @csrf
+    <input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
     <input type="hidden" name="division" value="{{ $tab['division'] }}">
     @if(!is_null($tab['category']))
         <input type="hidden" name="category" value="{{ $tab['category'] }}">
