@@ -189,10 +189,11 @@ $allAwardsPara = AllAwardResult::where('status','approved')
                     <table class="w-full text-sm text-left">
                         <thead class="bg-purple-700 text-white uppercase text-sm">
                             <tr>
-                                <th class="px-4 py-3">Event</th>
+                                <!-- <th class="px-4 py-3">Event</th> -->
                                 <th class="px-4 py-3">Event Type</th>
                                 <th class="px-4 py-3">Athlete Name</th>
                                 <th class="px-4 py-3">School</th>
+                                <th class="px-4 py-3">Municipality/Town/City</th>
                                 <th class="px-4 py-3">Region</th>
                                 <th class="px-4 py-3">Birthdate</th>
                             </tr>
@@ -205,10 +206,11 @@ $allAwardsPara = AllAwardResult::where('status','approved')
                                     $event   = $award->event;
                                 @endphp
                                 <tr class="border-t hover:bg-gray-50">
-                                    <td class="px-4 py-3">{{ $event ? $event->name : 'N/A' }}</td>
+                                    <!-- <td class="px-4 py-3">{{ $event ? $event->name : 'N/A' }}</td> -->
                                     <td class="px-4 py-3">{{ $sport ? $sport->name ?? 'N/A' : 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->last_name . ', ' . $athlete->first_name : 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->school_name : 'N/A' }}</td>
+                                    <td class="px-4 py-3">{{ $athlete ? $athlete->municipality : 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->region : 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->birthdate : 'N/A' }}</td>
                                 </tr>

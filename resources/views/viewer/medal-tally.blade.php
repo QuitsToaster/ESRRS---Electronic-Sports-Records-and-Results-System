@@ -146,10 +146,11 @@
                         <table class="w-full mb-6 bg-white/10 text-white rounded-xl">
                             <thead class="bg-white/20">
                                 <tr>
-                                    <th class="px-4 py-2">Event</th>
+                                    <!-- <th class="px-4 py-2">Event</th> -->
                                     <th class="px-4 py-2">Athlete</th>
                                     <th class="px-4 py-2">Category</th>
                                     <th class="px-4 py-2">School</th>
+                                    <th class="px-4 py-2">Municipality/Town/City</th>
                                     <th class="px-4 py-2">Division</th>
                                     <th class="px-4 py-2">Medal</th>
                                     <th class="px-4 py-2">Date</th>
@@ -158,10 +159,11 @@
                             <tbody>
                                 @foreach($rows as $r)
                                     <tr class="border-b border-white/20">
-                                        <td class="px-4 py-2">{{ $r->event?->name }}</td>
+                                        <!-- <td class="px-4 py-2">{{ $r->event?->name }}</td> -->
                                         <td class="px-4 py-2">{{ $r->athlete?->full_name }}</td>
                                         <td class="px-4 py-2">{{ $r->athlete?->category }}</td>
                                         <td class="px-4 py-2">{{ $r->athlete?->school_name }}</td>
+                                        <td class="px-4 py-2">{{ $r->athlete?->municipality }}</td>
                                         <td class="px-4 py-2">{{ $r->athlete?->school_division }}</td>
                                         <td class="px-4 py-2 font-bold
                                             {{ $r->medal==='Gold'?'text-yellow-400':($r->medal==='Silver'?'text-gray-300':'text-orange-400') }}">
