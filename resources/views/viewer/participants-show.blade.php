@@ -235,8 +235,8 @@
                         {{ $award->athlete?->first_name }}
                     </td>
                     <td class="px-4 py-3">{{ $award->sport?->name ?? 'N/A' }}</td>
-                    <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'School' }}</td>
-                    <td class="px-4 py-3">{{ $award->athlete?->municipality ?? 'Municipality/Town/City' }}</td>
+                    <td class="px-4 py-3">{{ $award->athlete?->school_name ?? 'N/A' }}</td>
+                    <td class="px-4 py-3">{{ $award->athlete?->municipality ?? 'N/A' }}</td>
                     <td class="px-4 py-3">{{ $award->sdo }}</td>
                     <td class="px-4 py-3">
                         {{ $award->created_at?->format('M d, Y') }}
