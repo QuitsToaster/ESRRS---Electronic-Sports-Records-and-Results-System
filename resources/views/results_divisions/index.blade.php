@@ -194,7 +194,7 @@ $allAwardsPara = AllAwardResult::where('status','approved')
                                 <th class="px-4 py-3">Athlete Name</th>
                                 <th class="px-4 py-3">School</th>
                                 <th class="px-4 py-3">Municipality/Town/City</th>
-                                <th class="px-4 py-3">Region</th>
+                                <th class="px-4 py-3">Division</th>
                                 <th class="px-4 py-3">Birthdate</th>
                             </tr>
                         </thead>
@@ -211,7 +211,7 @@ $allAwardsPara = AllAwardResult::where('status','approved')
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->last_name . ', ' . $athlete->first_name : 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->school_name : 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->municipality : 'N/A' }}</td>
-                                    <td class="px-4 py-3">{{ $athlete ? $athlete->region : 'N/A' }}</td>
+                                    <td class="px-4 py-3">SDO - {{ $athlete ? $athlete->school_division : 'N/A' }}</td>
                                     <td class="px-4 py-3">{{ $athlete ? $athlete->birthdate : 'N/A' }}</td>
                                 </tr>
                             @endforeach

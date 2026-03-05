@@ -164,7 +164,7 @@
                                         <td class="px-4 py-2">{{ $r->athlete?->category }}</td>
                                         <td class="px-4 py-2">{{ $r->athlete?->school_name }}</td>
                                         <td class="px-4 py-2">{{ $r->athlete?->municipality }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->school_division }}</td>
+                                        <td class="px-4 py-2">SDO - {{ $r->athlete?->school_division }}</td>
                                         <td class="px-4 py-2 font-bold
                                             {{ $r->medal==='Gold'?'text-yellow-400':($r->medal==='Silver'?'text-gray-300':'text-orange-400') }}">
                                             {{ $r->medal }}
