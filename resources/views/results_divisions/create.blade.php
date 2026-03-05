@@ -846,37 +846,41 @@ $tabAthletes = $athletes->filter(fn($a) =>
       x-data="{ showConfirm: false }"
       enctype="multipart/form-data">
 
-    @csrf
-    <input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
-    <input type="hidden" name="division" value="{{ $tab['division'] }}">
-    @if(!is_null($tab['category']))
-        <input type="hidden" name="category" value="{{ $tab['category'] }}">
-    @endif
+@csrf
 
-    @php
-        $divisions = \App\Models\Division::orderBy('name')->get();
+<input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
+<input type="hidden" name="division" value="{{ $tab['division'] }}">
+@if(!is_null($tab['category']))
+    <input type="hidden" name="category" value="{{ $tab['category'] }}">
+@endif
 
-        if($user->role->name === 'Tournament Manager') {
-            $accessibleSportIds = is_string($user->sports_access)
-                ? json_decode($user->sports_access, true)
-                : $user->sports_access;
+@php
+    $divisions = \App\Models\Division::orderBy('name')->get();
 
-            $accessibleSports = \App\Models\Sport::whereIn('id', $accessibleSportIds)->get();
+    if($user->role->name === 'Tournament Manager') {
+        $accessibleSportIds = is_string($user->sports_access)
+            ? json_decode($user->sports_access, true)
+            : $user->sports_access;
 
-            $accessibleTypeIds = is_string($user->sport_type_access)
-                ? json_decode($user->sport_type_access, true)
-                : $user->sport_type_access;
-        } else {
-            $accessibleSports = $sports;
-            $accessibleTypeIds = null;
-        }
+        $accessibleSports = \App\Models\Sport::whereIn('id', $accessibleSportIds)->get();
 
-        $athletesJson = $athletes->map(fn($a) => [
+        $accessibleTypeIds = is_string($user->sport_type_access)
+            ? json_decode($user->sport_type_access, true)
+            : $user->sport_type_access;
+    } else {
+        $accessibleSports = $sports;
+        $accessibleTypeIds = null;
+    }
+
+    // ALL ATHLETES (NO FILTERING)
+    $athletesJson = \App\Models\Athlete::orderBy('last_name')
+        ->get()
+        ->map(fn($a) => [
             'id' => $a->id,
             'name' => $a->last_name . ', ' . $a->first_name,
-            'school_division' => strtoupper(trim($a->school_division)),
-        ])->values();
-    @endphp
+        ])
+        ->values();
+@endphp
 
 <div class="mb-4 text-sm text-gray-600">
     <strong>Note:</strong> You may award any medal independently. Unfilled medals will be ignored.
@@ -904,24 +908,25 @@ $tabAthletes = $athletes->filter(fn($a) =>
 <td class="border px-3 py-3 align-top">
 
 <div x-data="{
-    selectedSDO: '',
+    open:false,
+    search:'',
+    selectedId:null,
+    selectedName:'',
     athletes: {{ json_encode($athletesJson) }},
     get filteredAthletes() {
-        if (!this.selectedSDO) return [];
-        const cleanSDO = this.selectedSDO
-            .replace(/^SDO\s*-\s*/i, '')
-            .trim()
-            .toUpperCase();
-        return this.athletes.filter(a => a.school_division === cleanSDO);
+        if (this.search === '') return this.athletes.slice(0, 10);
+        return this.athletes.filter(a => 
+            a.name.toLowerCase().includes(this.search.toLowerCase())
+        ).slice(0, 10);
     }
 }">
 
+{{-- SDO SELECT --}}
 <label class="block text-xs font-semibold mb-1">
     {{ $medal }} Division (SDO)
 </label>
 
-<select x-model="selectedSDO"
-        name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][sdo]"
+<select name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][sdo]"
         class="w-full border rounded px-2 py-1 text-sm mb-2"
         {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
     <option value="">-- Optional --</option>
@@ -930,20 +935,50 @@ $tabAthletes = $athletes->filter(fn($a) =>
     @endforeach
 </select>
 
+{{-- SEARCH FIELD --}}
 <label class="block text-xs font-semibold mb-1">
     {{ $medal }} Athlete
 </label>
 
-<select name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][athlete]"
-        class="w-full border rounded px-2 py-1 text-sm"
-        :disabled="!selectedSDO"
-        {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-    <option value="">-- Optional --</option>
+<div class="relative">
 
-    <template x-for="athlete in filteredAthletes" :key="athlete.id">
-        <option :value="athlete.id" x-text="athlete.name"></option>
-    </template>
-</select>
+    <input type="text"
+           x-model="search"
+           @focus="open=true"
+           @click.away="open=false"
+           placeholder="Search athlete name..."
+           class="w-full border rounded px-2 py-1 text-sm"
+           {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
+
+    {{-- Hidden input for actual submission --}}
+    <input type="hidden"
+           :value="selectedId"
+           name="individual_results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][athlete]">
+
+    {{-- Results Dropdown --}}
+    <div x-show="open"
+         class="absolute z-40 bg-white border w-full mt-1 max-h-40 overflow-y-auto rounded shadow">
+
+        <template x-for="athlete in filteredAthletes" :key="athlete.id">
+            <div @click="
+                    selectedId = athlete.id;
+                    selectedName = athlete.name;
+                    search = athlete.name;
+                    open = false;
+                "
+                 class="px-3 py-2 hover:bg-blue-100 cursor-pointer text-sm">
+                <span x-text="athlete.name"></span>
+            </div>
+        </template>
+
+        <div x-show="filteredAthletes.length === 0"
+             class="px-3 py-2 text-gray-500 text-sm">
+            No athletes found
+        </div>
+
+    </div>
+
+</div>
 
 </div>
 
@@ -977,9 +1012,12 @@ $tabAthletes = $athletes->filter(fn($a) =>
            class="w-full border rounded mb-4">
 
     <div class="flex justify-end gap-2">
-        <button type="button" class="border px-4 py-2 rounded"
+        <button type="button"
+                class="border px-4 py-2 rounded"
                 @click="showConfirm=false">Cancel</button>
-        <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">
+
+        <button type="submit"
+                class="bg-yellow-500 text-white px-4 py-2 rounded">
             Yes, Forward
         </button>
     </div>

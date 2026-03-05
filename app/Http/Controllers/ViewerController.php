@@ -126,21 +126,35 @@ public function participantShow(Division $division, Request $request)
         ->get();
 
 
-    /* =========================================================
-   INDIVIDUAL AWARDS (individual_award_results)
+   /* =========================================================
+   INDIVIDUAL AWARDS (FIXED NORMALIZATION)
 ========================================================== */
 
-// Regular Individual Awards filtered by SDO
-$individualRegular = IndividualAwardResult::with(['sport','event','athlete'])
+$individualRegular = IndividualAwardResult::with(['sport','athlete'])
     ->whereIn('division', ['Elementary','Secondary'])
-    ->where('sdo', $division->name)
-    ->get();
+    ->where('status', 'approved')
+    ->get()
+    ->filter(function ($award) use ($division) {
 
-// Paragames Individual Awards filtered by SDO
-$individualParagames = IndividualAwardResult::with(['sport','event','athlete'])
+        $awardSdo = strtoupper(trim(str_replace('SDO - ', '', $award->sdo)));
+        $divisionName = strtoupper(trim($division->name));
+
+        return $awardSdo === $divisionName;
+    })
+    ->values();
+
+$individualParagames = IndividualAwardResult::with(['sport','athlete'])
     ->where('division', 'Paragames')
-    ->where('sdo', $division->name)
-    ->get();
+    ->where('status', 'approved')
+    ->get()
+    ->filter(function ($award) use ($division) {
+
+        $awardSdo = strtoupper(trim(str_replace('SDO - ', '', $award->sdo)));
+        $divisionName = strtoupper(trim($division->name));
+
+        return $awardSdo === $divisionName;
+    })
+    ->values();
 
 
     /* =========================================================

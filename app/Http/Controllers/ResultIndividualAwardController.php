@@ -70,7 +70,11 @@ class ResultIndividualAwardController extends Controller
                         ]
                     );
 
-                    AuditLog::create([
+                    $actionLabel = $existing
+    ? 'Updated Individual Award'
+    : 'Created Individual Award';
+
+AuditLog::create([
     'model_type' => 'IndividualAwardResult',
     'model_id'   => $award->id,
     'user_id'    => $user->id,
