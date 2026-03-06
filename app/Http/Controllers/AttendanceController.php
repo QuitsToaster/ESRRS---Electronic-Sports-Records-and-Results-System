@@ -87,14 +87,20 @@ class AttendanceController extends Controller
             })
             ->get();
 
+            $logs = Attendance::with(['athlete','coach'])
+        ->latest()
+        ->limit(200)
+        ->get();
+
         return view('attendance.index', compact(
-            'attended',
-            'notAttended',
-            'notAttendedCoaches',
-            'divisions',
-            'selectedDivision',
-            'userDivision'
-        ));
+    'attended',
+    'notAttended',
+    'notAttendedCoaches',
+    'divisions',
+    'selectedDivision',
+    'userDivision',
+    'logs'
+));
     }
 
     /**
@@ -109,51 +115,83 @@ class AttendanceController extends Controller
      * Handle QR Code Submission
      */
     public function store(Request $request)
-    {
-        $request->validate([
-            'qr_code' => 'required|string',
+{
+    $request->validate([
+        'qr_code' => 'required|string',
+    ]);
+
+    $code = trim($request->qr_code);
+
+    $athlete = Athlete::where('qr_code', $code)->first();
+    $coach = null;
+
+    if (!$athlete) {
+        $coach = Coach::where('qr_code', $code)->first();
+    }
+
+    if (!$athlete && !$coach) {
+        return back()->with('error', 'QR Code not recognized.');
+    }
+
+    $now = now();
+
+    $attendanceQuery = Attendance::query();
+
+    if ($athlete) {
+        $attendanceQuery->where('athlete_id', $athlete->id);
+    }
+
+    if ($coach) {
+        $attendanceQuery->where('coach_id', $coach->id);
+    }
+
+    /*
+    |--------------------------------------------------
+    | Prevent duplicate scan within 2 seconds
+    |--------------------------------------------------
+    */
+
+    $recentScan = (clone $attendanceQuery)
+        ->latest()
+        ->first();
+
+    if ($recentScan && $recentScan->created_at->diffInSeconds($now) < 2) {
+        return back()->with('error', 'Duplicate scan detected. Please wait.');
+    }
+
+    /*
+    |--------------------------------------------------
+    | Check for OPEN attendance (no time_out)
+    |--------------------------------------------------
+    */
+
+    $openAttendance = (clone $attendanceQuery)
+        ->whereNull('time_out')
+        ->latest()
+        ->first();
+
+    if ($openAttendance) {
+
+        // TIME OUT
+        $openAttendance->update([
+            'time_out' => $now
         ]);
 
-        $code = trim($request->qr_code);
-        $today = Carbon::today();
-
-        // Try to find Athlete first
-        $athlete = Athlete::where('qr_code', $code)->first();
-        $coach = null;
-
-        if (!$athlete) {
-            // Try Coach if no athlete found
-            $coach = Coach::where('qr_code', $code)->first();
-        }
-
-        if (!$athlete && !$coach) {
-            return redirect()->back()->with('error', 'QR code not recognized.');
-        }
-
-        // Determine if user already has attendance today
-        $attendanceQuery = Attendance::whereDate('created_at', $today);
-        $attendanceQuery->when($athlete, fn($q) => $q->where('athlete_id', $athlete->id));
-        $attendanceQuery->when($coach, fn($q) => $q->where('coach_id', $coach->id));
-        $existing = $attendanceQuery->first();
-
-        if ($existing) {
-            // If already timed in, update time_out
-            if (!$existing->time_out) {
-                $existing->time_out = now();
-                $existing->save();
-                return redirect()->back()->with('success', 'Time Out recorded successfully.');
-            } else {
-                return redirect()->back()->with('error', 'Attendance already recorded for today.');
-            }
-        } else {
-            // Record new attendance (time_in)
-            Attendance::create([
-                'athlete_id' => $athlete->id ?? null,
-                'coach_id'   => $coach->id ?? null,
-                'time_in'    => now(),
-            ]);
-
-            return redirect()->back()->with('success', 'Time In recorded successfully.');
-        }
+        return back()->with('success', 'Time Out recorded.');
     }
+
+    /*
+    |--------------------------------------------------
+    | No open record → create TIME IN
+    |--------------------------------------------------
+    */
+
+    Attendance::create([
+        'athlete_id' => $athlete->id ?? null,
+        'coach_id' => $coach->id ?? null,
+        'time_in' => $now,
+    ]);
+
+    return back()->with('success', 'Time In recorded.');
+}
 }

@@ -59,6 +59,72 @@
         </div>
     @endif
 
+    {{-- ================= ATTENDANCE LOGS ================= --}}
+<div class="mb-8">
+    <h3 class="text-xl font-semibold mb-2">
+        Attendance Logs
+    </h3>
+
+    <div class="overflow-x-auto bg-white rounded-lg shadow-lg">
+        <table class="min-w-full border border-gray-200 text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-3 py-2 text-left">Name</th>
+                    <th class="px-3 py-2 text-left">Role</th>
+                    <th class="px-3 py-2 text-left">Division</th>
+                    <th class="px-3 py-2 text-left">Time In</th>
+                    <th class="px-3 py-2 text-left">Time Out</th>
+                    <th class="px-3 py-2 text-left">Date</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                @forelse($logs as $log)
+
+                @php
+                    $user = $log->athlete ?? $log->coach;
+                    $name = $log->athlete->full_name ?? $log->coach->name ?? '-';
+                    $division = $log->athlete->school_division ?? $log->coach->school->division ?? '-';
+                @endphp
+
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-3 py-2 font-medium">{{ $name }}</td>
+
+                    <td class="px-3 py-2">
+                        {{ $log->athlete ? 'Athlete' : 'Coach' }}
+                    </td>
+
+                    <td class="px-3 py-2">
+                        {{ $division }}
+                    </td>
+
+                    <td class="px-3 py-2">
+                        {{ $log->time_in ? \Carbon\Carbon::parse($log->time_in)->format('M d Y h:i A') : '-' }}
+                    </td>
+
+                    <td class="px-3 py-2">
+                        {{ $log->time_out ? \Carbon\Carbon::parse($log->time_out)->format('M d Y h:i A') : '-' }}
+                    </td>
+
+                    <td class="px-3 py-2">
+                        {{ \Carbon\Carbon::parse($log->created_at)->format('M d Y') }}
+                    </td>
+
+                </tr>
+
+                @empty
+                <tr>
+                    <td colspan="6" class="text-center text-gray-400 py-4">
+                        No logs found
+                    </td>
+                </tr>
+                @endforelse
+
+            </tbody>
+        </table>
+    </div>
+</div>
+
     {{-- ================= ATTENDED TODAY ================= --}}
     <div class="mb-8">
         <h3 class="text-xl font-semibold mb-2">
