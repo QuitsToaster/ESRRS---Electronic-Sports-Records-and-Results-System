@@ -123,7 +123,11 @@
             </tbody>
         </table>
     </div>
+    <div class="p-4">
+    {{ $logs->links() }}
 </div>
+</div>
+
 
     {{-- ================= ATTENDED TODAY ================= --}}
     <div class="mb-8">
@@ -170,6 +174,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="p-4">
+    {{ $attended->links() }}
+</div>
     </div>
 
     {{-- ================= NOT ATTENDED ATHLETES ================= --}}
@@ -204,6 +211,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="p-4">
+    {{ $notAttended->links() }}
+</div>
     </div>
 
     {{-- ================= NOT ATTENDED COACHES ================= --}}
@@ -236,6 +246,9 @@
                 </tbody>
             </table>
         </div>
+        <div class="p-4">
+    {{ $notAttendedCoaches->links() }}
+</div>
     </div>
 
 </div>

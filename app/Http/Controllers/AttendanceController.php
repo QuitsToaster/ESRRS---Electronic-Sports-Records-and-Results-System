@@ -7,6 +7,7 @@ use App\Models\Athlete;
 use App\Models\Coach;
 use App\Models\Attendance;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 
 class AttendanceController extends Controller
@@ -23,9 +24,8 @@ class AttendanceController extends Controller
         $userDivision = null;
 
         if ($user && stripos($user->name, 'SDO -') === 0) {
-            $afterPrefix = trim(substr($user->name, 5)); // remove "SDO - "
-            
-            // Match the actual city from athletes table
+            $afterPrefix = trim(substr($user->name, 5));
+
             $allDivisions = Athlete::whereNotNull('school_division')
                 ->distinct()
                 ->pluck('school_division')
@@ -39,7 +39,6 @@ class AttendanceController extends Controller
             }
         }
 
-        // Force division for SDO users
         if ($userDivision) {
             $selectedDivision = $userDivision;
             $divisions = collect([$userDivision]);
@@ -52,19 +51,23 @@ class AttendanceController extends Controller
         }
 
         // ================= ATTENDED TODAY =================
-        $attended = Attendance::with(['athlete', 'coach.school'])
+        $attended = Attendance::with(['athlete','coach.school'])
             ->whereDate('created_at', $today)
             ->when($selectedDivision, function ($query) use ($selectedDivision) {
                 $query->where(function ($q) use ($selectedDivision) {
+
                     $q->whereHas('athlete', function ($q2) use ($selectedDivision) {
                         $q2->where('school_division', $selectedDivision);
                     })
+
                     ->orWhereHas('coach.school', function ($q2) use ($selectedDivision) {
                         $q2->where('division', $selectedDivision);
                     });
+
                 });
             })
-            ->get();
+            ->latest()
+            ->paginate(10, ['*'], 'attended_page');
 
         // ================= NOT ATTENDED ATHLETES =================
         $notAttended = Athlete::when($selectedDivision, function ($query) use ($selectedDivision) {
@@ -73,7 +76,7 @@ class AttendanceController extends Controller
             ->whereDoesntHave('attendances', function ($query) use ($today) {
                 $query->whereDate('created_at', $today);
             })
-            ->get();
+            ->paginate(10, ['*'], 'athletes_page');
 
         // ================= NOT ATTENDED COACHES =================
         $notAttendedCoaches = Coach::with('school')
@@ -85,22 +88,37 @@ class AttendanceController extends Controller
             ->whereDoesntHave('attendances', function ($query) use ($today) {
                 $query->whereDate('created_at', $today);
             })
-            ->get();
+            ->paginate(10, ['*'], 'coaches_page');
 
-            $logs = Attendance::with(['athlete','coach'])
-        ->latest()
-        ->limit(200)
-        ->get();
+        // ================= ATTENDANCE LOGS (NOW FILTERED) =================
+        $logs = Attendance::with(['athlete','coach.school'])
+            ->when($selectedDivision, function ($query) use ($selectedDivision) {
+
+                $query->where(function ($q) use ($selectedDivision) {
+
+                    $q->whereHas('athlete', function ($q2) use ($selectedDivision) {
+                        $q2->where('school_division', $selectedDivision);
+                    })
+
+                    ->orWhereHas('coach.school', function ($q2) use ($selectedDivision) {
+                        $q2->where('division', $selectedDivision);
+                    });
+
+                });
+
+            })
+            ->latest()
+            ->paginate(15, ['*'], 'logs_page');
 
         return view('attendance.index', compact(
-    'attended',
-    'notAttended',
-    'notAttendedCoaches',
-    'divisions',
-    'selectedDivision',
-    'userDivision',
-    'logs'
-));
+            'attended',
+            'notAttended',
+            'notAttendedCoaches',
+            'divisions',
+            'selectedDivision',
+            'userDivision',
+            'logs'
+        ));
     }
 
     /**
@@ -108,90 +126,156 @@ class AttendanceController extends Controller
      */
     public function checkAttendance()
     {
-        return view('attendance.check'); // points to check.blade.php
+        return view('attendance.check');
     }
 
     /**
      * Handle QR Code Submission
      */
     public function store(Request $request)
-{
-    $request->validate([
-        'qr_code' => 'required|string',
-    ]);
-
-    $code = trim($request->qr_code);
-
-    $athlete = Athlete::where('qr_code', $code)->first();
-    $coach = null;
-
-    if (!$athlete) {
-        $coach = Coach::where('qr_code', $code)->first();
-    }
-
-    if (!$athlete && !$coach) {
-        return back()->with('error', 'QR Code not recognized.');
-    }
-
-    $now = now();
-
-    $attendanceQuery = Attendance::query();
-
-    if ($athlete) {
-        $attendanceQuery->where('athlete_id', $athlete->id);
-    }
-
-    if ($coach) {
-        $attendanceQuery->where('coach_id', $coach->id);
-    }
-
-    /*
-    |--------------------------------------------------
-    | Prevent duplicate scan within 2 seconds
-    |--------------------------------------------------
-    */
-
-    $recentScan = (clone $attendanceQuery)
-        ->latest()
-        ->first();
-
-    if ($recentScan && $recentScan->created_at->diffInSeconds($now) < 2) {
-        return back()->with('error', 'Duplicate scan detected. Please wait.');
-    }
-
-    /*
-    |--------------------------------------------------
-    | Check for OPEN attendance (no time_out)
-    |--------------------------------------------------
-    */
-
-    $openAttendance = (clone $attendanceQuery)
-        ->whereNull('time_out')
-        ->latest()
-        ->first();
-
-    if ($openAttendance) {
-
-        // TIME OUT
-        $openAttendance->update([
-            'time_out' => $now
+    {
+        $request->validate([
+            'qr_code' => 'required|string',
         ]);
 
-        return back()->with('success', 'Time Out recorded.');
+        $code = trim($request->qr_code);
+
+        $athlete = Athlete::where('qr_code', $code)->first();
+        $coach = null;
+
+        if (!$athlete) {
+            $coach = Coach::where('qr_code', $code)->first();
+        }
+
+        if (!$athlete && !$coach) {
+            return back()->with('error', 'QR Code not recognized.');
+        }
+
+        $now = now();
+
+        $attendanceQuery = Attendance::query();
+
+        if ($athlete) {
+            $attendanceQuery->where('athlete_id', $athlete->id);
+        }
+
+        if ($coach) {
+            $attendanceQuery->where('coach_id', $coach->id);
+        }
+
+        // Prevent duplicate scan within 2 seconds
+        $recentScan = (clone $attendanceQuery)
+            ->latest()
+            ->first();
+
+        if ($recentScan && $recentScan->created_at->diffInSeconds($now) < 2) {
+            return back()->with('error', 'Duplicate scan detected. Please wait.');
+        }
+
+        // Check for OPEN attendance (no time_out)
+        $openAttendance = (clone $attendanceQuery)
+            ->whereNull('time_out')
+            ->latest()
+            ->first();
+
+        if ($openAttendance) {
+
+            $openAttendance->update([
+                'time_out' => $now
+            ]);
+
+            return back()->with('success', 'Time Out recorded.');
+        }
+
+        // Create TIME IN
+        Attendance::create([
+            'athlete_id' => $athlete->id ?? null,
+            'coach_id' => $coach->id ?? null,
+            'time_in' => $now,
+        ]);
+
+        return back()->with('success', 'Time In recorded.');
     }
 
-    /*
-    |--------------------------------------------------
-    | No open record → create TIME IN
-    |--------------------------------------------------
-    */
+    public function exportPdf(Request $request)
+{
+    $today = Carbon::today();
+    $selectedDivision = $request->division;
 
-    Attendance::create([
-        'athlete_id' => $athlete->id ?? null,
-        'coach_id' => $coach->id ?? null,
-        'time_in' => $now,
-    ]);
+    // ================= LOGS =================
+    $logs = Attendance::with(['athlete','coach.school'])
+        ->when($selectedDivision, function ($query) use ($selectedDivision) {
 
-    return back()->with('success', 'Time In recorded.');
+            $query->where(function ($q) use ($selectedDivision) {
+
+                $q->whereHas('athlete', function ($q2) use ($selectedDivision) {
+                    $q2->where('school_division', $selectedDivision);
+                })
+
+                ->orWhereHas('coach.school', function ($q2) use ($selectedDivision) {
+                    $q2->where('division', $selectedDivision);
+                });
+
+            });
+
+        })
+        ->latest()
+        ->get();
+
+    // ================= ATTENDED =================
+    $attended = Attendance::with(['athlete','coach.school'])
+        ->whereDate('created_at', $today)
+        ->when($selectedDivision, function ($query) use ($selectedDivision) {
+
+            $query->where(function ($q) use ($selectedDivision) {
+
+                $q->whereHas('athlete', function ($q2) use ($selectedDivision) {
+                    $q2->where('school_division', $selectedDivision);
+                })
+
+                ->orWhereHas('coach.school', function ($q2) use ($selectedDivision) {
+                    $q2->where('division', $selectedDivision);
+                });
+
+            });
+
+        })
+        ->get();
+
+    // ================= NOT ATTENDED ATHLETES =================
+    $notAttended = Athlete::whereDoesntHave('attendances', function ($query) use ($today) {
+            $query->whereDate('created_at', $today);
+        })
+        ->when($selectedDivision, function ($query) use ($selectedDivision) {
+            $query->where('school_division', $selectedDivision);
+        })
+        ->get();
+
+    // ================= NOT ATTENDED COACHES =================
+    $notAttendedCoaches = Coach::with('school')
+        ->whereDoesntHave('attendances', function ($query) use ($today) {
+            $query->whereDate('created_at', $today);
+        })
+        ->when($selectedDivision, function ($query) use ($selectedDivision) {
+            $query->whereHas('school', function ($q) use ($selectedDivision) {
+                $q->where('division', $selectedDivision);
+            });
+        })
+        ->get();
+
+    // ================= GENERATED DATE =================
+    $generatedAt = now()->format('F d, Y h:i A');
+
+    // ================= CREATE PDF =================
+    $pdf = Pdf::loadView('attendance.export', compact(
+        'logs',
+        'attended',
+        'notAttended',
+        'notAttendedCoaches',
+        'selectedDivision',
+        'generatedAt'
+    ));
+
+    return $pdf->download('attendance-report.pdf');
 }
 }
