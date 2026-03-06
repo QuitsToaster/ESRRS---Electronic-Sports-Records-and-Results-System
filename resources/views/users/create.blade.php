@@ -41,6 +41,35 @@
     </select>
 </div>
 
+{{-- SYSTEM ACCESS --}}
+<div>
+    <label class="font-semibold mb-2 block">System Access</label>
+
+    <label class="flex items-center gap-2 mb-2">
+        <input type="checkbox" id="selectAllAccess"> Select All Access
+    </label>
+
+    @php
+        $modules = [
+            'dashboard','attendance','results','divisions','participants',
+            'events','sports','athletes','coaches','games',
+            'announcements','users','logs','settings'
+        ];
+    @endphp
+
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+        @foreach($modules as $m)
+            <label class="flex items-center gap-2">
+                <input type="checkbox"
+                       class="moduleCheckbox"
+                       name="access[]"
+                       value="{{ $m }}">
+                {{ ucfirst($m) }}
+            </label>
+        @endforeach
+    </div>
+</div>
+
 {{-- LEVEL ACCESS --}}
 <div>
     <label class="flex items-center gap-2 font-semibold mb-2">
@@ -203,6 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    bind(document.getElementById('selectAllAccess'), document.querySelectorAll('.moduleCheckbox'));
     bind(document.getElementById('selectAllLevels'), levelCBs);
     bind(document.getElementById('selectAllCategories'), catCBs);
     bind(document.getElementById('selectAllSports'), sportCBs);
