@@ -693,129 +693,194 @@ $tabAthletes = $athletes->filter(fn($a) =>
 
             
 {{-- ================================================= --}}
-{{-- 🏆 ALL AWARDS FORM (UPDATED WITH DIVISION DROPDOWN) --}}
+{{-- 🏆 ALL AWARDS FORM (DYNAMIC UNLIMITED DIVISIONS) --}}
 {{-- ================================================= --}}
 <form method="POST"
       action="{{ route('results_all_awards.store') }}"
       enctype="multipart/form-data"
       x-show="awardType==='all'"
       x-data="{ showConfirm:false }">
-    @csrf
+@csrf
 
-    <input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
-    <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
-    <!-- Division for this tab -->
+<input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
+<input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 
-    {{-- 🚫 READ ONLY NOTICE --}}
-    @if($user->role->name === 'Tournament Manager')
-    <div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
-        <strong>Read Only:</strong>
-        Tournament Managers cannot modify or submit Awards.
-    </div>
+{{-- 🚫 READ ONLY NOTICE --}}
+@if($user->role->name === 'Tournament Manager')
+<div class="mb-4 p-3 bg-red-100 border-l-4 border-red-500 text-red-700 rounded">
+    <strong>Read Only:</strong>
+    Tournament Managers cannot modify or submit Awards.
+</div>
+@endif
+
+@foreach($accessibleSports as $sport)
+
+<h3 class="font-semibold mt-6">
+    {{ strtoupper($sport->name) }}
+    @if(strtolower($sport->division) === 'paragames')
+        — {{ $sport->category ?? 'N/A' }}
     @endif
+</h3>
 
-    @foreach($accessibleSports as $sport)
-        <h3 class="font-semibold mt-6">
-            {{ strtoupper($sport->name) }}
-            @if(strtolower($sport->division) === 'paragames')
-                — {{ $sport->category ?? 'N/A' }}
-            @endif
-        </h3>
+<table class="w-full border text-sm mt-2
+{{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
 
-        <table class="w-full border text-sm mt-2
-            {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
-            <thead class="bg-gray-200 text-center">
-                <tr>
-                    <th class="border px-2 py-2">Event Type</th>
-                    <th class="border bg-yellow-300">Gold</th>
-                    <th class="border bg-gray-300">Silver</th>
-                    <th class="border bg-orange-200">Bronze</th>
-                </tr>
-            </thead>
-            <tbody>
-            @foreach($sport->types->whereIn('id', $accessibleTypeIds ?? $sport->types->pluck('id')->toArray()) as $type)
-                <tr>
-                    <td class="border px-2 font-medium">{{ $type->type_name }}</td>
+<thead class="bg-gray-200 text-center">
+<tr>
+<th class="border px-2 py-2">Event Type</th>
+<th class="border bg-yellow-300">Gold</th>
+<th class="border bg-gray-300">Silver</th>
+<th class="border bg-orange-200">Bronze</th>
+</tr>
+</thead>
 
-                    @foreach(['Gold','Silver','Bronze'] as $medal)
-                    <td class="border px-2 py-2 align-top">
+<tbody>
+@foreach($sport->types->whereIn('id', $accessibleTypeIds ?? $sport->types->pluck('id')->toArray()) as $type)
 
-                        {{-- PRIMARY DIVISION SELECT --}}
-                        <label class="block text-xs font-semibold mb-1">{{ $medal }} Division</label>
-                        <select name="results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][]"
-                                class="w-full border rounded px-2 py-1 text-sm mb-1"
-                                {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-                            <option value="">-- Select Division --</option>
-                            @foreach($divisions as $divisionOption)
-                                <option value="{{ $divisionOption->name }}">{{ $divisionOption->name }}</option>
-                            @endforeach
-                        </select>
+<tr>
 
-                        {{-- OPTIONAL EXTRA DIVISION (FOR TIE) --}}
-                        <label class="block text-xs font-semibold mt-1 mb-1 text-gray-600">Optional Extra Division (Tie)</label>
-                        <select name="results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][]"
-                                class="w-full border rounded px-2 py-1 text-sm mb-1"
-                                {{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}>
-                            <option value="">-- Optional --</option>
-                            @foreach($divisions as $divisionOption)
-                                <option value="{{ $divisionOption->name }}">{{ $divisionOption->name }}</option>
-                            @endforeach
-                        </select>
+<td class="border px-2 font-medium">
+{{ $type->type_name }}
+</td>
 
-                    </td>
-                    @endforeach
-                </tr>
-            @endforeach
-            </tbody>
-        </table>
-    @endforeach
+@foreach(['Gold','Silver','Bronze'] as $medal)
 
-    {{-- ================= ACTION BUTTONS ================= --}}
-    <div class="flex justify-end mt-6">
+<td class="border px-2 py-2 align-top">
 
-    @if($user->role->name === 'Tournament Secretary')
-        <button type="button"
-                class="bg-yellow-500 text-white px-6 py-2 rounded"
-                @click="showConfirm=true">
-            Forward for Validation
-        </button>
+<div
+x-data="{
+divisions:[''],
+addDivision(){ this.divisions.push('') },
+removeDivision(i){ this.divisions.splice(i,1) }
+}"
+>
 
-        {{-- MODAL --}}
-        <div x-show="showConfirm"
-             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-white rounded shadow p-6 w-96">
-                <h3 class="text-lg font-bold mb-3">Confirm Forward</h3>
-                <p class="text-sm mb-3">Optional: upload validation file (PDF / Image)</p>
-                <input type="file" name="validation_file" accept=".pdf,image/*" class="w-full border rounded mb-4">
-                <div class="flex justify-end gap-2">
-                    <button type="button"
-                            class="border px-4 py-2 rounded"
-                            @click="showConfirm=false">
-                        Cancel
-                    </button>
-                    <button type="submit"
-                            class="bg-yellow-500 text-white px-4 py-2 rounded">
-                        Yes, Forward
-                    </button>
-                </div>
-            </div>
-        </div>
+<template x-for="(division,index) in divisions" :key="index">
 
-    @elseif($user->role->name === 'Super Admin')
-        <button type="submit"
-                class="bg-blue-600 text-white px-6 py-2 rounded">
-            Save All Awards
-        </button>
+<div class="flex gap-2 mb-2">
 
-    @else
-        <button type="button"
-                disabled
-                class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
-            Editing Disabled
-        </button>
-    @endif
-    </div>
+<select
+:name="'results[{{ $sport->id }}][{{ $type->id }}][{{ $medal }}][]'"
+class="w-full border rounded px-2 py-1 text-sm"
+{{ $user->role->name === 'Tournament Manager' ? 'disabled' : '' }}
+>
+
+<option value="">-- Select Division --</option>
+
+@foreach($divisions as $divisionOption)
+<option value="{{ $divisionOption->name }}">
+{{ $divisionOption->name }}
+</option>
+@endforeach
+
+</select>
+
+{{-- REMOVE BUTTON --}}
+<button
+type="button"
+x-show="divisions.length > 1"
+@click="removeDivision(index)"
+class="bg-red-500 text-white px-2 rounded text-xs"
+>
+✕
+</button>
+
+</div>
+
+</template>
+
+{{-- ADD BUTTON --}}
+<button
+type="button"
+@click="addDivision()"
+class="text-blue-600 text-xs mt-1 hover:underline"
+>
++ Add Other Division
+</button>
+
+</div>
+
+</td>
+
+@endforeach
+
+</tr>
+
+@endforeach
+</tbody>
+</table>
+
+@endforeach
+
+
+{{-- ================= ACTION BUTTONS ================= --}}
+<div class="flex justify-end mt-6">
+
+@if($user->role->name === 'Tournament Secretary')
+
+<button type="button"
+        class="bg-yellow-500 text-white px-6 py-2 rounded"
+        @click="showConfirm=true">
+Forward for Validation
+</button>
+
+{{-- MODAL --}}
+<div x-show="showConfirm"
+     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+
+<div class="bg-white rounded shadow p-6 w-96">
+
+<h3 class="text-lg font-bold mb-3">
+Confirm Forward
+</h3>
+
+<p class="text-sm mb-3">
+Optional: upload validation file (PDF / Image)
+</p>
+
+<input type="file"
+       name="validation_file"
+       accept=".pdf,image/*"
+       class="w-full border rounded mb-4">
+
+<div class="flex justify-end gap-2">
+
+<button type="button"
+        class="border px-4 py-2 rounded"
+        @click="showConfirm=false">
+Cancel
+</button>
+
+<button type="submit"
+        class="bg-yellow-500 text-white px-4 py-2 rounded">
+Yes, Forward
+</button>
+
+</div>
+
+</div>
+</div>
+
+@elseif($user->role->name === 'Super Admin')
+
+<button type="submit"
+        class="bg-blue-600 text-white px-6 py-2 rounded">
+Save All Awards
+</button>
+
+@else
+
+<button type="button"
+        disabled
+        class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
+Editing Disabled
+</button>
+
+@endif
+
+</div>
+
 </form>
 
 {{-- ========================================================= --}}
