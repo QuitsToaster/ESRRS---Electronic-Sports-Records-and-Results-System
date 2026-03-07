@@ -12,117 +12,96 @@ use Illuminate\Support\Facades\Auth;
 class ResultAllAwardController extends Controller
 {
     public function store(Request $request)
-    {
-        $user = auth()->user();
+{
+    $user = auth()->user();
+    $roleName = optional($user->role)->name;
 
-        if (!$user) {
-            return back()->with('error', 'User not authenticated.');
-        }
+    $status = $roleName === 'Tournament Secretary' ? 'pending' : 'approved';
+    $eventId = $request->event_id;
 
-        $roleName = optional($user->role)->name;
+    if (!$eventId || !Event::where('id', $eventId)->exists()) {
+        return back()->with('error', 'Invalid event selected.');
+    }
 
-        if ($roleName === 'Tournament Secretary') {
-            $request->validate([
-                'selected_sdo' => 'required|string',
-                'results' => 'required|array',
-            ]);
-        }
+    $filePath = $request->hasFile('validation_file')
+        ? $request->file('validation_file')->store('award-validations', 'public')
+        : null;
 
-        $status = $roleName === 'Tournament Secretary'
-            ? 'pending'
-            : 'approved';
+    // Main division for the current tab (Elementary / Secondary / Paragames)
+    $mainDivision = $request->division ?? 'N/A';
 
-        $eventId = $request->event_id;
+    // Loop through form results
+    foreach ($request->input('results', []) as $sportId => $types) {
+        foreach ($types as $typeId => $medals) {
+            foreach ($medals as $medalName => $selectedSdos) {
+                foreach ($selectedSdos as $sdoValue) {
 
-if (!$eventId || !Event::where('id', $eventId)->exists()) {
-    return back()->with('error', 'Invalid event selected.');
-}
+                    // Skip if no selection
+                    if (empty($sdoValue)) continue;
 
-        $filePath = null;
+                    // Save each selected division as "sdo"
+                    $existing = AllAwardResult::where([
+                        'event_id' => $eventId,
+                        'division' => $request->division,          // Elementary / Secondary / Paragames
+                        'category' => $request->category ?? null,
+                        'sport_id' => $sportId,
+                        'type_id'  => $typeId,
+                        'sdo'      => $sdoValue,               // Dropdown selection goes here
+                        'medal'    => $medalName,
+                    ])->first();
 
-        if ($roleName === 'Tournament Secretary' && $request->hasFile('validation_file')) {
-            $filePath = $request->file('validation_file')
-                ->store('award-validations', 'public');
-        }
+                    $oldValues = $existing ? $existing->toArray() : null;
 
-        $selectedSdo = $request->selected_sdo;
-
-        foreach ($request->results as $sportId => $types) {
-            foreach ($types as $typeId => $sdos) {
-                foreach ($sdos as $fakeSdo => $medals) {
-                    foreach ($medals as $medal => $count) {
-
-                        if ((int) $count !== 1) continue;
-
-                        $existing = AllAwardResult::where([
+                    $award = AllAwardResult::updateOrCreate(
+                        [
                             'event_id' => $eventId,
                             'division' => $request->division,
-                            'category' => $request->category ?: null,
+                            'category' => $request->category ?? null,
                             'sport_id' => $sportId,
                             'type_id'  => $typeId,
-                            'sdo'      => $selectedSdo,
-                            'medal'    => $medal,
-                        ])->first();
+                            'sdo'      => $sdoValue,
+                            'medal'    => $medalName,
+                        ],
+                        [
+                            'count' => 1,
+                            'status' => $status,
+                            'awarded_by' => $user->id,
+                            'validation_file' => $filePath,
+                        ]
+                    );
 
-                        $oldValues = $existing ? $existing->toArray() : null;
-
-                        $award = AllAwardResult::updateOrCreate(
-                            [
-                                'event_id' => $eventId, // ✅ added
-                                'division' => $request->division,
-                                'category' => $request->category ?: null,
-                                'sport_id' => $sportId,
-                                'type_id'  => $typeId,
-                                'sdo'      => $selectedSdo,
-                                'medal'    => $medal,
-                            ],
-                            [
-                                'count' => 1,
-                                'status' => $status,
-                                'awarded_by' => $user->id,
-                                'validation_file' => $filePath,
-                            ]
-                        );
-
-                        AuditLog::create([
-                            'model_type' => 'AllAwardResult',
-                            'model_id'   => $award->id,
-                            'user_id'    => $user->id,
-                            'action'     => sprintf(
-                                '%s | Division: %s | Category: %s | Sport ID: %s | Type ID: %s | Medal: %s | SDO: %s | Status: %s',
-                                $existing ? 'Updated & Forwarded All Award' : 'Created & Forwarded All Award',
-                                $request->division,
-                                $request->category ?? 'N/A',
-                                $sportId,
-                                $typeId,
-                                strtoupper($medal),
-                                $selectedSdo,
-                                strtoupper($status)
-                            ),
-                            'old_values' => $oldValues ? json_encode($oldValues) : null,
-                            'new_values' => json_encode($award->toArray()),
-                            'description' => json_encode([
-                                'performed_by' => $user->name,
-                                'role' => $roleName,
-                                'event_id' => $eventId,
-                                'division' => $request->division,
-                                'category' => $request->category,
-                                'sport_id' => $sportId,
-                                'type_id' => $typeId,
-                                'sdo' => $selectedSdo,
-                                'medal' => $medal,
-                                'status' => $status,
-                                'ip_address' => request()->ip(),
-                                'user_agent' => request()->userAgent(),
-                            ]),
-                        ]);
-                    }
+                    // Audit log
+                    AuditLog::create([
+                        'model_type' => 'AllAwardResult',
+                        'model_id'   => $award->id,
+                        'user_id'    => $user->id,
+                        'action'     => $existing
+                            ? "Updated & Forwarded All Award | Division: $mainDivision | Medal: $medalName | SDO: $sdoValue"
+                            : "Created & Forwarded All Award | Division: $mainDivision | Medal: $medalName | SDO: $sdoValue",
+                        'old_values' => $oldValues ? json_encode($oldValues) : null,
+                        'new_values' => json_encode($award->toArray()),
+                        'description' => json_encode([
+                            'performed_by' => $user->name,
+                            'role' => $roleName,
+                            'event_id' => $eventId,
+                            'division' => $request->division,
+                            'category' => $request->category,
+                            'sport_id' => $sportId,
+                            'type_id' => $typeId,
+                            'sdo' => $sdoValue,
+                            'medal' => $medalName,
+                            'status' => $status,
+                            'ip_address' => request()->ip(),
+                            'user_agent' => request()->userAgent(),
+                        ]),
+                    ]);
                 }
             }
         }
-
-        return back()->with('success', 'Awards forwarded successfully.');
     }
+
+    return back()->with('success', 'Awards saved successfully.');
+}
 
     public function approveAll(Request $request)
     {
