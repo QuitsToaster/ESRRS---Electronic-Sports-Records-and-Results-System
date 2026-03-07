@@ -244,6 +244,8 @@ Route::post('/reject-individual-award', [ResultIndividualAwardController::class,
 Route::delete('/results/all-awards/{award}', [ResultAllAwardController::class, 'revise'])
     ->name('results_all_awards.revise');
 
+    Route::delete('/all-awards/revise/{id}', [ResultAllAwardController::class, 'revise'])->name('all-awards.revise');
+
 // Individual Awards
 Route::delete('/results/individual-awards/{award}', [ResultIndividualAwardController::class, 'revise'])
     ->name('results_individual.revise');

@@ -149,147 +149,187 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
     </ul>
 </div>
 
-{{-- ================= PENDING AWARDS FOR TOURNAMENT SECRETARY ================= --}}
+{{-- ============================================================= --}}
+{{-- 🟡 PENDING AWARDS NEEDING REVISION (TOURNAMENT SECRETARY) --}}
+{{-- ============================================================= --}}
 @if($user->role->name === 'Tournament Secretary')
-@php
-    $pendingResultsSecretary = \App\Models\AllAwardResult::where('status','needs_revision')
-        ->where('sdo', $user->division_name)
-        ->whereIn('sport_id', $user->sports_access ?? [])
-        ->whereIn('type_id', $user->sport_type_access ?? [])
-        ->whereIn('division', $user->level_access ?? [])
-        ->where(function($q) use ($user) {
-            $q->whereNull('category')
-              ->orWhereIn('category', $user->category_access ?? []);
-        })
-        ->get();
 
-    $pendingIndividualSecretary = \App\Models\IndividualAwardResult::where('status','needs_revision')
-        ->where('sdo', $user->division_name)
-        ->whereIn('sport_id', $user->sports_access ?? [])
-        ->whereIn('type_id', $user->sport_type_access ?? [])
-        ->whereIn('division', $user->level_access ?? [])
-        ->where(function($q) use ($user) {
-            $q->whereNull('category')
-              ->orWhereIn('category', $user->category_access ?? []);
-        })
-        ->get();
+@php
+$pendingResultsSecretary = \App\Models\AllAwardResult::with(['sport','type'])
+    ->where('status','needs_revision')
+    ->where('sdo','like','%' . $user->division_name . '%')
+    ->whereIn('sport_id', $user->sports_access ?? [])
+    ->whereIn('type_id', $user->sport_type_access ?? [])
+    ->whereIn('division', $user->level_access ?? [])
+    ->where(function($q) use ($user) {
+        $q->whereNull('category')
+          ->orWhereIn('category', $user->category_access ?? []);
+    })
+    ->latest()
+    ->get();
+
+$pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','type','athlete'])
+    ->where('status','needs_revision')
+    ->where('sdo','like','%' . $user->division_name . '%')
+    ->whereIn('sport_id', $user->sports_access ?? [])
+    ->whereIn('type_id', $user->sport_type_access ?? [])
+    ->whereIn('division', $user->level_access ?? [])
+    ->where(function($q) use ($user) {
+        $q->whereNull('category')
+          ->orWhereIn('category', $user->category_access ?? []);
+    })
+    ->latest()
+    ->get();
 @endphp
 
-<div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
-    <h3 class="font-semibold mb-2">Pending Awards Needing Revision</h3>
+<div class="p-4 mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 rounded shadow-sm">
 
-    {{-- ================= ALL AWARDS ================= --}}
+<h3 class="font-semibold text-lg mb-3">
+Awards Returned for Revision
+</h3>
+
+{{-- ================= ALL AWARDS REVISION ================= --}}
 @if($pendingResultsSecretary->count())
-    <h4 class="font-semibold mt-2 mb-1">All Awards</h4>
+<h4 class="font-semibold mb-2">All Awards</h4>
 
-    <table class="w-full border text-sm mb-4">
-        <thead class="bg-yellow-200 text-center">
-            <tr>
-                <th class="border px-2">Sport</th>
-                <th class="border px-2">Event Type</th>
-                <th class="border px-2">Medal</th>
-                <th class="border px-2">Count</th>
-                <th class="border px-2">Validation File</th>
-                <th class="border px-2">Action</th> {{-- New column --}}
-            </tr>
-        </thead>
+<table class="w-full border text-sm mb-6">
+<thead class="bg-red-200 text-center">
+<tr>
+<th class="border px-2">Division</th>
+<th class="border px-2">Category</th>
+<th class="border px-2">Sport</th>
+<th class="border px-2">Event Type</th>
+<th class="border px-2">Medal</th>
+<th class="border px-2">SDO</th>
+<th class="border px-2">Revision Message</th>
+<th class="border px-2">Validation</th>
+<th class="border px-2">Action</th>
+</tr>
+</thead>
 
-        <tbody>
-            @foreach($pendingResultsSecretary as $r)
-                <tr class="text-center">
-                    <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-                    <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
-                    <td class="border px-2">{{ $r->medal }}</td>
-                    <td class="border px-2">{{ $r->count }}</td>
-                    <td class="border px-2">
-                        @if($r->validation_file)
-                            @php
-                                $fileUrl = asset('storage/' . $r->validation_file);
-                                $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-                            @endphp
-                            @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
-                                <a href="{{ $fileUrl }}" target="_blank">
-                                    <img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow hover:scale-105 transition">
-                                </a>
-                            @else
-                                <a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline font-semibold">View PDF</a>
-                            @endif
-                        @else
-                            <span class="text-gray-400 italic">No file</span>
-                        @endif
-                    </td>
-                    <td class="border px-2">
-                        <form action="{{ route('results_all_awards.revise', $r->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revise this award? It will be deleted.');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">Revise</button>
-                        </form>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+<tbody>
+@foreach($pendingResultsSecretary as $r)
+<tr class="text-center">
+<td class="border px-2">{{ $r->division }}</td>
+<td class="border px-2">{{ $r->category ?? '—' }}</td>
+<td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
+<td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+<td class="border px-2 font-semibold">{{ $r->medal }}</td>
+<td class="border px-2">{{ $r->sdo }}</td>
+<td class="border px-2 text-left">{{ $r->revision_message ?? 'No message' }}</td>
+
+<td class="border px-2">
+@if($r->validation_file)
+@php
+$fileUrl = asset('storage/'.$r->validation_file);
+$ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+@endphp
+
+@if(in_array($ext,['jpg','jpeg','png','gif','webp']))
+<a href="{{ $fileUrl }}" target="_blank">
+<img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow">
+</a>
+@else
+<a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline">
+View File
+</a>
+@endif
+@else
+<span class="text-gray-400 italic">No File</span>
+@endif
+</td>
+
+<td class="border px-2">
+<form method="POST" action="{{ route('all-awards.revise', $r->id) }}">
+    @csrf
+    @method('DELETE')
+    <button type="submit" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">
+        Resubmit
+    </button>
+</form>
+</td>
+
+</tr>
+@endforeach
+</tbody>
+</table>
 @endif
 
-{{-- ================= INDIVIDUAL AWARDS ================= --}}
+{{-- ================= INDIVIDUAL AWARDS REVISION ================= --}}
 @if($pendingIndividualSecretary->count())
-    <h4 class="font-semibold mt-2 mb-1">Individual Awards</h4>
+<h4 class="font-semibold mb-2">Individual Awards</h4>
 
-    <table class="w-full border text-sm">
-        <thead class="bg-yellow-200 text-center">
-            <tr>
-                <th class="border px-2">Sport</th>
-                <th class="border px-2">Event Type</th>
-                <th class="border px-2">Medal</th>
-                <th class="border px-2">Athlete</th>
-                <th class="border px-2">Validation File</th>
-                <th class="border px-2">Action</th> {{-- New column --}}
-            </tr>
-        </thead>
+<table class="w-full border text-sm">
+<thead class="bg-red-200 text-center">
+<tr>
+<th class="border px-2">Division</th>
+<th class="border px-2">Category</th>
+<th class="border px-2">Sport</th>
+<th class="border px-2">Event Type</th>
+<th class="border px-2">Medal</th>
+<th class="border px-2">Athlete</th>
+<th class="border px-2">SDO</th>
+<th class="border px-2">Revision Message</th>
+<th class="border px-2">Validation</th>
+<th class="border px-2">Action</th>
+</tr>
+</thead>
 
-        <tbody>
-            @foreach($pendingIndividualSecretary as $r)
-                <tr class="text-center">
-                    <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-                    <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
-                    <td class="border px-2">{{ $r->medal }}</td>
-                    <td class="border px-2">
-                        @php $ath = $athletes->find($r->athlete_id); @endphp
-                        {{ $ath ? $ath->last_name . ', ' . $ath->first_name : '-' }}
-                    </td>
-                    <td class="border px-2">
-                        @if($r->validation_file)
-                            @php
-                                $fileUrl = asset('storage/' . $r->validation_file);
-                                $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-                            @endphp
-                            @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
-                                <a href="{{ $fileUrl }}" target="_blank">
-                                    <img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow hover:scale-105 transition" alt="Validation Image">
-                                </a>
-                            @else
-                                <a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline font-semibold">View PDF</a>
-                            @endif
-                        @else
-                            <span class="text-gray-400 italic">No file</span>
-                        @endif
-                    </td>
-                    <td class="border px-2">
-                        <form action="{{ route('results_individual.revise', $r->id) }}" method="POST" onsubmit="return confirm('Are you sure you want to revise this award? It will be deleted.');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="px-2 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm">Revise</button>
-                        </form>
-                    </td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
+<tbody>
+@foreach($pendingIndividualSecretary as $r)
+<tr class="text-center">
+<td class="border px-2">{{ $r->division }}</td>
+<td class="border px-2">{{ $r->category ?? '—' }}</td>
+<td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
+<td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+<td class="border px-2 font-semibold">{{ $r->medal }}</td>
+<td class="border px-2">{{ $r->athlete->last_name ?? '' }}, {{ $r->athlete->first_name ?? '' }}</td>
+<td class="border px-2">{{ $r->sdo }}</td>
+<td class="border px-2 text-left">{{ $r->revision_message ?? 'No message' }}</td>
+
+<td class="border px-2">
+@if($r->validation_file)
+@php
+$fileUrl = asset('storage/'.$r->validation_file);
+$ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+@endphp
+
+@if(in_array($ext,['jpg','jpeg','png','gif','webp']))
+<a href="{{ $fileUrl }}" target="_blank">
+<img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow">
+</a>
+@else
+<a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline">
+View File
+</a>
+@endif
+@else
+<span class="text-gray-400 italic">No File</span>
+@endif
+</td>
+
+<td class="border px-2">
+<form method="POST" action="{{ route('all-awards.revise', $r->id) }}">
+    @csrf
+    @method('DELETE')
+    <button type="submit" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">
+        Resubmit
+    </button>
+</form>
+</td>
+
+</tr>
+@endforeach
+</tbody>
+</table>
 @endif
 
-    @if($pendingResultsSecretary->count() === 0 && $pendingIndividualSecretary->count() === 0)
-        <p>No pending awards requiring revision for your division.</p>
-    @endif
+@if($pendingResultsSecretary->count() === 0 && $pendingIndividualSecretary->count() === 0)
+<p class="text-gray-600">
+No awards returned for revision for your assigned sports.
+</p>
+@endif
+
 </div>
 @endif
 
@@ -502,8 +542,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                         <td class="border px-2">{{ $r->sdo }}</td>
                         <td class="border px-2">{{ $r->medal }}</td>
                         <td class="border px-2">
-                            @php $ath = $athletes->find($r->athlete_id); @endphp
-                            {{ $ath ? $ath->last_name . ', ' . $ath->first_name : '-' }}
+                            {{ $r->athlete ? $r->athlete->last_name . ', ' . $r->athlete->first_name : '-' }}
                         </td>
 
                         {{-- VALIDATION FILE --}}
@@ -790,6 +829,10 @@ $tabAthletes = $athletes->filter(fn($a) =>
 </div>
 
             
+@php
+$divisions = \App\Models\Division::orderBy('name')->get();
+@endphp
+
 {{-- ================================================= --}}
 {{-- 🏆 ALL AWARDS FORM (DYNAMIC UNLIMITED DIVISIONS) --}}
 {{-- ================================================= --}}
@@ -798,6 +841,7 @@ $tabAthletes = $athletes->filter(fn($a) =>
       enctype="multipart/form-data"
       x-show="awardType==='all'"
       x-data="{ showConfirm:false }">
+
 @csrf
 
 <input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
@@ -812,14 +856,16 @@ $tabAthletes = $athletes->filter(fn($a) =>
 </div>
 @endif
 
+
 @foreach($accessibleSports as $sport)
 
 <h3 class="font-semibold mt-6">
-    {{ strtoupper($sport->name) }}
-    @if(strtolower($sport->division) === 'paragames')
-        — {{ $sport->category ?? 'N/A' }}
-    @endif
+{{ strtoupper($sport->name) }}
+@if(strtolower($sport->division) === 'paragames')
+— {{ $sport->category ?? 'N/A' }}
+@endif
 </h3>
+
 
 <table class="w-full border text-sm mt-2
 {{ $user->role->name === 'Tournament Manager' ? 'opacity-60 pointer-events-none' : '' }}">
@@ -833,7 +879,9 @@ $tabAthletes = $athletes->filter(fn($a) =>
 </tr>
 </thead>
 
+
 <tbody>
+
 @foreach($sport->types->whereIn('id', $accessibleTypeIds ?? $sport->types->pluck('id')->toArray()) as $type)
 
 <tr>
@@ -841,6 +889,7 @@ $tabAthletes = $athletes->filter(fn($a) =>
 <td class="border px-2 font-medium">
 {{ $type->type_name }}
 </td>
+
 
 @foreach(['Gold','Silver','Bronze'] as $medal)
 
@@ -874,6 +923,7 @@ class="w-full border rounded px-2 py-1 text-sm"
 
 </select>
 
+
 {{-- REMOVE BUTTON --}}
 <button
 type="button"
@@ -887,6 +937,7 @@ class="bg-red-500 text-white px-2 rounded text-xs"
 </div>
 
 </template>
+
 
 {{-- ADD BUTTON --}}
 <button
@@ -906,6 +957,7 @@ class="text-blue-600 text-xs mt-1 hover:underline"
 </tr>
 
 @endforeach
+
 </tbody>
 </table>
 
@@ -918,14 +970,15 @@ class="text-blue-600 text-xs mt-1 hover:underline"
 @if($user->role->name === 'Tournament Secretary')
 
 <button type="button"
-        class="bg-yellow-500 text-white px-6 py-2 rounded"
-        @click="showConfirm=true">
+class="bg-yellow-500 text-white px-6 py-2 rounded"
+@click="showConfirm=true">
 Forward for Validation
 </button>
 
+
 {{-- MODAL --}}
 <div x-show="showConfirm"
-     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
 
 <div class="bg-white rounded shadow p-6 w-96">
 
@@ -938,20 +991,21 @@ Optional: upload validation file (PDF / Image)
 </p>
 
 <input type="file"
-       name="validation_file"
-       accept=".pdf,image/*"
-       class="w-full border rounded mb-4">
+name="validation_file"
+accept=".pdf,image/*"
+class="w-full border rounded mb-4">
+
 
 <div class="flex justify-end gap-2">
 
 <button type="button"
-        class="border px-4 py-2 rounded"
-        @click="showConfirm=false">
+class="border px-4 py-2 rounded"
+@click="showConfirm=false">
 Cancel
 </button>
 
 <button type="submit"
-        class="bg-yellow-500 text-white px-4 py-2 rounded">
+class="bg-yellow-500 text-white px-4 py-2 rounded">
 Yes, Forward
 </button>
 
@@ -960,18 +1014,20 @@ Yes, Forward
 </div>
 </div>
 
+
 @elseif($user->role->name === 'Super Admin')
 
 <button type="submit"
-        class="bg-blue-600 text-white px-6 py-2 rounded">
+class="bg-blue-600 text-white px-6 py-2 rounded">
 Save All Awards
 </button>
+
 
 @else
 
 <button type="button"
-        disabled
-        class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
+disabled
+class="bg-gray-400 text-white px-6 py-2 rounded cursor-not-allowed">
 Editing Disabled
 </button>
 

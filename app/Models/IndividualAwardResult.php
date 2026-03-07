@@ -30,4 +30,13 @@ class IndividualAwardResult extends Model
     {
         return $this->belongsTo(Event::class, 'event_id');
     }
+
+
+public function type()
+{
+    return $this->belongsTo(\App\Models\SportType::class, 'type_id');
+}
+
+
+
 }

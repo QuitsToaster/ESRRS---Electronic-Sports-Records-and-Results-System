@@ -32,6 +32,9 @@ public function sportType()
     return $this->belongsTo(\App\Models\SportType::class, 'type_id');
 }
 
-
+public function type()
+{
+    return $this->belongsTo(\App\Models\SportType::class, 'type_id');
+}
 
 }
