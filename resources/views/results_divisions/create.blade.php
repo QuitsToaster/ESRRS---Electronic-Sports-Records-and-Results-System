@@ -652,44 +652,142 @@ $tabAthletes = $athletes->filter(fn($a) =>
             <h2 class="text-xl font-bold mb-4">{{ $tabName }}</h2>
 
             {{-- ========================================================= --}}
-            {{-- 🏆 ALL AWARDS TABLE --}}
-            {{-- ========================================================= --}}
-            <div x-show="awardType==='all'" class="overflow-x-auto mb-8">
-             <table class="w-full border border-collapse text-sm">
-    <thead>
-        <tr class="bg-gray-200 text-center">
-            <th rowspan="2" class="border px-3">SPORT</th>
-            @foreach($divisions as $d)
-                <th colspan="3" class="border">{{ $d->name }}</th>
-            @endforeach
-        </tr>
-        <tr>
-            @foreach($divisions as $d)
-                <th class="border bg-yellow-300">G</th>
-                <th class="border bg-gray-300">S</th>
-                <th class="border bg-orange-200">B</th>
-            @endforeach
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($sports as $sport)
-        <tr>
-            <td class="border px-3 font-semibold">{{ strtoupper($sport->name) }}</td>
-            @foreach($divisions as $d)
-                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Gold')"></td>
-                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Silver')"></td>
-                <td class="border text-center" x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Bronze')"></td>
-            @endforeach
-        </tr>
-        @endforeach
-    </tbody>
-</table>
-
-{{-- PAGINATION LINKS OUTSIDE TABLE --}}
-<div class="mt-6">
-    {{ $sports->links('pagination::tailwind') }}
-</div>
+{{-- 🏆 ALL AWARDS TABLE --}}
+{{-- ========================================================= --}}
+<div x-show="awardType==='all'" class="space-y-6">
+    
+    {{-- Table Container --}}
+    <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    {{-- First Header Row --}}
+                    <tr class="bg-slate-50 border-b border-slate-200">
+                        <th class="text-left px-4 py-3 font-semibold text-slate-700 w-48">Sport</th>
+                        @foreach($divisions as $d)
+                            <th colspan="3" class="text-center px-4 py-3 font-semibold text-slate-700 border-l border-slate-200">
+                                {{ $d->name }}
+                            </th>
+                        @endforeach
+                    </tr>
+                    
+                    {{-- Second Header Row --}}
+                    <tr class="bg-slate-50/50 border-b border-slate-200">
+                        <th class="px-4 py-2"></th>
+                        @foreach($divisions as $d)
+                            <th class="text-center px-3 py-2 font-medium border-l border-slate-200">
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                                    Gold
+                                </span>
+                            </th>
+                            <th class="text-center px-3 py-2 font-medium">
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-slate-400"></span>
+                                    Silver
+                                </span>
+                            </th>
+                            <th class="text-center px-3 py-2 font-medium">
+                                <span class="inline-flex items-center gap-1">
+                                    <span class="w-2 h-2 rounded-full bg-orange-400"></span>
+                                    Bronze
+                                </span>
+                            </th>
+                        @endforeach
+                    </tr>
+                </thead>
+                
+                <tbody class="divide-y divide-slate-100">
+                    @foreach($sports as $sport)
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        {{-- Sport Name --}}
+                        <td class="px-4 py-3 font-medium text-slate-900">
+                            {{ strtoupper($sport->name) }}
+                        </td>
+                        
+                        {{-- Medal Counts --}}
+                        @foreach($divisions as $d)
+                            <td class="text-center px-3 py-3 border-l border-slate-100">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-amber-50 text-amber-700 font-semibold text-sm"
+                                      x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Gold') || '0'">
+                                </span>
+                            </td>
+                            <td class="text-center px-3 py-3">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-slate-50 text-slate-700 font-semibold text-sm"
+                                      x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Silver') || '0'">
+                                </span>
+                            </td>
+                            <td class="text-center px-3 py-3">
+                                <span class="inline-flex items-center justify-center w-8 h-8 rounded-full bg-orange-50 text-orange-700 font-semibold text-sm"
+                                      x-text="getTotal('{{ $tabName }}','{{ $sport->id }}','{{ $d->name }}','Bronze') || '0'">
+                                </span>
+                            </td>
+                        @endforeach
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    {{-- Pagination Section with Note --}}
+    <div class="bg-white rounded-xl border border-slate-200 p-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            {{-- Pagination Info --}}
+            <div class="text-sm text-slate-600 flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Showing <span class="font-medium">{{ $sports->firstItem() ?? 0 }}</span> to <span class="font-medium">{{ $sports->lastItem() ?? 0 }}</span> of <span class="font-medium">{{ $sports->total() }}</span> sports</span>
             </div>
+            
+            {{-- Pagination Links --}}
+            <div class="flex items-center gap-3">
+                {{ $sports->links('pagination::tailwind') }}
+                
+                {{-- Helper Note --}}
+                <div class="relative group">
+                    <button class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </button>
+                    
+                    {{-- Tooltip --}}
+                    <div class="absolute right-0 bottom-full mb-2 w-64 p-3 bg-slate-800 text-white text-xs rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
+                        <div class="font-medium mb-1">About Pagination</div>
+                        <ul class="space-y-1 text-slate-300">
+                            <li>• Use ◀ ▶ buttons to navigate between pages</li>
+                            <li>• Click page numbers to jump directly</li>
+                            <li>• {{ $sports->total() }} total sports across all pages</li>
+                            <li>• Data updates as you navigate</li>
+                        </ul>
+                        <div class="absolute bottom-0 right-4 transform translate-y-1/2 rotate-45 w-2 h-2 bg-slate-800"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        {{-- Quick Tips --}}
+        <div class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 flex items-center gap-4">
+            <div class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+                <span>Gold</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-slate-400 rounded-full"></span>
+                <span>Silver</span>
+            </div>
+            <div class="flex items-center gap-1">
+                <span class="w-1.5 h-1.5 bg-orange-400 rounded-full"></span>
+                <span>Bronze</span>
+            </div>
+            <div class="flex-1 text-right">
+                <span class="text-slate-400">Numbers show total medals per division</span>
+            </div>
+        </div>
+    </div>
+</div>
 
             
 {{-- ================================================= --}}
