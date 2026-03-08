@@ -17,162 +17,143 @@
     <script src="//unpkg.com/alpinejs" defer></script>
 
     {{-- Fonts --}}
-    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Russo+One&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Anton&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 
-<body class="bg-gray-100 font-sans overflow-x-hidden">
+<body class="bg-gray-50 font-['Poppins',sans-serif] overflow-x-hidden">
 
-<!-- {{-- FULL PAGE LOADER --}}
-<div
-    x-data="{ loading: true }"
-    x-init="
-        window.addEventListener('load', () => {
-            setTimeout(() => loading = false, 500);
-        });
-    "
-    x-show="loading"
-    x-transition.opacity.duration.300ms
-    style="display: none"
-    class="fixed inset-0 z-[10000] flex items-center justify-center bg-white"
->
-    <div class="flex flex-col items-center gap-4">
-    {{-- Spinner --}}
-    <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-
-    {{-- Dynamic Motivational Loading Text --}}
-    <p class="text-sm font-medium text-gray-600 tracking-wide">
-        <span id="loadingText">Gearing up for the action…</span>
-    </p>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const phrases = [
-            "Gearing up for the action…",
-            "Counting medals… 🏅",
-            "Warming up the teams…",
-            "Getting ready for the games…",
-            "Checking the scoreboard…",
-            "Fueling the competitive spirit… 🏆"
-        ];
-
-        let index = 0;
-        const loadingText = document.getElementById('loadingText');
-
-        setInterval(() => {
-            index = (index + 1) % phrases.length;
-            loadingText.textContent = phrases[index];
-        }, 1500); // change every 1.5 seconds
-    });
-</script> -->
-
-</div>
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-    const loader = document.querySelector('[x-data="{ loading: true }"]') || document.querySelector('[x-data]');
-
-    document.querySelectorAll('a[href]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const href = link.getAttribute('href');
-
-            // Ignore anchors, JS links, or links that open in a new tab
-            if (!href || href.startsWith('#') || href.startsWith('javascript') || link.target === '_blank') return;
-
-            // Show loader
-            if (loader && loader.__x) {
-                loader.__x.$data.loading = true;
-            }
-        });
-    });
-});
-</script>
-
-
-{{-- ================= NAVBAR ================= --}}
-<nav class="fixed top-0 inset-x-0 z-[60] pointer-events-auto bg-white/30 backdrop-blur-md shadow-md">
+{{-- ================= CLEAN WHITE NAVBAR ================= --}}
+<nav class="fixed top-0 inset-x-0 z-[60] pointer-events-auto bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between h-16 relative">
             {{-- Logo --}}
             @php $viewerLogo = \App\Models\LayoutSetting::where('key', 'viewer_top_logo')->first(); @endphp
-            <a href="{{ route('viewer.home') }}" class="flex items-center gap-2 shrink-0">
-                @if($viewerLogo && $viewerLogo->value)
-                    <img src="{{ asset('storage/' . $viewerLogo->value) }}" alt="Viewer Logo" class="h-8 sm:h-10 object-contain">
-                @else
-                    <span class="text-lg sm:text-xl font-bold text-gray-800">ESRRS</span>
-                @endif
+            <a href="{{ route('viewer.home') }}" class="flex items-center gap-2 shrink-0 group">
+                <div class="relative">
+                    @if($viewerLogo && $viewerLogo->value)
+                        <img src="{{ asset('storage/' . $viewerLogo->value) }}" alt="Viewer Logo" class="relative h-8 sm:h-10 object-contain">
+                    @else
+                        <span class="relative text-xl sm:text-2xl font-black text-gray-900 tracking-tight">ESRRS</span>
+                    @endif
+                </div>
             </a>
 
-            {{-- Desktop Navigation --}}
-            <div class="hidden md:flex items-center gap-6 font-medium text-gray-800 absolute left-1/2 -translate-x-1/2">
-                @php $linkClass = 'hover:text-gray-600 transition whitespace-nowrap'; $active = 'underline font-semibold'; @endphp
-                <a href="{{ route('viewer.home') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.home') ? $active : '' }}">Home</a>
-                <a href="{{ route('viewer.participants') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $active : '' }}">SDO</a>
-                <a href="{{ route('viewer.medalTally') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.medalTally') ? $active : '' }}">Medals</a>
+            {{-- Desktop Navigation - Clean White Style --}}
+            <div class="hidden md:flex items-center gap-1 font-medium text-gray-700 absolute left-1/2 -translate-x-1/2">
+                @php
+                    $linkClass = 'px-4 py-2 rounded-lg hover:bg-gray-100 transition-all duration-200';
+                    $activeClass = 'bg-blue-50 text-blue-700 font-semibold';
+                @endphp
+                
+                <a href="{{ route('viewer.home') }}" 
+                   class="{{ $linkClass }} {{ request()->routeIs('viewer.home') ? $activeClass : '' }}">
+                    Home
+                </a>
+                
+                <a href="{{ route('viewer.participants') }}" 
+                   class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $activeClass : '' }}">
+                    SDO
+                </a>
+                
+                <a href="{{ route('viewer.medalTally') }}" 
+                   class="{{ $linkClass }} {{ request()->routeIs('viewer.medalTally') ? $activeClass : '' }}">
+                    Medals
+                </a>
 
                 <a href="{{ route('viewer.events') }}" 
-   class="px-3 py-2 {{ request()->routeIs('viewer.events') ? 'underline font-semibold' : 'hover:text-gray-600' }}">
-    Events
-</a>
+                   class="{{ $linkClass }} {{ request()->routeIs('viewer.events') ? $activeClass : '' }}">
+                    Events
+                </a>
 
-                <!-- <a href="{{ route('viewer.gallery') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.gallery') ? $active : '' }}">Gallery</a> -->
-                <a href="{{ route('viewer.announcements') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.announcements') ? $active : '' }}">Announcements</a>
-                <a href="{{ route('viewer.feedbacks') }}" class="{{ $linkClass }} {{ request()->routeIs('viewer.feedbacks') ? $active : '' }}">About Us</a>
+                <a href="{{ route('viewer.announcements') }}" 
+                   class="{{ $linkClass }} {{ request()->routeIs('viewer.announcements') ? $activeClass : '' }}">
+                    News
+                </a>
+                
+                <a href="{{ route('viewer.feedbacks') }}" 
+                   class="{{ $linkClass }} {{ request()->routeIs('viewer.feedbacks') ? $activeClass : '' }}">
+                    About
+                </a>
             </div>
 
-           {{-- Desktop Actions (Viewer – always visible) --}}
-<div class="hidden md:flex items-center gap-3">
-    <a href="{{ route('login') }}"
-       class="px-4 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-white font-semibold transition">
-        Login
-    </a>
+            {{-- Desktop Actions - Clean White Buttons --}}
+            <div class="hidden md:flex items-center gap-3">
+                <a href="{{ route('login') }}"
+                   class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    Login
+                </a>
 
-    <a href="{{ route('attendance.check') }}"
-       class="px-4 py-1.5 bg-yellow-600 hover:bg-yellow-700 rounded text-white font-semibold transition">
-        Attendance
-    </a>
-</div>
-
+                <a href="{{ route('attendance.check') }}"
+                   class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all duration-200 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
+                    Attendance
+                </a>
+            </div>
 
             {{-- Mobile Toggle --}}
-            <button @click="open = !open" class="md:hidden focus:outline-none">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
-                    <path x-show="open" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            <button @click="open = !open" class="md:hidden focus:outline-none text-gray-700 p-2">
+                <svg x-show="!open" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                </svg>
+                <svg x-show="open" x-cloak class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                 </svg>
             </button>
         </div>
     </div>
 
-    {{-- Mobile Menu --}}
-    <div x-show="open" x-transition x-cloak class="md:hidden bg-white/90 backdrop-blur-md px-3 py-3 space-y-1 z-[65]">
-        <a href="{{ route('viewer.home') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Home</a>
-        <a href="{{ route('viewer.participants') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Teams</a>
-        <a href="{{ route('viewer.medalTally') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Medals</a>
+    {{-- Mobile Menu - Clean White Style --}}
+    <div x-show="open" x-transition x-cloak 
+         class="md:hidden bg-white border-t border-gray-200 px-3 py-4 space-y-2 z-[65] shadow-lg">
+        
+        <a href="{{ route('viewer.home') }}" 
+           class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.home') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
+            Home
+        </a>
+        
+        <a href="{{ route('viewer.participants') }}" 
+           class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.participants') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
+            SDO
+        </a>
+        
+        <a href="{{ route('viewer.medalTally') }}" 
+           class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.medalTally') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
+            Medals
+        </a>
 
         <a href="{{ route('viewer.events') }}" 
-   class="block px-3 py-2 rounded hover:bg-gray-200 {{ request()->routeIs('viewer.events') ? 'font-semibold underline' : '' }}">
-    Events
-</a>
+           class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.events') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
+            Events
+        </a>
 
-        <!-- <a href="{{ route('viewer.gallery') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Gallery</a> -->
-        <a href="{{ route('viewer.announcements') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Announcements</a>
-        <a href="{{ route('viewer.feedbacks') }}" class="block px-3 py-2 rounded hover:bg-gray-200">Feedbacks</a>
-       {{-- Viewer Actions (Mobile – always visible) --}}
-<a href="{{ route('login') }}"
-   class="block px-3 py-2 mt-2 rounded bg-blue-600 text-white font-semibold">
-    Login
-</a>
+        <a href="{{ route('viewer.announcements') }}" 
+           class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.announcements') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
+            News
+        </a>
+        
+        <a href="{{ route('viewer.feedbacks') }}" 
+           class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.feedbacks') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
+            About
+        </a>
 
-<a href="{{ route('attendance.check') }}"
-   class="block px-3 py-2 mt-2 rounded bg-yellow-600 text-white font-semibold">
-    Attendance
-</a>
+        {{-- Mobile Actions --}}
+        <div class="pt-4 mt-2 border-t border-gray-200 space-y-2">
+            <a href="{{ route('login') }}"
+               class="block px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors">
+                Login
+            </a>
 
-
+            <a href="{{ route('attendance.check') }}"
+               class="block px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg text-center transition-colors">
+                Attendance
+            </a>
+        </div>
     </div>
 </nav>
 
@@ -183,6 +164,38 @@ document.addEventListener('DOMContentLoaded', () => {
 <main class="relative z-0 pointer-events-auto w-full overflow-x-hidden">
     @yield('content')
 </main>
+
+{{-- Scroll to Top Button (clean version) --}}
+<button x-show="showTop" 
+        x-cloak
+        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+        x-transition
+        class="fixed bottom-6 right-6 z-50 p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-full shadow-lg hover:shadow-xl border border-gray-200 transform hover:scale-110 transition-all duration-200">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
+    </svg>
+</button>
+
+<style>
+    @keyframes marquee {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(-50%); }
+    }
+    .animate-marquee {
+        display: inline-block;
+        animation: marquee 30s linear infinite;
+    }
+    .animate-marquee:hover {
+        animation-play-state: paused;
+    }
+    
+    /* Smooth transitions */
+    .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 200ms;
+    }
+</style>
 
 {{-- ================= TV NEWS STYLE ANNOUNCEMENTS CRAWLER ================= --}}
 @php
