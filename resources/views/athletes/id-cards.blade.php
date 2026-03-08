@@ -18,8 +18,7 @@
 
         /* PAGE CONTAINER = EXACT HEIGHT FIT FOR 2 CARDS */
         .page {
-            height: 10.2in; /* 5in + 5in + small allowance */
-            page-break-after: always;
+            height: 10.2in;
         }
 
         table {
@@ -146,7 +145,7 @@
 
 @foreach($athletes->chunk(2) as $pair)
 
-<div class="page">
+<div class="page" @if(!$loop->last) style="page-break-after: always;" @endif>
 
     @foreach($pair as $athlete)
 

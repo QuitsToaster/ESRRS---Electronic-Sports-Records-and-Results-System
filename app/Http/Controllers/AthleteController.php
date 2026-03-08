@@ -289,11 +289,13 @@ class AthleteController extends Controller
             ->with('success', 'Athletes uploaded successfully!');
     }
 
-   public function exportIdPdf(Request $request)
+  public function exportIdPdf(Request $request)
 {
     $user = auth()->user();
-    $limit = $request->input('limit');
+
     $division = $request->input('school_division');
+    $start = $request->input('start');
+    $end = $request->input('end');
 
     $query = Athlete::with(['school', 'sport'])
         ->orderBy('last_name')
@@ -314,18 +316,27 @@ class AthleteController extends Controller
         $query->where('school_division', $division);
     }
 
-    // 🚀 Optional Limit
-    if ($limit && is_numeric($limit)) {
-        $query->limit((int) $limit);
+    /* ==========================
+       ATHLETE RANGE LOGIC
+    ========================== */
+
+    if ($start && $end) {
+
+        $start = max(1, (int) $start);
+        $end   = max($start, (int) $end);
+
+        $offset = $start - 1;
+        $limit  = $end - $start + 1;
+
+        $query->skip($offset)->take($limit);
     }
 
     $athletes = $query->get();
 
     /* ==========================
-       📋 AUDIT LOG ENTRY
+       AUDIT LOG
     ========================== */
 
-    // Determine final division used
     $exportedDivision = $officialDivision ?? $division ?? 'All Divisions';
 
     $actionDescription = "Exported Athlete ID Cards PDF | "
@@ -334,8 +345,8 @@ class AthleteController extends Controller
         . "Total Exported: {$athletes->count()} | "
         . "Division: {$exportedDivision}";
 
-    if ($limit) {
-        $actionDescription .= " | Limit Applied: {$limit}";
+    if ($start && $end) {
+        $actionDescription .= " | Athlete Range: {$start}-{$end}";
     }
 
     AuditLog::create([
@@ -346,13 +357,14 @@ class AthleteController extends Controller
         'new_values' => json_encode([
             'exported_count' => $athletes->count(),
             'division'       => $exportedDivision,
-            'limit'          => $limit,
+            'start'          => $start,
+            'end'            => $end,
         ]),
         'action'     => $actionDescription,
     ]);
 
     /* ==========================
-       📄 GENERATE PDF
+       GENERATE PDF
     ========================== */
 
     $pdf = Pdf::loadView('athletes.id-cards', compact('athletes'))

@@ -97,64 +97,102 @@
 
         <hr class="my-4">
 
-        {{-- ================= EXPORT WITH LIMIT ================= --}}
-        <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3 mb-4">
-            <label class="text-sm font-medium">
-                Export first X athletes
-            </label>
+        {{-- ================= EXPORT BY ATHLETE RANGE ================= --}}
+<form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3 mb-4">
 
+    <label class="text-sm font-medium">
+        Export by Athlete Number Range
+    </label>
+
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="text-xs text-gray-600">Start Athlete</label>
             <input type="number"
-                   name="limit"
+                   name="start"
                    min="1"
-                   max="{{ $athleteCount }}"
-                   value="50"
+                   value="1"
                    class="w-full border rounded px-3 py-2"
                    required>
+        </div>
 
-            <button type="submit"
-                    class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-                Export With Limit
-            </button>
-        </form>
+        <div>
+            <label class="text-xs text-gray-600">End Athlete</label>
+            <input type="number"
+                   name="end"
+                   min="1"
+                   value="10"
+                   class="w-full border rounded px-3 py-2"
+                   required>
+        </div>
+    </div>
+
+    <p class="text-xs text-gray-500">
+        Example: 1–10, 11–20, 21–30
+    </p>
+
+    <button type="submit"
+            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+        Export Athlete Range
+    </button>
+
+</form>
 
         {{-- ================= SUPER ADMIN ONLY ================= --}}
-        @if($isSuperAdmin)
+@if($isSuperAdmin)
 
-        <hr class="my-4">
+<hr class="my-4">
 
-        <h4 class="font-semibold text-sm mb-2 text-gray-700">
-            Export by Division (Super Admin Only)
-        </h4>
+<h4 class="font-semibold text-sm mb-2 text-gray-700">
+    Export by Division (Super Admin Only)
+</h4>
 
-        <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
+<form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
 
-            {{-- Select Division --}}
-            <select name="school_division"
-                    class="w-full border rounded px-3 py-2"
-                    required>
-                <option value="">Select Division</option>
-                @foreach($divisions as $division)
-                    <option value="{{ $division }}">
-                        SDO - {{ $division }}
-                    </option>
-                @endforeach
-            </select>
+    {{-- Select Division --}}
+    <select name="school_division"
+            class="w-full border rounded px-3 py-2"
+            required>
+        <option value="">Select Division</option>
+        @foreach($divisions as $division)
+            <option value="{{ $division }}">
+                SDO - {{ $division }}
+            </option>
+        @endforeach
+    </select>
 
-            {{-- Optional Limit --}}
+    {{-- Athlete Range --}}
+    <div class="grid grid-cols-2 gap-3">
+        <div>
+            <label class="text-xs text-gray-600">Start Athlete</label>
             <input type="number"
-                   name="limit"
+                   name="start"
                    min="1"
-                   placeholder="Optional Limit (leave blank for all)"
+                   placeholder="1"
                    class="w-full border rounded px-3 py-2">
+        </div>
 
-            <button type="submit"
-                    class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                Export Selected Division
-            </button>
+        <div>
+            <label class="text-xs text-gray-600">End Athlete</label>
+            <input type="number"
+                   name="end"
+                   min="1"
+                   placeholder="50"
+                   class="w-full border rounded px-3 py-2">
+        </div>
+    </div>
 
-        </form>
+    <p class="text-xs text-gray-500">
+        Example: 1–50, 51–100, 101–150
+    </p>
 
-        @endif
+    <button type="submit"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+        Export Selected Division
+    </button>
+
+</form>
+
+@endif
 
     </div>
 </div>
