@@ -52,10 +52,9 @@ public function index(Request $request)
     }
 
     // -----------------------------
-    // GET EVENTS
-    // -----------------------------
-    $events = $query->orderBy('start_date')->get();
-
+// GET EVENTS
+// -----------------------------
+$events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
     // -----------------------------
     // COUNTS
     // -----------------------------
