@@ -6,10 +6,13 @@ use Illuminate\Http\Request;
 use App\Models\School;
 use App\Models\Athlete;
 use App\Models\Event;
+use App\Models\SportType;
 use App\Models\Sport;
 use App\Models\Coach;
 use App\Models\User;
 use App\Models\Game;
+use App\Models\AllAwardResult;
+use App\Models\IndividualAwardResult;
 use App\Models\Official;
 use App\Models\Announcement;
 use App\Models\Division;
@@ -85,10 +88,94 @@ $eventStatusCounts = collect([
     'Delayed'  => $eventStatusCounts['Delayed'] ?? 0,
 ]);
 
+/* =========================================================
+ | TOURNAMENT SECRETARIES WITH NEEDS REVISION AWARDS
+ ========================================================= */
+
+$secretaryRevisionList = User::whereHas('role', function($q){
+        $q->where('name','Tournament Secretary');
+    })
+    ->whereHas('allAwards', function($q){
+        $q->where('status','needs_revision');
+    })
+    ->orWhereHas('individualAwards', function($q){
+        $q->where('status','needs_revision');
+    })
+    ->withCount([
+        'allAwards as all_awards_revision_count' => function($q){
+            $q->where('status','needs_revision');
+        },
+        'individualAwards as individual_awards_revision_count' => function($q){
+            $q->where('status','needs_revision');
+        }
+    ])
+    ->get();
+
+    /* =========================================================
+ | TOURNAMENT SECRETARIES WHO HAVEN'T AWARDED YET
+ ========================================================= */
+
+$secretariesNoAwards = User::whereHas('role', function ($q) {
+        $q->where('name', 'Tournament Secretary');
+    })
+    ->whereDoesntHave('allAwards')
+    ->whereDoesntHave('individualAwards')
+    ->get();
+
+    $sports = Sport::all();
+$sportTypes = \App\Models\SportType::all();
+
+/* =========================================================
+ | TOURNAMENT SECRETARIES WHO FORWARDED AWARDS (PENDING)
+ ========================================================= */
+
+$secretariesPendingAwards = User::whereHas('role', function ($q) {
+        $q->where('name', 'Tournament Secretary');
+    })
+    ->where(function ($q) {
+        $q->whereHas('allAwards', function ($sub) {
+            $sub->where('status', 'pending');
+        })
+        ->orWhereHas('individualAwards', function ($sub) {
+            $sub->where('status', 'pending');
+        });
+    })
+    ->withCount([
+        'allAwards as all_awards_pending_count' => function ($q) {
+            $q->where('status', 'pending');
+        },
+        'individualAwards as individual_awards_pending_count' => function ($q) {
+            $q->where('status', 'pending');
+        }
+    ])
+    ->get();
+
+    /* =========================================================
+ | AWARD STATUS COUNTS (ALL AWARDS)
+ ========================================================= */
+
+$allAwardsPending = AllAwardResult::where('status','pending')->count();
+$allAwardsApproved = AllAwardResult::where('status','approved')->count();
+$allAwardsRevision = AllAwardResult::where('status','needs_revision')->count();
+
+/* =========================================================
+ | AWARD STATUS COUNTS (INDIVIDUAL AWARDS)
+ ========================================================= */
+
+$individualAwardsPending = IndividualAwardResult::where('status','pending')->count();
+$individualAwardsApproved = IndividualAwardResult::where('status','approved')->count();
+$individualAwardsRevision = IndividualAwardResult::where('status','needs_revision')->count();
+
     return view('dashboard', compact(
-        'athletesCount', 'eventsCount', 'sportsCount',
-        'coachesCount', 'gamesCount', 'divisionsCount', 'liveGames',
-        'medalTally', 'latestAnnouncements','eventStatusCounts','usersCount'
-    ));
+    'athletesCount','eventsCount','sportsCount',
+    'coachesCount','gamesCount','divisionsCount','liveGames',
+    'medalTally','latestAnnouncements','eventStatusCounts','usersCount',
+    'secretaryRevisionList','secretariesNoAwards','secretariesPendingAwards',
+    'sports','sportTypes',
+
+    // NEW
+    'allAwardsPending','allAwardsApproved','allAwardsRevision',
+    'individualAwardsPending','individualAwardsApproved','individualAwardsRevision'
+));
 }
 }

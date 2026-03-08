@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\AllAwardResult;
+use App\Models\IndividualAwardResult;
 use App\Models\Role;
 
 class User extends Authenticatable
@@ -42,4 +44,14 @@ class User extends Authenticatable
     {
         return $this->belongsTo(Role::class);
     }
+
+    public function allAwards()
+{
+    return $this->hasMany(AllAwardResult::class, 'awarded_by');
+}
+
+public function individualAwards()
+{
+    return $this->hasMany(IndividualAwardResult::class, 'awarded_by');
+}
 }

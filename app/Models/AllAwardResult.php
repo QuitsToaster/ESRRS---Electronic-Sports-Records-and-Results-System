@@ -37,4 +37,9 @@ public function type()
     return $this->belongsTo(\App\Models\SportType::class, 'type_id');
 }
 
+public function user()
+{
+    return $this->belongsTo(\App\Models\User::class, 'awarded_by');
+}
+
 }

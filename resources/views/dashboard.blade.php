@@ -82,8 +82,437 @@
             <div class="text-3xl font-bold text-teal-800">{{ $gamesCount }}</div>
         </div>
     </a> -->
+    
 
 </div>
+{{-- ============================================================= --}}
+{{-- 🏆 AWARDS STATUS OVERVIEW (Clickable with Modal) --}}
+{{-- ============================================================= --}}
+
+<div x-data="{ openModal: false, modalTitle: '', modalAwards: [] }" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+
+    {{-- ALL AWARDS STATUS --}}
+    <div class="bg-white border border-gray-200 rounded-xl shadow p-6">
+
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">
+            All Awards Status
+        </h2>
+
+        <div class="grid grid-cols-3 gap-4">
+
+            {{-- Pending --}}
+            <div @click="openModal = true; modalTitle='All Awards - Pending'; modalAwards=@js(App\Models\AllAwardResult::where('status','pending')->with(['sport','event','user'])->get());"
+                 class="cursor-pointer bg-yellow-100 rounded-lg p-4 text-center hover:bg-yellow-200 transition">
+                <div class="text-sm text-yellow-700 font-semibold">
+                    Pending
+                </div>
+                <div class="text-2xl font-bold text-yellow-800 mt-1">
+                    {{ $allAwardsPending }}
+                </div>
+            </div>
+
+            {{-- Approved --}}
+            <div @click="openModal = true; modalTitle='All Awards - Approved'; modalAwards=@js(App\Models\AllAwardResult::where('status','approved')->with(['sport','event','user'])->get());"
+                 class="cursor-pointer bg-green-100 rounded-lg p-4 text-center hover:bg-green-200 transition">
+                <div class="text-sm text-green-700 font-semibold">
+                    Approved
+                </div>
+                <div class="text-2xl font-bold text-green-800 mt-1">
+                    {{ $allAwardsApproved }}
+                </div>
+            </div>
+
+            {{-- Needs Revision --}}
+            <div @click="openModal = true; modalTitle='All Awards - Needs Revision'; modalAwards=@js(App\Models\AllAwardResult::where('status','needs_revision')->with(['sport','event','user'])->get());"
+                 class="cursor-pointer bg-red-100 rounded-lg p-4 text-center hover:bg-red-200 transition">
+                <div class="text-sm text-red-700 font-semibold">
+                    Needs Revision
+                </div>
+                <div class="text-2xl font-bold text-red-800 mt-1">
+                    {{ $allAwardsRevision }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+
+    {{-- INDIVIDUAL AWARDS STATUS --}}
+    <div class="bg-white border border-gray-200 rounded-xl shadow p-6">
+
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">
+            Individual Awards Status
+        </h2>
+
+        <div class="grid grid-cols-3 gap-4">
+
+            {{-- Pending --}}
+            <div @click="openModal = true; modalTitle='Individual Awards - Pending'; modalAwards=@js(App\Models\IndividualAwardResult::where('status','pending')->with(['sport','event','user'])->get());"
+                 class="cursor-pointer bg-yellow-100 rounded-lg p-4 text-center hover:bg-yellow-200 transition">
+                <div class="text-sm text-yellow-700 font-semibold">
+                    Pending
+                </div>
+                <div class="text-2xl font-bold text-yellow-800 mt-1">
+                    {{ $individualAwardsPending }}
+                </div>
+            </div>
+
+            {{-- Approved --}}
+            <div @click="openModal = true; modalTitle='Individual Awards - Approved'; modalAwards=@js(App\Models\IndividualAwardResult::where('status','approved')->with(['sport','event','user'])->get());"
+                 class="cursor-pointer bg-green-100 rounded-lg p-4 text-center hover:bg-green-200 transition">
+                <div class="text-sm text-green-700 font-semibold">
+                    Approved
+                </div>
+                <div class="text-2xl font-bold text-green-800 mt-1">
+                    {{ $individualAwardsApproved }}
+                </div>
+            </div>
+
+            {{-- Needs Revision --}}
+            <div @click="openModal = true; modalTitle='Individual Awards - Needs Revision'; modalAwards=@js(App\Models\IndividualAwardResult::where('status','needs_revision')->with(['sport','event','user'])->get());"
+                 class="cursor-pointer bg-red-100 rounded-lg p-4 text-center hover:bg-red-200 transition">
+                <div class="text-sm text-red-700 font-semibold">
+                    Needs Revision
+                </div>
+                <div class="text-2xl font-bold text-red-800 mt-1">
+                    {{ $individualAwardsRevision }}
+                </div>
+            </div>
+
+        </div>
+
+    </div>
+
+    {{-- ================= MODAL ================= --}}
+    <div x-show="openModal" class="fixed inset-0 flex items-center justify-center z-50">
+        <div class="absolute inset-0 bg-black bg-opacity-50" @click="openModal = false"></div>
+
+        <div class="bg-white rounded-xl shadow-lg max-w-3xl w-full p-6 z-50 overflow-y-auto max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800" x-text="modalTitle"></h2>
+                <button @click="openModal = false" class="text-gray-500 hover:text-gray-800 font-bold">&times;</button>
+            </div>
+
+            <table class="min-w-full table-auto border-collapse border border-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Athlete / User</th>
+                        <th class="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Sport</th>
+                        <th class="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Event</th>
+                        <th class="border px-3 py-2 text-left text-sm font-semibold text-gray-700">Medal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="award in modalAwards" :key="award.id">
+                        <tr class="hover:bg-gray-50">
+                            <td class="border px-3 py-2 text-sm text-gray-800" x-text="award.user.name"></td>
+                            <td class="border px-3 py-2 text-sm text-gray-800" x-text="award.sport.name"></td>
+                            <td class="border px-3 py-2 text-sm text-gray-800" x-text="award.event.name"></td>
+                            <td class="border px-3 py-2 text-sm text-gray-800 font-semibold" x-text="award.medal"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+{{-- ============================================================= --}}
+{{-- ⏳ TOURNAMENT SECRETARIES WITH FORWARDED AWARDS (PENDING) --}}
+{{-- ============================================================= --}}
+
+@if(auth()->user()->role->name === 'Super Admin')
+
+<div class="bg-blue-50 border border-blue-200 rounded-xl shadow p-6 mt-8 mb-10">
+
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-blue-800">
+            Tournament Secretaries With Pending Award Submissions
+        </h2>
+
+        <span class="text-sm text-blue-700 font-semibold">
+            Awards forwarded and waiting for approval
+        </span>
+    </div>
+
+    @if($secretariesPendingAwards->isEmpty())
+
+        <div class="text-gray-500 text-center py-4">
+            No pending award submissions from tournament secretaries.
+        </div>
+
+    @else
+
+    <div class="overflow-x-auto rounded-lg border border-blue-200">
+        <table class="min-w-full bg-white">
+
+            <thead class="bg-blue-100 text-blue-800 text-sm">
+                <tr>
+                    <th class="px-4 py-3 text-left">Secretary Name</th>
+                    <th class="px-4 py-3 text-left">Email</th>
+                    <th class="px-4 py-3 text-left">Sport</th>
+                    <th class="px-4 py-3 text-left">Sport Type</th>
+                    <th class="px-4 py-3 text-left">Level</th>
+                    <th class="px-4 py-3 text-left">Category</th>
+                    <th class="px-4 py-3 text-left">Pending Awards</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y">
+
+                @foreach($secretariesPendingAwards as $secretary)
+
+                <tr class="hover:bg-blue-50 transition">
+
+                    <td class="px-4 py-3 font-semibold text-gray-800">
+                        {{ $secretary->name }}
+                    </td>
+
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ $secretary->email }}
+                    </td>
+
+                    {{-- Sports --}}
+                    <td class="px-4 py-3 text-gray-600">
+                        @if(!empty($secretary->sports_access))
+                            {{ collect($secretary->sports_access)->map(function($id) use ($sports) {
+                                return optional($sports->firstWhere('id',$id))->name;
+                            })->filter()->implode(', ') }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
+
+                    {{-- Sport Types --}}
+                    <td class="px-4 py-3 text-gray-600">
+                        @if(!empty($secretary->sport_type_access))
+                            {{ collect($secretary->sport_type_access)->map(function($id) use ($sportTypes) {
+                                return optional($sportTypes->firstWhere('id',$id))->type_name;
+                            })->filter()->implode(', ') }}
+                        @else
+                            N/A
+                        @endif
+                    </td>
+
+                    {{-- Level --}}
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
+                    </td>
+
+                    {{-- Category --}}
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
+                    </td>
+
+                    {{-- Pending Awards Count --}}
+                    <td class="px-4 py-3 font-semibold text-blue-700">
+                        {{ $secretary->all_awards_pending_count + $secretary->individual_awards_pending_count }}
+                    </td>
+
+                </tr>
+
+                @endforeach
+
+            </tbody>
+
+        </table>
+    </div>
+
+    @endif
+
+</div>
+
+@endif
+
+{{-- ============================================================= --}}
+{{-- ⚠️ TOURNAMENT SECRETARIES WITH AWARDS NEEDING REVISION --}}
+{{-- ============================================================= --}}
+@php
+$isSuperAdmin = auth()->user()?->role?->name === 'Super Admin';
+@endphp
+
+@if($isSuperAdmin)
+
+<div class="mt-8 bg-red-50 border border-red-200 rounded-xl shadow p-6 mb-10">
+
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-red-800">
+            Tournament Secretaries with Awards Needing Revision
+        </h2>
+
+        <span class="text-sm text-red-600 font-semibold">
+            Monitor and contact responsible secretaries
+        </span>
+    </div>
+
+    @if($secretaryRevisionList->isEmpty())
+
+        <div class="text-gray-500 text-center py-4">
+            No tournament secretaries currently have awards needing revision.
+        </div>
+
+    @else
+
+    <div class="overflow-x-auto rounded-lg border border-red-200">
+        <table class="min-w-full bg-white">
+
+            <thead class="bg-red-100 text-red-800 text-sm">
+                <tr>
+                    <th class="px-4 py-3 text-left">Secretary Name</th>
+                    <th class="px-4 py-3 text-left">Email</th>
+                    <th class="px-4 py-3 text-center">All Awards Revision</th>
+                    <th class="px-4 py-3 text-center">Individual Awards Revision</th>
+                    <th class="px-4 py-3 text-center">Total</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y">
+
+                @foreach($secretaryRevisionList as $secretary)
+
+                @php
+                $total = $secretary->all_awards_revision_count + $secretary->individual_awards_revision_count;
+                @endphp
+
+                <tr class="hover:bg-red-50 transition">
+
+                    <td class="px-4 py-3 font-semibold text-gray-800">
+                        {{ $secretary->name }}
+                    </td>
+
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ $secretary->email }}
+                    </td>
+
+                    <td class="px-4 py-3 text-center text-red-600 font-bold">
+                        {{ $secretary->all_awards_revision_count }}
+                    </td>
+
+                    <td class="px-4 py-3 text-center text-red-600 font-bold">
+                        {{ $secretary->individual_awards_revision_count }}
+                    </td>
+
+                    <td class="px-4 py-3 text-center font-bold text-red-700">
+                        {{ $total }}
+                    </td>
+
+                </tr>
+
+                @endforeach
+
+            </tbody>
+
+        </table>
+    </div>
+
+    @endif
+
+</div>
+
+@endif
+
+{{-- ============================================================= --}}
+{{-- ⏳ TOURNAMENT SECRETARIES WHO HAVEN'T SUBMITTED AWARDS --}}
+{{-- ============================================================= --}}
+
+@if($isSuperAdmin)
+
+<div class="bg-yellow-50 border border-yellow-200 rounded-xl shadow p-6 mt-8 mb-10">
+
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-yellow-800">
+            Tournament Secretaries Without Award Submissions
+        </h2>
+
+        <span class="text-sm text-yellow-700 font-semibold">
+            These secretaries have not submitted any awards yet
+        </span>
+    </div>
+
+    @if($secretariesNoAwards->isEmpty())
+
+        <div class="text-gray-500 text-center py-4">
+            All tournament secretaries have already submitted awards.
+        </div>
+
+    @else
+
+    <div class="overflow-x-auto rounded-lg border border-yellow-200">
+        <table class="min-w-full bg-white">
+
+            <thead class="bg-yellow-100 text-yellow-800 text-sm">
+                <tr>
+                    <th class="px-4 py-3 text-left">Secretary Name</th>
+                    <th class="px-4 py-3 text-left">Email</th>
+                    <th class="px-4 py-3 text-left">Sport</th>
+                    <th class="px-4 py-3 text-left">Sport Type</th>
+                    <th class="px-4 py-3 text-left">Level</th>
+                    <th class="px-4 py-3 text-left">Category</th>
+                </tr>
+            </thead>
+
+            <tbody class="divide-y">
+
+                @foreach($secretariesNoAwards as $secretary)
+
+                <tr class="hover:bg-yellow-50 transition">
+
+                    <td class="px-4 py-3 font-semibold text-gray-800">
+                        {{ $secretary->name }}
+                    </td>
+
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ $secretary->email }}
+                    </td>
+
+                    {{-- Sports Access --}}
+                    <td class="px-4 py-3 text-gray-600">
+                        @if(!empty($secretary->sports_access))
+                            {{ collect($secretary->sports_access)->map(function($id) use ($sports) {
+                                return optional($sports->firstWhere('id', $id))->name;
+                            })->filter()->implode(', ') }}
+                        @else
+                            N/A
+                        @endif
+                        </td>
+
+                    {{-- Sport Type Access --}}
+                    <td class="px-4 py-3 text-gray-600">
+@if(!empty($secretary->sport_type_access))
+    {{ collect($secretary->sport_type_access)->map(function($id) use ($sportTypes) {
+        return optional($sportTypes->firstWhere('id', $id))->type_name;
+    })->filter()->implode(', ') }}
+@else
+    N/A
+@endif
+</td>
+
+                    {{-- Level Access --}}
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
+                    </td>
+
+                    {{-- Category Access --}}
+                    <td class="px-4 py-3 text-gray-600">
+                        {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
+                    </td>
+
+                </tr>
+
+                @endforeach
+
+            </tbody>
+
+        </table>
+    </div>
+
+    @endif
+
+</div>
+
+@endif
 
 {{-- ================= EVENT STATUS GRAPH ================= --}}
 <div class="mb-10 bg-white border border-gray-200 rounded-xl shadow p-6">
