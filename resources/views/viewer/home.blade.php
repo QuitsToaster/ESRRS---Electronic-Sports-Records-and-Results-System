@@ -96,89 +96,191 @@ function closePrivacyBanner() {
     ];
 @endphp
 
-<div x-data="{ activeStatus: null }" class="max-w-full mx-auto px-4 py-8 space-y-6 bg-gray-100">
-
-    <h2 class="text-xl sm:text-4xl font-bold text-black" style="font-family: 'Poppins', sans-serif;">Event Stats</h2>
-    <p class="text-gray-900 mt-2" style="font-family: 'Poppins', sans-serif;">Click card to view event details.</p>
+<div x-data="{ activeStatus: null }" class="max-w-full mx-auto px-4 py-8 space-y-6 bg-gray-50">
+    
+    {{-- Header with accent line --}}
+    <div class="text-center md:text-left">
+        <div class="inline-block">
+            <h2 class="text-3xl sm:text-4xl font-bold text-gray-900" style="font-family: 'Poppins', sans-serif;">
+                Event Stats
+            </h2>
+            <div class="h-1 w-20 bg-blue-600 mt-2 mx-auto md:mx-0"></div>
+        </div>
+        <p class="text-gray-600 mt-3 text-sm sm:text-base" style="font-family: 'Poppins', sans-serif;">
+            Click any card to view detailed event information
+        </p>
+    </div>
 
     {{-- ====== Status Cards ====== --}}
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        @php
+            $statusColors = [
+                'Upcoming' => ['bg' => 'bg-blue-50', 'text' => 'text-blue-700', 'border' => 'border-blue-200', 'hover' => 'hover:border-blue-300'],
+                'Ongoing' => ['bg' => 'bg-green-50', 'text' => 'text-green-700', 'border' => 'border-green-200', 'hover' => 'hover:border-green-300'],
+                'Finished' => ['bg' => 'bg-gray-50', 'text' => 'text-gray-700', 'border' => 'border-gray-200', 'hover' => 'hover:border-gray-300'],
+                'Delayed' => ['bg' => 'bg-red-50', 'text' => 'text-red-700', 'border' => 'border-red-200', 'hover' => 'hover:border-red-300'],
+            ];
+        @endphp
+        
         @foreach($statusCounts as $status => $events)
+            @php $colors = $statusColors[$status] ?? $statusColors['Upcoming']; @endphp
             <div @click="activeStatus = '{{ $status }}'"
-                 class="bg-white rounded-lg shadow-md p-4 flex flex-col items-center justify-center text-black cursor-pointer transition hover:scale-105">
-                <div class="text-2xl sm:text-3xl font-bold">{{ $events->count() }}</div>
-                <div class="mt-1 text-sm sm:text-base font-semibold">{{ $status }} Event</div>
+                 class="{{ $colors['bg'] }} border-2 {{ $colors['border'] }} rounded-xl p-5 flex flex-col items-center justify-center cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md {{ $colors['hover'] }} group">
+                <span class="text-3xl sm:text-4xl font-black {{ $colors['text'] }}">{{ $events->count() }}</span>
+                <span class="mt-2 text-sm sm:text-base font-semibold {{ $colors['text'] }}">{{ $status }}</span>
+                <span class="text-xs text-gray-500 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">Click to view</span>
             </div>
         @endforeach
     </div>
 
     {{-- ===== Modal for Events by Status ===== --}}
-    <div x-show="activeStatus" x-transition.opacity class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70 p-4" style="display: none;">
-        <div @click.away="activeStatus = null" class="bg-white w-full max-w-3xl rounded-xl shadow-xl overflow-auto max-h-[80vh]">
+    <div x-show="activeStatus" 
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" 
+         style="display: none;">
+        
+        <div @click.away="activeStatus = null"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="bg-white w-full max-w-3xl rounded-xl shadow-2xl overflow-auto max-h-[80vh]">
+            
             {{-- Modal Header --}}
-            <div class="flex justify-between items-center p-4 border-b border-gray-300">
-                <h3 class="text-xl font-bold text-black" x-text="activeStatus + ' Events'"></h3>
-                <button @click="activeStatus = null" class="text-black text-2xl hover:text-gray-600">&times;</button>
+            <div class="flex justify-between items-center p-5 border-b border-gray-200 bg-gray-50">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></div>
+                    <h3 class="text-xl font-bold text-gray-900" x-text="activeStatus + ' Events'"></h3>
+                </div>
+                <button @click="activeStatus = null" 
+                        class="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-200 rounded-full">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
             </div>
 
             {{-- Modal Body --}}
-            <div class="p-4 space-y-3 text-black">
-                {{-- Only show events for the selected status --}}
+            <div class="p-5 space-y-3">
                 @foreach($statusCounts as $status => $events)
                     <template x-if="activeStatus === '{{ $status }}'">
-                        <div class="space-y-2">
+                        <div class="space-y-3">
                             @forelse($events as $event)
                                 <a href="{{ route('viewer.events', ['event' => $event->id]) }}" 
-                                   class="block p-3 bg-gray-100 rounded shadow flex flex-col sm:flex-row justify-between items-start sm:items-center hover:bg-gray-200 transition cursor-pointer">
-                                    <div>
-                                        {{-- ✅ SPORT NAME --}}
-    <div class="text-xl text-blue-700 font-extrabold">
-        {{ $event->sport->name ?? 'No Sport Assigned' }}
-    </div>
+                                   class="block p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all duration-200 group">
+                                    
+                                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                                        {{-- Event Details --}}
+                                        <div class="flex-1">
+                                            {{-- Sport Name Badge --}}
+                                            <div class="inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold mb-2 border border-blue-200">
+                                                {{ $event->sport->name ?? 'No Sport Assigned' }}
+                                            </div>
+                                            
+                                            {{-- Event Name --}}
+                                            <h4 class="text-lg font-bold text-gray-900 group-hover:text-blue-700 transition-colors">
+                                                {{ $event->name }}
+                                            </h4>
+                                            
+                                            {{-- Event Meta --}}
+                                            <div class="flex flex-wrap gap-3 mt-2 text-sm">
+                                                <span class="flex items-center gap-1 text-gray-600">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                                    </svg>
+                                                    {{ $event->age_group }}
+                                                </span>
+                                                <span class="flex items-center gap-1 text-gray-600">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                                                    </svg>
+                                                    {{ $event->category }}
+                                                </span>
+                                                <span class="flex items-center gap-1 text-gray-600">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                    </svg>
+                                                    {{ $event->start_date?->format('M d, Y') ?? 'TBA' }}
+                                                </span>
+                                                <span class="flex items-center gap-1 text-gray-600">
+                                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                    </svg>
+                                                    {{ $event->venue ?? 'TBA' }}
+                                                </span>
+                                            </div>
 
-    <div class="font-semibold">{{ $event->name }}</div>
+                                            {{-- Status Reason --}}
+                                            @if($event->status_reason)
+                                                <div class="mt-2 text-xs text-red-600 bg-red-50 inline-block px-2 py-1 rounded-full border border-red-200">
+                                                    ⚠️ {{ $event->status_reason }}
+                                                </div>
+                                            @endif
 
-    <div class="font-semibold text-gray-700 text-sm">
-        {{ $event->age_group }} {{ $event->category }}
-    </div>
+                                            {{-- Game Winners --}}
+                                            @if($event->status === 'Finished' && !empty($event->game_winners))
+                                                <div class="mt-3 pt-2 border-t border-gray-100">
+                                                    <span class="text-xs font-semibold text-gray-700">Game Winners:</span>
+                                                    <div class="flex flex-wrap gap-2 mt-1">
+                                                        @foreach($event->game_winners as $index => $divisionId)
+                                                            @if($divisionId)
+                                                                @php $division = \App\Models\Division::find($divisionId); @endphp
+                                                                <span class="px-2 py-0.5 bg-green-50 text-green-700 rounded-full text-xs border border-green-200">
+                                                                    Game {{ $index + 1 }}: {{ $division->name }}
+                                                                </span>
+                                                            @endif
+                                                        @endforeach
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
 
-    <div class="text-sm text-gray-700">
-        {{ $event->start_date?->format('M d, Y') ?? 'TBA' }} |
-        {{ $event->venue ?? 'TBA' }}
-    </div>
-
-    @if($event->status_reason)
-        <div class="text-xs text-red-600 mt-1">
-            Reason: {{ $event->status_reason }}
-        </div>
-    @endif
-
-    @if($event->status === 'Finished' && !empty($event->game_winners))
-        <div class="text-xs text-green-700 mt-1">
-            <span class="font-semibold">Game Winners:</span>
-            <ul class="list-disc list-inside">
-                @foreach($event->game_winners as $index => $divisionId)
-                    @if($divisionId)
-                        @php $division = \App\Models\Division::find($divisionId); @endphp
-                        <li>Game {{ $index + 1 }}: {{ $division->name }}</li>
-                    @endif
-                @endforeach
-            </ul>
-        </div>
-    @endif
-</div>
-                                    <div class="mt-2 sm:mt-0 text-sm font-medium text-gray-800">{{ $status }}</div>
+                                        {{-- Status Badge --}}
+                                        <div class="sm:text-right">
+                                            <span class="inline-block px-3 py-1 rounded-full text-xs font-bold
+                                                @if($status === 'Upcoming') bg-blue-100 text-blue-700
+                                                @elseif($status === 'Ongoing') bg-green-100 text-green-700
+                                                @elseif($status === 'Finished') bg-gray-100 text-gray-700
+                                                @elseif($status === 'Delayed') bg-red-100 text-red-700
+                                                @endif">
+                                                {{ $status }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </a>
                             @empty
-                                <div class="text-gray-500 italic text-center py-4">No events available.</div>
+                                <div class="text-center py-12">
+                                    <svg class="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    <p class="text-gray-500 italic">No {{ $status }} events available.</p>
+                                </div>
                             @endforelse
                         </div>
                     </template>
                 @endforeach
             </div>
+
+            {{-- Modal Footer --}}
+            <div class="p-4 border-t border-gray-200 bg-gray-50 text-xs text-gray-500 flex justify-between">
+                <span class="flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Click any event for full details
+                </span>
+                <span>Click outside or ESC to close</span>
+            </div>
         </div>
     </div>
-
 </div>
 
 <style>
@@ -225,24 +327,56 @@ function closePrivacyBanner() {
         latestAnnouncements: {{ $latestAnnouncements->toJson() }},
     }"
 >
-    <div class="h-full bg-white p-6 shadow-2xl flex flex-col">
-
-        <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4"
-            style="font-family: 'Poppins', sans-serif;">
-            Latest News & Announcements
-        </h2>
+    <div class="h-full bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+        
+        {{-- Header with accent --}}
+        <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold text-gray-900 tracking-wide">
+                    Latest News & Announcements
+                </h2>
+            </div>
+            
+            {{-- Live indicator --}}
+            <span class="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-full">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                <span class="text-[10px] font-semibold text-blue-700">LIVE</span>
+            </span>
+        </div>
 
         {{-- Search Bar --}}
-        <input
-            type="text"
-            placeholder="Search announcements..."
-            x-model="search"
-            class="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm
-                   focus:outline-none focus:ring-2 focus:ring-blue-400"
-        >
+        <div class="relative mb-5">
+            <input
+                type="text"
+                placeholder="Search announcements..."
+                x-model="search"
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
+            >
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            
+            {{-- Clear search button --}}
+            <button x-show="search" 
+                    @click="search = ''" 
+                    x-cloak
+                    class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
 
-        <div class="space-y-4 overflow-y-auto pr-1 flex-1">
-
+        {{-- Announcements List --}}
+        <div class="space-y-3 overflow-y-auto pr-1 flex-1 custom-scrollbar">
             <template
                 x-for="announcement in (
                     search
@@ -251,49 +385,99 @@ function closePrivacyBanner() {
                             a.content.toLowerCase().includes(search.toLowerCase())
                           )
                         : latestAnnouncements
-                ).slice(0, 2)"
+                ).slice(0, 5)"
                 :key="announcement.id"
             >
                 <a
                     :href="'{{ route('viewer.announcements') }}#announcement-' + announcement.id"
-                    class="group block rounded-xl border bg-gray-50 p-4
-                           hover:bg-gray-100 hover:shadow transition relative"
+                    class="group block rounded-xl border border-gray-100 bg-white p-4 hover:border-blue-200 hover:shadow-md transition-all duration-200 relative"
                 >
-                    <h4 class="font-semibold text-gray-800 group-hover:text-blue-600 transition"
-                        style="font-family: 'Poppins', sans-serif;"
+                    {{-- Type badge --}}
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-semibold border border-blue-200"
+                              x-text="announcement.type || 'NEWS'">
+                        </span>
+                        <span class="text-xs text-gray-400" 
+                              x-text="new Date(announcement.published_at).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                              })">
+                        </span>
+                    </div>
+
+                    {{-- Title --}}
+                    <h4 class="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors text-base mb-2"
                         x-text="announcement.title">
                     </h4>
 
-                    <p class="text-xs text-gray-400 mt-1"
-                       x-text="new Date(announcement.published_at)
-                           .toLocaleDateString('en-US', {
-                               month: 'short',
-                               day: '2-digit',
-                               year: 'numeric'
-                           })">
+                    {{-- Preview content --}}
+                    <p class="text-sm text-gray-600 line-clamp-2"
+                       x-text="announcement.content.length > 120
+                           ? announcement.content.substring(0,120) + '...'
+                           : announcement.content">
                     </p>
 
-                    <p class="text-sm text-gray-600 mt-2"
-                       x-text="
-                           announcement.content.length > 100
-                               ? announcement.content.substring(0,100) + '...'
-                               : announcement.content
-                       ">
-                    </p>
-
-                    <div class="absolute inset-0 bg-blue-50/20 opacity-0
-                                group-hover:opacity-100 transition
-                                rounded-xl pointer-events-none"></div>
+                    {{-- Read more indicator --}}
+                    <div class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span>Read more</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
                 </a>
             </template>
 
+            {{-- Empty state --}}
             <template x-if="search && allAnnouncements.length === 0">
-                <p class="text-sm text-gray-500">No announcements found.</p>
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+                    </svg>
+                    <p class="text-sm text-gray-500">No announcements found.</p>
+                    <button @click="search = ''" class="mt-2 text-xs text-blue-600 hover:text-blue-700">
+                        Clear search
+                    </button>
+                </div>
             </template>
+        </div>
 
+        {{-- View all link --}}
+        <div class="mt-4 pt-3 border-t border-gray-100">
+            <a href="{{ route('viewer.announcements') }}" 
+               class="flex items-center justify-between text-sm text-gray-600 hover:text-blue-700 transition-colors group">
+                <span class="font-medium">View all announcements</span>
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
         </div>
     </div>
 </section>
+
+{{-- Custom scrollbar for announcements --}}
+<style>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+.line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: hidden;
+    overflow: hidden;
+}
+</style>
 
 
     {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
@@ -623,76 +807,177 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
 
 
-            {{-- ================= RIGHT SECTION: UPCOMING EVENTS & GAMES ================= --}}
+           {{-- ================= RIGHT SECTION: UPCOMING EVENTS ================= --}}
 <section
     class="order-3 h-full"
     x-data="{
         eventSearch: '',
-        gameSearch: '',
 
         allEvents: {{ $allUpcomingEvents->toJson() }},
         latestEvents: {{ $latestUpcomingEvents->toJson() }},
-
-        allGames: {{ $allUpcomingGames->toJson() }},
-        latestGames: {{ $latestUpcomingGames->toJson() }},
+        
+        get filteredEvents() {
+            if (!this.eventSearch) return this.latestEvents.slice(0, 5);
+            return this.allEvents.filter(e =>
+                e.name?.toLowerCase().includes(this.eventSearch.toLowerCase()) ||
+                e.sport?.name?.toLowerCase().includes(this.eventSearch.toLowerCase())
+            ).slice(0, 5);
+        }
     }"
 >
-    <div class="h-full bg-white p-6 shadow-2xl flex flex-col">
+    <div class="h-full bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
 
-        {{-- ================= UPCOMING EVENTS ================= --}}
-        <div class="mb-8">
-            <h2 class="text-xl font-extrabold text-gray-900 uppercase tracking-wide mb-4">
-                Upcoming Events
-            </h2>
+        {{-- Header with blue icon --}}
+        <div class="flex items-center justify-between mb-5">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold text-gray-900 tracking-wide">
+                    Upcoming Events
+                </h2>
+            </div>
+            
+            {{-- Live indicator --}}
+            <span class="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-full">
+                <span class="relative flex h-2 w-2">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                </span>
+                <span class="text-[10px] font-semibold text-blue-700">LIVE</span>
+            </span>
+        </div>
 
+        {{-- Search Bar --}}
+        <div class="relative mb-4">
             <input
                 type="text"
-                placeholder="Search events..."
+                placeholder="Search events or sports..."
                 x-model="eventSearch"
-                class="mb-4 w-full rounded-lg border border-gray-300 p-2 text-sm
-                       focus:outline-none focus:ring-2 focus:ring-blue-400"
+                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
             >
-
-            <div class="space-y-3">
-                <template
-                    x-for="event in (
-                        eventSearch
-                            ? allEvents.filter(e =>
-                                e.name.toLowerCase().includes(eventSearch.toLowerCase())
-                              )
-                            : latestEvents
-                    ).slice(0, 2)"
-                    :key="event.id"
-                >
-                    <a
-                        :href="'{{ route('viewer.events') }}#event-' + event.id"
-                        class="block p-4 rounded-xl bg-gray-50 border
-                               hover:bg-gray-100 hover:shadow transition"
-                    >
-                        <div class="flex justify-between items-center">
-                            <span class="font-semibold text-gray-800 truncate"
-                                  x-text="event.name"></span>
-
-                            <span class="text-xs font-bold text-gray-500"
-                                  x-text="new Date(event.start_date)
-                                      .toLocaleDateString('en-US', {
-                                          month: 'short',
-                                          day: '2-digit'
-                                      })"></span>
-                        </div>
-
-                        <div class="mt-1 text-xs text-gray-500 space-y-1">
-                            <p>Sport: <span x-text="event.sport?.name ?? 'N/A'"></span></p>
-                            <p>Level: <span x-text="event.age_group ?? 'N/A'"></span></p>
-                            <p>Category: <span x-text="event.category ?? 'N/A'"></span></p>
-                        </div>
-                    </a>
-                </template>
-            </div>
+            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            
+            {{-- Clear search --}}
+            <button x-show="eventSearch" 
+                    @click="eventSearch = ''" 
+                    x-cloak
+                    class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
         </div>
+
+        {{-- Events List --}}
+        <div class="space-y-3 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+            <template x-for="event in filteredEvents" :key="event.id">
+                <a
+                    :href="'{{ route('viewer.events') }}#event-' + event.id"
+                    class="group block p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all duration-200"
+                >
+                    {{-- Event Header with date badge --}}
+                    <div class="flex items-start justify-between mb-2">
+                        <div>
+                            {{-- Sport Badge --}}
+                            <span class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-semibold border border-blue-200 mb-2"
+                                  x-text="event.sport?.name ?? 'TBA'">
+                            </span>
+                        </div>
+                        <span class="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded-full border border-gray-200"
+                              x-text="new Date(event.start_date).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric'
+                              })">
+                        </span>
+                    </div>
+
+                    {{-- Event Name --}}
+                    <h4 class="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors text-base mb-2"
+                        x-text="event.name">
+                    </h4>
+
+                    {{-- Event Details Grid --}}
+                    <div class="grid grid-cols-2 gap-y-2 mt-2">
+                        <div class="flex items-center gap-1 text-xs text-gray-500">
+                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span x-text="event.age_group ?? 'All'"></span>
+                        </div>
+                        <div class="flex items-center gap-1 text-xs text-gray-500">
+                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                            </svg>
+                            <span x-text="event.category ?? 'Open'"></span>
+                        </div>
+                        <div class="flex items-center gap-1 text-xs text-gray-500 col-span-2">
+                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span x-text="event.venue ?? 'TBA'" class="truncate"></span>
+                        </div>
+                    </div>
+
+                    {{-- Read more indicator --}}
+                    <div class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span>View event details</span>
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                    </div>
+                </a>
+            </template>
+
+            {{-- Empty State --}}
+            <template x-if="filteredEvents.length === 0">
+                <div class="text-center py-8">
+                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-sm text-gray-500">No events found</p>
+                    <button @click="eventSearch = ''" class="mt-2 text-xs text-blue-600 hover:text-blue-700">
+                        Clear search
+                    </button>
+                </div>
+            </template>
+        </div>
+
+        {{-- View all link --}}
+        <div class="mt-4 pt-3 border-t border-gray-100">
+            <a href="{{ route('viewer.events') }}" 
+               class="flex items-center justify-between text-sm text-gray-600 hover:text-blue-700 transition-colors group">
+                <span class="font-medium">View all events</span>
+                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                </svg>
+            </a>
         </div>
     </div>
 </section>
+
+{{-- Custom scrollbar for events --}}
+<style>
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
+}
+</style>
 {{-- ================= END DASHBOARD STRIP ================= --}}
 
 
