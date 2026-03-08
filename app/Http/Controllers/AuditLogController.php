@@ -36,7 +36,7 @@ class AuditLogController extends Controller
                 });
             })
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(15);
 
         $roles = Role::orderBy('name')->get();
 
@@ -69,7 +69,7 @@ class AuditLogController extends Controller
                 });
             })
             ->orderByDesc('created_at')
-            ->get();
+            ->paginate(15);
 
         $generatedAt = Carbon::now('Asia/Manila')->format('M d, Y h:i A');
 
