@@ -9,9 +9,11 @@
         <div>
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
+                    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" stroke-width="2" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20M2 12h20" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.9 5.9l12.2 12.2M18.1 5.9L5.9 18.1" />
+</svg>
                 </div>
                 <div>
                     <h1 class="text-2xl font-bold text-gray-900">Sports Management</h1>
@@ -118,9 +120,11 @@
 
             {{-- Count Badge --}}
             <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl">
-                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                </svg>
+                <svg class="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="10" stroke-width="2" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20M2 12h20" />
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.9 5.9l12.2 12.2M18.1 5.9L5.9 18.1" />
+</svg>
                 <span class="text-sm text-gray-600">
                     <span class="font-semibold">Total Sports:</span>
                     <span class="ml-1 font-bold text-gray-900">{{ $totalSports }}</span>
