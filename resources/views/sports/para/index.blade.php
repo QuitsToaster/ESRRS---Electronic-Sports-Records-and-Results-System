@@ -1,196 +1,287 @@
 @extends('layouts.app')
 
-@section('page-title', 'Para Games')
+@section('page-title', 'Para Games Management')
 
 @section('content')
-
-{{-- ================= INSTRUCTIONS / NOTES ================= --}}
-<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
-    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
-    <ul class="list-disc list-inside text-sm space-y-1">
-        <li>View all registered sports and their corresponding game types.</li>
-        <li>Use the checkboxes to select multiple sports for bulk deletion.</li>
-        <li>Click <strong>+ Add Sport</strong> to register a new sport.</li>
-        <li>Edit or delete individual sports using the Actions column.</li>
-        <li>Use the tabs above to switch between Regular Sports and Para Games.</li>
-    </ul>
-</div>
-
-
-{{-- Tabs --}}
-<div class="mb-6 border-b border-gray-200">
-    <nav class="flex gap-6">
-        <a href="{{ route('sports.index') }}"
-           class="pb-3 border-b-2 font-semibold
-                  border-transparent text-gray-500 hover:text-gray-700">
-            Regular Sports
-        </a>
-
-        <a href="{{ route('para-sports.index') }}"
-           class="pb-3 border-b-2 font-semibold
-                  border-blue-600 text-blue-600">
-            Para Games
-        </a>
-    </nav>
-</div>
-
-<div class="flex justify-between items-center mb-4">
-    <div class="flex items-center gap-4">
-        <p class="text-sm text-gray-600">
-            List of para games available in the system.
-        </p>
-
-        {{-- ✅ TOTAL PARA GAMES COUNT --}}
-        <span class="text-sm text-gray-600 font-medium">
-            Total Para Games: {{ $totalParaSports }}
-        </span>
-    </div>
-
-    <div class="flex gap-2">
-        <button id="bulkDeleteBtn"
-                type="button"
-                class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded shadow hidden">
-            Delete Selected
-        </button>
-
+<div class="space-y-6">
+    {{-- ================= HEADER WITH GRADIENT ================= --}}
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Para Games Management</h1>
+                    <p class="text-sm text-gray-500 mt-0.5">Manage all para games categories and game types</p>
+                </div>
+            </div>
+        </div>
+        
         <a href="{{ route('para-sports.create') }}"
-           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow">
-            + Add Para Game
+           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Para Game
         </a>
     </div>
-</div>
 
-@if(session('success'))
-    <div class="bg-green-100 text-green-800 p-4 rounded mb-4">
-        {{ session('success') }}
+    {{-- ================= INSTRUCTIONS CARD ================= --}}
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50/50 border border-blue-100 rounded-2xl p-5 shadow-sm">
+        <div class="flex items-start gap-3">
+            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div>
+                <h3 class="font-semibold text-blue-900 mb-2">Quick Guide</h3>
+                <ul class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1 text-sm text-blue-800/80">
+                    <li class="flex items-center gap-2">
+                        <span class="w-1 h-1 bg-blue-400 rounded-full"></span>
+                        View all registered para games and their game types
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="w-1 h-1 bg-blue-400 rounded-full"></span>
+                        Use checkboxes to select multiple para games for bulk deletion
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="w-1 h-1 bg-blue-400 rounded-full"></span>
+                        Click "Add Para Game" to register a new para sport
+                    </li>
+                    <li class="flex items-center gap-2">
+                        <span class="w-1 h-1 bg-blue-400 rounded-full"></span>
+                        Switch between Regular Sports and Para Games using tabs
+                    </li>
+                </ul>
+            </div>
+        </div>
     </div>
-@endif
 
-{{-- BULK DELETE FORM --}}
-<form id="bulkDeleteForm" action="{{ route('para-sports.bulkDelete') }}" method="POST">
-@csrf
-@method('DELETE')
+    {{-- Tabs --}}
+    <div class="border-b border-gray-200">
+        <nav class="flex gap-6">
+            <a href="{{ route('sports.index') }}"
+               class="pb-3 border-b-2 font-semibold text-sm transition-colors
+                      border-transparent text-gray-500 hover:text-gray-700">
+                Regular Sports
+            </a>
 
-<div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-x-auto">
-    <table class="min-w-full border-collapse">
-        <thead class="bg-gray-100 border-b border-gray-200">
-            <tr>
-                <th class="px-6 py-3">
-                    <input type="checkbox" id="selectAll">
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
-                    Para Game Name
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
-                    Type of Game
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-semibold uppercase">
-                    Category
-                </th>
-                <th class="px-6 py-3 text-right text-xs font-semibold uppercase">
-                    Actions
-                </th>
-            </tr>
-        </thead>
+            <a href="{{ route('para-sports.index') }}"
+               class="pb-3 border-b-2 font-semibold text-sm transition-colors
+                      border-blue-600 text-blue-600">
+                Para Games
+            </a>
+        </nav>
+    </div>
 
-        <tbody class="divide-y divide-gray-100">
-            @forelse($sports as $sport)
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4">
-                        <input type="checkbox"
-                               name="sports[]"
-                               value="{{ $sport->id }}"
-                               class="sport-checkbox">
-                    </td>
+    {{-- ================= FILTERS & STATS ================= --}}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <span class="text-sm text-gray-600">Manage para games and their categories</span>
+                </div>
+            </div>
 
-                    <td class="px-6 py-4 font-medium text-gray-800">
-                        {{ $sport->name }}
-                    </td>
+            {{-- Count Badge --}}
+            <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl">
+                <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                </svg>
+                <span class="text-sm text-gray-600">
+                    <span class="font-semibold">Total Para Games:</span>
+                    <span class="ml-1 font-bold text-gray-900">{{ $totalParaSports }}</span>
+                </span>
+            </div>
+        </div>
+    </div>
 
-                    <td class="px-6 py-4">
-                        @if($sport->types->count())
-                            <div class="flex flex-wrap gap-2">
-                                @foreach($sport->types as $type)
-                                    <span class="px-3 py-1 text-xs font-medium
-                                                 bg-purple-100 text-purple-700
-                                                 rounded-full">
-                                        {{ $type->type_name }}
-                                    </span>
-                                @endforeach
-                            </div>
-                        @else
-                            <span class="text-sm text-gray-400 italic">
-                                No type added
-                            </span>
-                        @endif
-                    </td>
-                    <td class="px-6 py-4 font-medium text-gray-800">
-                        {{ $sport->category }}
-                    </td>
+    {{-- Success Message --}}
+    @if(session('success'))
+        <div class="p-4 bg-emerald-50 border border-emerald-200 rounded-xl text-emerald-700 flex items-center gap-3">
+            <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-sm font-medium">{{ session('success') }}</span>
+        </div>
+    @endif
 
-                    <td class="px-6 py-4 text-right whitespace-nowrap">
-                        <a href="{{ route('para-sports.edit', $sport->id) }}"
-                           class="text-blue-600 hover:text-blue-800 font-medium mr-3">
-                            Edit
-                        </a>
+    {{-- Para Games Table --}}
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <form id="bulkDeleteForm" action="{{ route('para-sports.bulkDelete') }}" method="POST">
+            @csrf
+            @method('DELETE')
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 w-12">
+                                <input type="checkbox" id="selectAll" 
+                                       class="rounded border-gray-300 text-blue-600 focus:ring-blue-200">
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Para Game Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type of Game</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        @forelse($sports as $sport)
+                            <tr class="hover:bg-gray-50 transition-colors">
+                                <td class="px-6 py-4">
+                                    <input type="checkbox"
+                                           name="sports[]"
+                                           value="{{ $sport->id }}"
+                                           class="sport-checkbox rounded border-gray-300 text-blue-600 focus:ring-blue-200">
+                                </td>
 
-                        <form action="{{ route('para-sports.destroy', $sport->id) }}"
-                              method="POST"
-                              class="inline-block"
-                              onsubmit="return confirm('Delete this para game?');">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit"
-                                    class="text-red-600 hover:text-red-800 font-medium">
-                                Delete
-                            </button>
-                        </form>
-                    </td>
-                </tr>
-            @empty
-                <tr>
-                    <td colspan="4"
-                        class="px-6 py-6 text-center text-gray-500">
-                        No para games found.
-                    </td>
-                </tr>
-            @endforelse
-        </tbody>
-    </table>
+                                <td class="px-6 py-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ $sport->name }}</div>
+                                </td>
+
+                                <td class="px-6 py-4">
+                                    @if($sport->types->count())
+                                        <div class="flex flex-wrap gap-1">
+                                            @foreach($sport->types as $type)
+                                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full border border-blue-200">
+                                                    {{ $type->type_name }}
+                                                </span>
+                                            @endforeach
+                                        </div>
+                                    @else
+                                        <span class="text-xs text-gray-400 italic">No type added</span>
+                                    @endif
+                                </td>
+
+                                <td class="px-6 py-4 text-sm text-gray-600">
+                                    {{ $sport->category ?? '-' }}
+                                </td>
+
+                                <td class="px-6 py-4 text-right">
+                                    <div class="flex items-center justify-end gap-2">
+                                        <a href="{{ route('para-sports.edit', $sport->id) }}"
+                                           class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                           title="Edit">
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                            </svg>
+                                        </a>
+
+                                        <form action="{{ route('para-sports.destroy', $sport->id) }}"
+                                              method="POST"
+                                              onsubmit="return confirm('Are you sure you want to delete this para game?')"
+                                              class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit"
+                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                                    title="Delete">
+                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="px-6 py-12 text-center">
+                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                                        </svg>
+                                    </div>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-1">No para games found</h3>
+                                    <p class="text-gray-500 mb-4">Get started by adding your first para game</p>
+                                    <a href="{{ route('para-sports.create') }}" 
+                                       class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                        </svg>
+                                        Add Para Game
+                                    </a>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+
+            {{-- Bulk Delete Button (appears when items selected) --}}
+            <div class="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-between items-center">
+                <button id="bulkDeleteBtn"
+                        type="button"
+                        class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200 hidden">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Selected
+                </button>
+                <span id="selectedCount" class="text-sm text-gray-500"></span>
+            </div>
+        </form>
+    </div>
 </div>
 
-</form>
-
-{{-- JAVASCRIPT --}}
+{{-- JavaScript (unchanged functionality, only UI updated) --}}
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-
     const selectAll = document.getElementById('selectAll');
     const checkboxes = document.querySelectorAll('.sport-checkbox');
     const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
     const bulkDeleteForm = document.getElementById('bulkDeleteForm');
+    const selectedCount = document.getElementById('selectedCount');
+
+    function updateSelectedCount() {
+        const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+        if (selectedCount) {
+            selectedCount.textContent = checked > 0 ? `${checked} item(s) selected` : '';
+        }
+    }
 
     function toggleBulkButton() {
         const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-        bulkDeleteBtn.classList.toggle('hidden', !anyChecked);
+        if (bulkDeleteBtn) {
+            bulkDeleteBtn.classList.toggle('hidden', !anyChecked);
+        }
+        updateSelectedCount();
     }
 
-    selectAll.addEventListener('change', function () {
-        checkboxes.forEach(cb => cb.checked = selectAll.checked);
-        toggleBulkButton();
-    });
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            checkboxes.forEach(cb => cb.checked = selectAll.checked);
+            toggleBulkButton();
+        });
+    }
 
     checkboxes.forEach(cb => {
-        cb.addEventListener('change', toggleBulkButton);
+        cb.addEventListener('change', function() {
+            if (selectAll) {
+                selectAll.checked = Array.from(checkboxes).every(cb => cb.checked);
+            }
+            toggleBulkButton();
+        });
     });
 
-    bulkDeleteBtn.addEventListener('click', function () {
-        if (confirm('Are you sure you want to delete selected para games?')) {
-            bulkDeleteForm.submit();
-        }
-    });
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', function () {
+            const selectedIds = Array.from(checkboxes)
+                .filter(cb => cb.checked)
+                .map(cb => cb.value);
 
+            if (selectedIds.length === 0) return;
+
+            if (confirm(`Are you sure you want to delete ${selectedIds.length} selected para game(s)?`)) {
+                bulkDeleteForm.submit();
+            }
+        });
+    }
 });
 </script>
-
 @endsection

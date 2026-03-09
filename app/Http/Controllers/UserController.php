@@ -41,7 +41,7 @@ class UserController extends Controller
         $usersQuery->whereJsonContains('level_access', $levelFilter);
     }
 
-    // Division filter (match SDO name in user name or level_access)
+    // Division filter
     if ($divisionFilter) {
         $usersQuery->where('name', 'like', "%{$divisionFilter}%");
     }
@@ -52,12 +52,28 @@ class UserController extends Controller
     $roles = Role::all();
     $divisions = \App\Models\Division::orderBy('name')->get();
 
+    // Load sports and sport types
+    $sports = Sport::orderBy('division')
+        ->orderBy('category')
+        ->orderBy('name')
+        ->get();
+
+    $sportTypes = SportType::orderBy('type_name')->get();
+
     // Account requests for super admin
     $accountRequests = (auth()->user()->role->name === 'Super Admin') 
         ? \App\Models\AccountRequest::orderBy('created_at', 'desc')->get() 
         : collect();
 
-    return view('users.index', compact('users','totalUsers','roles','divisions','accountRequests'));
+    return view('users.index', compact(
+        'users', 
+        'totalUsers', 
+        'roles', 
+        'divisions', 
+        'accountRequests',
+        'sports',
+        'sportTypes'   // <-- pass these!
+    ));
 }
 
 
