@@ -237,246 +237,186 @@
 @if(auth()->user()->role->name === 'Super Admin')
 <div class="space-y-8 mb-10">
     
-    {{-- PENDING AWARDS --}}
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-transparent px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Pending Award Submissions</h2>
-                </div>
-                <span class="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">Awards waiting for approval</span>
-            </div>
-        </div>
-
-        @if($secretariesPendingAwards->isEmpty())
-            <div class="px-6 py-12 text-center">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <p class="text-gray-500">No pending award submissions from tournament secretaries.</p>
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Secretary</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sport</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($secretariesPendingAwards as $secretary)
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $secretary->name }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-600">{{ $secretary->email }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600 max-w-xs truncate">
-                                    @if(!empty($secretary->sports_access))
-                                        {{ collect($secretary->sports_access)->map(function($id) use ($sports) {
-                                            return optional($sports->firstWhere('id',$id))->name;
-                                        })->filter()->implode(', ') }}
-                                    @else
-                                        <span class="text-gray-400">N/A</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600 max-w-xs truncate">
-                                    @if(!empty($secretary->sport_type_access))
-                                        {{ collect($secretary->sport_type_access)->map(function($id) use ($sportTypes) {
-                                            return optional($sportTypes->firstWhere('id',$id))->type_name;
-                                        })->filter()->implode(', ') }}
-                                    @else
-                                        <span class="text-gray-400">N/A</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600">
-                                    {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600">
-                                    {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-full">
-                                    {{ $secretary->all_awards_pending_count + $secretary->individual_awards_pending_count }}
-                                </span>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
-
-    {{-- NEEDS REVISION --}}
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="border-b border-gray-100 bg-gradient-to-r from-rose-50 to-transparent px-6 py-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 bg-rose-100 rounded-lg flex items-center justify-center">
-                        <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
-                    </div>
-                    <h2 class="text-lg font-semibold text-gray-900">Awards Needing Revision</h2>
-                </div>
-                <span class="text-xs font-medium text-rose-600 bg-rose-50 px-3 py-1 rounded-full">Requires attention</span>
-            </div>
-        </div>
-
-        @if($secretaryRevisionList->isEmpty())
-            <div class="px-6 py-12 text-center">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                </div>
-                <p class="text-gray-500">No tournament secretaries currently have awards needing revision.</p>
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Secretary</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">All Awards</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Individual</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($secretaryRevisionList as $secretary)
-                        @php $total = $secretary->all_awards_revision_count + $secretary->individual_awards_revision_count; @endphp
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $secretary->name }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-600">{{ $secretary->email }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="text-sm font-semibold text-rose-600">{{ $secretary->all_awards_revision_count }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="text-sm font-semibold text-rose-600">{{ $secretary->individual_awards_revision_count }}</span>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-center">
-                                <span class="px-3 py-1 text-sm font-medium text-rose-700 bg-rose-50 rounded-full">{{ $total }}</span>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
-
-    {{-- NO SUBMISSIONS --}}
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div class="border-b border-gray-100 bg-gradient-to-r from-amber-50 to-transparent px-6 py-4">
+{{-- ================= PENDING AWARDS ================= --}}
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+    <div class="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-transparent px-6 py-4">
+        <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                 </div>
-                <h2 class="text-lg font-semibold text-gray-900">Secretaries Without Submissions</h2>
+                <h2 class="text-lg font-semibold text-gray-900">Pending Award Submissions</h2>
             </div>
-        </div>
 
-        @if($secretariesNoAwards->isEmpty())
-            <div class="px-6 py-12 text-center">
-                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                    </svg>
-                </div>
-                <p class="text-gray-500">All tournament secretaries have already submitted awards.</p>
-            </div>
-        @else
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Secretary</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sport</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($secretariesNoAwards as $secretary)
-                        <tr class="hover:bg-gray-50 transition-colors">
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">{{ $secretary->name }}</div>
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-600">{{ $secretary->email }}</div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600 max-w-xs truncate">
-                                    @if(!empty($secretary->sports_access))
-                                        {{ collect($secretary->sports_access)->map(function($id) use ($sports) {
-                                            return optional($sports->firstWhere('id', $id))->name;
-                                        })->filter()->implode(', ') }}
-                                    @else
-                                        <span class="text-gray-400">N/A</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600 max-w-xs truncate">
-                                    @if(!empty($secretary->sport_type_access))
-                                        {{ collect($secretary->sport_type_access)->map(function($id) use ($sportTypes) {
-                                            return optional($sportTypes->firstWhere('id', $id))->type_name;
-                                        })->filter()->implode(', ') }}
-                                    @else
-                                        <span class="text-gray-400">N/A</span>
-                                    @endif
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600">
-                                    {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
-                                </div>
-                            </td>
-                            <td class="px-6 py-4">
-                                <div class="text-sm text-gray-600">
-                                    {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
-                                </div>
-                            </td>
-                        </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
+            {{-- EXPORT PDF --}}
+            <a href="{{ route('dashboard.secretaries.export', 'pending') }}"
+               class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+               Export PDF
+            </a>
+        </div>
     </div>
+
+    {{-- TABLE --}}
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sport</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pending</th>
+                </tr>
+            </thead>
+
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach($secretariesPendingAwards as $secretary)
+                <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->email }}</td>
+
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ collect($secretary->sports_access ?? [])
+                        ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)
+                        ->filter()->implode(', ') ?: 'N/A' }}
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ collect($secretary->sport_type_access ?? [])
+                        ->map(fn($id)=>optional($sportTypes->firstWhere('id',$id))->type_name)
+                        ->filter()->implode(', ') ?: 'N/A' }}
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
+                    </td>
+
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
+                    </td>
+
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-full">
+                            {{ $secretary->all_awards_pending_count + $secretary->individual_awards_pending_count }}
+                        </span>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{{-- ================= NEEDS REVISION ================= --}}
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+    <div class="border-b border-gray-100 bg-gradient-to-r from-rose-50 to-transparent px-6 py-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Awards Needing Revision</h2>
+
+            {{-- EXPORT --}}
+            <a href="{{ route('dashboard.secretaries.export', 'revision') }}"
+               class="text-sm bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg">
+               Export PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">All Awards</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Individual</th>
+                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
+                </tr>
+            </thead>
+
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach($secretaryRevisionList as $secretary)
+                @php $total = $secretary->all_awards_revision_count + $secretary->individual_awards_revision_count; @endphp
+                <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->email }}</td>
+                    <td class="px-6 py-4 text-center text-rose-600 font-semibold">{{ $secretary->all_awards_revision_count }}</td>
+                    <td class="px-6 py-4 text-center text-rose-600 font-semibold">{{ $secretary->individual_awards_revision_count }}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-3 py-1 text-sm font-medium text-rose-700 bg-rose-50 rounded-full">{{ $total }}</span>
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+{{-- ================= NO SUBMISSIONS ================= --}}
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+    <div class="border-b border-gray-100 bg-gradient-to-r from-amber-50 to-transparent px-6 py-4">
+        <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Secretaries Without Submissions</h2>
+
+            {{-- EXPORT --}}
+            <a href="{{ route('dashboard.secretaries.export', 'no_submissions') }}"
+               class="text-sm bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg">
+               Export PDF
+            </a>
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sport</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
+                </tr>
+            </thead>
+
+            <tbody class="bg-white divide-y divide-gray-200">
+                @foreach($secretariesNoAwards as $secretary)
+                <tr>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->email }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ collect($secretary->sports_access ?? [])
+                        ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)
+                        ->filter()->implode(', ') ?: 'N/A' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ collect($secretary->sport_type_access ?? [])
+                        ->map(fn($id)=>optional($sportTypes->firstWhere('id',$id))->type_name)
+                        ->filter()->implode(', ') ?: 'N/A' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-600">
+                        {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
+                    </td>
+                </tr>
+                @endforeach
+            </tbody>
+
+        </table>
+    </div>
+
+</div>
+
 </div>
 @endif
 

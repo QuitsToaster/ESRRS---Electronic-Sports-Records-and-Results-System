@@ -17,6 +17,7 @@ use App\Models\Official;
 use App\Models\Announcement;
 use App\Models\Division;
 use App\Models\Result; 
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class DashboardController extends Controller
 {
@@ -177,5 +178,66 @@ $individualAwardsRevision = IndividualAwardResult::where('status','needs_revisio
     'allAwardsPending','allAwardsApproved','allAwardsRevision',
     'individualAwardsPending','individualAwardsApproved','individualAwardsRevision'
 ));
+}
+
+public function exportSecretariesPdf($type)
+{
+    if ($type == 'pending') {
+
+        $data = User::whereHas('role', fn($q) => $q->where('name', 'Tournament Secretary'))
+
+            ->where(function($q){
+                $q->whereHas('allAwards', fn($q)=>$q->where('status','pending'))
+                  ->orWhereHas('individualAwards', fn($q)=>$q->where('status','pending'));
+            })
+
+            ->withCount([
+                'allAwards as all_awards_pending_count' => fn($q)=>$q->where('status','pending'),
+                'individualAwards as individual_awards_pending_count' => fn($q)=>$q->where('status','pending')
+            ])
+
+            ->get();
+
+        $title = "Pending Award Submissions";
+    }
+
+    elseif ($type == 'revision') {
+
+        $data = User::whereHas('role', fn($q)=>$q->where('name','Tournament Secretary'))
+
+            ->where(function($q){
+                $q->whereHas('allAwards', fn($q)=>$q->where('status','needs_revision'))
+                  ->orWhereHas('individualAwards', fn($q)=>$q->where('status','needs_revision'));
+            })
+
+            ->withCount([
+                'allAwards as all_awards_revision_count' => fn($q)=>$q->where('status','needs_revision'),
+                'individualAwards as individual_awards_revision_count' => fn($q)=>$q->where('status','needs_revision')
+            ])
+
+            ->get();
+
+        $title = "Awards Needing Revision";
+    }
+
+    else {
+
+        $data = User::whereHas('role', fn($q)=>$q->where('name','Tournament Secretary'))
+            ->whereDoesntHave('allAwards')
+            ->whereDoesntHave('individualAwards')
+            ->get();
+
+        $title = "Secretaries Without Submissions";
+    }
+
+    $sports = Sport::all();
+    $sportTypes = SportType::all();
+
+    $pdf = Pdf::loadView(
+        'pdf.secretaries-report',
+        compact('data','title','sports','sportTypes')
+    )->setPaper('letter','portrait');
+
+    return $pdf->download('secretaries-report.pdf');
 }
 }
