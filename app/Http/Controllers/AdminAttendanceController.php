@@ -100,6 +100,6 @@ class AdminAttendanceController extends Controller
             'generatedAt' => now()->setTimezone('Asia/Manila')->format('M d, Y h:i A')
         ]);
 
-        return $pdf->download('attendance_' . now()->format('Ymd_His') . '.pdf');
+        return $pdf->download('eSRRS-attendance_' . now()->format('Ymd_His') . '.pdf');
     }
 }

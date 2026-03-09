@@ -276,6 +276,6 @@ class AttendanceController extends Controller
         'generatedAt'
     ));
 
-    return $pdf->download('attendance-report.pdf');
+    return $pdf->download('eSRRS-attendance-report.pdf');
 }
 }

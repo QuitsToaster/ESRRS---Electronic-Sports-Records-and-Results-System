@@ -78,6 +78,6 @@ class AuditLogController extends Controller
             'generatedAt' => $generatedAt,
         ])->setPaper('letter', 'portrait');
 
-        return $pdf->download('audit_logs_' . now()->format('Ymd_His') . '.pdf');
+        return $pdf->download('eSRRS-audit_logs_' . now()->format('Ymd_His') . '.pdf');
     }
 }

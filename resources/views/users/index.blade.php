@@ -234,7 +234,7 @@
             </a>
         </div>
     @else
-        <div x-data="passwordReset()" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+        <div x-data="userActions()" class="relative bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
@@ -328,28 +328,25 @@
                                         Edit
                                     </a>
 
-                                    <form action="{{ route('users.destroy', $user) }}" method="POST"
-                                          onsubmit="return confirm('Are you sure you want to delete this user?');"
-                                          class="inline">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit"
-                                                class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 text-sm font-medium">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                            Delete
-                                        </button>
-                                    </form>
+                                    {{-- DELETE BUTTON WITH MODAL --}}
                                     <button type="button"
-        @click="openModal('{{ $user->email }}', {{ $user->id }})"
-        class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium text-left">
-    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
-    </svg>
-    Reset Password
-</button>
+                                            @click="openDeleteModal({{ $user->id }}, '{{ $user->name }}')"
+                                            class="inline-flex items-center gap-1 text-red-600 hover:text-red-800 text-sm font-medium">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                        Delete
+                                    </button>
+
+                                    {{-- RESET PASSWORD BUTTON WITH MODAL --}}
+                                    <button type="button"
+                                            @click="openPasswordModal('{{ $user->email }}', {{ $user->id }})"
+                                            class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium text-left">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                        </svg>
+                                        Reset Password
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -365,8 +362,9 @@
             </div>
             @endif
 
-            {{-- Password Reset Confirmation Modal --}}
-    <div x-show="showModal" 
+
+    {{-- DELETE CONFIRMATION MODAL --}}
+    <div x-show="showDeleteModal" 
          x-cloak
          x-transition:enter="transition ease-out duration-300"
          x-transition:enter-start="opacity-0"
@@ -376,7 +374,60 @@
          x-transition:leave-end="opacity-0"
          class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
         
-        <div @click.away="showModal = false"
+        <div @click.away="showDeleteModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                </div>
+                
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Delete User</h2>
+                <p class="text-gray-600 mb-2">
+                    Are you sure you want to delete user <span class="font-semibold text-red-600" x-text="deleteUserName"></span>?
+                </p>
+                <p class="text-sm text-gray-500 mb-6">
+                    This action cannot be undone.
+                </p>
+                
+                <div class="flex gap-3">
+                    <button @click="showDeleteModal = false"
+                            class="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200">
+                        Cancel
+                    </button>
+                    <form method="POST" :action="deleteFormAction" class="flex-1">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                                class="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+                            Delete User
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- PASSWORD RESET CONFIRMATION MODAL --}}
+    <div x-show="showPasswordModal" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        
+        <div @click.away="showPasswordModal = false"
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 scale-95 translate-y-4"
              x-transition:enter-end="opacity-100 scale-100 translate-y-0"
@@ -394,18 +445,18 @@
                 
                 <h2 class="text-xl font-bold text-gray-900 mb-2">Reset Password</h2>
                 <p class="text-gray-600 mb-2">
-                    Reset password for <span class="font-semibold text-blue-600" x-text="email"></span>?
+                    Reset password for <span class="font-semibold text-blue-600" x-text="passwordEmail"></span>?
                 </p>
                 <p class="text-sm text-gray-500 mb-6">
                     Password will be reset to: <span class="font-mono font-bold text-amber-600 bg-amber-50 px-2 py-1 rounded-lg">ESRRS@2026</span>
                 </p>
                 
                 <div class="flex gap-3">
-                    <button @click="showModal = false"
+                    <button @click="showPasswordModal = false"
                             class="flex-1 px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200">
                         Cancel
                     </button>
-                    <button @click="confirmReset()"
+                    <button @click="confirmPasswordReset()"
                             class="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
                         Reset Password
                     </button>
@@ -413,9 +464,85 @@
             </div>
         </div>
     </div>
+
+    {{-- SUCCESS MODAL --}}
+    <div x-show="showSuccessModal" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        
+        <div @click.away="showSuccessModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Success!</h2>
+                <p class="text-gray-600 mb-6" x-text="successMessage"></p>
+                
+                <button @click="showSuccessModal = false"
+                        class="w-full px-4 py-2.5 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- ERROR MODAL --}}
+    <div x-show="showErrorModal" 
+         x-cloak
+         x-transition:enter="transition ease-out duration-300"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-200"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+        
+        <div @click.away="showErrorModal = false"
+             x-transition:enter="transition ease-out duration-300"
+             x-transition:enter-start="opacity-0 scale-95 translate-y-4"
+             x-transition:enter-end="opacity-100 scale-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-200"
+             x-transition:leave-start="opacity-100 scale-100 translate-y-0"
+             x-transition:leave-end="opacity-0 scale-95 translate-y-4"
+             class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
+            
+            <div class="text-center">
+                <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                
+                <h2 class="text-xl font-bold text-gray-900 mb-2">Error</h2>
+                <p class="text-gray-600 mb-6" x-text="errorMessage"></p>
+                
+                <button @click="showErrorModal = false"
+                        class="w-full px-4 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
         </div>
     @endif
-</div>
 
 {{-- Custom scrollbar styles --}}
 <style>
@@ -435,28 +562,49 @@
 }
 </style>
 
-{{-- JS for password reset --}}
+{{-- JS for user actions --}}
 <script>
-function passwordReset() {
+function userActions() {
     return {
-        showModal: false,
-        email: '',
-        userId: null,
+        // Password reset modal
+        showPasswordModal: false,
+        passwordEmail: '',
+        passwordUserId: null,
+        
+        // Delete modal
+        showDeleteModal: false,
+        deleteUserId: null,
+        deleteUserName: '',
+        deleteFormAction: '',
+        
+        // Success/Error modals
+        showSuccessModal: false,
+        successMessage: '',
+        showErrorModal: false,
+        errorMessage: '',
 
-        openModal(email, id) {
-            this.email = email;
-            this.userId = id;
-            this.showModal = true;
+        openPasswordModal(email, id) {
+            this.passwordEmail = email;
+            this.passwordUserId = id;
+            this.showPasswordModal = true;
         },
 
-        confirmReset() {
+        openDeleteModal(id, name) {
+            this.deleteUserId = id;
+            this.deleteUserName = name;
+            this.deleteFormAction = `{{ url('users') }}/${id}`;
+            this.showDeleteModal = true;
+        },
 
-            if(!this.userId){
-                alert("User ID missing");
+        confirmPasswordReset() {
+            if (!this.passwordUserId) {
+                this.showPasswordModal = false;
+                this.errorMessage = "User ID missing";
+                this.showErrorModal = true;
                 return;
             }
 
-            fetch("{{ url('/users') }}/" + this.userId + "/reset-password", {
+            fetch(`{{ url('users') }}/${this.passwordUserId}/reset-password`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -469,17 +617,15 @@ function passwordReset() {
             })
             .then(response => response.json())
             .then(data => {
-
-                alert(data.message || "Password reset successfully");
-
-                this.showModal = false;
-
+                this.showPasswordModal = false;
+                this.successMessage = data.message || "Password reset successfully";
+                this.showSuccessModal = true;
             })
             .catch(error => {
-
                 console.error(error);
-                alert("Something went wrong resetting the password.");
-
+                this.showPasswordModal = false;
+                this.errorMessage = "Something went wrong resetting the password.";
+                this.showErrorModal = true;
             });
         }
     }
