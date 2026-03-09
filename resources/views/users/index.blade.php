@@ -341,14 +341,15 @@
                                             Delete
                                         </button>
                                     </form>
-
-                                    <button @click="openModal('{{ $user->email }}', {{ $user->id }})"
-                                            class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium text-left">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-                                        </svg>
-                                        Reset Password
-                                    </button>
+                                    <button type="button"
+        @click="openModal('{{ $user->email }}', {{ $user->id }})"
+        class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-sm font-medium text-left">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+    </svg>
+    Reset Password
+</button>
                                 </div>
                             </td>
                         </tr>
@@ -363,10 +364,8 @@
                 {{ $users->withQueryString()->links() }}
             </div>
             @endif
-        </div>
-    @endif
 
-    {{-- Password Reset Confirmation Modal --}}
+            {{-- Password Reset Confirmation Modal --}}
     <div x-show="showModal" 
          x-cloak
          x-transition:enter="transition ease-out duration-300"
@@ -414,6 +413,8 @@
             </div>
         </div>
     </div>
+        </div>
+    @endif
 </div>
 
 {{-- Custom scrollbar styles --}}
@@ -441,28 +442,44 @@ function passwordReset() {
         showModal: false,
         email: '',
         userId: null,
+
         openModal(email, id) {
             this.email = email;
             this.userId = id;
             this.showModal = true;
         },
+
         confirmReset() {
-            fetch(`/users/${this.userId}/reset-password`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}' 
+
+            if(!this.userId){
+                alert("User ID missing");
+                return;
+            }
+
+            fetch("{{ url('/users') }}/" + this.userId + "/reset-password", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                    "Accept": "application/json"
                 },
-                body: JSON.stringify({ password: 'ESRRS@2026' })
+                body: JSON.stringify({
+                    password: "ESRRS@2026"
+                })
             })
-            .then(res => res.json())
-            .then(data => { 
-                alert(data.message); 
-                this.showModal = false; 
+            .then(response => response.json())
+            .then(data => {
+
+                alert(data.message || "Password reset successfully");
+
+                this.showModal = false;
+
             })
-            .catch(err => { 
-                alert('Something went wrong'); 
-                console.error(err); 
+            .catch(error => {
+
+                console.error(error);
+                alert("Something went wrong resetting the password.");
+
             });
         }
     }
