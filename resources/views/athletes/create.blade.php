@@ -119,6 +119,14 @@
            class="w-full border rounded px-3 py-2">
 </div>
 
+{{-- ✅ NEW: LEGISLATIVE DISTRICT --}}
+<div class="mb-4">
+    <label>Legislative District</label>
+    <input name="legislative_district"
+           placeholder="e.g., 1st District"
+           class="w-full border rounded px-3 py-2">
+</div>
+
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
     <div>
         <label>School Division</label>

@@ -98,6 +98,15 @@
     </div>
 </div>
 
+{{-- ✅ NEW: LEGISLATIVE DISTRICT --}}
+<div class="mb-4">
+    <label class="font-medium">Legislative District</label>
+    <input name="legislative_district"
+           value="{{ old('legislative_district',$athlete->legislative_district) }}"
+           placeholder="e.g., 1st District"
+           class="w-full border rounded px-3 py-2">
+</div>
+
 <div class="grid grid-cols-2 gap-4 mb-4">
     <div>
         <label class="font-medium">School Division</label>

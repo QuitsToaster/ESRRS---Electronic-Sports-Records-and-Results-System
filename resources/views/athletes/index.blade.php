@@ -314,6 +314,7 @@ function closeExportModal() {
     <th class="px-4 py-2 text-left">Division</th>
     <th class="px-4 py-2 text-left">Event</th>
     <th class="px-4 py-2 text-left">Municipality/Town/City</th>
+    <th class="px-4 py-2 text-left">Legislative District</th>
     <th class="px-4 py-2 text-left">School</th>
     <th class="px-4 py-2 text-left">School Type</th>
     <th class="px-4 py-2 text-left">School Address</th>
@@ -355,6 +356,7 @@ function closeExportModal() {
     <td class="px-4 py-2">SDO - {{ $athlete->school_division ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->event ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->municipality ?? '—' }}</td>
+    <td class="px-4 py-2">{{ $athlete->legislative_district ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school->name ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school_type ?? '—' }}</td>
     <td class="px-4 py-2">{{ $athlete->school_address ?? '—' }}</td>

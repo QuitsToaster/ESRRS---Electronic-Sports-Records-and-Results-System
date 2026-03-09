@@ -36,6 +36,7 @@ class Athlete extends Model
     'status',
     'qr_code',
     'profile_photo',
+    'legislative_district',
 ];
 
 

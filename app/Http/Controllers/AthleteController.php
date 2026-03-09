@@ -183,6 +183,7 @@ class AthleteController extends Controller
             'school_code'       => $request->school_code,
             'lrn'               => $request->lrn,
             'profile_photo'     => $photoPath,
+            'legislative_district'   => $request->legislative_district ?? null,
         ]);
 
         return redirect()->route('athletes.index')
@@ -211,6 +212,7 @@ class AthleteController extends Controller
             'category'         => 'required|in:Boys,Girls',
             'status'           => 'required|in:Active,Disqualified,Injured',
             'profile_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+            'legislative_district' => 'nullable|string|max:255',
         ]);
 
         $oldValues = $athlete->toArray();
@@ -237,6 +239,7 @@ class AthleteController extends Controller
             'municipality' => $request->municipality,
             'school_code'       => $request->school_code,
             'lrn'               => $request->lrn,
+            'legislative_district'   => $request->legislative_district ?? null,
         ]);
 
         AuditLog::create([

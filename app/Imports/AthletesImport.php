@@ -65,6 +65,8 @@ class AthletesImport implements ToCollection, WithHeadingRow
 
                 'lrn'             => $row['lrn'],
                 'status'          => 'Active',
+
+                'legislative_district' => $row['legislative_district'] ?? null,
             ]);
         }
     }
