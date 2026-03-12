@@ -1,6 +1,6 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
-    RewriteCond %{REQUEST_URI} !^/caraa-monitoring/public/
+    RewriteCond %{REQUEST_URI} !^/cavraa-monitoring/public/
     RewriteRule ^(.*)$ /cavraa-monitoring/public/$1 [L,QSA]
 </IfModule>
