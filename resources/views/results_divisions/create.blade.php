@@ -149,6 +149,13 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
     </ul>
 </div>
 
+@if(!$currentEvent)
+<div class="p-4 mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 rounded shadow-sm">
+    <strong>No Active Event Found.</strong>
+    You can still open this page, but results cannot be submitted until an event is activated.
+</div>
+@endif
+
 {{-- ============================================================= --}}
 {{-- 🟡 PENDING AWARDS NEEDING REVISION (TOURNAMENT SECRETARY) --}}
 {{-- ============================================================= --}}
@@ -844,7 +851,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 @csrf
 
-<input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
+<input type="hidden" name="event_id" value="{{ $currentEvent?->id }}">
 <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 
@@ -1048,7 +1055,7 @@ Editing Disabled
 
 @csrf
 
-<input type="hidden" name="event_id" value="{{ $currentEvent->id }}">
+<input type="hidden" name="event_id" value="{{ $currentEvent?->id }}">
 <input type="hidden" name="division" value="{{ $tab['division'] }}">
 @if(!is_null($tab['category']))
     <input type="hidden" name="category" value="{{ $tab['category'] }}">

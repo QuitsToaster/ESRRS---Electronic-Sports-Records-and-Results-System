@@ -198,62 +198,77 @@ class AthleteController extends Controller
     }
 
     public function update(Request $request, Athlete $athlete)
-    {
-        $request->validate([
-            'first_name'       => 'required|string|max:255',
-            'middle_initial'   => 'nullable|string|max:1',
-            'last_name'        => 'required|string|max:255',
-            'sex'              => 'required|in:Male,Female',
-            'birthdate'        => 'nullable|date',
-            'school_id'        => 'required|exists:schools,id',
-            'municipality' => 'nullable|string|max:255',
-            'sport_id'         => 'required|exists:sports,id',
-            'division'         => 'required|in:Elementary,Secondary,Paragames',
-            'category'         => 'required|in:Boys,Girls',
-            'status'           => 'required|in:Active,Disqualified,Injured',
-            'profile_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
-            'legislative_district' => 'nullable|string|max:255',
-        ]);
+{
+    // ✅ Flexible validation (no required fields)
+    $request->validate([
+        'first_name'       => 'nullable|string|max:255',
+        'middle_initial'   => 'nullable|string|max:1',
+        'last_name'        => 'nullable|string|max:255',
+        'sex'              => 'nullable|in:Male,Female',
+        'birthdate'        => 'nullable|date',
+        'school_id'        => 'nullable|exists:schools,id',
+        'municipality'     => 'nullable|string|max:255',
+        'sport_id'         => 'nullable|exists:sports,id',
+        'division'         => 'nullable|in:Elementary,Secondary,Paragames',
+        'category'         => 'nullable|in:Boys,Girls',
+        'status'           => 'nullable|in:Active,Disqualified,Injured',
+        'profile_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
+        'legislative_district' => 'nullable|string|max:255',
+        'lrn'              => 'nullable|string|max:20',
+    ]);
 
-        $oldValues = $athlete->toArray();
+    $oldValues = $athlete->toArray();
 
-        if ($request->hasFile('profile_photo')) {
-            $athlete->profile_photo = $request->file('profile_photo')->store('athletes', 'public');
-        }
+    // ✅ Handle photo
+    $photoPath = $athlete->profile_photo;
 
-        $athlete->update([
-            'first_name'        => $request->first_name,
-            'middle_initial'    => $request->middle_initial,
-            'last_name'         => $request->last_name,
-            'sex'               => $request->sex,
-            'birthdate'         => $request->birthdate,
-            'school_id'         => $request->school_id,
-            'sport_id'          => $request->sport_id,
-            'division'          => $request->division,
-            'category'          => $request->category,
-            'status'            => $request->status,
-            'region'            => $request->region,
-            'school_type'       => $request->school_type,
-            'school_address'    => $request->school_address,
-            'school_division'   => $request->school_division,
-            'municipality' => $request->municipality,
-            'school_code'       => $request->school_code,
-            'lrn'               => $request->lrn,
-            'legislative_district'   => $request->legislative_district ?? null,
-        ]);
-
-        AuditLog::create([
-            'model_type' => 'Athlete',
-            'model_id'   => $athlete->id,
-            'user_id'    => Auth::id(),
-            'old_values' => json_encode($oldValues),
-            'new_values' => json_encode($athlete->toArray()),
-            'action'     => 'Updated Athlete: ' . "{$athlete->last_name}, {$athlete->first_name}",
-        ]);
-
-        return redirect()->route('athletes.index')
-            ->with('success', 'Athlete updated successfully!');
+    if ($request->hasFile('profile_photo')) {
+        $photoPath = $request->file('profile_photo')->store('athletes', 'public');
     }
+
+    // ✅ Only update fields that are NOT NULL (preserve old data)
+    $data = array_filter([
+        'first_name'            => $request->first_name,
+        'middle_initial'        => $request->middle_initial,
+        'last_name'             => $request->last_name,
+        'sex'                   => $request->sex,
+        'birthdate'             => $request->birthdate,
+        'school_id'             => $request->school_id,
+        'sport_id'              => $request->sport_id,
+        'division'              => $request->division,
+        'category'              => $request->category,
+        'status'                => $request->status,
+        'region'                => $request->region,
+        'school_type'           => $request->school_type,
+        'school_address'        => $request->school_address,
+        'school_division'       => $request->school_division,
+        'municipality'          => $request->municipality,
+        'school_code'           => $request->school_code,
+        'lrn'                   => $request->lrn,
+        'legislative_district'  => $request->legislative_district,
+    ], function ($value) {
+        return !is_null($value);
+    });
+
+    // ✅ Always include photo (so it updates properly)
+    $data['profile_photo'] = $photoPath;
+
+    // ✅ Perform update
+    $athlete->update($data);
+
+    // ✅ Audit Log
+    AuditLog::create([
+        'model_type' => 'Athlete',
+        'model_id'   => $athlete->id,
+        'user_id'    => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($athlete->fresh()->toArray()),
+        'action'     => 'Updated Athlete: ' . "{$athlete->last_name}, {$athlete->first_name}",
+    ]);
+
+    return redirect()->route('athletes.index')
+        ->with('success', 'Athlete updated successfully!');
+}
 
     public function destroy(Athlete $athlete)
     {

@@ -6,6 +6,18 @@
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
 <form action="{{ route('athletes.update',$athlete->id) }}" method="POST" enctype="multipart/form-data">
+
+@if ($errors->any())
+    <div class="bg-red-100 text-red-700 p-3 mb-4 rounded">
+        <strong>Errors:</strong>
+        <ul class="list-disc ml-5">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 @csrf
 @method('PUT')
 

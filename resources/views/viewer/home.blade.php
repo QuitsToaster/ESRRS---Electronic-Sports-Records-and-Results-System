@@ -3,20 +3,25 @@
 @section('page-title', 'Home')
 
 @section('content')
- {{-- ================= DATA PRIVACY SLIDE-UP ================= --}}
-<div id="privacyBanner"
-     class="fixed bottom-0 left-0 right-0 z-50 bg-black shadow-2xl border-t border-black
-            transform translate-y-full transition-transform duration-500 ease-out">
+ {{-- ================= DATA PRIVACY MODAL ================= --}}
+<div id="privacyModal"
+     class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm
+            opacity-0 pointer-events-none transition-opacity duration-300">
 
-    <div class="max-w-7xl mx-auto px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="bg-white w-full max-w-lg rounded-xl shadow-2xl p-6
+                transform scale-95 transition-transform duration-300"
+         id="privacyModalContent">
 
-        <div class="text-sm text-gray-100 leading-relaxed">
-            <strong class="block text-white mb-1">Data Privacy Notice</strong>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">
+            Data Privacy Notice
+        </h3>
+
+        <p class="text-sm text-gray-600 leading-relaxed mb-4">
             In compliance with the Data Privacy Act of 2012 (RA 10173), this system collects and processes
             data strictly for event monitoring and system operations. By continuing, you agree to this use.
-        </div>
+        </p>
 
-        <div class="flex gap-3 shrink-0">
+        <div class="flex justify-end gap-3">
             <button onclick="declinePrivacy()"
                     class="px-4 py-2 rounded-md bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold transition">
                 Decline
@@ -30,33 +35,39 @@
 
     </div>
 </div>
-{{-- ================= END DATA PRIVACY SLIDE-UP ================= --}}
+{{-- ================= END DATA PRIVACY MODAL ================= --}}
 
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const banner = document.getElementById('privacyBanner');
+    const modal = document.getElementById('privacyModal');
+    const content = document.getElementById('privacyModalContent');
 
-    // Show only once per browser session
     if (!sessionStorage.getItem('privacyAccepted')) {
         setTimeout(() => {
-            banner.classList.remove('translate-y-full');
-        }, 500);
+            modal.classList.remove('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+        }, 300);
     }
 });
 
 function acceptPrivacy() {
     sessionStorage.setItem('privacyAccepted', 'true');
-    closePrivacyBanner();
+    closePrivacyModal();
 }
 
 function declinePrivacy() {
     window.location.href = 'about:blank';
 }
 
-function closePrivacyBanner() {
-    const banner = document.getElementById('privacyBanner');
-    banner.classList.add('translate-y-full');
+function closePrivacyModal() {
+    const modal = document.getElementById('privacyModal');
+    const content = document.getElementById('privacyModalContent');
+
+    modal.classList.add('opacity-0', 'pointer-events-none');
+    content.classList.remove('scale-100');
+    content.classList.add('scale-95');
 }
 </script>
 
