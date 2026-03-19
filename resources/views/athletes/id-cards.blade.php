@@ -18,22 +18,21 @@
 
         /* PAGE CONTAINER = EXACT HEIGHT FIT FOR 2 CARDS */
         .page {
-            height: 10.2in;
-        }
-
-        table {
-    width: auto; /* prevents stretching */
-    border-collapse: collapse;
-    border-spacing: 0; /* removes hidden spacing */
-    margin: 0 auto; /* keeps centered */
+    width: 100%;
 }
 
-        td {
-            padding: 0; /* remove gap */
-            margin: 0;
-            text-align: center;
-            vertical-align: top;
-        }
+        table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    font-size: 0; /* 🔥 removes inline spacing */
+}
+
+td {
+    padding: 0;
+    margin: 0;
+    font-size: 0; /* 🔥 critical */
+}
 
         /* CARD SIZE */
         .card {
@@ -45,62 +44,85 @@
             display: block;
         }
 
-        /* FRONT TEXT */
-        .name {
-            position: absolute;
-            top: 2.9in;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 24px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #02367B;
-        }
+        /* COMMON TEXT HANDLING */
+.text-fit {
+    width: 90%;
+    margin: 0 auto;
+    text-align: center;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.1;
+}
 
-        .school {
-            position: absolute;
-            top: 3.35in;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 500;
-            color: #02367B;
-        }
+/* NAME */
+.name {
+    position: absolute;
+    top: 2.7in;
+    left: 0;
+    right: 0;
 
-        .division {
-            position: absolute;
-            top: 3.55in;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 12px;
-            font-weight: 500;
-            color: #02367B;
-        }
+    font-size: 22px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #02367B;
 
-        .sport {
-            position: absolute;
-            top: 3.70in;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 32px;
-            font-weight: 700;
-            color: white;
-        }
+    max-height: 0.5in;
+    overflow: hidden;
+}
 
-        .level {
-            position: absolute;
-            top: 4.35in;
-            left: 0;
-            right: 0;
-            text-align: center;
-            font-size: 14px;
-            font-weight: 700;
-            color: #02367B;
-        }
+/* SCHOOL */
+.school {
+    position: absolute;
+    top: 3.35in;
+    left: 0;
+    right: 0;
+
+    font-size: 11px;
+    font-weight: 500;
+    color: #02367B;
+
+    max-height: 0.35in;
+    overflow: hidden;
+}
+
+/* DIVISION */
+.division {
+    position: absolute;
+    top: 3.55in;
+    left: 0;
+    right: 0;
+
+    font-size: 11px;
+    font-weight: 500;
+    color: #02367B;
+}
+
+/* SPORT */
+.sport {
+    position: absolute;
+    top: 3.70in;
+    left: 0;
+    right: 0;
+
+    font-size: 24px; /* reduced from 32 */
+    font-weight: 700;
+    color: white;
+
+    max-height: 0.5in;
+    overflow: hidden;
+}
+
+/* LEVEL */
+.level {
+    position: absolute;
+    top: 4.35in;
+    left: 0;
+    right: 0;
+
+    font-size: 13px;
+    font-weight: 700;
+    color: #02367B;
+}
 
         /* PHOTO */
         .photo {
@@ -137,8 +159,12 @@
         }
 
         .row-spacing {
-            height: 0.2in;
-        }
+    height: 0.05in; /* or remove completely */
+}
+
+.card {
+    page-break-inside: avoid;
+}
     </style>
 </head>
 <body>
@@ -150,10 +176,7 @@
     @foreach($pair as $athlete)
 
         <table>
-            <tr>
-
-                {{-- FRONT --}}
-                <td>
+            <tr><td>
                     <div class="card"
                         style="background-image: url('{{ public_path('storage/id_templates/id-template-front.png') }}');">
 
@@ -162,23 +185,27 @@
                                 src="{{ public_path('storage/'.$athlete->profile_photo) }}">
                         @endif
 
-                        <div class="name">
-                            {{ $athlete->last_name }}, {{ $athlete->first_name }}
+                        <div class="name text-fit"
+     style="font-size:
+        {{ strlen($athlete->last_name . $athlete->first_name) > 20 ? '18px' : '22px' }}">
+                            {{ $athlete->first_name }} {{ $athlete->middle_initial }} {{ $athlete->last_name }}
                         </div>
 
-                        <div class="school">
+                        <div class="school text-fit">
                             {{ $athlete->school->name ?? '' }}
                         </div>
 
-                        <div class="division">
+                        <div class="division text-fit">
                             SDO - {{ $athlete->school_division ?? '' }}
                         </div>
 
-                        <div class="sport">
+                        <div class="sport text-fit"
+     style="font-size:
+        {{ strlen($athlete->event) > 15 ? '18px' : '24px' }}">
                             {{ $athlete->event ?? '' }}
                         </div>
 
-                        <div class="level">
+                        <div class="level text-fit">
                             {{ $athlete->level ?? '' }} {{ $athlete->category ?? '' }}
                         </div>
 
