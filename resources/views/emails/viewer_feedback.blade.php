@@ -8,9 +8,9 @@
 {{ $data['message'] }}
 
 @component('mail::button', ['url' => config('app.url')])
-View CAVRAA Monitoring System
+View eSRRS
 @endcomponent
 
 Thanks,<br>
-{{ config('app.name') }}
+{{ config('app.name') }} Support Team
 @endcomponent

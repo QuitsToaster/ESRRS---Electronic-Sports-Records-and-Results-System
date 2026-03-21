@@ -441,7 +441,7 @@ public function feedbacks()
         ]);
 
         // Send email to Bryan
-        Mail::to('bryanlloydtan@gmail.com')->send(new ViewerFeedback($request->all()));
+        Mail::to('esrrs.support@gmail.com')->send(new ViewerFeedback($request->all()));
 
         return back()->with('success', 'Thank you for your feedback! We will review it shortly.');
     }
