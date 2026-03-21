@@ -11,6 +11,17 @@
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
 <form action="{{ route('athletes.store') }}" method="POST" enctype="multipart/form-data">
+
+@if ($errors->any())
+    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
+        <strong>Whoops! Something went wrong:</strong>
+        <ul class="mt-2 list-disc list-inside text-sm">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 @csrf
 
 {{-- ================= ATHLETE INFO ================= --}}
@@ -25,7 +36,7 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
     <div>
         <label>First Name</label>
-        <input name="first_name" class="w-full border rounded px-3 py-2" required>
+        <input name="first_name" class="w-full border rounded px-3 py-2">
     </div>
 
     <div>
@@ -38,14 +49,14 @@
 
     <div>
         <label>Last Name</label>
-        <input name="last_name" class="w-full border rounded px-3 py-2" required>
+        <input name="last_name" class="w-full border rounded px-3 py-2">
     </div>
 </div>
 
 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
     <div>
         <label>Sex</label>
-        <select name="sex" class="w-full border rounded px-3 py-2" required>
+        <select name="sex" class="w-full border rounded px-3 py-2">
             <option value="">Select</option>
             <option>Male</option>
             <option>Female</option>
@@ -170,7 +181,7 @@
 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
     <div>
         <label>Level</label>
-        <select name="division" class="w-full border rounded px-3 py-2" required>
+        <select name="division" class="w-full border rounded px-3 py-2">
             <option value="">Select Level</option>
             <option value="Elementary">Elementary</option>
             <option value="Secondary">Secondary</option>

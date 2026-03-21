@@ -107,28 +107,28 @@ class AthleteController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'first_name'      => 'required|string|max:255',
-            'middle_initial'  => 'nullable|string|max:1',
-            'last_name'       => 'required|string|max:255',
-            'sex'             => 'required|in:Male,Female',
-            'birthdate'       => 'nullable|date',
+    'first_name'      => 'nullable|string|max:255',
+    'middle_initial'  => 'nullable|string|max:1',
+    'last_name'       => 'nullable|string|max:255',
+    'sex'             => 'nullable|in:Male,Female',
+    'birthdate'       => 'nullable|date',
 
-            'school_id'       => 'nullable|exists:schools,id',
-            'school_name'     => 'nullable|string|max:255',
-            'school_logo'     => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+    'school_id'       => 'nullable|exists:schools,id',
+    'school_name'     => 'nullable|string|max:255',
+    'school_logo'     => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
 
-            'sport_id'        => 'nullable|exists:sports,id',
-            'sport_name'      => 'nullable|string|max:255',
-            'municipality'  => 'nullable|string|max:255',
+    'sport_id'        => 'nullable|exists:sports,id',
+    'sport_name'      => 'nullable|string|max:255',
+    'municipality'    => 'nullable|string|max:255',
 
-            'division'        => 'required|in:Elementary,Secondary,Paragames',
-            'category'        => 'required|in:Boys,Girls',
-            'status'          => 'required|in:Active,Injured,Disqualified',
+    'division'        => 'nullable|in:Elementary,Secondary,Paragames',
+    'category'        => 'nullable|in:Boys,Girls',
+    'status'          => 'nullable|in:Active,Injured,Disqualified',
 
-            'profile_photo'   => 'nullable|image|max:2048',
-            'lrn'             => 'nullable|string|max:20|unique:athletes,lrn',
-            'school_type'     => 'nullable|in:Public,Private',
-        ]);
+    'profile_photo'   => 'nullable|image|max:2048',
+    'lrn'             => 'nullable|string|max:20|unique:athletes,lrn',
+    'school_type'     => 'nullable|in:Public,Private',
+]);
 
         /* ================= SCHOOL AUTO-CREATE ================= */
         if (!$request->school_id && $request->school_name) {

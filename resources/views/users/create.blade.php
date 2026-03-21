@@ -7,6 +7,17 @@
 <div class="bg-white shadow rounded-lg p-6 w-full">
 
 <form action="{{ route('users.store') }}" method="POST" class="space-y-6">
+
+@if ($errors->any())
+    <div class="mb-4 p-4 rounded-lg border border-red-400 bg-red-100 text-red-700">
+        <strong class="block mb-2">Whoops! Something went wrong:</strong>
+        <ul class="list-disc list-inside text-sm space-y-1">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
 @csrf
 
 {{-- BASIC INFO --}}
