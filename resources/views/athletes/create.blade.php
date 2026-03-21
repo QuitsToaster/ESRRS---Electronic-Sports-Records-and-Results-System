@@ -12,12 +12,35 @@
 
 <form action="{{ route('athletes.store') }}" method="POST" enctype="multipart/form-data">
 
+{{-- GLOBAL ERROR --}}
+@if(session('error'))
+    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-800 rounded">
+        <strong class="block mb-1">System Error:</strong>
+        <p class="text-sm">{{ session('error') }}</p>
+
+        {{-- OPTIONAL DEBUG (REMOVE IN PRODUCTION) --}}
+        @if(session('debug_error'))
+            <details class="mt-2 text-xs text-gray-600">
+                <summary class="cursor-pointer">Technical Details</summary>
+                <pre class="whitespace-pre-wrap">{{ session('debug_error') }}</pre>
+            </details>
+        @endif
+    </div>
+@endif
+
+{{-- VALIDATION ERRORS (FIELD SPECIFIC) --}}
 @if ($errors->any())
-    <div class="mb-4 p-4 bg-red-100 border border-red-400 text-red-700 rounded">
-        <strong>Whoops! Something went wrong:</strong>
-        <ul class="mt-2 list-disc list-inside text-sm">
-            @foreach ($errors->all() as $error)
-                <li>{{ $error }}</li>
+    <div class="mb-4 p-4 bg-red-50 border border-red-300 text-red-800 rounded">
+        <strong class="block mb-2">Please fix the following fields:</strong>
+
+        <ul class="space-y-1 text-sm">
+            @foreach ($errors->messages() as $field => $messages)
+                <li>
+                    <span class="font-semibold text-red-700">
+                        {{ ucwords(str_replace('_', ' ', $field)) }}:
+                    </span>
+                    {{ $messages[0] }}
+                </li>
             @endforeach
         </ul>
     </div>

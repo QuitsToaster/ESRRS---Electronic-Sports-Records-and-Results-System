@@ -106,104 +106,118 @@ class AthleteController extends Controller
 
    public function store(Request $request)
 {
-    $request->validate([
-        'first_name'      => 'nullable|string|max:255',
-        'middle_initial'  => 'nullable|string|max:1',
-        'last_name'       => 'nullable|string|max:255',
-        'sex'             => 'nullable|in:Male,Female',
-        'birthdate'       => 'nullable|date',
+    try {
 
-        'school_id'       => 'nullable|exists:schools,id',
-        'school_name'     => 'nullable|string|max:255',
-        'school_logo'     => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
+        $request->validate([
+            'first_name'      => 'nullable|string|max:255',
+            'middle_initial'  => 'nullable|string|max:1',
+            'last_name'       => 'nullable|string|max:255',
+            'sex'             => 'nullable|in:Male,Female',
+            'birthdate'       => 'nullable|date',
 
-        'sport_id'        => 'nullable|exists:sports,id',
-        'sport_name'      => 'nullable|string|max:255',
-        'municipality'    => 'nullable|string|max:255',
+            'school_id'       => 'nullable|exists:schools,id',
+            'school_name'     => 'nullable|string|max:255',
+            'school_logo'     => 'nullable|image|mimes:png,jpg,jpeg|max:2048',
 
-        'division'        => 'nullable|in:Elementary,Secondary,Paragames',
-        'category'        => 'nullable|in:Boys,Girls',
-        'status'          => 'nullable|in:Active,Injured,Disqualified',
+            'sport_id'        => 'nullable|exists:sports,id',
+            'sport_name'      => 'nullable|string|max:255',
+            'municipality'    => 'nullable|string|max:255',
 
-        'profile_photo'   => 'nullable|image|max:2048',
+            'division'        => 'nullable|in:Elementary,Secondary,Paragames',
+            'category'        => 'nullable|in:Boys,Girls',
+            'status'          => 'nullable|in:Active,Injured,Disqualified',
 
-        // ❌ REMOVE UNIQUE
-        'lrn'             => 'nullable|string|max:20',
+            'profile_photo'   => 'nullable|image|max:2048',
+            'lrn'             => 'nullable|string|max:20',
+            'school_type'     => 'nullable|in:Public,Private',
+        ]);
 
-        'school_type'     => 'nullable|in:Public,Private',
-    ]);
+        $val = function ($field) use ($request) {
+            return $request->$field ? $request->$field : 'N/A';
+        };
 
-    // 🔥 Helper function: convert empty to N/A
-    $val = function ($field) use ($request) {
-        return $request->$field ? $request->$field : 'N/A';
-    };
+        /* ================= SCHOOL ================= */
+        if (!$request->school_id && $request->school_name) {
 
-    /* ================= SCHOOL AUTO-CREATE ================= */
-    if (!$request->school_id && $request->school_name) {
+            $logoPath = null;
+            if ($request->hasFile('school_logo')) {
+                $logoPath = $request->file('school_logo')->store('logos', 'public');
+            }
 
-        $logoPath = null;
-        if ($request->hasFile('school_logo')) {
-            $logoPath = $request->file('school_logo')->store('logos', 'public');
+            $school = School::firstOrCreate(
+                ['name' => $request->school_name],
+                [
+                    'division'        => $val('division'),
+                    'school_division' => $val('school_division'),
+                    'school_type'     => $val('school_type'),
+                    'school_address'  => $val('school_address'),
+                    'school_code'     => $val('school_code'),
+                    'logo'            => $logoPath,
+                ]
+            );
+
+            $schoolId = $school->id;
+
+        } else {
+            $schoolId = $request->school_id;
         }
 
-        $school = School::firstOrCreate(
-            ['name' => $request->school_name],
-            [
-                'division'        => $val('division'),
-                'school_division' => $val('school_division'),
-                'school_type'     => $val('school_type'),
-                'school_address'  => $val('school_address'),
-                'school_code'     => $val('school_code'),
-                'logo'            => $logoPath,
-            ]
-        );
+        $sportId = $request->sport_id ?? null;
 
-        $schoolId = $school->id;
+        $photoPath = null;
+        if ($request->hasFile('profile_photo')) {
+            $photoPath = $request->file('profile_photo')->store('athletes', 'public');
+        }
 
-    } else {
-        $schoolId = $request->school_id;
+        Athlete::create([
+            'first_name'        => $val('first_name'),
+            'middle_initial'    => $val('middle_initial'),
+            'last_name'         => $val('last_name'),
+            'sex'               => $val('sex'),
+            'birthdate'         => $request->birthdate ?? null,
+            'school_id'         => $schoolId,
+            'sport_id'          => $sportId,
+            'division'          => $val('division'),
+            'category'          => $val('category'),
+            'municipality'      => $val('municipality'),
+            'status'            => $val('status'),
+            'region'            => $val('region'),
+            'school_type'       => $val('school_type'),
+            'school_address'    => $val('school_address'),
+            'school_division'   => $val('school_division'),
+            'school_code'       => $val('school_code'),
+            'lrn'               => $request->lrn ?: 'N/A',
+            'profile_photo'     => $photoPath,
+            'legislative_district' => $val('legislative_district'),
+        ]);
+
+        return redirect()->route('athletes.index')
+            ->with('success', 'Athlete added successfully!');
+
+    } catch (\Throwable $e) {
+
+    $message = 'Failed to save athlete.';
+
+    // 🔥 HANDLE DUPLICATE LRN
+    if (str_contains($e->getMessage(), 'athletes_lrn_unique')) {
+        $message = 'Duplicate LRN detected. This LRN is already assigned to another athlete.';
     }
 
-    /* ================= SPORT ================= */
-    $sportId = $request->sport_id ?? null;
-
-    /* ================= PHOTO ================= */
-    $photoPath = null;
-    if ($request->hasFile('profile_photo')) {
-        $photoPath = $request->file('profile_photo')->store('athletes', 'public');
+    // 🔥 HANDLE FOREIGN KEY (INVALID SCHOOL / SPORT)
+    elseif (str_contains($e->getMessage(), 'foreign key')) {
+        $message = 'Invalid selection detected (School or Sport may not exist).';
     }
 
-    /* ================= SAVE ATHLETE ================= */
-    Athlete::create([
-        'first_name'        => $val('first_name'),
-        'middle_initial'    => $val('middle_initial'),
-        'last_name'         => $val('last_name'),
-        'sex'               => $val('sex'),
-        'birthdate'         => $request->birthdate ?? null,
+    // 🔥 HANDLE IMAGE ERRORS
+    elseif (str_contains($e->getMessage(), 'image')) {
+        $message = 'Image upload failed. Please use a valid image file.';
+    }
 
-        'school_id'         => $schoolId,
-        'sport_id'          => $sportId,
-
-        'division'          => $val('division'),
-        'category'          => $val('category'),
-        'municipality'      => $val('municipality'),
-        'status'            => $val('status'),
-
-        'region'            => $val('region'),
-        'school_type'       => $val('school_type'),
-        'school_address'    => $val('school_address'),
-        'school_division'   => $val('school_division'),
-        'school_code'       => $val('school_code'),
-
-        // ✅ LRN accepts empty & duplicates
-        'lrn'               => $request->lrn ?: 'N/A',
-
-        'profile_photo'     => $photoPath,
-        'legislative_district' => $val('legislative_district'),
-    ]);
-
-    return redirect()->route('athletes.index')
-        ->with('success', 'Athlete added successfully!');
+    return back()
+        ->withInput()
+        ->with('error', $message)
+        ->with('debug_error', $e->getMessage()); // optional (for dev only)
+}
 }
 
     public function edit(Athlete $athlete)
