@@ -242,6 +242,10 @@ Route::post('/reject-all-award', [ResultAllAwardController::class, 'reject'])
 Route::post('/reject-individual-award', [ResultIndividualAwardController::class, 'reject'])
     ->name('reject_individual_awards');
 
+    // Add inside the auth middleware group
+Route::post('/results/all-awards/forward-for-validation', [ResultAllAwardController::class, 'forwardForValidation'])
+    ->name('all-awards.forward-for-validation');
+
     // All Awards
 Route::delete('/results/all-awards/{award}', [ResultAllAwardController::class, 'revise'])
     ->name('results_all_awards.revise');
@@ -253,6 +257,38 @@ Route::delete('/results/individual-awards/{award}', [ResultIndividualAwardContro
     ->name('results_individual.revise');
 
     
+/*
+|--------------------------------------------------------------------------
+| All Awards Routes
+|--------------------------------------------------------------------------
+*/
+Route::prefix('results/all-awards')->group(function () {
+
+    // Store all awards
+    Route::post('/', [ResultAllAwardController::class, 'store'])
+        ->name('results_all_awards.store');
+
+    // Forward for validation (Tournament Secretary)
+    Route::post('/forward-for-validation', [ResultAllAwardController::class, 'forwardForValidation'])
+        ->name('all-awards.forward-for-validation');
+
+    // Approve all awards
+    Route::post('/approve', [ResultAllAwardController::class, 'approveAll'])
+        ->name('approve_all_awards');
+
+    // Reject all awards
+    Route::post('/reject', [ResultAllAwardController::class, 'reject'])
+        ->name('reject_all_awards');
+
+    // Revise (delete) all awards
+    Route::delete('/{award}', [ResultAllAwardController::class, 'revise'])
+        ->name('results_all_awards.revise');
+
+    // Optional alternative revise route (keep if used in Blade)
+    Route::delete('/revise/{id}', [ResultAllAwardController::class, 'revise'])
+        ->name('all-awards.revise');
+});
+
     /*
     |--------------------------------------------------------------------------
     | Audit Logs
