@@ -138,14 +138,30 @@ class AttendanceController extends Controller
             'qr_code' => 'required|string',
         ]);
 
-        $code = trim($request->qr_code);
+        $code = $request->qr_code;
 
-        $athlete = Athlete::where('qr_code', $code)->first();
-        $coach = null;
+// ✅ Normalize scanned QR
+$code = strtoupper($code);
+$code = preg_replace('/[^A-Z0-9]/', '', $code); // remove EVERYTHING except letters & numbers
 
-        if (!$athlete) {
-            $coach = Coach::where('qr_code', $code)->first();
-        }
+// 🔍 Normalize DB values during comparison
+$athlete = Athlete::all()->first(function ($a) use ($code) {
+    $dbCode = strtoupper($a->qr_code);
+    $dbCode = preg_replace('/[^A-Z0-9]/', '', $dbCode);
+
+    return $dbCode === $code;
+});
+
+$coach = null;
+
+if (!$athlete) {
+    $coach = Coach::all()->first(function ($c) use ($code) {
+        $dbCode = strtoupper($c->qr_code);
+        $dbCode = preg_replace('/[^A-Z0-9]/', '', $dbCode);
+
+        return $dbCode === $code;
+    });
+}
 
         if (!$athlete && !$coach) {
             return back()->with('error', 'QR Code not recognized.');

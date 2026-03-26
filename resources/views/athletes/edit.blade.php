@@ -196,6 +196,29 @@
     </select>
 </div>
 
+{{-- ✅ QR CODE VALUE (MANUAL EDIT) --}}
+<div class="mb-6">
+    <label class="font-medium">QR Code Value</label>
+    
+    <input name="qr_code"
+           value="{{ old('qr_code', $athlete->qr_code) }}"
+           class="w-full border rounded px-3 py-2"
+           placeholder="Paste original QR code value here">
+
+    <p class="text-sm text-gray-500 mt-1">
+        ⚠️ Important: This must match the QR used in attendance scanning.
+    </p>
+
+    {{-- OPTIONAL: SHOW CURRENT QR --}}
+    @if($athlete->qr_code)
+        <div class="mt-3">
+            <label class="text-sm text-gray-600">Current QR Preview:</label>
+            <img src="{{ route('athletes.qr', $athlete->id) }}"
+                 class="w-32 h-32 border mt-1">
+        </div>
+    @endif
+</div>
+
 <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded shadow">
     Update Athlete
 </button>

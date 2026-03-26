@@ -245,6 +245,7 @@ class AthleteController extends Controller
         'profile_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         'legislative_district' => 'nullable|string|max:255',
         'lrn'              => 'nullable|string|max:20',
+        'qr_code'           => 'nullable|string|max:255',
     ]);
 
     $oldValues = $athlete->toArray();
@@ -276,6 +277,7 @@ class AthleteController extends Controller
         'school_code'           => $request->school_code,
         'lrn'                   => $request->lrn,
         'legislative_district'  => $request->legislative_district,
+        'qr_code'               => $request->qr_code,
     ], function ($value) {
         return !is_null($value);
     });
