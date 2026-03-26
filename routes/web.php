@@ -167,7 +167,8 @@ Route::resource('sports', SportController::class);
     Route::post('athletes/bulk-upload', [AthleteController::class, 'bulkUpload'])->name('athletes.bulkUpload');
     Route::get('/athletes/export-id-pdf', [AthleteController::class, 'exportIdPdf'])
     ->name('athletes.exportIdPdf');
-
+    Route::get('/athletes/search', [AthleteController::class, 'search'])
+    ->name('athletes.search');
     
     /*
     |--------------------------------------------------------------------------

@@ -343,9 +343,10 @@ class AthleteController extends Controller
 {
     $user = auth()->user();
 
-    $division = $request->input('school_division');
-    $start = $request->input('start');
-    $end = $request->input('end');
+    $division   = $request->input('school_division');
+    $start      = $request->input('start');
+    $end        = $request->input('end');
+    $athleteId  = $request->input('athlete_id'); // ✅ ADD THIS
 
     $query = Athlete::with(['school', 'sport'])
         ->orderBy('last_name')
@@ -361,8 +362,13 @@ class AthleteController extends Controller
         }
     }
 
-    // 🟢 Super Admin Division Filter
-    if ($division) {
+    // 🟢 ✅ PRIORITY: SELECTED ATHLETE ONLY
+    if ($athleteId) {
+        $query->where('id', $athleteId);
+    }
+
+    // 🟢 Super Admin Division Filter (only if NOT selecting specific athlete)
+    elseif ($division) {
         $query->where('school_division', $division);
     }
 
@@ -370,7 +376,7 @@ class AthleteController extends Controller
        ATHLETE RANGE LOGIC
     ========================== */
 
-    if ($start && $end) {
+    elseif ($start && $end) {
 
         $start = max(1, (int) $start);
         $end   = max($start, (int) $end);
@@ -395,18 +401,23 @@ class AthleteController extends Controller
         . "Total Exported: {$athletes->count()} | "
         . "Division: {$exportedDivision}";
 
+    if ($athleteId) {
+        $actionDescription .= " | Selected Athlete ID: {$athleteId}";
+    }
+
     if ($start && $end) {
         $actionDescription .= " | Athlete Range: {$start}-{$end}";
     }
 
     AuditLog::create([
         'model_type' => 'Athlete',
-        'model_id'   => 0,
+        'model_id'   => $athleteId ?? 0,
         'user_id'    => $user->id,
         'old_values' => null,
         'new_values' => json_encode([
             'exported_count' => $athletes->count(),
             'division'       => $exportedDivision,
+            'athlete_id'     => $athleteId,
             'start'          => $start,
             'end'            => $end,
         ]),
@@ -425,6 +436,44 @@ class AthleteController extends Controller
     return $pdf->download(
         'athlete-id-cards-' . $athletes->count() . '.pdf'
     );
+}
+
+public function search(Request $request)
+{
+    $query = strtolower(trim($request->q));
+
+    $query = str_replace(',', ' ', $query);
+    $words = array_filter(explode(' ', $query));
+
+    $athletes = Athlete::with('school')
+        ->get()
+        ->filter(function ($a) use ($words) {
+
+            $first  = strtolower($a->first_name ?? '');
+            $middle = strtolower($a->middle_initial ?? '');
+            $last   = strtolower($a->last_name ?? '');
+
+            $full1 = trim("$first $middle $last");
+            $full2 = trim("$last $first $middle");
+
+            foreach ($words as $w) {
+                if (
+                    !str_contains($full1, $w) &&
+                    !str_contains($full2, $w) &&
+                    !str_contains($first, $w) &&
+                    !str_contains($last, $w) &&
+                    !str_contains($middle, $w)
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
+        })
+        ->take(50) // limit results for performance
+        ->values();
+
+    return response()->json($athletes);
 }
 
 }

@@ -66,7 +66,7 @@
         </form>
     @endif
 
-    {{-- EXPORT ID PDF --}}
+   {{-- EXPORT ID PDF --}}
 <button onclick="openExportModal()"
         class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow inline-flex items-center gap-2">
     Export ID PDF
@@ -76,128 +76,125 @@
 <div id="exportModal"
      class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50">
 
-    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6 relative">
+    <div class="bg-white w-full max-w-5xl rounded-lg shadow-lg p-6 relative flex gap-6">
 
+        {{-- CLOSE BUTTON --}}
         <button onclick="closeExportModal()"
                 class="absolute top-3 right-3 text-xl text-gray-500 hover:text-black">
             &times;
         </button>
 
-        <h3 class="text-lg font-bold mb-2">Export Athlete ID Cards</h3>
+        {{-- ================= LEFT SIDE ================= --}}
+        <div class="w-1/2">
 
-        <p class="text-sm text-gray-600 mb-4">
-            ⚠️ Exporting many athletes may slow down the system.
-        </p>
+            <h3 class="text-lg font-bold mb-2">Export Athlete ID Cards</h3>
 
-        {{-- ================= EXPORT ALL ================= --}}
-        <a href="{{ route('athletes.exportIdPdf') }}"
-           class="block w-full text-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mb-3">
-            Export ALL Athletes
-        </a>
+            <p class="text-sm text-gray-600 mb-4">
+                ⚠️ Exporting many athletes may slow down the system.
+            </p>
 
-        <hr class="my-4">
+            {{-- ================= SEARCH ATHLETE ================= --}}
+            <div class="mb-4">
+                <label class="text-sm font-semibold">Search Athlete</label>
+                <input type="text"
+                       id="athleteSearch"
+                       placeholder="Type first or last name..."
+                       class="w-full border rounded px-3 py-2 mt-1">
 
-        {{-- ================= EXPORT BY ATHLETE RANGE ================= --}}
-<form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3 mb-4">
+                <div id="searchResults"
+                     class="border rounded mt-2 max-h-40 overflow-y-auto hidden bg-white shadow">
+                </div>
+            </div>
 
-    <label class="text-sm font-medium">
-        Export by Athlete Number Range
-    </label>
+            {{-- EXPORT SELECTED ATHLETE --}}
+            <form method="GET" action="{{ route('athletes.exportIdPdf') }}">
+                <input type="hidden" name="athlete_id" id="selectedAthleteId">
 
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label class="text-xs text-gray-600">Start Athlete</label>
-            <input type="number"
-                   name="start"
-                   min="1"
-                   value="1"
-                   class="w-full border rounded px-3 py-2"
-                   required>
+                <button type="submit"
+                        class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded mb-3">
+                    Export Selected Athlete
+                </button>
+            </form>
+
+            <hr class="my-4">
+
+            {{-- EXPORT ALL --}}
+            <a href="{{ route('athletes.exportIdPdf') }}"
+               class="block w-full text-center bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mb-3">
+                Export ALL Athletes
+            </a>
+
+            <hr class="my-4">
+
+            {{-- RANGE --}}
+            <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3 mb-4">
+
+                <label class="text-sm font-medium">
+                    Export by Athlete Number Range
+                </label>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" name="start" min="1" value="1"
+                           class="w-full border rounded px-3 py-2" required>
+
+                    <input type="number" name="end" min="1" value="10"
+                           class="w-full border rounded px-3 py-2" required>
+                </div>
+
+                <button type="submit"
+                        class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
+                    Export Athlete Range
+                </button>
+
+            </form>
+
+            {{-- SUPER ADMIN --}}
+            @if($isSuperAdmin)
+
+            <hr class="my-4">
+
+            <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
+
+                <select name="school_division"
+                        class="w-full border rounded px-3 py-2"
+                        required>
+                    <option value="">Select Division</option>
+                    @foreach($divisions as $division)
+                        <option value="{{ $division }}">
+                            SDO - {{ $division }}
+                        </option>
+                    @endforeach
+                </select>
+
+                <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+                    Export Selected Division
+                </button>
+
+            </form>
+
+            @endif
+
         </div>
 
-        <div>
-            <label class="text-xs text-gray-600">End Athlete</label>
-            <input type="number"
-                   name="end"
-                   min="1"
-                   value="10"
-                   class="w-full border rounded px-3 py-2"
-                   required>
+        {{-- ================= RIGHT SIDE (REAL ID PREVIEW) ================= --}}
+        <div class="w-1/2 flex flex-col items-center justify-center">
+
+            <h4 class="font-semibold mb-3">ID Preview</h4>
+
+            <div id="previewCard"
+     class="w-[320px] h-[220px] bg-gray-200 rounded shadow flex items-center justify-center">
+
+                No athlete selected
+
+            </div>
+
         </div>
-    </div>
-
-    <p class="text-xs text-gray-500">
-        Example: 1–10, 11–20, 21–30
-    </p>
-
-    <button type="submit"
-            class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded">
-        Export Athlete Range
-    </button>
-
-</form>
-
-        {{-- ================= SUPER ADMIN ONLY ================= --}}
-@if($isSuperAdmin)
-
-<hr class="my-4">
-
-<h4 class="font-semibold text-sm mb-2 text-gray-700">
-    Export by Division (Super Admin Only)
-</h4>
-
-<form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
-
-    {{-- Select Division --}}
-    <select name="school_division"
-            class="w-full border rounded px-3 py-2"
-            required>
-        <option value="">Select Division</option>
-        @foreach($divisions as $division)
-            <option value="{{ $division }}">
-                SDO - {{ $division }}
-            </option>
-        @endforeach
-    </select>
-
-    {{-- Athlete Range --}}
-    <div class="grid grid-cols-2 gap-3">
-        <div>
-            <label class="text-xs text-gray-600">Start Athlete</label>
-            <input type="number"
-                   name="start"
-                   min="1"
-                   placeholder="1"
-                   class="w-full border rounded px-3 py-2">
-        </div>
-
-        <div>
-            <label class="text-xs text-gray-600">End Athlete</label>
-            <input type="number"
-                   name="end"
-                   min="1"
-                   placeholder="50"
-                   class="w-full border rounded px-3 py-2">
-        </div>
-    </div>
-
-    <p class="text-xs text-gray-500">
-        Example: 1–50, 51–100, 101–150
-    </p>
-
-    <button type="submit"
-            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-        Export Selected Division
-    </button>
-
-</form>
-
-@endif
 
     </div>
 </div>
 
-{{-- EXPORT MODAL SCRIPT --}}
+{{-- ================= SCRIPT ================= --}}
 <script>
 function openExportModal() {
     document.getElementById('exportModal').classList.remove('hidden');
@@ -207,6 +204,142 @@ function openExportModal() {
 function closeExportModal() {
     document.getElementById('exportModal').classList.add('hidden');
     document.getElementById('exportModal').classList.remove('flex');
+}
+
+/* ================= AJAX SEARCH (FULL DATABASE) ================= */
+let typingTimer;
+document.getElementById('athleteSearch').addEventListener('input', function () {
+
+    let query = this.value.trim();
+    let resultsBox = document.getElementById('searchResults');
+
+    clearTimeout(typingTimer);
+
+    if (query.length < 2) {
+        resultsBox.classList.add('hidden');
+        resultsBox.innerHTML = '';
+        return;
+    }
+
+    typingTimer = setTimeout(() => {
+
+        fetch(`/athletes/search?q=${encodeURIComponent(query)}`)
+            .then(res => res.json())
+            .then(data => {
+
+                resultsBox.innerHTML = '';
+
+                if (data.length === 0) {
+                    resultsBox.innerHTML = `
+                        <div class="px-3 py-2 text-gray-500 text-sm">
+                            No results found
+                        </div>
+                    `;
+                    resultsBox.classList.remove('hidden');
+                    return;
+                }
+
+                data.forEach(a => {
+
+                    let item = document.createElement('div');
+                    item.className = 'px-3 py-2 hover:bg-gray-100 cursor-pointer border-b';
+
+                    item.innerHTML = `
+                        <div class="font-medium">
+                            ${a.last_name}, ${a.first_name} ${a.middle_initial ?? ''}
+                        </div>
+                        <div class="text-xs text-gray-500">
+                            ${a.school?.name ?? 'No School'}
+                        </div>
+                    `;
+
+                    item.onclick = function () {
+                        selectAthlete(a);
+                        resultsBox.classList.add('hidden');
+                    };
+
+                    resultsBox.appendChild(item);
+                });
+
+                resultsBox.classList.remove('hidden');
+            });
+
+    }, 300); // debounce
+
+});
+
+/* ================= SELECT ATHLETE + REAL PREVIEW ================= */
+function selectAthlete(a) {
+
+    document.getElementById('selectedAthleteId').value = a.id;
+
+    let photo = a.profile_photo
+        ? `/storage/${a.profile_photo}`
+        : '';
+
+    // 🔥 Generate QR using API (same as backend)
+    let qrUrl = `/athletes/${a.id}/qr`;
+
+    document.getElementById('previewCard').innerHTML = `
+        <div style="display:flex; gap:10px;">
+
+            <!-- ================= FRONT ================= -->
+            <div style="width:140px;height:200px;position:relative;
+                background-image:url('/storage/id_templates/id-template-front.png');
+                background-size:cover;border-radius:6px;overflow:hidden;">
+
+                ${photo ? `<img src="${photo}"
+                    style="position:absolute;top:40px;left:50%;transform:translateX(-50%);
+                    width:45px;height:60px;object-fit:cover;border-radius:4px;">` : ''}
+
+                <div style="position:absolute;top:110px;width:100%;
+                    font-weight:bold;font-size:8px;color:#02367B;text-align:center;">
+                    ${a.last_name}, ${a.first_name} ${a.middle_initial ?? ''}
+                </div>
+
+                <div style="position:absolute;top:125px;width:100%;
+                    font-size:6px;color:#02367B;text-align:center;">
+                    ${a.school?.name ?? ''}
+                </div>
+
+                <div style="position:absolute;top:135px;width:100%;
+                    font-size:6px;color:#02367B;text-align:center;">
+                    SDO - ${a.school_division ?? ''}
+                </div>
+
+                <div style="position:absolute;top:145px;width:100%;
+                    font-size:9px;font-weight:bold;color:white;text-align:center;">
+                    ${a.event ?? ''}
+                </div>
+
+                <div style="position:absolute;top:170px;width:100%;
+                    font-size:7px;font-weight:bold;color:#02367B;text-align:center;">
+                    ${a.level ?? ''} ${a.category ?? ''}
+                </div>
+
+            </div>
+
+            <!-- ================= BACK ================= -->
+            <div style="width:140px;height:200px;position:relative;
+                background-image:url('/storage/id_templates/id-template-back.png');
+                background-size:cover;border-radius:6px;overflow:hidden;">
+
+                <div style="position:absolute;top:30px;width:100%;text-align:center;">
+
+                    <img src="${qrUrl}"
+                        style="width:60px;height:60px;">
+
+                    <div style="margin-top:4px;
+                        font-size:6px;font-weight:bold;color:#02367B;">
+                        ${a.qr_code ?? ''}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    `;
 }
 </script>
 
