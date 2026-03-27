@@ -833,10 +833,100 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 @endphp
 
 {{-- ================================================= --}}
-{{-- 🏆 ALL AWARDS FORM (DYNAMIC UNLIMITED DIVISIONS) --}}
+{{-- 🏆 ALL AWARDS FORM / VIEW --}}
 {{-- ================================================= --}}
 
-{{-- Single form wrapping all events --}}
+{{-- ================= TOURNAMENT MANAGER VIEW ================= --}}
+@if($user->role->name === 'Tournament Manager')
+
+    @foreach($events as $event)
+        @php
+            $awards = \App\Models\AllAwardResult::where('event_id', $event->id)
+                ->where('division', $tab['division'])
+                ->where('category', $tab['category'] ?? null)
+                ->where('status', 'pending')
+                ->get()
+                ->groupBy('medal');
+        @endphp
+
+        <h3 class="font-semibold mt-6">
+            {{ strtoupper($event->name ?? 'Unnamed Event') }}
+        </h3>
+
+        @if($awards->isEmpty())
+            <p class="text-gray-500 text-sm mt-2">No pending awards.</p>
+        @else
+            <table class="w-full border text-sm mt-2">
+                <thead class="bg-gray-200 text-center">
+                    <tr>
+                        <th class="border px-2 py-2">Medal</th>
+                        <th class="border px-2 py-2">Division / SDO</th>
+                        <th class="border px-2 py-2">Validation File</th>
+                        <th class="border px-2 py-2">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($awards as $medal => $items)
+                        @foreach($items as $award)
+                        <tr class="text-center">
+                            <td class="border px-2 py-2 font-semibold">
+                                {{ strtoupper($medal) }}
+                            </td>
+
+                            <td class="border px-2 py-2">
+                                {{ $award->sdo }}
+                            </td>
+
+                            <td class="border px-2 py-2">
+                                @if($award->validation_file)
+                                    <a href="{{ asset('storage/'.$award->validation_file) }}"
+                                       target="_blank"
+                                       class="text-blue-600 underline">
+                                        View File
+                                    </a>
+                                @else
+                                    <span class="text-gray-400">No file</span>
+                                @endif
+                            </td>
+
+                            <td class="border px-2 py-2">
+                                <div class="flex justify-center gap-2">
+
+                                    {{-- APPROVE --}}
+                                    <form method="POST" action="{{ route('approve_all_awards') }}">
+                                        @csrf
+                                        <input type="hidden" name="award_id" value="{{ $award->id }}">
+                                        <button class="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                                            Approve
+                                        </button>
+                                    </form>
+
+                                    {{-- REJECT --}}
+                                    <form method="POST" action="{{ route('reject_all_awards') }}">
+                                        @csrf
+                                        <input type="hidden" name="award_id" value="{{ $award->id }}">
+                                        <input type="hidden" name="message" value="Needs revision">
+                                        <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">
+                                            Reject
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                        @endforeach
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+    @endforeach
+
+@endif
+
+
+{{-- ================= NORMAL FORM (ADMIN + SECRETARY) ================= --}}
+@if(in_array($user->role->name, ['Super Admin','Tournament Secretary']))
+
 <form method="POST"
       action="{{ route('results_all_awards.store') }}"
       enctype="multipart/form-data"
@@ -856,13 +946,6 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
         <h3 class="font-semibold mt-6">
             {{ strtoupper($event->name ?? 'Unnamed Event') }}
-            @if(!$isOngoing)
-                @if(strtolower($event->status ?? '') === 'finished')
-                    <span class="text-red-500 text-sm">(Event already awarded)</span>
-                @else
-                    <span class="text-red-500 text-sm">(Cannot award: Status {{ ucfirst($event->status ?? 'Unknown') }})</span>
-                @endif
-            @endif
         </h3>
 
         <table class="w-full border text-sm mt-2">
@@ -893,19 +976,20 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                                             @endforeach
                                         </select>
 
-                                        <button
-                                            type="button"
-                                            x-show="divisions.length > 1"
-                                            @click="divisions.splice(index,1)"
-                                            class="bg-red-500 text-white px-2 rounded text-xs"
-                                        >✕</button>
+                                        <button type="button"
+                                                x-show="divisions.length > 1"
+                                                @click="divisions.splice(index,1)"
+                                                class="bg-red-500 text-white px-2 rounded text-xs">
+                                            ✕
+                                        </button>
                                     </div>
                                 </template>
 
                                 <button type="button"
                                         @click="divisions.push('')"
-                                        class="text-blue-600 text-xs mt-1 hover:underline"
-                                >+ Add Other Division</button>
+                                        class="text-blue-600 text-xs mt-1 hover:underline">
+                                    + Add Other Division
+                                </button>
                             </div>
                         </td>
                     @endforeach
@@ -914,7 +998,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         </table>
     @endforeach
 
-    {{-- Super Admin Save button --}}
+    {{-- SUPER ADMIN --}}
     @if($user->role->name === 'Super Admin')
         <div class="flex justify-end mt-4">
             <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
@@ -923,20 +1007,20 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         </div>
     @endif
 
-    {{-- Tournament Secretary Forward for Validation --}}
+    {{-- TOURNAMENT SECRETARY --}}
     @if($user->role->name === 'Tournament Secretary')
         <div class="flex justify-end mt-4">
             <button type="button"
                     @click="showModal = true"
-                    class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded">
+                    class="bg-yellow-500 text-white px-6 py-2 rounded">
                 Forward for Validation
             </button>
         </div>
 
-        {{-- Modal --}}
         <div x-show="showModal" x-cloak
              class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div class="bg-white p-6 rounded shadow w-96">
+
                 <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
 
                 <input type="file" name="validation_file" class="w-full border rounded mb-4">
@@ -959,6 +1043,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 </form>
 
+@endif
 
 
 {{-- ========================================================= --}}
