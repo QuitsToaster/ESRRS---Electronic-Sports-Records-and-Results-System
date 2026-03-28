@@ -543,4 +543,75 @@ public function getEventsByDivision(Request $request)
     return response()->json($events);
 }
 
+/**
+ * Get the count of athletes based on filter criteria for Super Admin
+ */
+public function getFilterCount(Request $request)
+{
+    $user = auth()->user();
+    
+    // Get filter parameters
+    $division = $request->input('school_division');
+    $level = $request->input('level');
+    $event = $request->input('event');
+    $category = $request->input('category');
+    $start = $request->input('start');
+    $end = $request->input('end');
+    
+    // Base query
+    $query = Athlete::query();
+    
+    // 🔒 Division Official restriction (if applicable)
+    $officialDivision = null;
+    
+    if ($user->role && $user->role->name === 'Division Official') {
+        if (preg_match('/SDO\s*-\s*(.+?)\s*Official/i', $user->name, $matches)) {
+            $officialDivision = trim($matches[1]);
+            $query->where('school_division', $officialDivision);
+        }
+    }
+    
+    // Apply filters
+    if ($division) {
+        $query->where('school_division', $division);
+    }
+    
+    if ($level) {
+        $query->where('division', $level);
+    }
+    
+    if ($event) {
+        $query->where('event', $event);
+    }
+    
+    if ($category) {
+        $query->where('category', $category);
+    }
+    
+    // Apply range filter if both start and end are provided
+    if ($start && $end) {
+        $start = max(1, (int) $start);
+        $end = max($start, (int) $end);
+        
+        // For range filtering, we need to consider the athlete's ID or index
+        // Assuming you have an auto-incrementing ID, you can use it for range
+        $query->whereBetween('id', [$start, $end]);
+    }
+    
+    // Get the count
+    $count = $query->count();
+    
+    return response()->json([
+        'count' => $count,
+        'filters' => [
+            'division' => $division,
+            'level' => $level,
+            'event' => $event,
+            'category' => $category,
+            'start' => $start,
+            'end' => $end,
+        ]
+    ]);
+}
+
 }

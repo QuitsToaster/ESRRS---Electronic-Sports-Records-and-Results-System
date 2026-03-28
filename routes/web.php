@@ -171,6 +171,9 @@ Route::resource('sports', SportController::class);
     ->name('athletes.search');
 
     Route::get('/athletes/events-by-division', [AthleteController::class, 'getEventsByDivision']);
+
+    // Add this route with your other athlete routes
+Route::get('/athletes/filter-count', [AthleteController::class, 'getFilterCount'])->name('athletes.filterCount');
     
     /*
     |--------------------------------------------------------------------------
