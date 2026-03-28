@@ -149,31 +149,51 @@
             </form>
 
             {{-- SUPER ADMIN --}}
-            @if($isSuperAdmin)
+@if($isSuperAdmin)
 
-            <hr class="my-4">
+<hr class="my-4">
 
-            <form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
+<form method="GET" action="{{ route('athletes.exportIdPdf') }}" class="space-y-3">
 
-                <select name="school_division"
-                        class="w-full border rounded px-3 py-2"
-                        required>
-                    <option value="">Select Division</option>
-                    @foreach($divisions as $division)
-                        <option value="{{ $division }}">
-                            SDO - {{ $division }}
-                        </option>
-                    @endforeach
-                </select>
+    {{-- ================= DIVISION ================= --}}
+    <select name="school_division"
+            id="divisionSelect"
+            class="w-full border rounded px-3 py-2"
+            required>
+        <option value="">Select Division</option>
+        @foreach($divisions as $division)
+            <option value="{{ $division }}">
+                SDO - {{ $division }}
+            </option>
+        @endforeach
+    </select>
 
-                <button type="submit"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-                    Export Selected Division
-                </button>
+    {{-- ================= EVENT (DYNAMIC) ================= --}}
+    <select name="event"
+            id="eventSelect"
+            class="w-full border rounded px-3 py-2 hidden">
+        <option value="">Select Event</option>
+    </select>
 
-            </form>
+    {{-- ================= RANGE ================= --}}
+    <div class="grid grid-cols-2 gap-3 hidden" id="rangeContainer">
+        <input type="number" name="start" min="1"
+               placeholder="Start"
+               class="w-full border rounded px-3 py-2">
 
-            @endif
+        <input type="number" name="end" min="1"
+               placeholder="End"
+               class="w-full border rounded px-3 py-2">
+    </div>
+
+    <button type="submit"
+            class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
+        Export Division + Event
+    </button>
+
+</form>
+
+@endif
 
         </div>
 
@@ -341,6 +361,52 @@ function selectAthlete(a) {
         </div>
     `;
 }
+</script>
+<script>
+/* ================= DIVISION → EVENTS ================= */
+document.getElementById('divisionSelect')?.addEventListener('change', function () {
+
+    let division = this.value;
+    let eventSelect = document.getElementById('eventSelect');
+    let rangeContainer = document.getElementById('rangeContainer');
+
+    eventSelect.innerHTML = '<option value="">Loading events...</option>';
+    eventSelect.classList.remove('hidden');
+
+    fetch(`/athletes/events-by-division?division=${encodeURIComponent(division)}`)
+        .then(res => res.json())
+        .then(data => {
+
+            eventSelect.innerHTML = '<option value="">Select Event</option>';
+
+            if (data.length === 0) {
+                eventSelect.innerHTML = '<option value="">No events found</option>';
+                return;
+            }
+
+            data.forEach(event => {
+                let opt = document.createElement('option');
+                opt.value = event;
+                opt.textContent = event;
+                eventSelect.appendChild(opt);
+            });
+
+        });
+
+});
+
+/* ================= EVENT → SHOW RANGE ================= */
+document.getElementById('eventSelect')?.addEventListener('change', function () {
+
+    let rangeContainer = document.getElementById('rangeContainer');
+
+    if (this.value) {
+        rangeContainer.classList.remove('hidden');
+    } else {
+        rangeContainer.classList.add('hidden');
+    }
+
+});
 </script>
 
 </div>

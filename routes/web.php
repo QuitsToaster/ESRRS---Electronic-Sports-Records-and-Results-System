@@ -169,6 +169,8 @@ Route::resource('sports', SportController::class);
     ->name('athletes.exportIdPdf');
     Route::get('/athletes/search', [AthleteController::class, 'search'])
     ->name('athletes.search');
+
+    Route::get('/athletes/events-by-division', [AthleteController::class, 'getEventsByDivision']);
     
     /*
     |--------------------------------------------------------------------------
