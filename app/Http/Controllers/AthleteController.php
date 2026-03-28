@@ -359,17 +359,82 @@ class AthleteController extends Controller
     }
 
     public function bulkUpload(Request $request)
-    {
-        $request->validate([
-            'file' => 'required|mimes:csv,xlsx'
-        ]);
+{
+    $request->validate([
+        'file' => 'required|mimes:csv,xlsx'
+    ]);
 
-        // ✅ Bulk import: No auto-creation of sports
-        Excel::import(new AthletesImport, $request->file('file'));
+    $file = $request->file('file');
 
-        return redirect()->route('athletes.index')
-            ->with('success', 'Athletes uploaded successfully!');
+    // ✅ Read file manually
+    $rows = Excel::toArray([], $file)[0];
+
+    if (count($rows) <= 1) {
+        return back()->with('error', 'CSV is empty.');
     }
+
+    // ==========================
+    // NORMALIZE HEADER
+    // ==========================
+    $header = array_map(function ($h) {
+        $h = strtolower(trim($h));
+
+        return match ($h) {
+            'lastname' => 'last_name',
+            'firstname' => 'first_name',
+            'mi' => 'middle_initial',
+            default => $h
+        };
+    }, $rows[0]);
+
+    $missingAthletes = [];
+    $successCount = 0;
+
+    foreach (array_slice($rows, 1) as $index => $row) {
+
+        $data = array_combine($header, $row);
+
+        $first  = trim($data['first_name'] ?? '');
+        $middle = trim($data['middle_initial'] ?? '');
+        $last   = trim($data['last_name'] ?? '');
+
+        // ❗ Skip completely empty rows
+        if (!$first && !$last) {
+            continue;
+        }
+
+        // 🔍 CHECK IF EXISTS IN SYSTEM
+        $exists = Athlete::whereRaw('LOWER(first_name) = ?', [strtolower($first)])
+            ->whereRaw('LOWER(last_name) = ?', [strtolower($last)])
+            ->whereRaw('LOWER(COALESCE(middle_initial,"")) = ?', [strtolower($middle)])
+            ->exists();
+
+        if (!$exists) {
+
+            // ❌ NOT FOUND → SAVE TO ERROR LIST
+            $missingAthletes[] = "{$last}, {$first} " . strtoupper($middle);
+
+            continue;
+        }
+
+        // ✅ IF EXISTS → count as success
+        $successCount++;
+    }
+
+    // ✅ RUN ACTUAL IMPORT
+    Excel::import(new AthletesImport, $file);
+
+    // ==========================
+    // FLASH MESSAGE BUILD
+    // ==========================
+    $total = count($rows) - 1;
+
+    $message = "Upload completed. {$successCount} / {$total} athletes matched in the system.";
+
+    return redirect()->route('athletes.index')
+        ->with('success', $message)
+        ->with('missing_athletes', $missingAthletes);
+}
 
   public function exportIdPdf(Request $request)
 {
@@ -377,6 +442,8 @@ class AthleteController extends Controller
 
     $division   = $request->input('school_division');
     $event      = $request->input('event'); 
+    $level      = $request->input('level');     // ✅ NEW
+    $category   = $request->input('category'); 
     $start      = $request->input('start');
     $end        = $request->input('end');
     $athleteId  = $request->input('athlete_id'); // ✅ ADD THIS
@@ -402,10 +469,19 @@ class AthleteController extends Controller
 
     // 🟢 Super Admin Division Filter (only if NOT selecting specific athlete)
     elseif ($division) {
+
     $query->where('school_division', $division);
 
     if ($event) {
         $query->where('event', $event);
+    }
+
+    if ($level) {
+        $query->where('division', $level); // column = division
+    }
+
+    if ($category) {
+        $query->where('category', $category);
     }
 }
 

@@ -148,7 +148,7 @@
 
             </form>
 
-            {{-- SUPER ADMIN --}}
+          {{-- SUPER ADMIN --}}
 @if($isSuperAdmin)
 
 <hr class="my-4">
@@ -175,6 +175,25 @@
         <option value="">Select Event</option>
     </select>
 
+    {{-- ================= LEVEL (ALWAYS VISIBLE) ================= --}}
+    <select name="level"
+            id="levelSelect"
+            class="w-full border rounded px-3 py-2">
+        <option value="">Select Level</option>
+        <option value="Elementary">Elementary</option>
+        <option value="Secondary">Secondary</option>
+        <option value="Paragames">Paragames</option>
+    </select>
+
+    {{-- ================= CATEGORY ================= --}}
+    <select name="category"
+            id="categorySelect"
+            class="w-full border rounded px-3 py-2 hidden">
+        <option value="">Select Category</option>
+        <option value="Boys">Boys</option>
+        <option value="Girls">Girls</option>
+    </select>
+
     {{-- ================= RANGE ================= --}}
     <div class="grid grid-cols-2 gap-3 hidden" id="rangeContainer">
         <input type="number" name="start" min="1"
@@ -188,7 +207,7 @@
 
     <button type="submit"
             class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded">
-        Export Division + Event
+        Export Filtered IDs
     </button>
 
 </form>
@@ -368,7 +387,6 @@ document.getElementById('divisionSelect')?.addEventListener('change', function (
 
     let division = this.value;
     let eventSelect = document.getElementById('eventSelect');
-    let rangeContainer = document.getElementById('rangeContainer');
 
     eventSelect.innerHTML = '<option value="">Loading events...</option>';
     eventSelect.classList.remove('hidden');
@@ -395,8 +413,22 @@ document.getElementById('divisionSelect')?.addEventListener('change', function (
 
 });
 
-/* ================= EVENT → SHOW RANGE ================= */
+/* ================= EVENT → SHOW CATEGORY ================= */
 document.getElementById('eventSelect')?.addEventListener('change', function () {
+
+    let categorySelect = document.getElementById('categorySelect');
+
+    if (this.value) {
+        categorySelect.classList.remove('hidden');
+    } else {
+        categorySelect.classList.add('hidden');
+    }
+
+});
+
+
+/* ================= CATEGORY → SHOW RANGE ================= */
+document.getElementById('categorySelect')?.addEventListener('change', function () {
 
     let rangeContainer = document.getElementById('rangeContainer');
 
@@ -497,6 +529,19 @@ document.getElementById('eventSelect')?.addEventListener('change', function () {
 @if(session('success'))
     <div class="bg-green-100 text-green-800 p-3 rounded mb-4">
         {{ session('success') }}
+    </div>
+@endif
+
+{{-- ================= MISSING ATHLETES ================= --}}
+@if(session('missing_athletes') && count(session('missing_athletes')) > 0)
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4">
+        <strong>⚠️ The following athletes were NOT registered in the system:</strong>
+
+        <ul class="mt-2 list-disc list-inside text-sm">
+            @foreach(session('missing_athletes') as $name)
+                <li>{{ $name }}</li>
+            @endforeach
+        </ul>
     </div>
 @endif
 

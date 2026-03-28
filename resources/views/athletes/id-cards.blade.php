@@ -100,7 +100,7 @@ td {
 /* SPORT */
 .sport {
     position: absolute;
-    top: 3.70in;
+    top: 3.75in;
     left: 0;
     right: 0;
 
@@ -188,7 +188,7 @@ td {
                         <div class="name text-fit"
      style="font-size:
         {{ strlen($athlete->last_name . $athlete->first_name) > 20 ? '18px' : '22px' }}">
-                            {{ $athlete->last_name }}, {{ $athlete->first_name }} {{ $athlete->middle_initial }}.
+                            {{ $athlete->last_name }}, {{ $athlete->first_name }} {{ $athlete->middle_initial }}
                         </div>
 
                         <div class="school text-fit">
