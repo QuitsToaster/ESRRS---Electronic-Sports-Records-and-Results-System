@@ -358,7 +358,7 @@ class AthleteController extends Controller
         return response($qr)->header('Content-Type', 'image/png');
     }
 
-    public function bulkUpload(Request $request)
+  public function bulkUpload(Request $request)
 {
     $request->validate([
         'file' => 'required|mimes:csv,xlsx'
@@ -366,74 +366,14 @@ class AthleteController extends Controller
 
     $file = $request->file('file');
 
-    // ✅ Read file manually
-    $rows = Excel::toArray([], $file)[0];
+    $import = new AthletesImport();
 
-    if (count($rows) <= 1) {
-        return back()->with('error', 'CSV is empty.');
-    }
-
-    // ==========================
-    // NORMALIZE HEADER
-    // ==========================
-    $header = array_map(function ($h) {
-        $h = strtolower(trim($h));
-
-        return match ($h) {
-            'lastname' => 'last_name',
-            'firstname' => 'first_name',
-            'mi' => 'middle_initial',
-            default => $h
-        };
-    }, $rows[0]);
-
-    $missingAthletes = [];
-    $successCount = 0;
-
-    foreach (array_slice($rows, 1) as $index => $row) {
-
-        $data = array_combine($header, $row);
-
-        $first  = trim($data['first_name'] ?? '');
-        $middle = trim($data['middle_initial'] ?? '');
-        $last   = trim($data['last_name'] ?? '');
-
-        // ❗ Skip completely empty rows
-        if (!$first && !$last) {
-            continue;
-        }
-
-        // 🔍 CHECK IF EXISTS IN SYSTEM
-        $exists = Athlete::whereRaw('LOWER(first_name) = ?', [strtolower($first)])
-            ->whereRaw('LOWER(last_name) = ?', [strtolower($last)])
-            ->whereRaw('LOWER(COALESCE(middle_initial,"")) = ?', [strtolower($middle)])
-            ->exists();
-
-        if (!$exists) {
-
-            // ❌ NOT FOUND → SAVE TO ERROR LIST
-            $missingAthletes[] = "{$last}, {$first} " . strtoupper($middle);
-
-            continue;
-        }
-
-        // ✅ IF EXISTS → count as success
-        $successCount++;
-    }
-
-    // ✅ RUN ACTUAL IMPORT
-    Excel::import(new AthletesImport, $file);
-
-    // ==========================
-    // FLASH MESSAGE BUILD
-    // ==========================
-    $total = count($rows) - 1;
-
-    $message = "Upload completed. {$successCount} / {$total} athletes matched in the system.";
+    Excel::import($import, $file);
 
     return redirect()->route('athletes.index')
-        ->with('success', $message)
-        ->with('missing_athletes', $missingAthletes);
+        ->with('success', "Upload completed. {$import->successCount} rows imported.")
+        ->with('import_errors', $import->errors)
+        ->with('preview_data', array_slice($import->previewData, 0, 10)); // show first 10
 }
 
   public function exportIdPdf(Request $request)

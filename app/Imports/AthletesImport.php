@@ -9,15 +9,23 @@ use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Carbon\Carbon;
-use Illuminate\Support\Str;
 
 class AthletesImport implements ToCollection, WithHeadingRow
 {
+    public $errors = [];
+    public $successCount = 0;
+    public $previewData = [];
+
     public function collection(Collection $rows)
     {
-        foreach ($rows as $row) {
+        foreach ($rows as $index => $row) {
+
+            $rowNumber = $index + 2; // +2 because header row
 
             try {
+
+                /* ================= PREVIEW DATA ================= */
+                $this->previewData[] = $row;
 
                 /* ================= CLEAN VALUES ================= */
 
@@ -27,20 +35,29 @@ class AthletesImport implements ToCollection, WithHeadingRow
 
                 $lrn = $this->cleanLRN($row['lrn'] ?? null);
 
-                $lastname = $this->cleanName($row['lastname'] ?? null);
-                $firstname = $this->cleanName($row['firstname'] ?? null);
-                $mi = strtoupper(trim($row['mi'] ?? ''));
-
-                $schoolCode = trim($row['school_code'] ?? '');
-
-                /* ================= SKIP INVALID ================= */
-
-                if (!$lrn || !$lastname || !$firstname) {
-                    continue;
+                // ✅ SIMPLE LRN FIX (NO RANDOM)
+                if (!$lrn) {
+                    $lrn = 'NO_LRN';
                 }
 
-                if (Athlete::where('lrn', $lrn)->exists()) {
-                    continue;
+                $originalLrn = $lrn;
+                $count = 1;
+
+                while (Athlete::where('lrn', $lrn)->exists()) {
+                    $lrn = $originalLrn . '-' . $count;
+                    $count++;
+                }
+
+                $lastname = $this->cleanName($row['lastname'] ?? null) ?? 'N/A';
+                $firstname = $this->cleanName($row['firstname'] ?? null) ?? 'N/A';
+                $mi = strtoupper(trim($row['mi'] ?? '')) ?: null;
+
+                $schoolCode = trim($row['school_code'] ?? '') ?: 'N/A';
+
+                /* ================= VALIDATION CHECK (FOR REPORT ONLY) ================= */
+
+                if ($lastname === 'N/A' || $firstname === 'N/A') {
+                    $this->errors[] = "Row {$rowNumber}: Missing name";
                 }
 
                 /* ================= SCHOOL ================= */
@@ -48,32 +65,32 @@ class AthletesImport implements ToCollection, WithHeadingRow
                 $school = School::firstOrCreate(
                     ['school_code' => $schoolCode],
                     [
-                        'name' => strtoupper(trim($row['schoolname'] ?? '')),
-                        'school_type' => ucfirst(strtolower(trim($row['school_type'] ?? ''))),
-                        'school_address' => trim($row['school_address'] ?? ''),
-                        'school_division' => strtoupper(trim($row['schdiv'] ?? '')),
+                        'name' => strtoupper(trim($row['schoolname'] ?? 'N/A')),
+                        'school_type' => ucfirst(strtolower(trim($row['school_type'] ?? 'Public'))),
+                        'school_address' => trim($row['school_address'] ?? 'N/A'),
+                        'school_division' => strtoupper(trim($row['schdiv'] ?? 'N/A')),
                     ]
                 );
 
                 /* ================= SPORT ================= */
 
-                $eventName = strtoupper(trim($row['event'] ?? ''));
+                $eventName = strtoupper(trim($row['event'] ?? 'N/A'));
 
                 $sport = Sport::whereRaw('UPPER(name) = ?', [$eventName])->first();
                 $sportId = $sport ? $sport->id : null;
 
-                /* ================= ATHLETE ================= */
+                /* ================= SAVE ATHLETE ================= */
 
                 Athlete::create([
 
                     'last_name' => $lastname,
                     'first_name' => $firstname,
-                    'middle_initial' => $mi ?: null,
+                    'middle_initial' => $mi,
 
                     'sex' => $sex,
                     'birthdate' => $this->parseDate($row['bdate_mmddyyyy'] ?? null),
 
-                    'region' => strtoupper(trim($row['region'] ?? '')),
+                    'region' => strtoupper(trim($row['region'] ?? 'N/A')),
 
                     'level' => $level,
                     'event' => $eventName,
@@ -81,106 +98,74 @@ class AthletesImport implements ToCollection, WithHeadingRow
                     'school_id' => $school->id,
                     'sport_id' => $sportId,
 
-                    'school_name' => strtoupper(trim($row['schoolname'] ?? '')),
-                    'school_type' => ucfirst(strtolower(trim($row['school_type'] ?? ''))),
-                    'school_address' => trim($row['school_address'] ?? ''),
-                    'school_division' => strtoupper(trim($row['schdiv'] ?? '')),
-                    'municipality' => strtoupper(trim($row['municipality'] ?? '')),
+                    'school_name' => strtoupper(trim($row['schoolname'] ?? 'N/A')),
+                    'school_type' => ucfirst(strtolower(trim($row['school_type'] ?? 'Public'))),
+                    'school_address' => trim($row['school_address'] ?? 'N/A'),
+                    'school_division' => strtoupper(trim($row['schdiv'] ?? 'N/A')),
+                    'municipality' => strtoupper(trim($row['municipality'] ?? 'N/A')),
                     'school_code' => $schoolCode,
 
-                    'division' => $level,
+                    'division' => $level ?? 'Elementary',
                     'category' => $category,
 
                     'lrn' => $lrn,
                     'status' => 'Active',
 
-                    'legislative_district' => strtoupper(trim($row['legislative_district'] ?? '')),
+                    'legislative_district' => strtoupper(trim($row['legislative_district'] ?? 'N/A')),
                 ]);
+
+                $this->successCount++;
 
             } catch (\Exception $e) {
 
-                // Prevent whole import from crashing
+                $this->errors[] = "Row {$rowNumber}: " . $e->getMessage();
                 continue;
-
             }
         }
     }
 
-    /* ================= CLEAN LEVEL ================= */
+    /* ================= HELPERS ================= */
 
     private function cleanLevel($level)
     {
         $level = strtoupper(trim($level));
 
-        if ($level === 'ELEMENTARY') {
-            return 'Elementary';
-        }
-
-        if ($level === 'SECONDARY') {
-            return 'Secondary';
-        }
-
-        if ($level === 'PARAGAMES') {
-            return 'Paragames';
-        }
-
-        return null;
+        return match ($level) {
+            'ELEMENTARY' => 'Elementary',
+            'SECONDARY' => 'Secondary',
+            'PARAGAMES' => 'Paragames',
+            default => 'Elementary',
+        };
     }
-
-    /* ================= CLEAN SEX ================= */
 
     private function cleanSex($sex)
     {
         $sex = strtoupper(trim($sex));
 
-        if ($sex === 'M' || $sex === 'MALE') {
-            return 'Male';
-        }
-
-        if ($sex === 'F' || $sex === 'FEMALE') {
-            return 'Female';
-        }
-
-        return 'Male';
+        return match ($sex) {
+            'F', 'FEMALE' => 'Female',
+            default => 'Male',
+        };
     }
-
-    /* ================= CLEAN NAME ================= */
 
     private function cleanName($name)
     {
-        if (!$name) return null;
-
-        return strtoupper(trim($name));
+        return $name ? strtoupper(trim($name)) : null;
     }
-
-    /* ================= CLEAN LRN ================= */
 
     private function cleanLRN($lrn)
     {
         if (!$lrn) return null;
-
-        $lrn = trim($lrn);
-
-        // remove decimal .00
-        $lrn = explode('.', $lrn)[0];
-
-        return $lrn;
+        return explode('.', trim($lrn))[0];
     }
-
-    /* ================= PARSE DATE ================= */
 
     private function parseDate($date)
     {
         try {
-
             if (!$date) return null;
-
             return Carbon::createFromFormat('m/d/Y', trim($date))->format('Y-m-d');
-
         } catch (\Exception $e) {
-
             return null;
-
         }
     }
 }

@@ -545,6 +545,50 @@ document.getElementById('categorySelect')?.addEventListener('change', function (
     </div>
 @endif
 
+{{-- IMPORT ERRORS --}}
+@if(session('import_errors'))
+    <div class="bg-red-100 border border-red-400 text-red-700 p-4 mb-4 rounded">
+        <strong>Import Issues:</strong>
+        <ul class="list-disc pl-5">
+            @foreach(session('import_errors') as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+{{-- PREVIEW --}}
+@if(session('preview_data'))
+    <div class="bg-gray-100 p-4 rounded mb-4">
+        <strong>Preview (First 10 Rows)</strong>
+
+        @php
+            $preview = collect(session('preview_data'))->map(function ($row) {
+                return is_array($row) ? $row : $row->toArray();
+            });
+        @endphp
+
+        <table class="w-full mt-2 border">
+            <thead>
+                <tr class="bg-gray-200">
+                    @foreach(array_keys($preview->first()) as $header)
+                        <th class="border px-2 py-1">{{ $header }}</th>
+                    @endforeach
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($preview as $row)
+                    <tr>
+                        @foreach($row as $cell)
+                            <td class="border px-2 py-1">{{ $cell }}</td>
+                        @endforeach
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
+    </div>
+@endif
+
 <div class="bg-white border rounded shadow overflow-x-auto">
 <table class="min-w-full text-sm">
 <thead class="bg-gray-100">
