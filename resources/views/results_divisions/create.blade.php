@@ -832,367 +832,310 @@ $tabAthletes = $athletes->filter(fn($a) =>
 $divisions = \App\Models\Division::orderBy('name')->get();
 @endphp
 
+
 {{-- ================================================= --}}
 {{-- 🏆 ALL AWARDS FORM / VIEW --}}
 {{-- ================================================= --}}
+<div x-show="awardType==='all'">
 
-{{-- ================= TOURNAMENT MANAGER VIEW ================= --}}
-@if($user->role->name === 'Tournament Manager')
+    {{-- ================= TOURNAMENT MANAGER VIEW ================= --}}
+    @if($user->role->name === 'Tournament Manager')
 
-    @foreach($events as $event)
-        @php
-            $awards = \App\Models\AllAwardResult::where('event_id', $event->id)
-                ->where('division', $tab['division'])
-                ->where('category', $tab['category'] ?? null)
-                ->where('status', 'pending')
-                ->get()
-                ->groupBy('medal');
-        @endphp
+        @foreach($events as $event)
+            @php
+                $awards = \App\Models\AllAwardResult::where('event_id', $event->id)
+                    ->where('division', $tab['division'])
+                    ->where('category', $tab['category'] ?? null)
+                    ->where('status', 'pending')
+                    ->get()
+                    ->groupBy('medal');
+            @endphp
 
-        <h3 class="font-semibold mt-6">
-            {{ strtoupper($event->name ?? 'Unnamed Event') }}
-        </h3>
+            <h3 class="font-semibold mt-6">
+                {{ strtoupper($event->name ?? 'Unnamed Event') }}
+            </h3>
 
-        @if($awards->isEmpty())
-            <p class="text-gray-500 text-sm mt-2">No pending awards.</p>
-        @else
-            <table class="w-full border text-sm mt-2">
-                <thead class="bg-gray-200 text-center">
-                    <tr>
-                        <th class="border px-2 py-2">Medal</th>
-                        <th class="border px-2 py-2">Division / SDO</th>
-                        <th class="border px-2 py-2">Validation File</th>
-                        <th class="border px-2 py-2">Action</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($awards as $medal => $items)
-                        @foreach($items as $award)
-                        <tr class="text-center">
-                            <td class="border px-2 py-2 font-semibold">
-                                {{ strtoupper($medal) }}
-                            </td>
-
-                            <td class="border px-2 py-2">
-                                {{ $award->sdo }}
-                            </td>
-
-                            <td class="border px-2 py-2">
-                                @if($award->validation_file)
-                                    <a href="{{ asset('storage/'.$award->validation_file) }}"
-                                       target="_blank"
-                                       class="text-blue-600 underline">
-                                        View File
-                                    </a>
-                                @else
-                                    <span class="text-gray-400">No file</span>
-                                @endif
-                            </td>
-
-                            <td class="border px-2 py-2">
-                                <div class="flex justify-center gap-2">
-
-                                    {{-- APPROVE --}}
-                                    <form method="POST" action="{{ route('approve_all_awards') }}">
-                                        @csrf
-                                        <input type="hidden" name="award_id" value="{{ $award->id }}">
-                                        <button class="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                                            Approve
-                                        </button>
-                                    </form>
-
-                                    {{-- REJECT --}}
-                                    <form method="POST" action="{{ route('reject_all_awards') }}">
-                                        @csrf
-                                        <input type="hidden" name="award_id" value="{{ $award->id }}">
-                                        <input type="hidden" name="message" value="Needs revision">
-                                        <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">
-                                            Reject
-                                        </button>
-                                    </form>
-
-                                </div>
-                            </td>
+            @if($awards->isEmpty())
+                <p class="text-gray-500 text-sm mt-2">No pending awards.</p>
+            @else
+                <table class="w-full border text-sm mt-2">
+                    <thead class="bg-gray-200 text-center">
+                        <tr>
+                            <th class="border px-2 py-2">Medal</th>
+                            <th class="border px-2 py-2">Division / SDO</th>
+                            <th class="border px-2 py-2">Validation File</th>
+                            <th class="border px-2 py-2">Action</th>
                         </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($awards as $medal => $items)
+                            @foreach($items as $award)
+                                <tr class="text-center">
+                                    <td class="border px-2 py-2 font-semibold">
+                                        {{ strtoupper($medal) }}
+                                    </td>
+
+                                    <td class="border px-2 py-2">
+                                        {{ $award->sdo }}
+                                    </td>
+
+                                    <td class="border px-2 py-2">
+                                        @if($award->validation_file)
+                                            <a href="{{ asset('storage/'.$award->validation_file) }}"
+                                               target="_blank"
+                                               class="text-blue-600 underline">
+                                                View File
+                                            </a>
+                                        @else
+                                            <span class="text-gray-400">No file</span>
+                                        @endif
+                                    </td>
+
+                                    <td class="border px-2 py-2">
+                                        <div class="flex justify-center gap-2">
+
+                                            <form method="POST" action="{{ route('approve_all_awards') }}">
+                                                @csrf
+                                                <input type="hidden" name="award_id" value="{{ $award->id }}">
+                                                <button class="bg-green-600 text-white px-3 py-1 rounded text-xs">
+                                                    Approve
+                                                </button>
+                                            </form>
+
+                                            <form method="POST" action="{{ route('reject_all_awards') }}">
+                                                @csrf
+                                                <input type="hidden" name="award_id" value="{{ $award->id }}">
+                                                <input type="hidden" name="message" value="Needs revision">
+                                                <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">
+                                                    Reject
+                                                </button>
+                                            </form>
+
+                                        </div>
+                                    </td>
+                                </tr>
+                            @endforeach
                         @endforeach
-                    @endforeach
-                </tbody>
-            </table>
-        @endif
-    @endforeach
+                    </tbody>
+                </table>
+            @endif
+        @endforeach
 
-@endif
+    @endif
 
 
-{{-- ================= NORMAL FORM (ADMIN + SECRETARY) ================= --}}
-@if(in_array($user->role->name, ['Super Admin','Tournament Secretary']))
+    {{-- ================= NORMAL FORM ================= --}}
+    @if(in_array($user->role->name, ['Super Admin','Tournament Secretary']))
 
-<form method="POST"
-      action="{{ route('results_all_awards.store') }}"
-      enctype="multipart/form-data"
-      x-data="{ showModal:false }">
+        <form method="POST"
+              action="{{ route('results_all_awards.store') }}"
+              enctype="multipart/form-data"
+              x-data="{ showModal:false }">
 
-    @csrf
+            @csrf
 
-    @foreach($events as $event)
-        @php
-            if (!is_object($event)) continue;
-            $isOngoing = strtolower($event->status ?? '') === 'ongoing';
-        @endphp
+            <input type="hidden" name="division" value="{{ $tab['division'] }}">
+            <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
 
-        <input type="hidden" name="event_ids[]" value="{{ $event->id }}">
-        <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
-        <input type="hidden" name="division" value="{{ $tab['division'] }}">
+            @foreach($events as $event)
+                @php
+                    if (!is_object($event)) continue;
+                @endphp
 
-        <h3 class="font-semibold mt-6">
-            {{ strtoupper($event->name ?? 'Unnamed Event') }}
-        </h3>
+                <h3 class="font-semibold mt-6">
+                    {{ strtoupper($event->name ?? 'Unnamed Event') }}
+                </h3>
 
-        <table class="w-full border text-sm mt-2">
-            <thead class="bg-gray-200 text-center">
-                <tr>
-                    <th class="border px-2 py-2">Event</th>
-                    <th class="border bg-yellow-300">Gold</th>
-                    <th class="border bg-gray-300">Silver</th>
-                    <th class="border bg-orange-200">Bronze</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td class="border px-2 font-medium">{{ $event->name ?? 'N/A' }}</td>
+                <table class="w-full border text-sm mt-2">
+                    <thead class="bg-gray-200 text-center">
+                        <tr>
+                            <th class="border px-2 py-2">Event</th>
+                            <th class="border bg-yellow-300">Gold</th>
+                            <th class="border bg-gray-300">Silver</th>
+                            <th class="border bg-orange-200">Bronze</th>
+                        </tr>
+                    </thead>
 
-                    @foreach(['Gold','Silver','Bronze'] as $medal)
-                        <td class="border px-2 py-2 align-top">
-                            <div x-data="{ divisions:[''] }">
-                                <template x-for="(division,index) in divisions" :key="index">
-                                    <div class="flex gap-2 mb-2">
-                                        <select
-                                            :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
-                                            class="w-full border rounded px-2 py-1 text-sm"
-                                        >
-                                            <option value="">-- Select Division --</option>
-                                            @foreach($divisions as $divisionOption)
-                                                <option value="{{ $divisionOption->name }}">{{ $divisionOption->name }}</option>
-                                            @endforeach
-                                        </select>
+                    <tbody>
+                        <tr>
+                            <td class="border px-2 font-medium">{{ $event->name ?? 'N/A' }}</td>
+
+                            @foreach(['Gold','Silver','Bronze'] as $medal)
+                                <td class="border px-2 py-2 align-top">
+                                    <div x-data="{ divisions:[''] }">
+
+                                        <template x-for="(division,index) in divisions" :key="index">
+                                            <div class="flex gap-2 mb-2">
+
+                                                <select
+                                                    :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
+                                                    class="w-full border rounded px-2 py-1 text-sm"
+                                                >
+                                                    <option value="">-- Select Division / SDO --</option>
+                                                    @foreach($divisions as $divisionOption)
+                                                        <option value="{{ $divisionOption->name }}">
+                                                            {{ $divisionOption->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+
+                                                <button type="button"
+                                                        x-show="divisions.length > 1"
+                                                        @click="divisions.splice(index,1)"
+                                                        class="bg-red-500 text-white px-2 rounded text-xs">
+                                                    ✕
+                                                </button>
+
+                                            </div>
+                                        </template>
 
                                         <button type="button"
-                                                x-show="divisions.length > 1"
-                                                @click="divisions.splice(index,1)"
-                                                class="bg-red-500 text-white px-2 rounded text-xs">
-                                            ✕
+                                                @click="divisions.push('')"
+                                                class="text-blue-600 text-xs hover:underline">
+                                            + Add Division
                                         </button>
+
                                     </div>
-                                </template>
+                                </td>
+                            @endforeach
+                        </tr>
+                    </tbody>
+                </table>
+            @endforeach
 
-                                <button type="button"
-                                        @click="divisions.push('')"
-                                        class="text-blue-600 text-xs mt-1 hover:underline">
-                                    + Add Other Division
-                                </button>
-                            </div>
-                        </td>
-                    @endforeach
-                </tr>
-            </tbody>
-        </table>
-    @endforeach
-
-    {{-- SUPER ADMIN --}}
-    @if($user->role->name === 'Super Admin')
-        <div class="flex justify-end mt-4">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
-                Save All Awards
-            </button>
-        </div>
-    @endif
-
-    {{-- TOURNAMENT SECRETARY --}}
-    @if($user->role->name === 'Tournament Secretary')
-        <div class="flex justify-end mt-4">
-            <button type="button"
-                    @click="showModal = true"
-                    class="bg-yellow-500 text-white px-6 py-2 rounded">
-                Forward for Validation
-            </button>
-        </div>
-
-        <div x-show="showModal" x-cloak
-             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-white p-6 rounded shadow w-96">
-
-                <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
-
-                <input type="file" name="validation_file" class="w-full border rounded mb-4">
-
-                <div class="flex justify-end gap-2">
+            <div class="flex justify-end mt-4">
+                @if($user->role->name === 'Super Admin')
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
+                        Save All Awards
+                    </button>
+                @else
                     <button type="button"
-                            @click="showModal=false"
-                            class="px-4 py-2 bg-gray-400 text-white rounded">
-                        Cancel
+                            @click="showModal = true"
+                            class="bg-yellow-500 text-white px-6 py-2 rounded">
+                        Forward for Validation
                     </button>
+                @endif
+            </div>
 
-                    <button type="submit"
-                            class="px-4 py-2 bg-yellow-500 text-white rounded">
-                        Yes, Forward
-                    </button>
+            {{-- OPTIONAL MODAL --}}
+            <div x-show="showModal" x-cloak
+                 class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+                <div class="bg-white p-6 rounded shadow w-96">
+
+                    <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
+
+                    <input type="file" name="validation_file" class="w-full border rounded mb-4">
+
+                    <div class="flex justify-end gap-2">
+                        <button type="button"
+                                @click="showModal=false"
+                                class="px-4 py-2 bg-gray-400 text-white rounded">
+                            Cancel
+                        </button>
+
+                        <button type="submit"
+                                class="px-4 py-2 bg-yellow-500 text-white rounded">
+                            Yes, Forward
+                        </button>
+                    </div>
                 </div>
             </div>
-        </div>
+
+        </form>
+
     @endif
 
-</form>
-
-@endif
+</div>
 
 
 {{-- ========================================================= --}}
 {{-- 🏅 INDIVIDUAL AWARDS FORM --}}
 {{-- ========================================================= --}}
-<form x-show="awardType==='individual'" 
-      method="POST" 
-      action="{{ route('results_individual.store') }}" 
-      x-data="{ showConfirm: false }"
-      enctype="multipart/form-data">
+<div x-show="awardType==='individual'">
 
-@csrf
+    <form method="POST" 
+          action="{{ route('results_individual.store') }}" 
+          enctype="multipart/form-data">
 
-<input type="hidden" name="event_id" value="{{ $currentEvent?->id }}">
-<input type="hidden" name="division" value="{{ $tab['division'] }}">
-@if(!is_null($tab['category']))
-    <input type="hidden" name="category" value="{{ $tab['category'] }}">
-@endif
+        @csrf
 
-@php
-    $divisions = \App\Models\Division::orderBy('name')->get();
-
-    $athletesJson = \App\Models\Athlete::orderBy('last_name')
-        ->get()
-        ->map(fn($a) => [
-            'id' => $a->id,
-            'name' => $a->last_name . ', ' . $a->first_name,
-        ])
-        ->values();
-@endphp
-
-@foreach($events as $event)
-
-@php
-    if (!is_object($event)) continue;
-
-    // Only allow awards when status is 'ongoing'
-    $eventStatus = strtolower($event->status ?? '');
-    $isOngoing = $eventStatus === 'ongoing';
-@endphp
-
-<h3 class="font-semibold mt-6">
-    {{ strtoupper($event->name ?? 'Unnamed Event') }}
-    @if(!$isOngoing)
-        @if($eventStatus === 'finished')
-            <span class="text-gray-500 text-sm">(Event already awarded)</span>
-        @else
-            <span class="text-red-500 text-sm">(Cannot award: Status {{ ucfirst($eventStatus ?: 'Unknown') }})</span>
+        <input type="hidden" name="event_id" value="{{ $currentEvent?->id }}">
+        <input type="hidden" name="division" value="{{ $tab['division'] }}">
+        @if(!is_null($tab['category']))
+            <input type="hidden" name="category" value="{{ $tab['category'] }}">
         @endif
-    @endif
-</h3>
 
-<table class="w-full border text-sm mt-2
-{{ !$isOngoing ? 'opacity-60 pointer-events-none' : '' }}">
+        @php
+            $divisions = \App\Models\Division::orderBy('name')->get();
+        @endphp
 
-<thead class="bg-gray-100">
-<tr>
-    <th class="border px-2 py-2">Event</th>
-    <th class="border px-2 py-2 bg-yellow-100">Gold</th>
-    <th class="border px-2 py-2 bg-gray-200">Silver</th>
-    <th class="border px-2 py-2 bg-orange-200">Bronze</th>
-</tr>
-</thead>
+        @foreach($events as $event)
+            @php
+                if (!is_object($event)) continue;
+            @endphp
 
-<tbody>
-<tr>
-<td class="border px-2 font-medium">
-    {{ $event->name ?? 'N/A' }}
-</td>
+            <h3 class="font-semibold mt-6">
+                {{ strtoupper($event->name ?? 'Unnamed Event') }}
+            </h3>
 
-@foreach(['Gold','Silver','Bronze'] as $medal)
-<td class="border px-3 py-3 align-top">
+            <table class="w-full border text-sm mt-2">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-2 py-2">Event</th>
+                        <th class="border px-2 py-2 bg-yellow-100">Gold</th>
+                        <th class="border px-2 py-2 bg-gray-200">Silver</th>
+                        <th class="border px-2 py-2 bg-orange-200">Bronze</th>
+                    </tr>
+                </thead>
 
-<div x-data="{
-    open:false,
-    search:'',
-    selectedId:null,
-    athletes: {{ json_encode($athletesJson) }},
-    get filteredAthletes() {
-        if (this.search === '') return this.athletes.slice(0, 10);
-        return this.athletes.filter(a => 
-            a.name.toLowerCase().includes(this.search.toLowerCase())
-        ).slice(0, 10);
-    }
-}">
+                <tbody>
+                    <tr>
+                        <td class="border px-2 font-medium">{{ $event->name ?? 'N/A' }}</td>
 
-<select 
-    name="individual_results[{{ $event->sport_id ?? 0 }}][{{ $event->sport_type_id ?? 0 }}][{{ $medal }}][sdo]"
-    class="w-full border rounded px-2 py-1 text-sm mb-2"
-    {{ !$isOngoing ? 'disabled' : '' }}
->
-    <option value="">-- Optional --</option>
-    @foreach($divisions as $divisionOption)
-        <option value="{{ $divisionOption->name }}">
-            {{ $divisionOption->name }}
-        </option>
-    @endforeach
-</select>
+                        @foreach(['Gold','Silver','Bronze'] as $medal)
+                            <td class="border px-3 py-3 align-top">
 
-<input type="text"
-       x-model="search"
-       class="w-full border rounded px-2 py-1 text-sm"
-       placeholder="Search athlete..."
-       {{ !$isOngoing ? 'disabled' : '' }}>
+                                <div>
+                                    <select 
+                                        name="individual_results[{{ $event->sport_id ?? 0 }}][{{ $event->sport_type_id ?? 0 }}][{{ $medal }}][sdo]"
+                                        class="w-full border rounded px-2 py-1 text-sm mb-2">
+                                        <option value="">-- Select SDO --</option>
+                                        @foreach($divisions as $divisionOption)
+                                            <option value="{{ $divisionOption->name }}">
+                                                {{ $divisionOption->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
 
-<input type="hidden"
-       :value="selectedId"
-       name="individual_results[{{ $event->sport_id ?? 0 }}][{{ $event->sport_type_id ?? 0 }}][{{ $medal }}][athlete]">
+                                    <select 
+                                        name="individual_results[{{ $event->sport_id ?? 0 }}][{{ $event->sport_type_id ?? 0 }}][{{ $medal }}][athlete]"
+                                        class="w-full border rounded px-2 py-1 text-sm">
+                                        <option value="">-- Select Athlete --</option>
+                                        @foreach(\App\Models\Athlete::orderBy('last_name')->get() as $athlete)
+                                            <option value="{{ $athlete->id }}">
+                                                {{ $athlete->last_name }}, {{ $athlete->first_name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
 
-</div>
+                                </div>
+                            </td>
+                        @endforeach
 
-</td>
-@endforeach
+                    </tr>
+                </tbody>
+            </table>
+        @endforeach
 
-</tr>
-</tbody>
-</table>
-
-@endforeach
-
-{{-- BUTTONS --}}
-<div class="flex justify-end mt-6">
-
-@if($user->role->name === 'Tournament Secretary')
-
-<button type="button"
-class="bg-yellow-500 text-white px-6 py-2 rounded"
-@click="showConfirm=true"
-{{-- Disable button if no event is ongoing --}}
-{{ !collect($events)->contains(fn($e)=>strtolower($e->status ?? '')==='ongoing') ? 'disabled class=bg-gray-400 cursor-not-allowed' : '' }}>
-Forward for Validation
-</button>
-
-@elseif($user->role->name === 'Super Admin')
-
-<button type="submit"
-class="bg-green-600 text-white px-6 py-2 rounded"
-{{ !collect($events)->contains(fn($e)=>strtolower($e->status ?? '')==='ongoing') ? 'disabled class=bg-gray-400 cursor-not-allowed' : '' }}>
-Save Individual Awards
-</button>
-
-@endif
-
-</div>
-
-</form>
-
-
+        <div class="flex justify-end mt-6">
+            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
+                Save Individual Awards
+            </button>
         </div>
+
+    </form>
+
+</div>
     @endforeach
 
 </div>
