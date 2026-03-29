@@ -1051,7 +1051,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 {{-- ========================================================= --}}
 {{-- 🏅 INDIVIDUAL AWARDS FORM --}}
 {{-- ========================================================= --}}
-<div x-show="awardType==='individual'">
+<div x-show="awardType==='individual'" x-data="individualAwardsForm()">
 
     <form method="POST" 
           action="{{ route('results_individual.store') }}" 
@@ -1066,7 +1066,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         @endif
 
         @php
-            $divisions = \App\Models\Division::orderBy('name')->get();
+            $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
         @endphp
 
         @foreach($events as $event)
@@ -1095,30 +1095,35 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                         @foreach(['Gold','Silver','Bronze'] as $medal)
                             <td class="border px-3 py-3 align-top">
 
-                                <div>
-                                    <select 
-                                        name="individual_results[{{ $event->sport_id ?? 0 }}][{{ $event->sport_type_id ?? 0 }}][{{ $medal }}][sdo]"
-                                        class="w-full border rounded px-2 py-1 text-sm mb-2">
-                                        <option value="">-- Select SDO --</option>
-                                        @foreach($divisions as $divisionOption)
-                                            <option value="{{ $divisionOption->name }}">
-                                                {{ $divisionOption->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-
-                                    <select 
-                                        name="individual_results[{{ $event->sport_id ?? 0 }}][{{ $event->sport_type_id ?? 0 }}][{{ $medal }}][athlete]"
+                                {{-- Searchable Athlete Input --}}
+                                <div x-data="{ selectedAthlete: null }" class="space-y-1">
+                                    <input 
+                                        list="athletes_list_{{ $event->sport_id }}_{{ $event->sport_type_id }}_{{ $medal }}" 
+                                        x-model="selectedAthlete" 
+                                        placeholder="Type athlete name..." 
                                         class="w-full border rounded px-2 py-1 text-sm">
-                                        <option value="">-- Select Athlete --</option>
-                                        @foreach(\App\Models\Athlete::orderBy('last_name')->get() as $athlete)
-                                            <option value="{{ $athlete->id }}">
-                                                {{ $athlete->last_name }}, {{ $athlete->first_name }}
+
+                                    <datalist id="athletes_list_{{ $event->sport_id }}_{{ $event->sport_type_id }}_{{ $medal }}">
+                                        @foreach($athletes as $athlete)
+                                            <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"
+                                                    data-sdo="{{ $athlete->school_division ?? '' }}"
+                                                    data-school="{{ $athlete->school?->name ?? '' }}">
                                             </option>
                                         @endforeach
-                                    </select>
+                                    </datalist>
 
+                                    {{-- Hidden inputs to submit athlete ID and auto-fill SDO --}}
+                                    <input type="hidden" 
+                                           :value="getAthleteId(selectedAthlete)" 
+                                           name="individual_results[{{ $event->sport_id }}][{{ $event->sport_type_id }}][{{ $medal }}][athlete]">
+                                    <input type="hidden"
+                                           :value="getAthleteSDO(selectedAthlete)"
+                                           name="individual_results[{{ $event->sport_id }}][{{ $event->sport_type_id }}][{{ $medal }}][sdo]">
+
+                                    {{-- Display school division & school name --}}
+                                    <div class="text-xs text-gray-600 mt-1" x-html="getAthleteInfo(selectedAthlete)"></div>
                                 </div>
+
                             </td>
                         @endforeach
 
@@ -1134,8 +1139,39 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         </div>
 
     </form>
-
 </div>
+
+<script>
+function individualAwardsForm() {
+    return {
+        athletesData: [
+            @foreach($athletes as $athlete)
+                {
+                    id: "{{ $athlete->id }}",
+                    name: "{{ $athlete->last_name }}, {{ $athlete->first_name }}",
+                    sdo: "{{ $athlete->school_division ?? '' }}",
+                    school: "{{ $athlete->school?->name ?? '' }}"
+                },
+            @endforeach
+        ],
+
+        getAthleteId(selectedName) {
+            let athlete = this.athletesData.find(a => a.name === selectedName);
+            return athlete ? athlete.id : '';
+        },
+
+        getAthleteSDO(selectedName) {
+            let athlete = this.athletesData.find(a => a.name === selectedName);
+            return athlete ? athlete.sdo : '';
+        },
+
+        getAthleteInfo(selectedName) {
+            let athlete = this.athletesData.find(a => a.name === selectedName);
+            return athlete ? `${athlete.sdo}<br>${athlete.school}` : '';
+        }
+    }
+}
+</script>
     @endforeach
 
 </div>

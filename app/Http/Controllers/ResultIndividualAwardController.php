@@ -32,22 +32,40 @@ class ResultIndividualAwardController extends Controller
 
     foreach ($request->input('individual_results', []) as $sportId => $types) {
 
-        if (!is_array($types)) continue;
+    if (!is_array($types)) continue;
 
-        foreach ($types as $typeId => $medals) {
+    foreach ($types as $typeId => $medals) {
 
-            if (!is_array($medals)) continue;
+        if (!is_array($medals)) continue;
 
-            foreach ($medals as $medal => $data) {
+        foreach ($medals as $medal => $data) {
 
-                if (!is_array($data)) continue;
+            if (!is_array($data)) continue;
 
-                $athleteId = $data['athlete'] ?? null;
-                $sdo = $data['sdo'] ?? null;
+            $athleteId = $data['athlete'] ?? null;
 
-                if (!$athleteId || !$sdo) continue;
+            if (!$athleteId) continue;
 
-                $existing = IndividualAwardResult::where([
+            // Get athlete and prefix SDO
+            $athlete = \App\Models\Athlete::find($athleteId);
+            $sdo = $athlete && $athlete->school_division
+                ? 'SDO - ' . $athlete->school_division
+                : null;
+
+            $existing = IndividualAwardResult::where([
+                'event_id' => $eventId,
+                'division' => $request->division,
+                'category' => $request->category ?? null,
+                'sport_id' => $sportId,
+                'type_id'  => $typeId ?: null,
+                'medal'    => $medal,
+                'sdo'      => $sdo,
+            ])->first();
+
+            $oldValues = $existing ? $existing->toArray() : null;
+
+            $award = IndividualAwardResult::updateOrCreate(
+                [
                     'event_id' => $eventId,
                     'division' => $request->division,
                     'category' => $request->category ?? null,
@@ -55,41 +73,26 @@ class ResultIndividualAwardController extends Controller
                     'type_id'  => $typeId ?: null,
                     'medal'    => $medal,
                     'sdo'      => $sdo,
-                ])->first();
+                ],
+                [
+                    'athlete_id' => $athleteId,
+                    'status' => $status,
+                    'awarded_by' => $user->id,
+                    'validation_file' => $filePath,
+                ]
+            );
 
-                $oldValues = $existing ? $existing->toArray() : null;
-
-                $award = IndividualAwardResult::updateOrCreate(
-                    [
-                        'event_id' => $eventId,
-                        'division' => $request->division,
-                        'category' => $request->category ?? null,
-                        'sport_id' => $sportId,
-                        'type_id'  => $typeId ?: null,
-                        'medal'    => $medal,
-                        'sdo'      => $sdo,
-                    ],
-                    [
-                        'athlete_id' => $athleteId,
-                        'status' => $status,
-                        'awarded_by' => $user->id,
-                        'validation_file' => $filePath,
-                    ]
-                );
-
-                AuditLog::create([
-                    'model_type' => 'IndividualAwardResult',
-                    'model_id'   => $award->id,
-                    'user_id'    => $user->id,
-                    'action'     => $existing
-                        ? "Updated Individual Award"
-                        : "Created Individual Award",
-                    'old_values' => $oldValues ? json_encode($oldValues) : null,
-                    'new_values' => json_encode($award->toArray()),
-                ]);
-            }
+            AuditLog::create([
+                'model_type' => 'IndividualAwardResult',
+                'model_id'   => $award->id,
+                'user_id'    => $user->id,
+                'action'     => $existing ? "Updated Individual Award" : "Created Individual Award",
+                'old_values' => $oldValues ? json_encode($oldValues) : null,
+                'new_values' => json_encode($award->toArray()),
+            ]);
         }
     }
+}
 
     return back()->with('success', 'Individual awards saved successfully.');
 }
