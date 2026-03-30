@@ -32,22 +32,19 @@ class ResultAllAwardController extends Controller
         $processedEventIds = []; // Track events that got awards
 
         foreach ($results as $eventId => $sports) {
-
-            if (!Event::where('id', $eventId)->exists()) continue;
+            $event = Event::find($eventId);
+            if (!$event) continue; // Skip if event not found
             if (!is_array($sports)) continue;
 
             foreach ($sports as $sportId => $medals) {
-
                 if (!is_array($medals)) continue;
 
                 foreach ($medals as $medalName => $selectedSdos) {
-
                     if (!is_array($selectedSdos)) {
                         $selectedSdos = [$selectedSdos];
                     }
 
                     foreach ($selectedSdos as $sdoValue) {
-
                         if (empty($sdoValue)) continue;
 
                         $existing = AllAwardResult::where([
@@ -55,7 +52,7 @@ class ResultAllAwardController extends Controller
                             'division' => $request->division,
                             'category' => $request->category ?? null,
                             'sport_id' => $sportId,
-                            'type_id' => null,
+                            'type_id' => $event->sport_type_id,
                             'sdo' => $sdoValue,
                             'medal' => $medalName,
                         ])->first();
@@ -68,7 +65,7 @@ class ResultAllAwardController extends Controller
                                 'division' => $request->division,
                                 'category' => $request->category ?? null,
                                 'sport_id' => $sportId,
-                                'type_id' => null,
+                                'type_id' => $event->sport_type_id,
                                 'sdo' => $sdoValue,
                                 'medal' => $medalName,
                             ],
@@ -77,6 +74,7 @@ class ResultAllAwardController extends Controller
                                 'status' => $status,
                                 'awarded_by' => $user->id,
                                 'validation_file' => $filePath,
+                                'event_name' => $event->name,
                             ]
                         );
 
@@ -94,7 +92,7 @@ class ResultAllAwardController extends Controller
                                 'role' => $roleName,
                                 'event_id' => $eventId,
                                 'sport_id' => $sportId,
-                                'type_id' => null,
+                                'type_id' => $event->sport_type_id,
                                 'division' => $request->division,
                                 'category' => $request->category,
                                 'sdo' => $sdoValue,
@@ -244,6 +242,9 @@ class ResultAllAwardController extends Controller
             : null;
 
         foreach ($eventIds as $eventId) {
+            $event = Event::find($eventId);
+            if (!$event) continue;
+
             $awards = AllAwardResult::where('event_id', $eventId)
                 ->where('division', $division)
                 ->where('category', $category)
@@ -253,6 +254,8 @@ class ResultAllAwardController extends Controller
                 $award->update([
                     'status' => 'pending',
                     'validation_file' => $filePath,
+                    'type_id' => $event->sport_type_id, // save type_id
+                    'event_name' => $event->name,       // save event name
                 ]);
 
                 AuditLog::create([
@@ -276,7 +279,7 @@ class ResultAllAwardController extends Controller
                 ]);
 
                 // Keep event status as Ongoing when forwarded
-                Event::where('id', $award->event_id)->update(['status' => 'Ongoing']);
+                $event->update(['status' => 'Ongoing']);
             }
         }
 
@@ -287,11 +290,15 @@ class ResultAllAwardController extends Controller
     {
         $award = AllAwardResult::findOrFail($request->award_id);
 
+        $event = Event::find($award->event_id);
+
         $award->update([
             'medal' => $request->medal,
             'sdo' => $request->sdo,
             'status' => 'pending',
-            'revision_message' => null
+            'revision_message' => null,
+            'type_id' => $event->sport_type_id ?? null,
+            'event_name' => $event->name ?? null,
         ]);
 
         return back()->with('success', 'Award resubmitted successfully.');
