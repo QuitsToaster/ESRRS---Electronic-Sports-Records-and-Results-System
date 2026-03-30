@@ -3,6 +3,39 @@
 @section('page-title', 'Users Management')
 
 @section('content')
+{{-- ================= SUCCESS MODAL ================= --}}
+@if(session('success'))
+{{-- SUCCESS MODAL --}}
+<div x-data="{ showSuccessModal: @js(session()->has('success')) }" x-show="showSuccessModal" x-cloak>
+    <!-- Overlay -->
+    <div x-show="showSuccessModal"
+         x-transition.opacity
+         class="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"></div>
+
+    <!-- Modal Content -->
+    <div x-show="showSuccessModal"
+         x-transition
+         @click.away="showSuccessModal = false"
+         x-init="setTimeout(() => showSuccessModal = false, 5000)"
+         class="fixed inset-0 flex items-center justify-center z-50 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 border border-gray-200">
+            <div class="text-center">
+                <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">Success!</h2>
+                <p class="text-gray-600">{{ session('success') }}</p>
+                <button @click="showSuccessModal = false"
+                        class="mt-6 px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition duration-200 shadow-sm">
+                    OK
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
 <div class="space-y-6">
     {{-- ================= HEADER WITH GRADIENT ================= --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -241,6 +274,7 @@
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Number</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module Access</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
@@ -263,6 +297,7 @@
                             </td>
 
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $user->email }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ $user->contact_number }}</td>
 
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700 border border-purple-200">

@@ -23,7 +23,8 @@ class User extends Authenticatable
         'sport_type_access', 
         'level_access',      // ✅ FIX
         'category_access', 
-        'division_name',  // ✅ FIX
+        'division_name',
+        'contact_number',  // ✅ FIX
     ];
 
     protected $hidden = [

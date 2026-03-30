@@ -264,7 +264,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Number</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sport</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
@@ -277,7 +277,7 @@
                 @foreach($secretariesPendingAwards as $secretary)
                 <tr>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->email }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
 
                     <td class="px-6 py-4 text-sm text-gray-600">
                         {{ collect($secretary->sports_access ?? [])
@@ -332,7 +332,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Number</th>
                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">All Awards</th>
                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Individual</th>
                     <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
@@ -344,7 +344,7 @@
                 @php $total = $secretary->all_awards_revision_count + $secretary->individual_awards_revision_count; @endphp
                 <tr>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->email }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
                     <td class="px-6 py-4 text-center text-rose-600 font-semibold">{{ $secretary->all_awards_revision_count }}</td>
                     <td class="px-6 py-4 text-center text-rose-600 font-semibold">{{ $secretary->individual_awards_revision_count }}</td>
                     <td class="px-6 py-4 text-center">
@@ -379,7 +379,7 @@
             <thead class="bg-gray-50">
                 <tr>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Number</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sport</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
@@ -391,7 +391,7 @@
                 @foreach($secretariesNoAwards as $secretary)
                 <tr>
                     <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->email }}</td>
+                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
                     <td class="px-6 py-4 text-sm text-gray-600">
                         {{ collect($secretary->sports_access ?? [])
                         ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)

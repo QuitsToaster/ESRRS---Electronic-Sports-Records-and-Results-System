@@ -103,6 +103,7 @@ class UserController extends Controller
         'email'            => 'required|email|unique:users',
         'password'         => 'required|confirmed|min:6',
         'role_id'          => 'nullable|exists:roles,id',
+        'contact_number'   => 'nullable|digits:10',
         'new_role'         => 'nullable|string|max:50',
         'access'           => 'nullable|array',
         'sports_access'    => 'nullable|array',
@@ -131,6 +132,7 @@ class UserController extends Controller
         'sport_type_access'  => $request->sport_type_access ?? [],
         'level_access'    => $request->level_access ?? [],
         'category_access' => $request->category_access ?? [],
+        'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null, // ✅ save with prefix
     ]);
 
     AuditLog::create([
@@ -193,6 +195,7 @@ public function update(Request $request, User $user)
         'category_access'  => $request->category_access ?? [],
         'sports_access'    => $request->sports_access ?? [],
         'sport_type_access'=> $request->sport_type_access ?? [],
+        'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null, // ✅ save with prefix
     ]);
 
     if ($request->filled('password')) {

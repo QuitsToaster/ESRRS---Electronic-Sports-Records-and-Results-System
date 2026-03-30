@@ -31,6 +31,7 @@
     <input type="email" name="email" required class="w-full border rounded px-3 py-2">
 </div>
 
+
 <div>
     <label class="block text-sm font-semibold mb-1">Password *</label>
     <input type="password" name="password" required class="w-full border rounded px-3 py-2">
@@ -39,6 +40,20 @@
 <div>
     <label class="block text-sm font-semibold mb-1">Confirm Password *</label>
     <input type="password" name="password_confirmation" required class="w-full border rounded px-3 py-2">
+</div>
+
+<div>
+    <label class="block text-sm font-semibold mb-1">Contact Number</label>
+    <div class="flex">
+        <span class="inline-flex items-center px-3 rounded-l border bg-gray-100 text-gray-700">+63</span>
+        <input type="text"
+               name="contact_number"
+               maxlength="10"
+               pattern="\d{10}"
+               placeholder="9123456789"
+               class="w-full border rounded-r px-3 py-2">
+    </div>
+    <p class="text-xs text-gray-500 mt-1">Enter 10 digits only. Example: 9123456789</p>
 </div>
 
 {{-- ROLE --}}
@@ -164,6 +179,7 @@
 
 </form>
 </div>
+
 
 {{-- ================= JS LOGIC ================= --}}
 <script>

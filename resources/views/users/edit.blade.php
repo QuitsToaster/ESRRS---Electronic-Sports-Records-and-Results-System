@@ -33,6 +33,20 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
            class="w-full border rounded px-3 py-2" required>
 </div>
 
+<div>
+    <label class="block text-sm font-semibold mb-1">Contact Number</label>
+    <div class="flex">
+        <span class="inline-flex items-center px-3 rounded-l border bg-gray-100 text-gray-700">+63</span>
+        <input type="text"
+               name="contact_number"
+               maxlength="10"
+               pattern="\d{10}"
+               value="{{ old('contact_number', optional($user)->contact_number ? substr($user->contact_number, 3) : '') }}"
+               class="w-full border rounded-r px-3 py-2">
+    </div>
+    <p class="text-xs text-gray-500 mt-1">Enter 10 digits only. Example: 9123456789</p>
+</div>
+
 {{-- EMAIL --}}
 <div>
     <label class="block font-semibold mb-1">Email</label>
@@ -188,6 +202,7 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 
 </form>
 </div>
+
 
 {{-- ================= JS (SAME AS CREATE) ================= --}}
 <script>
