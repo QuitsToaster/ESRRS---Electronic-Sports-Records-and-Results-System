@@ -154,18 +154,29 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
     </label>
 
     <div id="sportsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-        @foreach($sports as $sport)
-            <label class="flex items-center gap-2 sportItem"
-                   data-level="{{ $sport->division }}"
-                   data-category="{{ $sport->category }}"
-                   style="display:none">
 
-                <input type="checkbox" class="sportCheckbox"
-                       name="sports_access[]" value="{{ $sport->id }}"
-                       {{ in_array($sport->id, old('sports_access', $user->sports_access ?? [])) ? 'checked' : '' }}>
+        @php
+            $groupedSports = $sports->groupBy(function($item) {
+                return $item->division . ' ' . ($item->category ?? '');
+            });
+        @endphp
 
-                {{ $sport->name }}
-            </label>
+        @foreach($groupedSports as $groupName => $group)
+            <div class="col-span-full font-semibold mt-2">{{ $groupName }}</div>
+
+            @foreach($group as $sport)
+                <label class="flex items-center gap-2 sportItem"
+                       data-level="{{ $sport->division }}"
+                       data-category="{{ $sport->category ?? '' }}"
+                       style="display:none">
+
+                    <input type="checkbox" class="sportCheckbox"
+                           name="sports_access[]" value="{{ $sport->id }}"
+                           {{ in_array($sport->id, old('sports_access', $user->sports_access ?? [])) ? 'checked' : '' }}>
+
+                    {{ $sport->name }}
+                </label>
+            @endforeach
         @endforeach
     </div>
 </div>
@@ -177,17 +188,29 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
     </label>
 
     <div id="sportTypeContainer" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
-        @foreach($sportTypes as $type)
-            <label class="flex items-center gap-2 sportTypeItem"
-                   data-sport-id="{{ $type->sport_id }}"
-                   style="display:none">
 
-                <input type="checkbox" class="sportTypeCheckbox"
-                       name="sport_type_access[]" value="{{ $type->id }}"
-                       {{ in_array($type->id, old('sport_type_access', $user->sport_type_access ?? [])) ? 'checked' : '' }}>
+        @php
+            $groupedTypes = $sportTypes->groupBy(function($item) use ($sports) {
+                $sport = $sports->firstWhere('id', $item->sport_id);
+                return $sport ? $sport->division . ' ' . ($sport->category ?? '') : 'Unknown';
+            });
+        @endphp
 
-                {{ $type->type_name }}
-            </label>
+        @foreach($groupedTypes as $groupName => $types)
+            <div class="col-span-full font-semibold mt-2">{{ $groupName }}</div>
+
+            @foreach($types as $type)
+                <label class="flex items-center gap-2 sportTypeItem"
+                       data-sport-id="{{ $type->sport_id }}"
+                       style="display:none">
+
+                    <input type="checkbox" class="sportTypeCheckbox"
+                           name="sport_type_access[]" value="{{ $type->id }}"
+                           {{ in_array($type->id, old('sport_type_access', $user->sport_type_access ?? [])) ? 'checked' : '' }}>
+
+                    {{ $type->type_name }}
+                </label>
+            @endforeach
         @endforeach
     </div>
 </div>
@@ -204,7 +227,7 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 </div>
 
 
-{{-- ================= JS (SAME AS CREATE) ================= --}}
+{{-- ================= JS (UPDATED WITH GROUP LABEL HIDING) ================= --}}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -214,56 +237,88 @@ document.addEventListener('DOMContentLoaded', () => {
     const sportCheckboxes = document.querySelectorAll('.sportCheckbox');
     const sportTypes = document.querySelectorAll('.sportTypeItem');
 
+    function getChecked(values) {
+        return Array.from(values).filter(v => v.checked).map(v => v.value);
+    }
+
     function filterSports() {
-        const selectedLevels = [...levels].filter(l => l.checked).map(l => l.value);
-        const selectedCategories = [...categories].filter(c => c.checked).map(c => c.value);
+        const selectedLevels = getChecked(levels);
+        const selectedCategories = getChecked(categories);
+
+        const allLevelsSelected = selectedLevels.length === 3;
+        const allCategoriesSelected = selectedCategories.length === 2;
 
         sports.forEach(item => {
             const level = item.dataset.level;
             const category = item.dataset.category;
 
-            const isParagames = selectedLevels.includes('Paragames') && level === 'Paragames';
+            let show = false;
 
-            if (
-                (isParagames && selectedLevels.includes(level)) ||
-                (selectedLevels.includes(level) && selectedCategories.includes(category))
-            ) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-                item.querySelector('input').checked = false;
-            }
+            // ✅ ALL LEVELS + ALL CATEGORIES → SHOW EVERYTHING
+            if (allLevelsSelected && allCategoriesSelected) show = true;
+            // Paragames (no category)
+            else if (selectedLevels.includes('Paragames') && level === 'Paragames') show = true;
+            // Elementary / Secondary with category
+            else if (selectedLevels.includes(level) && selectedCategories.includes(category)) show = true;
+
+            item.style.display = show ? 'flex' : 'none';
+            if (!show) item.querySelector('input').checked = false;
         });
+
+        // ✅ HIDE EMPTY GROUP LABELS IN SPORTS
+        const sportContainer = document.getElementById('sportsContainer');
+        if (sportContainer) {
+            const groupLabels = sportContainer.querySelectorAll('div.col-span-full');
+            groupLabels.forEach(label => {
+                const siblings = [];
+                let sibling = label.nextElementSibling;
+                while (sibling && !sibling.classList.contains('col-span-full')) {
+                    siblings.push(sibling);
+                    sibling = sibling.nextElementSibling;
+                }
+                const anyVisible = siblings.some(s => s.style.display !== 'none');
+                label.style.display = anyVisible ? 'block' : 'none';
+            });
+        }
 
         filterSportTypes();
     }
 
     function filterSportTypes() {
-        const selectedSports = [...sportCheckboxes]
-            .filter(s => s.checked)
-            .map(s => s.value);
+        const selectedSports = getChecked(sportCheckboxes);
 
         sportTypes.forEach(item => {
             const sportId = item.dataset.sportId;
-            if (selectedSports.includes(sportId)) {
-                item.style.display = 'flex';
-            } else {
-                item.style.display = 'none';
-                item.querySelector('input').checked = false;
-            }
+            const show = selectedSports.includes(sportId);
+            item.style.display = show ? 'flex' : 'none';
+            if (!show) item.querySelector('input').checked = false;
         });
+
+        // ✅ HIDE EMPTY GROUP LABELS IN SPORT TYPES
+        const sportTypeContainer = document.getElementById('sportTypeContainer');
+        if (sportTypeContainer) {
+            const typeLabels = sportTypeContainer.querySelectorAll('div.col-span-full');
+            typeLabels.forEach(label => {
+                const siblings = [];
+                let sibling = label.nextElementSibling;
+                while (sibling && !sibling.classList.contains('col-span-full')) {
+                    siblings.push(sibling);
+                    sibling = sibling.nextElementSibling;
+                }
+                const anyVisible = siblings.some(s => s.style.display !== 'none');
+                label.style.display = anyVisible ? 'block' : 'none';
+            });
+        }
     }
 
     levels.forEach(cb => cb.addEventListener('change', filterSports));
     categories.forEach(cb => cb.addEventListener('change', filterSports));
     sportCheckboxes.forEach(cb => cb.addEventListener('change', filterSportTypes));
 
-    // INITIAL LOAD
-    filterSports();
-
-    const bind = (masterId, className) => {
+    function bind(masterId, className) {
         const master = document.getElementById(masterId);
         const items = document.querySelectorAll(className);
+        if (!master) return;
 
         master.addEventListener('change', () => {
             items.forEach(cb => {
@@ -272,13 +327,16 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         });
-    };
+    }
 
     bind('selectAllAccess', '.moduleCheckbox');
     bind('selectAllLevels', '.levelCheckbox');
     bind('selectAllCategories', '.categoryCheckbox');
     bind('selectAllSports', '.sportCheckbox');
     bind('selectAllSportTypes', '.sportTypeCheckbox');
+
+    // INITIAL LOAD
+    filterSports();
 });
 </script>
 

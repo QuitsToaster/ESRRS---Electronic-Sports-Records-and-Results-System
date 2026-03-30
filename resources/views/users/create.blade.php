@@ -134,17 +134,28 @@
     </label>
 
     <div id="sportsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-        @foreach($sports as $sport)
-            <label class="flex items-center gap-2 sportItem"
-                data-level="{{ $sport->division }}"
-                data-category="{{ $sport->category ?? '' }}"
-                style="display:none">
 
-                <input type="checkbox" class="sportCheckbox"
-                       name="sports_access[]" value="{{ $sport->id }}">
+        @php
+            $groupedSports = $sports->groupBy(function($item) {
+                return $item->division . ' ' . ($item->category ?? '');
+            });
+        @endphp
 
-                {{ $sport->name }}
-            </label>
+        @foreach($groupedSports as $groupName => $group)
+            <div class="col-span-full font-semibold mt-2">{{ $groupName }}</div>
+
+            @foreach($group as $sport)
+                <label class="flex items-center gap-2 sportItem"
+                       data-level="{{ $sport->division }}"
+                       data-category="{{ $sport->category ?? '' }}"
+                       style="display:none">
+
+                    <input type="checkbox" class="sportCheckbox"
+                           name="sports_access[]" value="{{ $sport->id }}">
+
+                    {{ $sport->name }}
+                </label>
+            @endforeach
         @endforeach
     </div>
 </div>
@@ -157,16 +168,28 @@
     </label>
 
     <div id="sportTypeContainer" class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-        @foreach($sportTypes as $type)
-            <label class="flex items-center gap-2 sportTypeItem"
-                data-sport-id="{{ $type->sport_id }}"
-                style="display:none">
 
-                <input type="checkbox" class="sportTypeCheckbox"
-                       name="sport_type_access[]" value="{{ $type->id }}">
+        @php
+            $groupedTypes = $sportTypes->groupBy(function($item) use ($sports) {
+                $sport = $sports->firstWhere('id', $item->sport_id);
+                return $sport ? $sport->division . ' ' . ($sport->category ?? '') : 'Unknown';
+            });
+        @endphp
 
-                {{ $type->type_name }}
-            </label>
+        @foreach($groupedTypes as $groupName => $types)
+            <div class="col-span-full font-semibold mt-2">{{ $groupName }}</div>
+
+            @foreach($types as $type)
+                <label class="flex items-center gap-2 sportTypeItem"
+                       data-sport-id="{{ $type->sport_id }}"
+                       style="display:none">
+
+                    <input type="checkbox" class="sportTypeCheckbox"
+                           name="sport_type_access[]" value="{{ $type->id }}">
+
+                    {{ $type->type_name }}
+                </label>
+            @endforeach
         @endforeach
     </div>
 </div>
@@ -215,12 +238,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (allLevelSelected && allCatSelected) {
                 show = true;
             }
-
             // Paragames (no category)
             else if (levels.includes('Paragames') && lvl === 'Paragames') {
                 show = true;
             }
-
             // Elementary / Secondary with category
             else if (levels.includes(lvl) && cats.includes(cat)) {
                 show = true;
@@ -228,6 +249,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             item.style.display = show ? 'flex' : 'none';
             if (!show) item.querySelector('input').checked = false;
+        });
+
+        // ✅ HIDE EMPTY GROUP LABELS
+        const sportContainer = document.getElementById('sportsContainer');
+        const groupLabels = sportContainer.querySelectorAll('div.col-span-full');
+        groupLabels.forEach(label => {
+            const nextSiblings = [];
+            let sibling = label.nextElementSibling;
+            while (sibling && !sibling.classList.contains('col-span-full')) {
+                nextSiblings.push(sibling);
+                sibling = sibling.nextElementSibling;
+            }
+            const anyVisible = nextSiblings.some(s => s.style.display !== 'none');
+            label.style.display = anyVisible ? 'block' : 'none';
         });
 
         filterSportTypes();
@@ -239,9 +274,22 @@ document.addEventListener('DOMContentLoaded', () => {
         sportTypes.forEach(type => {
             const sid = type.dataset.sportId;
             const show = selectedSports.includes(sid);
-
             type.style.display = show ? 'flex' : 'none';
             if (!show) type.querySelector('input').checked = false;
+        });
+
+        // ✅ HIDE EMPTY SPORT TYPE GROUP LABELS
+        const sportTypeContainer = document.getElementById('sportTypeContainer');
+        const typeGroupLabels = sportTypeContainer.querySelectorAll('div.col-span-full');
+        typeGroupLabels.forEach(label => {
+            const nextSiblings = [];
+            let sibling = label.nextElementSibling;
+            while (sibling && !sibling.classList.contains('col-span-full')) {
+                nextSiblings.push(sibling);
+                sibling = sibling.nextElementSibling;
+            }
+            const anyVisible = nextSiblings.some(s => s.style.display !== 'none');
+            label.style.display = anyVisible ? 'block' : 'none';
         });
     }
 
@@ -264,6 +312,9 @@ document.addEventListener('DOMContentLoaded', () => {
     bind(document.getElementById('selectAllCategories'), catCBs);
     bind(document.getElementById('selectAllSports'), sportCBs);
     bind(document.getElementById('selectAllSportTypes'), document.querySelectorAll('.sportTypeCheckbox'));
+
+    // INITIAL LOAD
+    filterSports();
 });
 </script>
 
