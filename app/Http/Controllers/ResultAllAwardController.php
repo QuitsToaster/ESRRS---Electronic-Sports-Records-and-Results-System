@@ -272,4 +272,18 @@ class ResultAllAwardController extends Controller
 
     return back()->with('success', 'All awards forwarded for validation successfully.');
 }
+
+public function updateFromRevision(Request $request)
+{
+    $award = AllAwardResult::findOrFail($request->award_id);
+
+    $award->update([
+        'medal' => $request->medal,
+        'sdo' => $request->sdo,
+        'status' => 'pending',
+        'revision_message' => null
+    ]);
+
+    return back()->with('success', 'Award resubmitted successfully.');
+}
 }

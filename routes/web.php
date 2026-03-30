@@ -262,7 +262,11 @@ Route::delete('/results/all-awards/{award}', [ResultAllAwardController::class, '
 Route::delete('/results/individual-awards/{award}', [ResultIndividualAwardController::class, 'revise'])
     ->name('results_individual.revise');
 
-    
+    Route::post('/update-all-awards', [ResultAllAwardController::class, 'updateFromRevision'])
+    ->name('update_all_awards');
+
+Route::post('/update-individual-awards', [ResultIndividualAwardController::class, 'updateFromRevision'])
+    ->name('update_individual_awards');
 /*
 |--------------------------------------------------------------------------
 | All Awards Routes

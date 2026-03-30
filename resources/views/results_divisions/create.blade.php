@@ -139,11 +139,14 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 @if($user->role->name === 'Tournament Secretary')
 
 @php
+
+$sdoList = \App\Models\Division::orderBy('name')->pluck('name');
+
+
 $pendingResultsSecretary = \App\Models\AllAwardResult::with(['sport','type'])
     ->where('status','needs_revision')
     ->where('sdo','like','%' . $user->division_name . '%')
 
-    // ✅ FIX: allow NULL type_id
     ->where(function($q) use ($user) {
         $q->whereNull('type_id')
           ->orWhereIn('type_id', $user->sport_type_access ?? []);
@@ -177,13 +180,13 @@ $pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','
     ->get();
 @endphp
 
-<div class="p-4 mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 rounded shadow-sm">
+<div x-data="editAwardModal()" class="p-4 mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 rounded shadow-sm">
 
 <h3 class="font-semibold text-lg mb-3">
 Awards Returned for Revision
 </h3>
 
-{{-- ================= ALL AWARDS REVISION ================= --}}
+{{-- ================= ALL AWARDS ================= --}}
 @if($pendingResultsSecretary->count())
 <h4 class="font-semibold mb-2">All Awards</h4>
 
@@ -208,12 +211,7 @@ Awards Returned for Revision
 <td class="border px-2">{{ $r->division }}</td>
 <td class="border px-2">{{ $r->category ?? '—' }}</td>
 <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-
-{{-- ✅ SAFE TYPE DISPLAY --}}
-<td class="border px-2">
-    {{ $r->type->type_name ?? '-' }}
-</td>
-
+<td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
 <td class="border px-2 font-semibold">{{ $r->medal }}</td>
 <td class="border px-2">{{ $r->sdo }}</td>
 <td class="border px-2 text-left">{{ $r->revision_message ?? 'No message' }}</td>
@@ -240,22 +238,19 @@ View File
 </td>
 
 <td class="border px-2">
-<form method="POST" action="{{ route('all-awards.revise', $r->id) }}">
-    @csrf
-    @method('DELETE')
-    <button type="submit" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">
-        Resubmit
-    </button>
-</form>
+<button
+    @click="openModal({{ $r->id }}, 'all', '{{ $r->medal }}', '{{ $r->sdo }}')"
+    class="bg-blue-600 text-white px-3 py-1 rounded">
+    Edit
+</button>
 </td>
-
 </tr>
 @endforeach
 </tbody>
 </table>
 @endif
 
-{{-- ================= INDIVIDUAL AWARDS REVISION ================= --}}
+{{-- ================= INDIVIDUAL AWARDS ================= --}}
 @if($pendingIndividualSecretary->count())
 <h4 class="font-semibold mb-2">Individual Awards</h4>
 
@@ -309,15 +304,12 @@ View File
 </td>
 
 <td class="border px-2">
-<form method="POST" action="{{ route('all-awards.revise', $r->id) }}">
-    @csrf
-    @method('DELETE')
-    <button type="submit" class="bg-yellow-400 text-white px-2 py-1 rounded hover:bg-yellow-500">
-        Resubmit
-    </button>
-</form>
+<button
+    @click="openModal({{ $r->id }}, 'individual', '{{ $r->medal }}', '{{ $r->sdo }}')"
+    class="bg-blue-600 text-white px-3 py-1 rounded">
+    Edit
+</button>
 </td>
-
 </tr>
 @endforeach
 </tbody>
@@ -325,12 +317,171 @@ View File
 @endif
 
 @if($pendingResultsSecretary->count() === 0 && $pendingIndividualSecretary->count() === 0)
-<p class="text-gray-600">
-No awards returned for revision for your assigned sports.
-</p>
+<p class="text-gray-600">No awards returned for revision.</p>
 @endif
 
+{{-- ================= EDIT MODAL ================= --}}
+<div x-show="show" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
+
+<div class="bg-white w-full max-w-md p-6 rounded shadow-lg">
+<h3 class="text-lg font-bold mb-4">Edit & Resubmit Award</h3>
+
+<form method="POST"
+    :action="type === 'all'
+        ? '{{ route('update_all_awards') }}'
+        : '{{ route('update_individual_awards') }}'">
+
+    @csrf
+
+    <input type="hidden" name="award_id" :value="awardId">
+
+    {{-- ================= MEDAL ================= --}}
+    <label class="block mb-2 text-sm">Medal</label>
+    <select name="medal" x-model="medal" class="w-full border rounded p-2 mb-4">
+        <option>Gold</option>
+        <option>Silver</option>
+        <option>Bronze</option>
+    </select>
+
+    {{-- ================= INDIVIDUAL ONLY ================= --}}
+    <template x-if="type === 'individual'">
+
+        <div>
+
+            {{-- 🔍 ATHLETE SEARCH --}}
+            <label class="block mb-2 text-sm">Search Athlete</label>
+            <input type="text"
+                x-model="search"
+                @input="filterAthletes"
+                placeholder="Type athlete name..."
+                class="w-full border rounded p-2 mb-2">
+
+            {{-- RESULTS --}}
+            <div class="border rounded max-h-40 overflow-y-auto mb-4 bg-white"
+                 x-show="filtered.length">
+
+                <template x-for="ath in filtered" :key="ath.id">
+                    <div @click="selectAthlete(ath)"
+                        class="px-3 py-2 hover:bg-blue-100 cursor-pointer">
+
+                        <span x-text="ath.name"></span>
+                        <span class="text-xs text-gray-500 ml-2"
+                              x-text="'(' + ath.sdo + ')'"></span>
+                    </div>
+                </template>
+
+            </div>
+
+            {{-- SELECTED --}}
+            <input type="hidden" name="athlete_id" :value="selectedAthlete?.id">
+
+            <div class="mb-2 text-sm text-gray-700">
+                Selected: 
+                <span class="font-semibold" x-text="selectedAthlete?.name || 'None'"></span>
+            </div>
+
+            {{-- AUTO SDO --}}
+            <label class="block mb-2 text-sm">SDO</label>
+            <input type="text"
+                name="sdo"
+                x-model="sdo"
+                readonly
+                class="w-full border rounded p-2 mb-4 bg-gray-100">
+
+        </div>
+
+    </template>
+
+    {{-- ================= ALL AWARDS ONLY ================= --}}
+    <template x-if="type === 'all'">
+
+        <div>
+            <label class="block mb-2 text-sm">SDO</label>
+            <select name="sdo" x-model="sdo" class="w-full border rounded p-2 mb-4" required>
+                <option value="">Select SDO</option>
+                @foreach($sdoList as $sdo)
+                    <option value="{{ $sdo }}">{{ $sdo }}</option>
+                @endforeach
+            </select>
+        </div>
+
+    </template>
+
+    <div class="flex justify-end gap-2">
+        <button type="button" @click="show=false"
+            class="px-4 py-2 bg-gray-400 rounded">
+            Cancel
+        </button>
+
+        <button type="submit"
+            class="px-4 py-2 bg-green-600 text-white rounded">
+            Resubmit
+        </button>
+    </div>
+
+</form>
+
 </div>
+</div>
+
+</div>
+
+@php
+$athletes = \App\Models\Athlete::select(
+    'id',
+    \DB::raw("CONCAT(last_name, ', ', first_name) as name"),
+    'school_division as sdo'
+)->orderBy('last_name')->get();
+@endphp
+
+{{-- ================= ALPINE SCRIPT ================= --}}
+<script>
+function editAwardModal() {
+    return {
+        show: false,
+        awardId: null,
+        type: null,
+        medal: '',
+        sdo: '',
+
+        // 🔍 athlete search
+        search: '',
+        athletes: @json($athletes),
+        filtered: [],
+        selectedAthlete: null,
+
+        openModal(id, type, medal, sdo) {
+            this.awardId = id;
+            this.type = type;
+            this.medal = medal;
+            this.sdo = sdo;
+
+            this.search = '';
+            this.filtered = [];
+            this.selectedAthlete = null;
+
+            this.show = true;
+        },
+
+        filterAthletes() {
+            let q = this.search.toLowerCase();
+
+            this.filtered = this.athletes.filter(a =>
+                a.name.toLowerCase().includes(q)
+            ).slice(0, 10);
+        },
+
+        selectAthlete(ath) {
+            this.selectedAthlete = ath;
+            this.search = ath.name;
+            this.sdo = ath.sdo; // ✅ AUTO SET SDO
+            this.filtered = [];
+        }
+    }
+}
+</script>
+
+
 @endif
 
 {{-- ================= PENDING AWARDS FOR TOURNAMENT MANAGER / SUPER ADMIN ================= --}}

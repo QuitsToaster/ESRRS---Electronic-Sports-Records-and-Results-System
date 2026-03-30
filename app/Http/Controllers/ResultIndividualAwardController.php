@@ -205,4 +205,19 @@ class ResultIndividualAwardController extends Controller
 
         return back()->with('success', 'Award sent for revision successfully.');
     }
+
+    public function updateFromRevision(Request $request)
+{
+    $award = IndividualAwardResult::findOrFail($request->award_id);
+
+    $award->update([
+        'athlete_id' => $request->athlete_id, // ✅ update athlete
+        'medal' => $request->medal,
+        'sdo' => 'SDO - ' . $request->sdo, // ✅ add prefix
+        'status' => 'pending',
+        'revision_message' => null,
+    ]);
+
+    return back()->with('success', 'Award resubmitted successfully.');
+}
 }
