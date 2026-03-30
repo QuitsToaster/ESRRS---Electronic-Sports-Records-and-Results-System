@@ -9,9 +9,14 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 @endphp
 
 {{-- ================= INSTRUCTIONS ================= --}}
-<div class="p-4 mb-6 bg-blue-50 border-l-4 border-blue-400 text-blue-800 rounded shadow-sm">
-    <h3 class="font-semibold mb-1">How to Use This Page:</h3>
-    <ul class="list-disc list-inside text-sm space-y-1">
+<div class="p-5 mb-6 bg-blue-50 rounded-xl border border-blue-100 text-blue-800">
+    <div class="flex items-center gap-2 mb-2">
+        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h3 class="font-semibold text-blue-800">How to Use This Page:</h3>
+    </div>
+    <ul class="list-disc list-inside text-sm space-y-1 ml-6">
         <li>Edit user details and permissions.</li>
         <li>Leave password blank to keep current password.</li>
         <li>Sports and Sport Types depend on Level & Category.</li>
@@ -19,76 +24,84 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
     </ul>
 </div>
 
-<div class="bg-white shadow rounded-lg p-6 w-full">
+<div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 w-full">
 
 <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6">
 @csrf
 @method('PUT')
 
-{{-- NAME --}}
-<div>
-    <label class="block font-semibold mb-1">Name</label>
-    <input type="text" name="name"
-           value="{{ old('name', $user->name) }}"
-           class="w-full border rounded px-3 py-2" required>
-</div>
-
-<div>
-    <label class="block text-sm font-semibold mb-1">Contact Number</label>
-    <div class="flex">
-        <span class="inline-flex items-center px-3 rounded-l border bg-gray-100 text-gray-700">+63</span>
-        <input type="text"
-               name="contact_number"
-               maxlength="10"
-               pattern="\d{10}"
-               value="{{ old('contact_number', optional($user)->contact_number ? substr($user->contact_number, 3) : '') }}"
-               class="w-full border rounded-r px-3 py-2">
+{{-- NAME & CONTACT --}}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Name <span class="text-red-500">*</span></label>
+        <input type="text" name="name"
+               value="{{ old('name', $user->name) }}"
+               class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" required>
     </div>
-    <p class="text-xs text-gray-500 mt-1">Enter 10 digits only. Example: 9123456789</p>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Contact Number</label>
+        <div class="flex">
+            <span class="inline-flex items-center px-4 rounded-l-xl border border-r-0 border-gray-200 bg-gray-50 text-gray-600 text-sm">+63</span>
+            <input type="text"
+                   name="contact_number"
+                   maxlength="10"
+                   pattern="\d{10}"
+                   value="{{ old('contact_number', optional($user)->contact_number ? substr($user->contact_number, 3) : '') }}"
+                   class="w-full border border-gray-200 rounded-r-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+        </div>
+        <p class="text-xs text-gray-500 mt-1.5">Enter 10 digits only. Example: 9123456789</p>
+    </div>
 </div>
 
 {{-- EMAIL --}}
 <div>
-    <label class="block font-semibold mb-1">Email</label>
+    <label class="block text-sm font-medium text-gray-700 mb-1.5">Email <span class="text-red-500">*</span></label>
     <input type="email" name="email"
            value="{{ old('email', $user->email) }}"
-           class="w-full border rounded px-3 py-2" required>
+           class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" required>
 </div>
 
 {{-- PASSWORD --}}
 <div>
-    <label class="block font-semibold mb-1">New Password (optional)</label>
-    <input type="password" name="password" class="w-full border rounded px-3 py-2">
+    <label class="block text-sm font-medium text-gray-700 mb-1.5">New Password <span class="text-gray-400 text-xs font-normal">(optional)</span></label>
+    <input type="password" name="password" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+    <p class="text-xs text-gray-500 mt-1.5">Leave blank to keep current password</p>
 </div>
 
-{{-- ROLE --}}
-<div>
-    <label class="block font-semibold mb-1">Role</label>
-    <select name="role_id" class="w-full border rounded px-3 py-2">
-        @foreach($roles as $role)
-            <option value="{{ $role->id }}"
-                {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
-                {{ $role->name }}
-            </option>
-        @endforeach
-    </select>
+{{-- ROLE & NEW ROLE --}}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Role</label>
+        <select name="role_id" class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition bg-white">
+            @foreach($roles as $role)
+                <option value="{{ $role->id }}"
+                    {{ old('role_id', $user->role_id) == $role->id ? 'selected' : '' }}>
+                    {{ $role->name }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1.5">Or Add New Role</label>
+        <input type="text" name="new_role"
+               value="{{ old('new_role') }}"
+               placeholder="Enter custom role name"
+               class="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+    </div>
 </div>
 
-{{-- NEW ROLE --}}
-<div>
-    <label class="block font-semibold mb-1">Or Add New Role</label>
-    <input type="text" name="new_role"
-           value="{{ old('new_role') }}"
-           class="w-full border rounded px-3 py-2">
-</div>
+{{-- SYSTEM ACCESS --}}
+<div class="bg-gray-50 rounded-xl p-5">
+    <label class="text-sm font-semibold text-gray-800 mb-3 block">System Access</label>
 
-{{-- ACCESS --}}
-<div>
-    <label class="font-semibold mb-2 block">System Access</label>
-
-    <label class="flex items-center gap-2 mb-2">
-        <input type="checkbox" id="selectAllAccess"> Select All Access
-    </label>
+    <div class="mb-3">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="selectAllAccess" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <span class="text-sm font-medium text-gray-700">Select All Access</span>
+        </label>
+    </div>
 
     @php
         $modules = [
@@ -99,61 +112,70 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
         $userAccess = old('access', $user->access ?? []);
     @endphp
 
-    <div class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
         @foreach($modules as $m)
-            <label class="flex items-center gap-2">
-                <input type="checkbox" class="moduleCheckbox"
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="moduleCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                        name="access[]" value="{{ $m }}"
                        {{ in_array($m, $userAccess) ? 'checked' : '' }}>
-                {{ ucfirst($m) }}
+                <span class="text-gray-700 capitalize">{{ $m }}</span>
             </label>
         @endforeach
     </div>
 </div>
 
-{{-- LEVEL --}}
-<div>
-    <label class="font-semibold mb-2 block">
-        <input type="checkbox" id="selectAllLevels"> Select All Levels
-    </label>
+{{-- LEVEL ACCESS --}}
+<div class="bg-gray-50 rounded-xl p-5">
+    <div class="mb-3">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="selectAllLevels" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <span class="text-sm font-medium text-gray-700">Select All Levels</span>
+        </label>
+    </div>
 
-    <div class="flex gap-4 text-sm">
+    <div class="flex flex-wrap gap-4">
         @foreach(['Elementary','Secondary','Paragames'] as $level)
-            <label class="flex items-center gap-2">
-                <input type="checkbox" class="levelCheckbox"
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="levelCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                        name="level_access[]" value="{{ $level }}"
                        {{ in_array($level, old('level_access', $user->level_access ?? [])) ? 'checked' : '' }}>
-                {{ $level }}
+                <span class="text-gray-700">{{ $level }}</span>
             </label>
         @endforeach
     </div>
 </div>
 
-{{-- CATEGORY --}}
-<div>
-    <label class="font-semibold mb-2 block">
-        <input type="checkbox" id="selectAllCategories"> Select All Categories
-    </label>
+{{-- CATEGORY ACCESS --}}
+<div class="bg-gray-50 rounded-xl p-5">
+    <div class="mb-3">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="selectAllCategories" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <span class="text-sm font-medium text-gray-700">Select All Categories</span>
+        </label>
+    </div>
 
-    <div class="flex gap-4 text-sm">
+    <div class="flex flex-wrap gap-4">
         @foreach(['Boys','Girls'] as $cat)
-            <label class="flex items-center gap-2">
-                <input type="checkbox" class="categoryCheckbox"
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" class="categoryCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                        name="category_access[]" value="{{ $cat }}"
                        {{ in_array($cat, old('category_access', $user->category_access ?? [])) ? 'checked' : '' }}>
-                {{ $cat }}
+                <span class="text-gray-700">{{ $cat }}</span>
             </label>
         @endforeach
     </div>
 </div>
 
 {{-- SPORTS --}}
-<div>
-    <label class="font-semibold mb-2 block">
-        <input type="checkbox" id="selectAllSports"> Select All Sports
-    </label>
+<div class="bg-gray-50 rounded-xl p-5">
+    <div class="mb-3">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="selectAllSports" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <span class="text-sm font-medium text-gray-700">Select All Sports</span>
+        </label>
+    </div>
 
-    <div id="sportsContainer" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+    <div id="sportsContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
 
         @php
             $groupedSports = $sports->groupBy(function($item) {
@@ -162,19 +184,19 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
         @endphp
 
         @foreach($groupedSports as $groupName => $group)
-            <div class="col-span-full font-semibold mt-2">{{ $groupName }}</div>
+            <div class="col-span-full text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3 first:mt-0 mb-2">{{ $groupName }}</div>
 
             @foreach($group as $sport)
-                <label class="flex items-center gap-2 sportItem"
+                <label class="inline-flex items-center gap-2 sportItem cursor-pointer"
                        data-level="{{ $sport->division }}"
                        data-category="{{ $sport->category ?? '' }}"
                        style="display:none">
 
-                    <input type="checkbox" class="sportCheckbox"
+                    <input type="checkbox" class="sportCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                            name="sports_access[]" value="{{ $sport->id }}"
                            {{ in_array($sport->id, old('sports_access', $user->sports_access ?? [])) ? 'checked' : '' }}>
 
-                    {{ $sport->name }}
+                    <span class="text-gray-700">{{ $sport->name }}</span>
                 </label>
             @endforeach
         @endforeach
@@ -182,12 +204,15 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 </div>
 
 {{-- SPORT TYPES --}}
-<div>
-    <label class="font-semibold mb-2 block">
-        <input type="checkbox" id="selectAllSportTypes"> Select All Sport Types
-    </label>
+<div class="bg-gray-50 rounded-xl p-5">
+    <div class="mb-3">
+        <label class="inline-flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" id="selectAllSportTypes" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+            <span class="text-sm font-medium text-gray-700">Select All Sport Types</span>
+        </label>
+    </div>
 
-    <div id="sportTypeContainer" class="grid grid-cols-2 md:grid-cols-3 gap-2 text-sm">
+    <div id="sportTypeContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 text-sm">
 
         @php
             $groupedTypes = $sportTypes->groupBy(function($item) use ($sports) {
@@ -197,18 +222,18 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
         @endphp
 
         @foreach($groupedTypes as $groupName => $types)
-            <div class="col-span-full font-semibold mt-2">{{ $groupName }}</div>
+            <div class="col-span-full text-xs font-semibold text-gray-500 uppercase tracking-wider mt-3 first:mt-0 mb-2">{{ $groupName }}</div>
 
             @foreach($types as $type)
-                <label class="flex items-center gap-2 sportTypeItem"
+                <label class="inline-flex items-center gap-2 sportTypeItem cursor-pointer"
                        data-sport-id="{{ $type->sport_id }}"
                        style="display:none">
 
-                    <input type="checkbox" class="sportTypeCheckbox"
+                    <input type="checkbox" class="sportTypeCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                            name="sport_type_access[]" value="{{ $type->id }}"
                            {{ in_array($type->id, old('sport_type_access', $user->sport_type_access ?? [])) ? 'checked' : '' }}>
 
-                    {{ $type->type_name }}
+                    <span class="text-gray-700">{{ $type->type_name }}</span>
                 </label>
             @endforeach
         @endforeach
@@ -216,9 +241,9 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 </div>
 
 {{-- ACTIONS --}}
-<div class="flex justify-end gap-3 pt-4 border-t">
-    <a href="{{ route('users.index') }}" class="px-4 py-2 border rounded">Cancel</a>
-    <button class="px-5 py-2 bg-green-600 text-white rounded font-semibold">
+<div class="flex justify-end gap-3 pt-5 border-t border-gray-200">
+    <a href="{{ route('users.index') }}" class="px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition">Cancel</a>
+    <button class="px-6 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl transition shadow-sm font-medium">
         Update User
     </button>
 </div>
@@ -263,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 show = true;
             }
 
-            item.style.display = show ? 'flex' : 'none';
+            item.style.display = show ? 'inline-flex' : 'none';
             if (!show) item.querySelector('input').checked = false;
         });
 
@@ -292,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         sportTypes.forEach(item => {
             const sportId = item.dataset.sportId;
             const show = selectedSports.includes(sportId);
-            item.style.display = show ? 'flex' : 'none';
+            item.style.display = show ? 'inline-flex' : 'none';
             if (!show) item.querySelector('input').checked = false;
         });
 
