@@ -526,7 +526,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 @if(
     in_array('attendance', $access) &&
-    in_array($roleName, ['Super Admin', 'Secretariat', 'Security'])
+    in_array($roleName, ['Super Admin', 'Secretariat', 'Security', 'Billeting Quarters'])
 )
     <a href="{{ route('attendance.check') }}"
        class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-all duration-200 flex items-center gap-2">
