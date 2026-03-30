@@ -1011,13 +1011,11 @@ setTimeout(() => {
         <a href="{{ route('athletes.edit',$athlete->id) }}"
            class="text-blue-600 hover:underline mr-2">Edit</a>
 
-        <form action="{{ route('athletes.destroy',$athlete->id) }}"
-              method="POST" class="inline"
-              onsubmit="return confirm('Delete this athlete?')">
-            @csrf
-            @method('DELETE')
-            <button class="text-red-600 hover:underline">Delete</button>
-        </form>
+        <button
+    onclick="openDeleteModal({{ $athlete->id }}, '{{ $athlete->last_name }}, {{ $athlete->first_name }} {{ $athlete->middle_initial }}')"
+    class="text-red-600 hover:underline">
+    Delete
+</button>
     </td>
 </tr>
 @empty
@@ -1060,6 +1058,92 @@ function closeQrModal(){
     qrModal.classList.add('hidden');
     qrModal.classList.remove('flex');
 }
+</script>
+
+{{-- DELETE MODAL --}}
+<div id="deleteModal"
+     class="fixed inset-0 bg-black/60 hidden items-center justify-center z-50">
+
+    <div class="bg-white rounded-xl shadow-xl w-full max-w-md p-6 relative animate-fade-in-up">
+
+        {{-- CLOSE --}}
+        <button onclick="closeDeleteModal()"
+                class="absolute top-2 right-3 text-gray-500 hover:text-gray-700 text-xl">
+            &times;
+        </button>
+
+        {{-- CONTENT --}}
+        <h2 class="text-lg font-bold text-gray-800 mb-2">
+            Confirm Delete
+        </h2>
+
+        <p class="text-sm text-gray-600 mb-4">
+            Are you sure you want to delete:
+        </p>
+
+        <p id="deleteAthleteName"
+           class="font-semibold text-red-600 mb-6">
+        </p>
+
+        {{-- FORM --}}
+        <form id="deleteForm" method="POST">
+            @csrf
+            @method('DELETE')
+
+            <div class="flex justify-end gap-2">
+                <button type="button"
+                        onclick="closeDeleteModal()"
+                        class="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300 text-gray-700">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="px-4 py-2 rounded bg-red-600 hover:bg-red-700 text-white">
+                    Delete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    function openDeleteModal(id, name) {
+    const modal = document.getElementById('deleteModal');
+    const form = document.getElementById('deleteForm');
+    const nameField = document.getElementById('deleteAthleteName');
+
+    // Set dynamic values
+    nameField.innerText = name;
+    form.action = `/athletes/${id}`;
+
+    // Show modal
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+
+    document.body.style.overflow = '';
+}
+
+/* Close on outside click */
+document.getElementById('deleteModal')?.addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+/* Close on ESC */
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
 </script>
 
 @endsection

@@ -156,14 +156,23 @@
 
 {{-- SPORT --}}
 <div class="mb-4">
-    <label class="font-medium">Sport</label>
+    <label class="font-medium">Select Existing Sport</label>
     <select name="sport_id" class="w-full border rounded px-3 py-2">
+        <option value="">-- Select Sport --</option>
         @foreach($sports as $sport)
             <option value="{{ $sport->id }}" {{ $athlete->sport_id==$sport->id?'selected':'' }}>
                 {{ $sport->name }}
             </option>
         @endforeach
     </select>
+</div>
+
+<div class="mb-4">
+    <label class="font-medium">Or Add New Sport</label>
+    <input type="text"
+           name="sport_name"
+           placeholder="Type sport if not listed"
+           class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- DIVISION & CATEGORY --}}

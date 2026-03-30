@@ -153,6 +153,7 @@ class AthleteController extends Controller
 
             'sport_id'        => 'nullable|exists:sports,id',
             'sport_name'      => 'nullable|string|max:255',
+
             'municipality'    => 'nullable|string|max:255',
 
             'division'        => 'nullable|in:Elementary,Secondary,Paragames',
@@ -194,30 +195,63 @@ class AthleteController extends Controller
             $schoolId = $request->school_id;
         }
 
-        $sportId = $request->sport_id ?? null;
+        /* ================= SPORT ================= */
 
+        $sportId   = null;
+        $eventName = null;
+
+        // ✅ PRIORITY 1: Existing sport selected
+        if ($request->sport_id) {
+            $sport = Sport::find($request->sport_id);
+
+            if ($sport) {
+                $sportId   = $sport->id;
+                $eventName = $sport->name; // 🔥 SAVE TO EVENT
+            }
+        }
+
+        // ✅ PRIORITY 2: New sport typed
+        elseif ($request->sport_name) {
+
+            $sport = Sport::firstOrCreate([
+                'name' => $request->sport_name
+            ]);
+
+            $sportId   = $sport->id;
+            $eventName = $sport->name; // 🔥 SAVE TO EVENT
+        }
+
+        /* ================= PHOTO ================= */
         $photoPath = null;
         if ($request->hasFile('profile_photo')) {
             $photoPath = $request->file('profile_photo')->store('athletes', 'public');
         }
 
+        /* ================= CREATE ATHLETE ================= */
         Athlete::create([
             'first_name'        => $val('first_name'),
             'middle_initial'    => $val('middle_initial'),
             'last_name'         => $val('last_name'),
             'sex'               => $val('sex'),
             'birthdate'         => $request->birthdate ?? null,
+
             'school_id'         => $schoolId,
+
+            // ✅ BOTH SAVED
             'sport_id'          => $sportId,
+            'event'             => $eventName, // 🔥 FIX HERE
+
             'division'          => $val('division'),
             'category'          => $val('category'),
             'municipality'      => $val('municipality'),
             'status'            => $val('status'),
+
             'region'            => $val('region'),
             'school_type'       => $val('school_type'),
             'school_address'    => $val('school_address'),
             'school_division'   => $val('school_division'),
             'school_code'       => $val('school_code'),
+
             'lrn'               => $request->lrn ?: 'N/A',
             'profile_photo'     => $photoPath,
             'legislative_district' => $val('legislative_district'),
@@ -228,28 +262,21 @@ class AthleteController extends Controller
 
     } catch (\Throwable $e) {
 
-    $message = 'Failed to save athlete.';
+        $message = 'Failed to save athlete.';
 
-    // 🔥 HANDLE DUPLICATE LRN
-    if (str_contains($e->getMessage(), 'athletes_lrn_unique')) {
-        $message = 'Duplicate LRN detected. This LRN is already assigned to another athlete.';
+        if (str_contains($e->getMessage(), 'athletes_lrn_unique')) {
+            $message = 'Duplicate LRN detected. This LRN is already assigned.';
+        } elseif (str_contains($e->getMessage(), 'foreign key')) {
+            $message = 'Invalid School or Sport selected.';
+        } elseif (str_contains($e->getMessage(), 'image')) {
+            $message = 'Image upload failed.';
+        }
+
+        return back()
+            ->withInput()
+            ->with('error', $message)
+            ->with('debug_error', $e->getMessage());
     }
-
-    // 🔥 HANDLE FOREIGN KEY (INVALID SCHOOL / SPORT)
-    elseif (str_contains($e->getMessage(), 'foreign key')) {
-        $message = 'Invalid selection detected (School or Sport may not exist).';
-    }
-
-    // 🔥 HANDLE IMAGE ERRORS
-    elseif (str_contains($e->getMessage(), 'image')) {
-        $message = 'Image upload failed. Please use a valid image file.';
-    }
-
-    return back()
-        ->withInput()
-        ->with('error', $message)
-        ->with('debug_error', $e->getMessage()); // optional (for dev only)
-}
 }
 
     public function edit(Athlete $athlete)
@@ -261,7 +288,6 @@ class AthleteController extends Controller
 
     public function update(Request $request, Athlete $athlete)
 {
-    // ✅ Flexible validation (no required fields)
     $request->validate([
         'first_name'       => 'nullable|string|max:255',
         'middle_initial'   => 'nullable|string|max:1',
@@ -270,26 +296,55 @@ class AthleteController extends Controller
         'birthdate'        => 'nullable|date',
         'school_id'        => 'nullable|exists:schools,id',
         'municipality'     => 'nullable|string|max:255',
+
+        // ✅ ADD THIS
         'sport_id'         => 'nullable|exists:sports,id',
+        'sport_name'       => 'nullable|string|max:255',
+
         'division'         => 'nullable|in:Elementary,Secondary,Paragames',
         'category'         => 'nullable|in:Boys,Girls',
         'status'           => 'nullable|in:Active,Disqualified,Injured',
         'profile_photo'    => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         'legislative_district' => 'nullable|string|max:255',
         'lrn'              => 'nullable|string|max:20',
-        'qr_code'           => 'nullable|string|max:255',
+        'qr_code'          => 'nullable|string|max:255',
     ]);
 
     $oldValues = $athlete->toArray();
 
-    // ✅ Handle photo
+    /* ================= PHOTO ================= */
     $photoPath = $athlete->profile_photo;
 
     if ($request->hasFile('profile_photo')) {
         $photoPath = $request->file('profile_photo')->store('athletes', 'public');
     }
 
-    // ✅ Only update fields that are NOT NULL (preserve old data)
+    /* ================= SPORT FIX ================= */
+    $sportId   = $athlete->sport_id;
+    $eventName = $athlete->event;
+
+    // ✅ Existing sport selected
+    if ($request->sport_id) {
+        $sport = Sport::find($request->sport_id);
+
+        if ($sport) {
+            $sportId   = $sport->id;
+            $eventName = $sport->name;
+        }
+    }
+
+    // ✅ New sport typed
+    elseif ($request->sport_name) {
+
+        $sport = Sport::firstOrCreate([
+            'name' => $request->sport_name
+        ]);
+
+        $sportId   = $sport->id;
+        $eventName = $sport->name;
+    }
+
+    /* ================= UPDATE DATA ================= */
     $data = array_filter([
         'first_name'            => $request->first_name,
         'middle_initial'        => $request->middle_initial,
@@ -297,7 +352,11 @@ class AthleteController extends Controller
         'sex'                   => $request->sex,
         'birthdate'             => $request->birthdate,
         'school_id'             => $request->school_id,
-        'sport_id'              => $request->sport_id,
+
+        // ✅ FIXED HERE
+        'sport_id'              => $sportId,
+        'event'                 => $eventName,
+
         'division'              => $request->division,
         'category'              => $request->category,
         'status'                => $request->status,
@@ -314,13 +373,11 @@ class AthleteController extends Controller
         return !is_null($value);
     });
 
-    // ✅ Always include photo (so it updates properly)
     $data['profile_photo'] = $photoPath;
 
-    // ✅ Perform update
     $athlete->update($data);
 
-    // ✅ Audit Log
+    /* ================= AUDIT ================= */
     AuditLog::create([
         'model_type' => 'Athlete',
         'model_id'   => $athlete->id,
