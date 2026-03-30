@@ -399,6 +399,11 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 </div>
 @endif
 
+@php
+    $userRole = optional(auth()->user()->role)->name;
+@endphp
+
+@if(in_array($userRole, ['Super Admin', 'Tournament Manager']))
 <div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
 
     <h3 class="font-semibold mb-2">Pending Awards Needing Approval</h3>
@@ -595,6 +600,7 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
         <p>No pending awards to approve for your division/event.</p>
     @endif
 </div>
+@endif
 
 {{-- ================= APPROVE CONFIRMATION MODAL ================= --}}
 <div
@@ -1053,9 +1059,14 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 {{-- ========================================================= --}}
 <div x-show="awardType==='individual'" x-data="individualAwardsForm()">
 
+    @php
+        $userRole = optional($user->role)->name;
+    @endphp
+
     <form method="POST" 
-          action="{{ route('results_individual.store') }}" 
-          enctype="multipart/form-data">
+          action="{{ $userRole === 'Tournament Secretary' ? route('results_individual.store') : route('results_individual.store') }}" 
+          enctype="multipart/form-data"
+          x-data="{ showModal: false }">
 
         @csrf
 
@@ -1070,9 +1081,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         @endphp
 
         @foreach($events as $event)
-            @php
-                if (!is_object($event)) continue;
-            @endphp
+            @php if (!is_object($event)) continue; @endphp
 
             <h3 class="font-semibold mt-6">
                 {{ strtoupper($event->name ?? 'Unnamed Event') }}
@@ -1133,9 +1142,41 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         @endforeach
 
         <div class="flex justify-end mt-6">
-            <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
-                Save Individual Awards
-            </button>
+            @if($userRole === 'Super Admin')
+                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
+                    Save Individual Awards
+                </button>
+            @elseif($userRole === 'Tournament Secretary')
+                <button type="button"
+                        @click="showModal=true"
+                        class="bg-yellow-500 text-white px-6 py-2 rounded">
+                    Forward for Validation
+                </button>
+            @endif
+        </div>
+
+        {{-- Forward for Validation Modal --}}
+        <div x-show="showModal" x-cloak
+             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div class="bg-white p-6 rounded shadow w-96">
+
+                <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
+
+                <input type="file" name="validation_file" class="w-full border rounded mb-4">
+
+                <div class="flex justify-end gap-2">
+                    <button type="button"
+                            @click="showModal=false"
+                            class="px-4 py-2 bg-gray-400 text-white rounded">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="px-4 py-2 bg-yellow-500 text-white rounded">
+                        Yes, Forward
+                    </button>
+                </div>
+            </div>
         </div>
 
     </form>
@@ -1149,7 +1190,7 @@ function individualAwardsForm() {
                 {
                     id: "{{ $athlete->id }}",
                     name: "{{ $athlete->last_name }}, {{ $athlete->first_name }}",
-                    sdo: "{{ $athlete->school_division ?? '' }}",
+                    sdo: "SDO - {{ $athlete->school_division ?? '' }}",
                     school: "{{ $athlete->school?->name ?? '' }}"
                 },
             @endforeach
