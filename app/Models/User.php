@@ -24,6 +24,7 @@ class User extends Authenticatable
         'level_access',      // ✅ FIX
         'category_access', 
         'division_name',
+        'divisions', 
         'contact_number',  // ✅ FIX
     ];
 
@@ -37,7 +38,8 @@ class User extends Authenticatable
         'sports_access'   => 'array',
         'sport_type_access'  => 'array',
         'level_access'    => 'array',   // ✅ FIX
-        'category_access' => 'array',   // ✅ FIX
+        'category_access' => 'array',  
+        'divisions'       => 'array',  // ✅ FIX
         'email_verified_at' => 'datetime',
     ];
 

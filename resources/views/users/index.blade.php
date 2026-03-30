@@ -277,6 +277,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact Number</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Module Access</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SDO Access</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sports</th>
@@ -311,6 +312,19 @@
                                     {{ $user->access ? implode(', ', $user->access) : '—' }}
                                 </div>
                             </td>
+
+                            <td class="px-6 py-4 text-sm text-gray-600">
+    <div class="max-h-20 overflow-y-auto pr-1 custom-scrollbar">
+        @php
+            // Make sure $divisions is a collection of all divisions passed from the controller
+            $divisionNames = collect($user->divisions ?? [])
+                ->map(fn($id) => optional($divisions->firstWhere('id', $id))->name)
+                ->filter() // remove nulls if ID not found
+                ->implode(', ');
+        @endphp
+        {{ $divisionNames ?: '—' }}
+    </div>
+</td>
 
                             {{-- LEVEL ACCESS (SCROLLABLE) --}}
                             <td class="px-6 py-4 text-sm text-gray-600">

@@ -9,6 +9,7 @@ use App\Models\AccountRequest;
 use App\Models\Sport;
 use App\Models\SportType;
 use App\Models\AuditLog;
+use App\Models\Division;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -82,6 +83,7 @@ class UserController extends Controller
   public function create()
 {
     $roles = Role::all();
+    $divisions = Division::orderBy('name')->get(); // ✅ fetch all divisions
 
     $sports = Sport::orderBy('division')
         ->orderBy('category')
@@ -90,7 +92,7 @@ class UserController extends Controller
 
     $sportTypes = SportType::orderBy('type_name')->get();
 
-    return view('users.create', compact('roles', 'sports', 'sportTypes'));
+    return view('users.create', compact('roles', 'divisions', 'sports', 'sportTypes'));
 }
 
 
@@ -112,6 +114,8 @@ class UserController extends Controller
         'sport_type_access.*' => 'exists:sport_types,id',
         'level_access'     => 'nullable|array',
         'category_access'  => 'nullable|array',
+        'divisions' => 'nullable|array',
+'divisions.*' => 'exists:divisions,id',
     ]);
 
     if ($request->filled('new_role')) {
@@ -132,6 +136,7 @@ class UserController extends Controller
         'sport_type_access'  => $request->sport_type_access ?? [],
         'level_access'    => $request->level_access ?? [],
         'category_access' => $request->category_access ?? [],
+        'divisions'        => $request->divisions ?? [], // saves array of division IDs
         'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null, // ✅ save with prefix
     ]);
 
@@ -153,13 +158,19 @@ class UserController extends Controller
 public function edit(User $user)
 {
     $roles = Role::all();
-    $sports = Sport::orderBy('division')
-        ->orderBy('category')
-        ->orderBy('name')
-        ->get();
-    $sportTypes = SportType::orderBy('type_name')->get();
+    $sports = Sport::all();
+    $sportTypes = SportType::all();
 
-    return view('users.edit', compact('user', 'roles', 'sports', 'sportTypes'));
+    // ✅ Add this line to get all divisions
+    $divisions = Division::all(); // or whatever your model/table name is
+
+    return view('users.edit', compact(
+        'user',
+        'roles',
+        'sports',
+        'sportTypes',
+        'divisions' // ✅ pass divisions to Blade
+    ));
 }
 
 // Update existing user
@@ -176,6 +187,8 @@ public function update(Request $request, User $user)
         'category_access'  => 'nullable|array',
         'sports_access'    => 'nullable|array',
         'sport_type_access'=> 'nullable|array',
+        'divisions' => 'nullable|array',
+'divisions.*' => 'exists:divisions,id',
     ]);
 
     $oldValues = $user->toArray();
@@ -195,6 +208,7 @@ public function update(Request $request, User $user)
         'category_access'  => $request->category_access ?? [],
         'sports_access'    => $request->sports_access ?? [],
         'sport_type_access'=> $request->sport_type_access ?? [],
+        'divisions'        => $request->divisions ?? [],  // saves array of division IDs
         'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null, // ✅ save with prefix
     ]);
 
