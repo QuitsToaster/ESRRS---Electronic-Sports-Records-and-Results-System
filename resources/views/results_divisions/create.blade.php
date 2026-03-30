@@ -142,26 +142,37 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 $pendingResultsSecretary = \App\Models\AllAwardResult::with(['sport','type'])
     ->where('status','needs_revision')
     ->where('sdo','like','%' . $user->division_name . '%')
+
+    // ✅ FIX: allow NULL type_id
+    ->where(function($q) use ($user) {
+        $q->whereNull('type_id')
+          ->orWhereIn('type_id', $user->sport_type_access ?? []);
+    })
+
     ->whereIn('sport_id', $user->sports_access ?? [])
-    ->whereIn('type_id', $user->sport_type_access ?? [])
     ->whereIn('division', $user->level_access ?? [])
+
     ->where(function($q) use ($user) {
         $q->whereNull('category')
           ->orWhereIn('category', $user->category_access ?? []);
     })
+
     ->latest()
     ->get();
 
 $pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','type','athlete'])
     ->where('status','needs_revision')
     ->where('sdo','like','%' . $user->division_name . '%')
+
     ->whereIn('sport_id', $user->sports_access ?? [])
     ->whereIn('type_id', $user->sport_type_access ?? [])
     ->whereIn('division', $user->level_access ?? [])
+
     ->where(function($q) use ($user) {
         $q->whereNull('category')
           ->orWhereIn('category', $user->category_access ?? []);
     })
+
     ->latest()
     ->get();
 @endphp
@@ -197,7 +208,12 @@ Awards Returned for Revision
 <td class="border px-2">{{ $r->division }}</td>
 <td class="border px-2">{{ $r->category ?? '—' }}</td>
 <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-<td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+
+{{-- ✅ SAFE TYPE DISPLAY --}}
+<td class="border px-2">
+    {{ $r->type->type_name ?? '-' }}
+</td>
+
 <td class="border px-2 font-semibold">{{ $r->medal }}</td>
 <td class="border px-2">{{ $r->sdo }}</td>
 <td class="border px-2 text-left">{{ $r->revision_message ?? 'No message' }}</td>
@@ -325,13 +341,20 @@ $pendingIndividual = collect();
 
 if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin') {
 
-    $pendingResultsQuery = \App\Models\AllAwardResult::where('status','pending');
-    $pendingIndividualQuery = \App\Models\IndividualAwardResult::where('status','pending');
+    $pendingResultsQuery = \App\Models\AllAwardResult::with(['sport','type'])
+        ->where('status','pending');
+
+    $pendingIndividualQuery = \App\Models\IndividualAwardResult::with(['sport','type','athlete'])
+        ->where('status','pending');
 
     if ($user->role->name !== 'Super Admin') {
 
+        // ✅ FIX HERE (ALLOW NULL type_id)
         $pendingResultsQuery->whereIn('sport_id', $user->sports_access ?? [])
-                            ->whereIn('type_id', $user->sport_type_access ?? [])
+                            ->where(function($q) use ($user) {
+                                $q->whereNull('type_id')
+                                  ->orWhereIn('type_id', $user->sport_type_access ?? []);
+                            })
                             ->whereIn('division', $user->level_access ?? [])
                             ->where(function($q) use ($user) {
                                 $q->whereNull('category')
@@ -347,8 +370,8 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                                });
     }
 
-    $pendingResults = $pendingResultsQuery->get();
-    $pendingIndividual = $pendingIndividualQuery->get();
+    $pendingResults = $pendingResultsQuery->latest()->get();
+    $pendingIndividual = $pendingIndividualQuery->latest()->get();
 }
 
 @endphp
@@ -406,7 +429,12 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                 @foreach($pendingResults as $r)
                     <tr class="text-center">
                         <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-                        <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
+
+                        {{-- ✅ SAFE TYPE DISPLAY --}}
+                        <td class="border px-2">
+                            {{ $r->type->type_name ?? 'ALL EVENTS' }}
+                        </td>
+
                         <td class="border px-2">{{ $r->sdo }}</td>
                         <td class="border px-2">{{ $r->medal }}</td>
                         <td class="border px-2">{{ $r->count }}</td>
@@ -561,20 +589,20 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                         </td>
 
                         <td class="border px-2 space-x-1">
-    {{-- APPROVE --}}
-    <button
-        class="bg-green-500 text-white px-3 py-1 rounded"
-        @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })">
-        Approve
-    </button>
+                            {{-- APPROVE --}}
+                            <button
+                                class="bg-green-500 text-white px-3 py-1 rounded"
+                                @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })">
+                                Approve
+                            </button>
 
-    {{-- REJECT --}}
-    <button
-        @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })"
-        class="bg-red-600 text-white px-3 py-1 rounded">
-        Reject
-    </button>
-</td>
+                            {{-- REJECT --}}
+                            <button
+                                @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })"
+                                class="bg-red-600 text-white px-3 py-1 rounded">
+                                Reject
+                            </button>
+                        </td>
                     </tr>
                 @endforeach
             </tbody>
@@ -692,92 +720,6 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 {{-- 🏆 ALL AWARDS FORM / VIEW --}}
 {{-- ================================================= --}}
 <div x-show="awardType==='all'">
-
-    {{-- ================= TOURNAMENT MANAGER VIEW ================= --}}
-    @if($user->role->name === 'Tournament Manager')
-
-        @foreach($events as $event)
-            @php
-                $awards = \App\Models\AllAwardResult::where('event_id', $event->id)
-                    ->where('division', $tab['division'])
-                    ->where('category', $tab['category'] ?? null)
-                    ->where('status', 'pending')
-                    ->get()
-                    ->groupBy('medal');
-            @endphp
-
-            <h3 class="font-semibold mt-6">
-                {{ strtoupper($event->name ?? 'Unnamed Event') }}
-            </h3>
-
-            @if($awards->isEmpty())
-                <p class="text-gray-500 text-sm mt-2">No pending awards.</p>
-            @else
-                <table class="w-full border text-sm mt-2">
-                    <thead class="bg-gray-200 text-center">
-                        <tr>
-                            <th class="border px-2 py-2">Medal</th>
-                            <th class="border px-2 py-2">Division / SDO</th>
-                            <th class="border px-2 py-2">Validation File</th>
-                            <th class="border px-2 py-2">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($awards as $medal => $items)
-                            @foreach($items as $award)
-                                <tr class="text-center">
-                                    <td class="border px-2 py-2 font-semibold">
-                                        {{ strtoupper($medal) }}
-                                    </td>
-
-                                    <td class="border px-2 py-2">
-                                        {{ $award->sdo }}
-                                    </td>
-
-                                    <td class="border px-2 py-2">
-                                        @if($award->validation_file)
-                                            <a href="{{ asset('storage/'.$award->validation_file) }}"
-                                               target="_blank"
-                                               class="text-blue-600 underline">
-                                                View File
-                                            </a>
-                                        @else
-                                            <span class="text-gray-400">No file</span>
-                                        @endif
-                                    </td>
-
-                                    <td class="border px-2 py-2">
-                                        <div class="flex justify-center gap-2">
-
-                                            <form method="POST" action="{{ route('approve_all_awards') }}">
-                                                @csrf
-                                                <input type="hidden" name="award_id" value="{{ $award->id }}">
-                                                <button class="bg-green-600 text-white px-3 py-1 rounded text-xs">
-                                                    Approve
-                                                </button>
-                                            </form>
-
-                                            <form method="POST" action="{{ route('reject_all_awards') }}">
-                                                @csrf
-                                                <input type="hidden" name="award_id" value="{{ $award->id }}">
-                                                <input type="hidden" name="message" value="Needs revision">
-                                                <button class="bg-red-600 text-white px-3 py-1 rounded text-xs">
-                                                    Reject
-                                                </button>
-                                            </form>
-
-                                        </div>
-                                    </td>
-                                </tr>
-                            @endforeach
-                        @endforeach
-                    </tbody>
-                </table>
-            @endif
-        @endforeach
-
-    @endif
-
 
     {{-- ================= NORMAL FORM ================= --}}
     @if(in_array($user->role->name, ['Super Admin','Tournament Secretary']))
