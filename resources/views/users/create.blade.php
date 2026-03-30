@@ -225,8 +225,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const levels = getChecked(levelCBs);
         const cats   = getChecked(catCBs);
 
-        const allLevelSelected = levels.length === 3;
-        const allCatSelected   = cats.length === 2;
+        const allLevelSelected = levels.length === 3; // Elementary, Secondary, Paragames
+        const allCatSelected   = cats.length === 2;   // Boys, Girls
 
         sportItems.forEach(item => {
             const lvl = item.dataset.level;
@@ -238,11 +238,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (allLevelSelected && allCatSelected) {
                 show = true;
             }
-            // Paragames (no category)
-            else if (levels.includes('Paragames') && lvl === 'Paragames') {
-                show = true;
-            }
-            // Elementary / Secondary with category
+            // ✅ Paragames now has categories
             else if (levels.includes(lvl) && cats.includes(cat)) {
                 show = true;
             }

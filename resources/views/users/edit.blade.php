@@ -227,7 +227,7 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 </div>
 
 
-{{-- ================= JS (UPDATED WITH GROUP LABEL HIDING) ================= --}}
+{{-- ================= JS (UPDATED WITH GROUP LABEL HIDING AND PARAGAMES CATEGORIES) ================= --}}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -245,8 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedLevels = getChecked(levels);
         const selectedCategories = getChecked(categories);
 
-        const allLevelsSelected = selectedLevels.length === 3;
-        const allCategoriesSelected = selectedCategories.length === 2;
+        const allLevelsSelected = selectedLevels.length === 3; // Elementary, Secondary, Paragames
+        const allCategoriesSelected = selectedCategories.length === 2; // Boys, Girls
 
         sports.forEach(item => {
             const level = item.dataset.level;
@@ -255,11 +255,13 @@ document.addEventListener('DOMContentLoaded', () => {
             let show = false;
 
             // ✅ ALL LEVELS + ALL CATEGORIES → SHOW EVERYTHING
-            if (allLevelsSelected && allCategoriesSelected) show = true;
-            // Paragames (no category)
-            else if (selectedLevels.includes('Paragames') && level === 'Paragames') show = true;
-            // Elementary / Secondary with category
-            else if (selectedLevels.includes(level) && selectedCategories.includes(category)) show = true;
+            if (allLevelsSelected && allCategoriesSelected) {
+                show = true;
+            }
+            // ✅ Paragames now has categories like Elementary/Secondary
+            else if (selectedLevels.includes(level) && selectedCategories.includes(category)) {
+                show = true;
+            }
 
             item.style.display = show ? 'flex' : 'none';
             if (!show) item.querySelector('input').checked = false;
