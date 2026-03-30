@@ -12,57 +12,45 @@ use Illuminate\Support\Facades\Auth;
 class ResultAllAwardController extends Controller
 {
     public function store(Request $request)
-{
-    $user = auth()->user();
-    $roleName = optional($user->role)->name;
+    {
+        $user = auth()->user();
+        $roleName = optional($user->role)->name;
 
-    $status = $roleName === 'Tournament Secretary' ? 'pending' : 'approved';
+        // Status depends on role
+        $status = $roleName === 'Tournament Secretary' ? 'pending' : 'approved';
 
-    $filePath = $request->hasFile('validation_file')
-        ? $request->file('validation_file')->store('award-validations', 'public')
-        : null;
+        $filePath = $request->hasFile('validation_file')
+            ? $request->file('validation_file')->store('award-validations', 'public')
+            : null;
 
-    $results = $request->input('results', []);
+        $results = $request->input('results', []);
 
-    if (!is_array($results)) {
-        return back()->with('error', 'Invalid results format.');
-    }
+        if (!is_array($results)) {
+            return back()->with('error', 'Invalid results format.');
+        }
 
-    $processedEventIds = []; // Keep track of events that got awards
+        $processedEventIds = []; // Track events that got awards
 
-    foreach ($results as $eventId => $sports) {
+        foreach ($results as $eventId => $sports) {
 
-        if (!Event::where('id', $eventId)->exists()) continue;
-        if (!is_array($sports)) continue;
+            if (!Event::where('id', $eventId)->exists()) continue;
+            if (!is_array($sports)) continue;
 
-        foreach ($sports as $sportId => $medals) {
+            foreach ($sports as $sportId => $medals) {
 
-            if (!is_array($medals)) continue;
+                if (!is_array($medals)) continue;
 
-            foreach ($medals as $medalName => $selectedSdos) {
+                foreach ($medals as $medalName => $selectedSdos) {
 
-                if (!is_array($selectedSdos)) {
-                    $selectedSdos = [$selectedSdos];
-                }
+                    if (!is_array($selectedSdos)) {
+                        $selectedSdos = [$selectedSdos];
+                    }
 
-                foreach ($selectedSdos as $sdoValue) {
+                    foreach ($selectedSdos as $sdoValue) {
 
-                    if (empty($sdoValue)) continue;
+                        if (empty($sdoValue)) continue;
 
-                    $existing = AllAwardResult::where([
-                        'event_id' => $eventId,
-                        'division' => $request->division,
-                        'category' => $request->category ?? null,
-                        'sport_id' => $sportId,
-                        'type_id' => null,
-                        'sdo' => $sdoValue,
-                        'medal' => $medalName,
-                    ])->first();
-
-                    $oldValues = $existing ? $existing->toArray() : null;
-
-                    $award = AllAwardResult::updateOrCreate(
-                        [
+                        $existing = AllAwardResult::where([
                             'event_id' => $eventId,
                             'division' => $request->division,
                             'category' => $request->category ?? null,
@@ -70,53 +58,67 @@ class ResultAllAwardController extends Controller
                             'type_id' => null,
                             'sdo' => $sdoValue,
                             'medal' => $medalName,
-                        ],
-                        [
-                            'count' => 1,
-                            'status' => $status,
-                            'awarded_by' => $user->id,
-                            'validation_file' => $filePath,
-                        ]
-                    );
+                        ])->first();
 
-                    AuditLog::create([
-                        'model_type' => 'AllAwardResult',
-                        'model_id'   => $award->id,
-                        'user_id'    => $user->id,
-                        'action'     => $existing
-                            ? "Updated All Award | Event: $eventId | Sport: $sportId | Medal: $medalName"
-                            : "Created All Award | Event: $eventId | Sport: $sportId | Medal: $medalName",
-                        'old_values' => $oldValues ? json_encode($oldValues) : null,
-                        'new_values' => json_encode($award->toArray()),
-                        'description' => json_encode([
-                            'performed_by' => $user->name,
-                            'role' => $roleName,
-                            'event_id' => $eventId,
-                            'sport_id' => $sportId,
-                            'type_id' => null,
-                            'division' => $request->division,
-                            'category' => $request->category,
-                            'sdo' => $sdoValue,
-                            'medal' => $medalName,
-                            'status' => $status,
-                            'ip_address' => request()->ip(),
-                            'user_agent' => request()->userAgent(),
-                        ]),
-                    ]);
+                        $oldValues = $existing ? $existing->toArray() : null;
 
-                    $processedEventIds[] = $eventId; // Mark this event as processed
+                        $award = AllAwardResult::updateOrCreate(
+                            [
+                                'event_id' => $eventId,
+                                'division' => $request->division,
+                                'category' => $request->category ?? null,
+                                'sport_id' => $sportId,
+                                'type_id' => null,
+                                'sdo' => $sdoValue,
+                                'medal' => $medalName,
+                            ],
+                            [
+                                'count' => 1,
+                                'status' => $status,
+                                'awarded_by' => $user->id,
+                                'validation_file' => $filePath,
+                            ]
+                        );
+
+                        AuditLog::create([
+                            'model_type' => 'AllAwardResult',
+                            'model_id'   => $award->id,
+                            'user_id'    => $user->id,
+                            'action'     => $existing
+                                ? "Updated All Award | Event: $eventId | Sport: $sportId | Medal: $medalName"
+                                : "Created All Award | Event: $eventId | Sport: $sportId | Medal: $medalName",
+                            'old_values' => $oldValues ? json_encode($oldValues) : null,
+                            'new_values' => json_encode($award->toArray()),
+                            'description' => json_encode([
+                                'performed_by' => $user->name,
+                                'role' => $roleName,
+                                'event_id' => $eventId,
+                                'sport_id' => $sportId,
+                                'type_id' => null,
+                                'division' => $request->division,
+                                'category' => $request->category,
+                                'sdo' => $sdoValue,
+                                'medal' => $medalName,
+                                'status' => $status,
+                                'ip_address' => request()->ip(),
+                                'user_agent' => request()->userAgent(),
+                            ]),
+                        ]);
+
+                        $processedEventIds[] = $eventId; // Mark this event as processed
+                    }
                 }
             }
         }
-    }
 
-    // Update the event status to 'Finished' if it has awards
-    foreach (array_unique($processedEventIds) as $eventId) {
-        Event::where('id', $eventId)->update(['status' => 'Finished']);
-    }
+        // Update event status: Ongoing for Secretary, Finished for Manager
+        foreach (array_unique($processedEventIds) as $eventId) {
+            $eventStatus = $roleName === 'Tournament Manager' ? 'Finished' : 'Ongoing';
+            Event::where('id', $eventId)->update(['status' => $eventStatus]);
+        }
 
-    return back()->with('success', 'Awards saved successfully.');
-}
+        return back()->with('success', 'Awards saved successfully.');
+    }
 
     public function approveAll(Request $request)
     {
@@ -130,6 +132,11 @@ class ResultAllAwardController extends Controller
 
         $user = Auth::user();
         $roleName = optional($user->role)->name;
+
+        // If Tournament Manager approves, mark event as Finished
+        if ($roleName === 'Tournament Manager') {
+            Event::where('id', $award->event_id)->update(['status' => 'Finished']);
+        }
 
         AuditLog::create([
             'model_type' => 'AllAwardResult',
@@ -222,68 +229,71 @@ class ResultAllAwardController extends Controller
     }
 
     public function forwardForValidation(Request $request)
-{
-    $user = auth()->user();
+    {
+        $user = auth()->user();
 
-    if (optional($user->role)->name !== 'Tournament Secretary') {
-        return back()->with('error', 'Unauthorized action.');
-    }
-
-    $eventIds = explode(',', $request->event_ids ?? '');
-    $division = $request->division;
-    $category = $request->category;
-    $filePath = $request->hasFile('validation_file')
-        ? $request->file('validation_file')->store('award-validations', 'public')
-        : null;
-
-    foreach ($eventIds as $eventId) {
-        $awards = AllAwardResult::where('event_id', $eventId)
-            ->where('division', $division)
-            ->where('category', $category)
-            ->get();
-
-        foreach ($awards as $award) {
-            $award->update([
-                'status' => 'pending',
-                'validation_file' => $filePath,
-            ]);
-
-            AuditLog::create([
-                'model_type' => 'AllAwardResult',
-                'model_id' => $award->id,
-                'user_id' => $user->id,
-                'action' => sprintf(
-                    'Forwarded All Award for Validation | Event ID: %s | Medal: %s | SDO: %s',
-                    $award->event_id,
-                    strtoupper($award->medal),
-                    $award->sdo
-                ),
-                'old_values' => null,
-                'new_values' => json_encode($award->toArray()),
-                'description' => json_encode([
-                    'forwarded_by' => $user->name,
-                    'role' => optional($user->role)->name,
-                    'ip_address' => $request->ip(),
-                    'user_agent' => $request->userAgent(),
-                ]),
-            ]);
+        if (optional($user->role)->name !== 'Tournament Secretary') {
+            return back()->with('error', 'Unauthorized action.');
         }
+
+        $eventIds = explode(',', $request->event_ids ?? '');
+        $division = $request->division;
+        $category = $request->category;
+        $filePath = $request->hasFile('validation_file')
+            ? $request->file('validation_file')->store('award-validations', 'public')
+            : null;
+
+        foreach ($eventIds as $eventId) {
+            $awards = AllAwardResult::where('event_id', $eventId)
+                ->where('division', $division)
+                ->where('category', $category)
+                ->get();
+
+            foreach ($awards as $award) {
+                $award->update([
+                    'status' => 'pending',
+                    'validation_file' => $filePath,
+                ]);
+
+                AuditLog::create([
+                    'model_type' => 'AllAwardResult',
+                    'model_id' => $award->id,
+                    'user_id' => $user->id,
+                    'action' => sprintf(
+                        'Forwarded All Award for Validation | Event ID: %s | Medal: %s | SDO: %s',
+                        $award->event_id,
+                        strtoupper($award->medal),
+                        $award->sdo
+                    ),
+                    'old_values' => null,
+                    'new_values' => json_encode($award->toArray()),
+                    'description' => json_encode([
+                        'forwarded_by' => $user->name,
+                        'role' => optional($user->role)->name,
+                        'ip_address' => $request->ip(),
+                        'user_agent' => $request->userAgent(),
+                    ]),
+                ]);
+
+                // Keep event status as Ongoing when forwarded
+                Event::where('id', $award->event_id)->update(['status' => 'Ongoing']);
+            }
+        }
+
+        return back()->with('success', 'All awards forwarded for validation successfully.');
     }
 
-    return back()->with('success', 'All awards forwarded for validation successfully.');
-}
+    public function updateFromRevision(Request $request)
+    {
+        $award = AllAwardResult::findOrFail($request->award_id);
 
-public function updateFromRevision(Request $request)
-{
-    $award = AllAwardResult::findOrFail($request->award_id);
+        $award->update([
+            'medal' => $request->medal,
+            'sdo' => $request->sdo,
+            'status' => 'pending',
+            'revision_message' => null
+        ]);
 
-    $award->update([
-        'medal' => $request->medal,
-        'sdo' => $request->sdo,
-        'status' => 'pending',
-        'revision_message' => null
-    ]);
-
-    return back()->with('success', 'Award resubmitted successfully.');
-}
+        return back()->with('success', 'Award resubmitted successfully.');
+    }
 }
