@@ -180,249 +180,319 @@ $pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','
     ->get();
 @endphp
 
-<div x-data="editAwardModal()" class="p-4 mb-6 bg-red-50 border-l-4 border-red-500 text-red-800 rounded shadow-sm">
+<div x-data="editAwardModal()" class="p-6 mb-6 bg-white rounded-2xl shadow-sm border border-gray-100">
 
-<h3 class="font-semibold text-lg mb-3">
-Awards Returned for Revision
-</h3>
+    <div class="flex items-center gap-3 mb-6">
+        <div class="p-2 bg-red-50 rounded-xl">
+            <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Awards Returned for Revision</h3>
+    </div>
 
-{{-- ================= ALL AWARDS ================= --}}
-@if($pendingResultsSecretary->count())
-<h4 class="font-semibold mb-2">All Awards</h4>
+    {{-- ================= ALL AWARDS ================= --}}
+    @if($pendingResultsSecretary->count())
+        <div class="mb-8">
+            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                All Awards
+            </h4>
 
-<table class="w-full border text-sm mb-6">
-<thead class="bg-red-200 text-center">
-<tr>
-<th class="border px-2">Division</th>
-<th class="border px-2">Category</th>
-<th class="border px-2">Sport</th>
-<th class="border px-2">Event Type</th>
-<th class="border px-2">Medal</th>
-<th class="border px-2">SDO</th>
-<th class="border px-2">Revision Message</th>
-<th class="border px-2">Validation</th>
-<th class="border px-2">Action</th>
-</tr>
-</thead>
+            <div class="grid gap-4">
+                @foreach($pendingResultsSecretary as $r)
+                    <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-3">
+                                    <span class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">{{ $r->division }}</span>
+                                    @if($r->category)
+                                        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">{{ $r->category }}</span>
+                                    @endif
+                                </div>
+                                
+                                <div class="flex items-center gap-3 flex-wrap mb-2">
+                                    <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
+                                    <span class="text-xs text-gray-500">•</span>
+                                    <span class="text-sm text-gray-600">{{ $r->type->type_name ?? '-' }}</span>
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-4 text-sm mb-3">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                            @if($r->medal === 'Gold') bg-amber-100 text-amber-700
+                                            @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
+                                            @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
+                                            @else bg-blue-100 text-blue-700 @endif">
+                                            {{ $r->medal }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                        <span class="text-gray-600">{{ $r->sdo }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-red-50 border-l-3 border-red-400 p-3 rounded-lg mt-2">
+                                    <div class="flex items-start gap-2">
+                                        <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                        </svg>
+                                        <p class="text-sm text-red-700">{{ $r->revision_message ?? 'No message' }}</p>
+                                    </div>
+                                </div>
+                            </div>
 
-<tbody>
-@foreach($pendingResultsSecretary as $r)
-<tr class="text-center">
-<td class="border px-2">{{ $r->division }}</td>
-<td class="border px-2">{{ $r->category ?? '—' }}</td>
-<td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-<td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
-<td class="border px-2 font-semibold">{{ $r->medal }}</td>
-<td class="border px-2">{{ $r->sdo }}</td>
-<td class="border px-2 text-left">{{ $r->revision_message ?? 'No message' }}</td>
+                            <div class="flex items-center gap-4">
+                                {{-- VALIDATION FILE --}}
+                                @if($r->validation_file)
+                                    @php
+                                        $fileUrl = asset('storage/'.$r->validation_file);
+                                        $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                                    @endphp
 
-<td class="border px-2">
-@if($r->validation_file)
-@php
-$fileUrl = asset('storage/'.$r->validation_file);
-$ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-@endphp
+                                    @if(in_array($ext,['jpg','jpeg','png','gif','webp']))
+                                        <a href="{{ $fileUrl }}" target="_blank" class="block w-12 h-12 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition flex-shrink-0">
+                                            <img src="{{ $fileUrl }}" class="w-full h-full object-cover">
+                                        </a>
+                                    @else
+                                        <a href="{{ $fileUrl }}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium flex-shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                            View File
+                                        </a>
+                                    @endif
+                                @else
+                                    <span class="text-gray-400 text-sm flex-shrink-0">—</span>
+                                @endif
 
-@if(in_array($ext,['jpg','jpeg','png','gif','webp']))
-<a href="{{ $fileUrl }}" target="_blank">
-<img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow">
-</a>
-@else
-<a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline">
-View File
-</a>
-@endif
-@else
-<span class="text-gray-400 italic">No File</span>
-@endif
-</td>
+                                {{-- EDIT BUTTON --}}
+                                <button @click="openModal({{ $r->id }}, 'all', '{{ $r->medal }}', '{{ $r->sdo }}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex-shrink-0">
+                                    Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
 
-<td class="border px-2">
-<button
-    @click="openModal({{ $r->id }}, 'all', '{{ $r->medal }}', '{{ $r->sdo }}')"
-    class="bg-blue-600 text-white px-3 py-1 rounded">
-    Edit
-</button>
-</td>
-</tr>
-@endforeach
-</tbody>
-</table>
-@endif
-
-{{-- ================= INDIVIDUAL AWARDS ================= --}}
-@if($pendingIndividualSecretary->count())
-<h4 class="font-semibold mb-2">Individual Awards</h4>
-
-<table class="w-full border text-sm">
-<thead class="bg-red-200 text-center">
-<tr>
-<th class="border px-2">Division</th>
-<th class="border px-2">Category</th>
-<th class="border px-2">Sport</th>
-<th class="border px-2">Event Type</th>
-<th class="border px-2">Medal</th>
-<th class="border px-2">Athlete</th>
-<th class="border px-2">SDO</th>
-<th class="border px-2">Revision Message</th>
-<th class="border px-2">Validation</th>
-<th class="border px-2">Action</th>
-</tr>
-</thead>
-
-<tbody>
-@foreach($pendingIndividualSecretary as $r)
-<tr class="text-center">
-<td class="border px-2">{{ $r->division }}</td>
-<td class="border px-2">{{ $r->category ?? '—' }}</td>
-<td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-<td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
-<td class="border px-2 font-semibold">{{ $r->medal }}</td>
-<td class="border px-2">{{ $r->athlete->last_name ?? '' }}, {{ $r->athlete->first_name ?? '' }}</td>
-<td class="border px-2">{{ $r->sdo }}</td>
-<td class="border px-2 text-left">{{ $r->revision_message ?? 'No message' }}</td>
-
-<td class="border px-2">
-@if($r->validation_file)
-@php
-$fileUrl = asset('storage/'.$r->validation_file);
-$ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-@endphp
-
-@if(in_array($ext,['jpg','jpeg','png','gif','webp']))
-<a href="{{ $fileUrl }}" target="_blank">
-<img src="{{ $fileUrl }}" class="h-12 mx-auto rounded shadow">
-</a>
-@else
-<a href="{{ $fileUrl }}" target="_blank" class="text-blue-600 underline">
-View File
-</a>
-@endif
-@else
-<span class="text-gray-400 italic">No File</span>
-@endif
-</td>
-
-<td class="border px-2">
-<button
-    @click="openModal({{ $r->id }}, 'individual', '{{ $r->medal }}', '{{ $r->sdo }}')"
-    class="bg-blue-600 text-white px-3 py-1 rounded">
-    Edit
-</button>
-</td>
-</tr>
-@endforeach
-</tbody>
-</table>
-@endif
-
-@if($pendingResultsSecretary->count() === 0 && $pendingIndividualSecretary->count() === 0)
-<p class="text-gray-600">No awards returned for revision.</p>
-@endif
-
-{{-- ================= EDIT MODAL ================= --}}
-<div x-show="show" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50">
-
-<div class="bg-white w-full max-w-md p-6 rounded shadow-lg">
-<h3 class="text-lg font-bold mb-4">Edit & Resubmit Award</h3>
-
-<form method="POST"
-    :action="type === 'all'
-        ? '{{ route('update_all_awards') }}'
-        : '{{ route('update_individual_awards') }}'">
-
-    @csrf
-
-    <input type="hidden" name="award_id" :value="awardId">
-
-    {{-- ================= MEDAL ================= --}}
-    <label class="block mb-2 text-sm">Medal</label>
-    <select name="medal" x-model="medal" class="w-full border rounded p-2 mb-4">
-        <option>Gold</option>
-        <option>Silver</option>
-        <option>Bronze</option>
-    </select>
-
-    {{-- ================= INDIVIDUAL ONLY ================= --}}
-    <template x-if="type === 'individual'">
-
+    {{-- ================= INDIVIDUAL AWARDS ================= --}}
+    @if($pendingIndividualSecretary->count())
         <div>
+            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                Individual Awards
+            </h4>
 
-            {{-- 🔍 ATHLETE SEARCH --}}
-            <label class="block mb-2 text-sm">Search Athlete</label>
-            <input type="text"
-                x-model="search"
-                @input="filterAthletes"
-                placeholder="Type athlete name..."
-                class="w-full border rounded p-2 mb-2">
+            <div class="grid gap-4">
+                @foreach($pendingIndividualSecretary as $r)
+                    <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap mb-3">
+                                    <span class="px-2 py-0.5 bg-red-100 text-red-700 text-xs font-medium rounded-full">{{ $r->division }}</span>
+                                    @if($r->category)
+                                        <span class="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs font-medium rounded-full">{{ $r->category }}</span>
+                                    @endif
+                                </div>
+                                
+                                <div class="flex items-center gap-3 flex-wrap mb-2">
+                                    <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
+                                    <span class="text-xs text-gray-500">•</span>
+                                    <span class="text-sm text-gray-600">{{ $r->type->type_name ?? '-' }}</span>
+                                </div>
+                                
+                                <div class="flex flex-wrap gap-4 text-sm mb-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                            @if($r->medal === 'Gold') bg-amber-100 text-amber-700
+                                            @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
+                                            @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
+                                            @else bg-blue-100 text-blue-700 @endif">
+                                            {{ $r->medal }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                        </svg>
+                                        <span class="text-gray-700">{{ $r->athlete->last_name ?? '' }}, {{ $r->athlete->first_name ?? '' }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                        <span class="text-gray-600">{{ $r->sdo }}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-red-50 border-l-3 border-red-400 p-3 rounded-lg mt-2">
+                                    <div class="flex items-start gap-2">
+                                        <svg class="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z"></path>
+                                        </svg>
+                                        <p class="text-sm text-red-700">{{ $r->revision_message ?? 'No message' }}</p>
+                                    </div>
+                                </div>
+                            </div>
 
-            {{-- RESULTS --}}
-            <div class="border rounded max-h-40 overflow-y-auto mb-4 bg-white"
-                 x-show="filtered.length">
+                            <div class="flex items-center gap-4">
+                                {{-- VALIDATION FILE --}}
+                                @if($r->validation_file)
+                                    @php
+                                        $fileUrl = asset('storage/'.$r->validation_file);
+                                        $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                                    @endphp
 
-                <template x-for="ath in filtered" :key="ath.id">
-                    <div @click="selectAthlete(ath)"
-                        class="px-3 py-2 hover:bg-blue-100 cursor-pointer">
+                                    @if(in_array($ext,['jpg','jpeg','png','gif','webp']))
+                                        <a href="{{ $fileUrl }}" target="_blank" class="block w-12 h-12 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition flex-shrink-0">
+                                            <img src="{{ $fileUrl }}" class="w-full h-full object-cover">
+                                        </a>
+                                    @else
+                                        <a href="{{ $fileUrl }}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium flex-shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                            View File
+                                        </a>
+                                    @endif
+                                @else
+                                    <span class="text-gray-400 text-sm flex-shrink-0">—</span>
+                                @endif
 
-                        <span x-text="ath.name"></span>
-                        <span class="text-xs text-gray-500 ml-2"
-                              x-text="'(' + ath.sdo + ')'"></span>
+                                {{-- EDIT BUTTON --}}
+                                <button @click="openModal({{ $r->id }}, 'individual', '{{ $r->medal }}', '{{ $r->sdo }}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex-shrink-0">
+                                    Edit
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    @if($pendingResultsSecretary->count() === 0 && $pendingIndividualSecretary->count() === 0)
+        <div class="text-center py-10">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <p class="text-gray-500">No awards returned for revision.</p>
+        </div>
+    @endif
+
+    {{-- ================= EDIT MODAL ================= --}}
+    <div x-show="show" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50" x-cloak>
+        <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="p-2 bg-blue-100 rounded-full">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900">Edit & Resubmit Award</h3>
+            </div>
+
+            <form method="POST"
+                :action="type === 'all'
+                    ? '{{ route('update_all_awards') }}'
+                    : '{{ route('update_individual_awards') }}'">
+
+                @csrf
+
+                <input type="hidden" name="award_id" :value="awardId">
+
+                {{-- ================= MEDAL ================= --}}
+                <label class="block mb-2 text-sm font-medium text-gray-700">Medal</label>
+                <select name="medal" x-model="medal" class="w-full border border-gray-200 rounded-xl p-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+                    <option>Gold</option>
+                    <option>Silver</option>
+                    <option>Bronze</option>
+                </select>
+
+                {{-- ================= INDIVIDUAL ONLY ================= --}}
+                <template x-if="type === 'individual'">
+                    <div>
+                        {{-- 🔍 ATHLETE SEARCH --}}
+                        <label class="block mb-2 text-sm font-medium text-gray-700">Search Athlete</label>
+                        <input type="text"
+                            x-model="search"
+                            @input="filterAthletes"
+                            placeholder="Type athlete name..."
+                            class="w-full border border-gray-200 rounded-xl p-2.5 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition">
+
+                        {{-- RESULTS --}}
+                        <div class="border border-gray-200 rounded-xl max-h-40 overflow-y-auto mb-4 bg-white"
+                             x-show="filtered.length" x-cloak>
+
+                            <template x-for="ath in filtered" :key="ath.id">
+                                <div @click="selectAthlete(ath)"
+                                    class="px-3 py-2 hover:bg-blue-50 cursor-pointer transition">
+                                    <span x-text="ath.name" class="text-sm text-gray-800"></span>
+                                    <span class="text-xs text-gray-500 ml-2"
+                                          x-text="'(' + ath.sdo + ')'"></span>
+                                </div>
+                            </template>
+                        </div>
+
+                        {{-- SELECTED --}}
+                        <input type="hidden" name="athlete_id" :value="selectedAthlete?.id">
+
+                        <div class="mb-3 text-sm text-gray-600 bg-gray-50 rounded-lg p-2">
+                            Selected: 
+                            <span class="font-semibold text-gray-900" x-text="selectedAthlete?.name || 'None'"></span>
+                        </div>
+
+                        {{-- AUTO SDO --}}
+                        <label class="block mb-2 text-sm font-medium text-gray-700">SDO</label>
+                        <input type="text"
+                            name="sdo"
+                            x-model="sdo"
+                            readonly
+                            class="w-full border border-gray-200 rounded-xl p-2.5 mb-4 bg-gray-50 text-gray-600 cursor-not-allowed">
                     </div>
                 </template>
 
-            </div>
+                {{-- ================= ALL AWARDS ONLY ================= --}}
+                <template x-if="type === 'all'">
+                    <div>
+                        <label class="block mb-2 text-sm font-medium text-gray-700">SDO</label>
+                        <select name="sdo" x-model="sdo" class="w-full border border-gray-200 rounded-xl p-2.5 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition" required>
+                            <option value="">Select SDO</option>
+                            @foreach($sdoList as $sdo)
+                                <option value="{{ $sdo }}">{{ $sdo }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                </template>
 
-            {{-- SELECTED --}}
-            <input type="hidden" name="athlete_id" :value="selectedAthlete?.id">
+                <div class="flex justify-end gap-3 mt-6">
+                    <button type="button" @click="show=false"
+                        class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition">
+                        Cancel
+                    </button>
 
-            <div class="mb-2 text-sm text-gray-700">
-                Selected: 
-                <span class="font-semibold" x-text="selectedAthlete?.name || 'None'"></span>
-            </div>
-
-            {{-- AUTO SDO --}}
-            <label class="block mb-2 text-sm">SDO</label>
-            <input type="text"
-                name="sdo"
-                x-model="sdo"
-                readonly
-                class="w-full border rounded p-2 mb-4 bg-gray-100">
-
+                    <button type="submit"
+                        class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-xl transition shadow-sm">
+                        Resubmit
+                    </button>
+                </div>
+            </form>
         </div>
-
-    </template>
-
-    {{-- ================= ALL AWARDS ONLY ================= --}}
-    <template x-if="type === 'all'">
-
-        <div>
-            <label class="block mb-2 text-sm">SDO</label>
-            <select name="sdo" x-model="sdo" class="w-full border rounded p-2 mb-4" required>
-                <option value="">Select SDO</option>
-                @foreach($sdoList as $sdo)
-                    <option value="{{ $sdo }}">{{ $sdo }}</option>
-                @endforeach
-            </select>
-        </div>
-
-    </template>
-
-    <div class="flex justify-end gap-2">
-        <button type="button" @click="show=false"
-            class="px-4 py-2 bg-gray-400 rounded">
-            Cancel
-        </button>
-
-        <button type="submit"
-            class="px-4 py-2 bg-green-600 text-white rounded">
-            Resubmit
-        </button>
     </div>
-
-</form>
-
-</div>
-</div>
 
 </div>
 
@@ -486,21 +556,22 @@ function editAwardModal() {
 
 {{-- ================= PENDING AWARDS FOR TOURNAMENT MANAGER / SUPER ADMIN ================= --}}
 @php
-
 $pendingResults = collect();
 $pendingIndividual = collect();
 
-if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super Admin') {
+if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
 
+    // ALL AWARDS PENDING
     $pendingResultsQuery = \App\Models\AllAwardResult::with(['sport','type'])
         ->where('status','pending');
 
+    // INDIVIDUAL AWARDS PENDING
     $pendingIndividualQuery = \App\Models\IndividualAwardResult::with(['sport','type','athlete'])
         ->where('status','pending');
 
     if ($user->role->name !== 'Super Admin') {
 
-        // ✅ FIX HERE (ALLOW NULL type_id)
+        // FILTER: Sports & Type (allow NULL type_id)
         $pendingResultsQuery->whereIn('sport_id', $user->sports_access ?? [])
                             ->where(function($q) use ($user) {
                                 $q->whereNull('type_id')
@@ -512,19 +583,23 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                                   ->orWhereIn('category', $user->category_access ?? []);
                             });
 
+        // ✅ INDIVIDUAL AWARDS: SAME LOGIC (allow NULL type_id & category)
         $pendingIndividualQuery->whereIn('sport_id', $user->sports_access ?? [])
-                               ->whereIn('type_id', $user->sport_type_access ?? [])
+                               ->where(function($q) use ($user) {
+                                   $q->whereNull('type_id') // allow NULL
+                                     ->orWhereIn('type_id', $user->sport_type_access ?? []);
+                               })
                                ->whereIn('division', $user->level_access ?? [])
                                ->where(function($q) use ($user) {
-                                   $q->whereNull('category')
+                                   $q->whereNull('category') // allow NULL
                                      ->orWhereIn('category', $user->category_access ?? []);
                                });
     }
 
+    // GET RESULTS
     $pendingResults = $pendingResultsQuery->latest()->get();
     $pendingIndividual = $pendingIndividualQuery->latest()->get();
 }
-
 @endphp
 
 {{-- ================= SUCCESS MODAL ================= --}}
@@ -555,89 +630,106 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 @endphp
 
 @if(in_array($userRole, ['Super Admin', 'Tournament Manager']))
-<div class="p-4 mb-6 bg-yellow-50 border-l-4 border-yellow-400 text-yellow-800 rounded shadow-sm">
+<div class="p-6 mb-6 bg-white rounded-2xl shadow-sm border border-gray-100">
 
-    <h3 class="font-semibold mb-2">Pending Awards Needing Approval</h3>
+    <div class="flex items-center gap-3 mb-6">
+        <div class="p-2 bg-amber-50 rounded-xl">
+            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-800">Pending Awards Needing Approval</h3>
+    </div>
 
     {{-- ================= ALL AWARDS ================= --}}
     @if($pendingResults->count())
-        <h4 class="font-semibold mt-2 mb-1">All Awards</h4>
+        <div class="mb-8">
+            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+                All Awards
+            </h4>
 
-        <table class="w-full border text-sm mb-4">
-            <thead class="bg-yellow-200 text-center">
-                <tr>
-                    <th class="border px-2">Sport</th>
-                    <th class="border px-2">Event Type</th>
-                    <th class="border px-2">SDO</th>
-                    <th class="border px-2">Medal</th>
-                    <th class="border px-2">Count</th>
-                    <th class="border px-2">Validation File</th>
-                    <th class="border px-2">Action</th>
-                </tr>
-            </thead>
-
-            <tbody>
+            <div class="grid gap-4">
                 @foreach($pendingResults as $r)
-                    <tr class="text-center">
-                        <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
+                    <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-3 flex-wrap mb-2">
+                                    <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
+                                    <span class="text-xs text-gray-500">•</span>
+                                    <span class="text-sm text-gray-600">{{ $r->type->type_name ?? 'ALL EVENTS' }}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-3 text-sm">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                        <span class="text-gray-600">{{ $r->sdo }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                            @if($r->medal === 'Gold') bg-amber-100 text-amber-700
+                                            @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
+                                            @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
+                                            @else bg-blue-100 text-blue-700 @endif">
+                                            {{ $r->medal }}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
+                                        </svg>
+                                        <span class="text-gray-600 font-medium">{{ $r->count }} award(s)</span>
+                                    </div>
+                                </div>
+                            </div>
 
-                        {{-- ✅ SAFE TYPE DISPLAY --}}
-                        <td class="border px-2">
-                            {{ $r->type->type_name ?? 'ALL EVENTS' }}
-                        </td>
+                            <div class="flex items-center gap-4">
+                                {{-- VALIDATION FILE --}}
+                                @if($r->validation_file)
+                                    @php
+                                        $fileUrl = asset('storage/' . $r->validation_file);
+                                        $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                                    @endphp
 
-                        <td class="border px-2">{{ $r->sdo }}</td>
-                        <td class="border px-2">{{ $r->medal }}</td>
-                        <td class="border px-2">{{ $r->count }}</td>
-
-                        {{-- VALIDATION FILE --}}
-                        <td class="border px-2">
-                            @if($r->validation_file)
-                                @php
-                                    $fileUrl = asset('storage/' . $r->validation_file);
-                                    $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-                                @endphp
-
-                                @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
-                                    <a href="{{ $fileUrl }}" target="_blank">
-                                        <img src="{{ $fileUrl }}"
-                                             class="h-12 mx-auto rounded shadow hover:scale-105 transition">
-                                    </a>
+                                    @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
+                                        <a href="{{ $fileUrl }}" target="_blank" class="block w-12 h-12 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition flex-shrink-0">
+                                            <img src="{{ $fileUrl }}" class="w-full h-full object-cover">
+                                        </a>
+                                    @else
+                                        <a href="{{ $fileUrl }}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium flex-shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                            View PDF
+                                        </a>
+                                    @endif
                                 @else
-                                    <a href="{{ $fileUrl }}" target="_blank"
-                                       class="text-blue-600 underline font-semibold">
-                                        View PDF
-                                    </a>
+                                    <span class="text-gray-400 text-sm flex-shrink-0">—</span>
                                 @endif
-                            @else
-                                <span class="text-gray-400 italic">No file</span>
-                            @endif
-                        </td>
 
-                        {{-- ACTIONS --}}
-                        <td class="border px-2 space-x-1">
-                            {{-- APPROVE --}}
-                            <form method="POST"
-                                  action="{{ route('approve_all_awards') }}"
-                                  class="inline">
-                                @csrf
-                                <input type="hidden" name="award_id" value="{{ $r->id }}">
-                                <button class="bg-green-600 text-white px-3 py-1 rounded">
-                                    Approve
-                                </button>
-                            </form>
-
-                            {{-- REJECT --}}
-                            <button
-                                @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'all' })"
-                                class="bg-red-600 text-white px-3 py-1 rounded">
-                                Reject
-                            </button>
-                        </td>
-                    </tr>
+                                {{-- ACTIONS --}}
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <form method="POST" action="{{ route('approve_all_awards') }}" class="inline">
+                                        @csrf
+                                        <input type="hidden" name="award_id" value="{{ $r->id }}">
+                                        <button class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-lg transition">
+                                            Approve
+                                        </button>
+                                    </form>
+                                    <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'all' })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-lg transition">
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 @endforeach
-            </tbody>
-        </table>
+            </div>
+        </div>
     @endif
 
     {{-- ================= REJECT MODAL ================= --}}
@@ -649,14 +741,24 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
          ">
 
         <div x-show="open"
-             class="fixed inset-0 bg-black/60 z-50 flex items-center justify-center">
+             class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
 
-            <div class="bg-white w-full max-w-md rounded-lg p-6">
-                <h3 class="font-bold text-lg mb-3">Reject Award</h3>
+            <div class="bg-white w-full max-w-md rounded-2xl shadow-2xl p-6">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="p-2 bg-red-100 rounded-full">
+                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900">Reject Award</h3>
+                </div>
+
+                <p class="text-sm text-gray-500 mb-4">Please provide a reason for rejection or revision instructions.</p>
 
                 <textarea x-model="message"
-                          class="w-full border rounded p-2 mb-4"
+                          class="w-full border border-gray-200 rounded-xl p-3 mb-5 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition"
                           placeholder="Enter revision message..."
+                          rows="3"
                           required></textarea>
 
                 <form method="POST"
@@ -668,16 +770,16 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
                     <input type="hidden" name="award_id" :value="awardId">
                     <input type="hidden" name="message" :value="message">
 
-                    <div class="flex justify-end gap-2">
+                    <div class="flex justify-end gap-3">
                         <button type="button"
                                 @click="open=false"
-                                class="px-4 py-2 bg-gray-400 rounded">
+                                class="px-5 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl transition">
                             Cancel
                         </button>
 
                         <button type="submit"
-                                class="px-4 py-2 bg-red-600 text-white rounded">
-                            Reject
+                                class="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl transition shadow-sm">
+                            Reject Award
                         </button>
                     </div>
                 </form>
@@ -687,81 +789,100 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
 
     {{-- ================= INDIVIDUAL AWARDS ================= --}}
     @if($pendingIndividual->count())
-        <h4 class="font-semibold mt-2 mb-1">Individual Awards</h4>
+        <div>
+            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span class="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+                Individual Awards
+            </h4>
 
-        <table class="w-full border text-sm">
-            <thead class="bg-yellow-200 text-center">
-                <tr>
-                    <th class="border px-2">Sport</th>
-                    <th class="border px-2">Event Type</th>
-                    <th class="border px-2">SDO</th>
-                    <th class="border px-2">Medal</th>
-                    <th class="border px-2">Athlete</th>
-                    <th class="border px-2">Validation File</th>
-                    <th class="border px-2">Action</th>
-                </tr>
-            </thead>
-
-            <tbody>
+            <div class="grid gap-4">
                 @foreach($pendingIndividual as $r)
-                    <tr class="text-center">
-                        <td class="border px-2">{{ $r->sport->name ?? 'N/A' }}</td>
-                        <td class="border px-2">{{ $r->type->type_name ?? '-' }}</td>
-                        <td class="border px-2">{{ $r->sdo }}</td>
-                        <td class="border px-2">{{ $r->medal }}</td>
-                        <td class="border px-2">
-                            {{ $r->athlete ? $r->athlete->last_name . ', ' . $r->athlete->first_name : '-' }}
-                        </td>
+                    <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+                        <div class="flex flex-wrap items-start justify-between gap-4">
+                            <div class="flex-1 min-w-0">
+                                <div class="flex items-center gap-3 flex-wrap mb-2">
+                                    <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
+                                    <span class="text-xs text-gray-500">•</span>
+                                    <span class="text-sm text-gray-600">{{ $r->type->type_name ?? '-' }}</span>
+                                </div>
+                                <div class="flex flex-wrap gap-3 text-sm mb-2">
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                                        </svg>
+                                        <span class="text-gray-600">{{ $r->sdo }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-1.5">
+                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
+                                            @if($r->medal === 'Gold') bg-amber-100 text-amber-700
+                                            @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
+                                            @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
+                                            @else bg-blue-100 text-blue-700 @endif">
+                                            {{ $r->medal }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-1.5 text-sm">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                    <span class="text-gray-700">{{ $r->athlete ? $r->athlete->last_name . ', ' . $r->athlete->first_name : '-' }}</span>
+                                </div>
+                            </div>
 
-                        {{-- VALIDATION FILE --}}
-                        <td class="border px-2">
-                            @if($r->validation_file)
-                                @php
-                                    $fileUrl = asset('storage/' . $r->validation_file);
-                                    $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-                                @endphp
+                            <div class="flex items-center gap-4">
+                                {{-- VALIDATION FILE --}}
+                                @if($r->validation_file)
+                                    @php
+                                        $fileUrl = asset('storage/' . $r->validation_file);
+                                        $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
+                                    @endphp
 
-                                @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
-                                    <a href="{{ $fileUrl }}" target="_blank">
-                                        <img src="{{ $fileUrl }}"
-                                             class="h-12 mx-auto rounded shadow cursor-pointer hover:scale-105 transition"
-                                             alt="Validation Image">
-                                    </a>
+                                    @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
+                                        <a href="{{ $fileUrl }}" target="_blank" class="block w-12 h-12 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition flex-shrink-0">
+                                            <img src="{{ $fileUrl }}" class="w-full h-full object-cover">
+                                        </a>
+                                    @else
+                                        <a href="{{ $fileUrl }}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium flex-shrink-0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
+                                            </svg>
+                                            View PDF
+                                        </a>
+                                    @endif
                                 @else
-                                    <a href="{{ $fileUrl }}"
-                                       target="_blank"
-                                       class="text-blue-600 underline font-semibold">
-                                        View PDF
-                                    </a>
+                                    <span class="text-gray-400 text-sm flex-shrink-0">—</span>
                                 @endif
-                            @else
-                                <span class="text-gray-400 italic">No file</span>
-                            @endif
-                        </td>
 
-                        <td class="border px-2 space-x-1">
-                            {{-- APPROVE --}}
-                            <button
-                                class="bg-green-500 text-white px-3 py-1 rounded"
-                                @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })">
-                                Approve
-                            </button>
-
-                            {{-- REJECT --}}
-                            <button
-                                @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })"
-                                class="bg-red-600 text-white px-3 py-1 rounded">
-                                Reject
-                            </button>
-                        </td>
-                    </tr>
+                                {{-- ACTIONS --}}
+                                <div class="flex items-center gap-2 flex-shrink-0">
+                                    <button class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-lg transition" @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })">
+                                        Approve
+                                    </button>
+                                    <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-lg transition">
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 @endforeach
-            </tbody>
-        </table>
+            </div>
+        </div>
     @endif
 
     @if($pendingResults->count() === 0 && $pendingIndividual->count() === 0)
-        <p>No pending awards to approve for your division/event.</p>
+        <div class="text-center py-10">
+            <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+            </div>
+            <p class="text-gray-500">No pending awards to approve for your division/event.</p>
+        </div>
     @endif
 </div>
 @endif
@@ -797,331 +918,239 @@ if ($user->role->name === 'Tournament Manager' || $user->role->name === 'Super A
     <option value="individual">Individual Awards</option>
 </select>
 
-{{-- ================= TABS ================= --}}
-<ul class="flex border-b mb-6">
-@foreach($tabs as $name => $tab)
-    <li>
-        <button @click="activeTab='{{ $name }}'"
-                class="px-4 py-2 border-b-2 font-semibold"
-                :class="activeTab==='{{ $name }}'
-                    ? 'border-blue-600 text-blue-600'
-                    : 'text-gray-500'">
-            {{ $name }}
-        </button>
-    </li>
-@endforeach
-</ul>
-
-@foreach($tabs as $tabName => $tab)
-   @php
-// ==============================
-// EVENTS QUERY (REPLACES SPORTS)
-// ==============================
-$eventsQuery = \App\Models\Event::query()
-    ->where('age_group', $tab['division'])
-    ->where('is_active', 1);
-
-// FILTER CATEGORY
-if (!is_null($tab['category'])) {
-    $eventsQuery->where('category', $tab['category']);
-}
-
-// 🔒 NON-SUPER ADMIN FILTER
-if ($user->role->name !== 'Super Admin') {
-    $eventsQuery->whereIn('sport_id', $user->sports_access ?? []);
-}
-
-// PAGINATE EVENTS
-$events = $eventsQuery->orderBy('name')->paginate(10);
-
-// -----------------------------
-// FILTER ATHLETES FOR THIS TAB
-// -----------------------------
-$tabAthletes = $athletes->filter(fn($a) =>
-    $a->division == $tab['division'] &&
-    ($tab['category'] ? $a->category == $tab['category'] : true) &&
-    ($user->role->name === 'Super Admin' || $a->sdo == $user->division_name)
-)->sortBy('last_name');
-@endphp
 @php
-    // Accessible sports for this tab
-    if($user->role->name === 'Tournament Manager') {
-        $accessibleSportIds = is_string($user->sports_access) ? json_decode($user->sports_access, true) : $user->sports_access;
-        $accessibleSports = \App\Models\Sport::whereIn('id', $accessibleSportIds)->get();
-        $accessibleTypeIds = is_string($user->sport_type_access) ? json_decode($user->sport_type_access, true) : $user->sport_type_access;
-    } else {
-        $accessibleSports = $sports; // default to all sports fetched above
-        $accessibleTypeIds = null;
+// ==============================
+// 🚀 GROUP EVENTS BY LABEL
+// ==============================
+$groupedEvents = $events->sortBy('name')->groupBy(function($event){
+    if ($event->age_group === 'Paragames') {
+        return 'Paragames';
     }
-@endphp
+    return $event->age_group . ' ' . $event->category;
+});
 
-        <div x-show="activeTab==='{{ $tabName }}'" x-cloak>
-
-            <h2 class="text-xl font-bold mb-4">{{ $tabName }}</h2>
-
-          
-
-            
-@php
 $divisions = \App\Models\Division::orderBy('name')->get();
 @endphp
 
-
 {{-- ================================================= --}}
-{{-- 🏆 ALL AWARDS FORM / VIEW --}}
+{{-- 🏆 ALL AWARDS FORM --}}
 {{-- ================================================= --}}
 <div x-show="awardType==='all'">
 
-    {{-- ================= NORMAL FORM ================= --}}
-    @if(in_array($user->role->name, ['Super Admin','Tournament Secretary']))
+@if(in_array($user->role->name, ['Super Admin','Tournament Secretary']))
 
-        <form method="POST"
-              action="{{ route('results_all_awards.store') }}"
-              enctype="multipart/form-data"
-              x-data="{ showModal:false }">
+<form method="POST"
+      action="{{ route('results_all_awards.store') }}"
+      enctype="multipart/form-data"
+      x-data="{ showModal:false }">
 
-            @csrf
+@csrf
 
-            <input type="hidden" name="division" value="{{ $tab['division'] }}">
-            <input type="hidden" name="category" value="{{ $tab['category'] ?? '' }}">
+@foreach($groupedEvents as $label => $eventsList)
 
-            @foreach($events as $event)
-                @php
-                    if (!is_object($event)) continue;
-                @endphp
+    {{-- 🔥 GROUP LABEL --}}
+    <h2 class="text-2xl font-bold mt-8 mb-4 text-blue-700">
+        {{ strtoupper($label) }}
+    </h2>
 
-                <h3 class="font-semibold mt-6">
-                    {{ strtoupper($event->name ?? 'Unnamed Event') }}
-                </h3>
+    @foreach($eventsList as $event)
+        @php if (!is_object($event)) continue; @endphp
 
-                <table class="w-full border text-sm mt-2">
-                    <thead class="bg-gray-200 text-center">
-                        <tr>
-                            <th class="border px-2 py-2">Event</th>
-                            <th class="border bg-yellow-300">Gold</th>
-                            <th class="border bg-gray-300">Silver</th>
-                            <th class="border bg-orange-200">Bronze</th>
-                        </tr>
-                    </thead>
+        <h3 class="font-semibold mt-4">
+            {{ strtoupper($event->name ?? 'Unnamed Event') }}
+        </h3>
 
-                    <tbody>
-                        <tr>
-                            <td class="border px-2 font-medium">{{ $event->name ?? 'N/A' }}</td>
+        <table class="w-full border text-sm mt-2">
+            <thead class="bg-gray-200 text-center">
+                <tr>
+                    <th class="border px-2 py-2">Event</th>
+                    <th class="border bg-yellow-300">Gold</th>
+                    <th class="border bg-gray-300">Silver</th>
+                    <th class="border bg-orange-200">Bronze</th>
+                </tr>
+            </thead>
 
-                            @foreach(['Gold','Silver','Bronze'] as $medal)
-                                <td class="border px-2 py-2 align-top">
-                                    <div x-data="{ divisions:[''] }">
+            <tbody>
+                <tr>
+                    <td class="border px-2 font-medium">{{ $event->name }}</td>
 
-                                        <template x-for="(division,index) in divisions" :key="index">
-                                            <div class="flex gap-2 mb-2">
+                    @foreach(['Gold','Silver','Bronze'] as $medal)
+                    <td class="border px-2 py-2 align-top">
+                        <div x-data="{ divisions:[''] }">
 
-                                                <select
-                                                    :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
-                                                    class="w-full border rounded px-2 py-1 text-sm"
-                                                >
-                                                    <option value="">-- Select Division / SDO --</option>
-                                                    @foreach($divisions as $divisionOption)
-                                                        <option value="{{ $divisionOption->name }}">
-                                                            {{ $divisionOption->name }}
-                                                        </option>
-                                                    @endforeach
-                                                </select>
+                            <template x-for="(division,index) in divisions" :key="index">
+                                <div class="flex gap-2 mb-2">
 
-                                                <button type="button"
-                                                        x-show="divisions.length > 1"
-                                                        @click="divisions.splice(index,1)"
-                                                        class="bg-red-500 text-white px-2 rounded text-xs">
-                                                    ✕
-                                                </button>
+                                    <select
+                                        :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
+                                        class="w-full border rounded px-2 py-1 text-sm"
+                                    >
+                                        <option value="">-- Select Division / SDO --</option>
+                                        @foreach($divisions as $divisionOption)
+                                            <option value="{{ $divisionOption->name }}">
+                                                {{ $divisionOption->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
 
-                                            </div>
-                                        </template>
+                                    <button type="button"
+                                            x-show="divisions.length > 1"
+                                            @click="divisions.splice(index,1)"
+                                            class="bg-red-500 text-white px-2 rounded text-xs">
+                                        ✕
+                                    </button>
 
-                                        <button type="button"
-                                                @click="divisions.push('')"
-                                                class="text-blue-600 text-xs hover:underline">
-                                            + Add Division
-                                        </button>
+                                </div>
+                            </template>
 
-                                    </div>
-                                </td>
-                            @endforeach
-                        </tr>
-                    </tbody>
-                </table>
-            @endforeach
+                            <button type="button"
+                                    @click="divisions.push('')"
+                                    class="text-blue-600 text-xs hover:underline">
+                                + Add Division
+                            </button>
 
-            <div class="flex justify-end mt-4">
-                @if($user->role->name === 'Super Admin')
-                    <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
-                        Save All Awards
-                    </button>
-                @else
-                    <button type="button"
-                            @click="showModal = true"
-                            class="bg-yellow-500 text-white px-6 py-2 rounded">
-                        Forward for Validation
-                    </button>
-                @endif
-            </div>
+                        </div>
+                    </td>
+                    @endforeach
+                </tr>
+            </tbody>
+        </table>
+    @endforeach
 
-            {{-- OPTIONAL MODAL --}}
-            <div x-show="showModal" x-cloak
-                 class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-                <div class="bg-white p-6 rounded shadow w-96">
+@endforeach
 
-                    <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
-
-                    <input type="file" name="validation_file" class="w-full border rounded mb-4">
-
-                    <div class="flex justify-end gap-2">
-                        <button type="button"
-                                @click="showModal=false"
-                                class="px-4 py-2 bg-gray-400 text-white rounded">
-                            Cancel
-                        </button>
-
-                        <button type="submit"
-                                class="px-4 py-2 bg-yellow-500 text-white rounded">
-                            Yes, Forward
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-        </form>
-
+<div class="flex justify-end mt-6">
+    @if($user->role->name === 'Super Admin')
+        <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
+            Save All Awards
+        </button>
+    @else
+        <button type="button"
+                @click="showModal = true"
+                class="bg-yellow-500 text-white px-6 py-2 rounded">
+            Forward for Validation
+        </button>
     @endif
-
 </div>
 
+{{-- MODAL --}}
+<div x-show="showModal" x-cloak
+     class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+    <div class="bg-white p-6 rounded shadow w-96">
+
+        <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
+
+        <input type="file" name="validation_file" class="w-full border rounded mb-4">
+
+        <div class="flex justify-end gap-2">
+            <button type="button"
+                    @click="showModal=false"
+                    class="px-4 py-2 bg-gray-400 text-white rounded">
+                Cancel
+            </button>
+
+            <button type="submit"
+                    class="px-4 py-2 bg-yellow-500 text-white rounded">
+                Yes, Forward
+            </button>
+        </div>
+    </div>
+</div>
+
+</form>
+@endif
+</div>
 
 {{-- ========================================================= --}}
 {{-- 🏅 INDIVIDUAL AWARDS FORM --}}
 {{-- ========================================================= --}}
 <div x-show="awardType==='individual'" x-data="individualAwardsForm()">
 
-    @php
-        $userRole = optional($user->role)->name;
-    @endphp
+<form method="POST"
+      action="{{ route('results_individual.store') }}"
+      enctype="multipart/form-data"
+      x-data="{ showModal: false }">
 
-    <form method="POST" 
-          action="{{ $userRole === 'Tournament Secretary' ? route('results_individual.store') : route('results_individual.store') }}" 
-          enctype="multipart/form-data"
-          x-data="{ showModal: false }">
+@csrf
 
-        @csrf
+<input type="hidden" name="event_id" value="{{ $currentEvent?->id }}">
 
-        <input type="hidden" name="event_id" value="{{ $currentEvent?->id }}">
-        <input type="hidden" name="division" value="{{ $tab['division'] }}">
-        @if(!is_null($tab['category']))
-            <input type="hidden" name="category" value="{{ $tab['category'] }}">
-        @endif
+@php
+    $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
+@endphp
 
-        @php
-            $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
-        @endphp
+@foreach($groupedEvents as $label => $eventsList)
 
-        @foreach($events as $event)
-            @php if (!is_object($event)) continue; @endphp
+    {{-- 🔥 GROUP LABEL --}}
+    <h2 class="text-2xl font-bold mt-8 mb-4 text-green-700">
+        {{ strtoupper($label) }}
+    </h2>
 
-            <h3 class="font-semibold mt-6">
-                {{ strtoupper($event->name ?? 'Unnamed Event') }}
-            </h3>
+    @foreach($eventsList as $event)
+        @php if (!is_object($event)) continue; @endphp
 
-            <table class="w-full border text-sm mt-2">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="border px-2 py-2">Event</th>
-                        <th class="border px-2 py-2 bg-yellow-100">Gold</th>
-                        <th class="border px-2 py-2 bg-gray-200">Silver</th>
-                        <th class="border px-2 py-2 bg-orange-200">Bronze</th>
-                    </tr>
-                </thead>
+        <h3 class="font-semibold mt-4">
+            {{ strtoupper($event->name) }}
+        </h3>
 
-                <tbody>
-                    <tr>
-                        <td class="border px-2 font-medium">{{ $event->name ?? 'N/A' }}</td>
+        <table class="w-full border text-sm mt-2">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border px-2 py-2">Event</th>
+                    <th class="border px-2 py-2 bg-yellow-100">Gold</th>
+                    <th class="border px-2 py-2 bg-gray-200">Silver</th>
+                    <th class="border px-2 py-2 bg-orange-200">Bronze</th>
+                </tr>
+            </thead>
 
-                        @foreach(['Gold','Silver','Bronze'] as $medal)
-                            <td class="border px-3 py-3 align-top">
+            <tbody>
+                <tr>
+                    <td class="border px-2 font-medium">{{ $event->name }}</td>
 
-                                {{-- Searchable Athlete Input --}}
-                                <div x-data="{ selectedAthlete: null }" class="space-y-1">
-                                    <input 
-                                        list="athletes_list_{{ $event->sport_id }}_{{ $event->sport_type_id }}_{{ $medal }}" 
-                                        x-model="selectedAthlete" 
-                                        placeholder="Type athlete name..." 
-                                        class="w-full border rounded px-2 py-1 text-sm">
+                    @foreach(['Gold','Silver','Bronze'] as $medal)
+                    <td class="border px-3 py-3 align-top">
 
-                                    <datalist id="athletes_list_{{ $event->sport_id }}_{{ $event->sport_type_id }}_{{ $medal }}">
-                                        @foreach($athletes as $athlete)
-                                            <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"
-                                                    data-sdo="{{ $athlete->school_division ?? '' }}"
-                                                    data-school="{{ $athlete->school?->name ?? '' }}">
-                                            </option>
-                                        @endforeach
-                                    </datalist>
+                        <div x-data="{ selectedAthlete: null }">
+                            <input 
+                                list="athletes_list_{{ $event->id }}_{{ $medal }}"
+                                x-model="selectedAthlete"
+                                placeholder="Type athlete name..."
+                                class="w-full border rounded px-2 py-1 text-sm">
 
-                                    {{-- Hidden inputs to submit athlete ID and auto-fill SDO --}}
-                                    <input type="hidden" 
-                                           :value="getAthleteId(selectedAthlete)" 
-                                           name="individual_results[{{ $event->sport_id }}][{{ $event->sport_type_id }}][{{ $medal }}][athlete]">
-                                    <input type="hidden"
-                                           :value="getAthleteSDO(selectedAthlete)"
-                                           name="individual_results[{{ $event->sport_id }}][{{ $event->sport_type_id }}][{{ $medal }}][sdo]">
+                            <datalist id="athletes_list_{{ $event->id }}_{{ $medal }}">
+                                @foreach($athletes as $athlete)
+                                    <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
+                                @endforeach
+                            </datalist>
 
-                                    {{-- Display school division & school name --}}
-                                    <div class="text-xs text-gray-600 mt-1" x-html="getAthleteInfo(selectedAthlete)"></div>
-                                </div>
+                            <input type="hidden"
+                                   :value="getAthleteId(selectedAthlete)"
+                                   name="individual_results[{{ $event->id }}][{{ $medal }}][athlete]">
 
-                            </td>
-                        @endforeach
+                            <input type="hidden"
+                                   :value="getAthleteSDO(selectedAthlete)"
+                                   name="individual_results[{{ $event->id }}][{{ $medal }}][sdo]">
 
-                    </tr>
-                </tbody>
-            </table>
-        @endforeach
+                            <div class="text-xs text-gray-600 mt-1"
+                                 x-html="getAthleteInfo(selectedAthlete)"></div>
+                        </div>
 
-        <div class="flex justify-end mt-6">
-            @if($userRole === 'Super Admin')
-                <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
-                    Save Individual Awards
-                </button>
-            @elseif($userRole === 'Tournament Secretary')
-                <button type="button"
-                        @click="showModal=true"
-                        class="bg-yellow-500 text-white px-6 py-2 rounded">
-                    Forward for Validation
-                </button>
-            @endif
-        </div>
+                    </td>
+                    @endforeach
+                </tr>
+            </tbody>
+        </table>
+    @endforeach
 
-        {{-- Forward for Validation Modal --}}
-        <div x-show="showModal" x-cloak
-             class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-            <div class="bg-white p-6 rounded shadow w-96">
+@endforeach
 
-                <h3 class="text-lg font-bold mb-4">Confirm Forward</h3>
+<div class="flex justify-end mt-6">
+    <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
+        Save Individual Awards
+    </button>
+</div>
 
-                <input type="file" name="validation_file" class="w-full border rounded mb-4">
-
-                <div class="flex justify-end gap-2">
-                    <button type="button"
-                            @click="showModal=false"
-                            class="px-4 py-2 bg-gray-400 text-white rounded">
-                        Cancel
-                    </button>
-
-                    <button type="submit"
-                            class="px-4 py-2 bg-yellow-500 text-white rounded">
-                        Yes, Forward
-                    </button>
-                </div>
-            </div>
-        </div>
-
-    </form>
+</form>
 </div>
 
 <script>
@@ -1155,7 +1184,7 @@ function individualAwardsForm() {
     }
 }
 </script>
-    @endforeach
+
 
 </div>
 

@@ -66,9 +66,6 @@ class ResultDivisionController extends Controller
         ]);
     }
 
-    // -----------------------------
-    // CREATE PAGE
-    // -----------------------------
     public function create(Request $request)
 {
     $user = auth()->user();
@@ -81,18 +78,33 @@ class ResultDivisionController extends Controller
         'Para Games'        => ['division' => 'Paragames', 'category' => null],
     ];
 
-    // ✅ PAGINATE SPORTS (CRITICAL FIX)
+    // ✅ LOAD ALL EVENTS (NOT PAGINATED)
+    $eventsQuery = \App\Models\Event::where('is_active', 1);
+
+    // 🔒 NON-SUPER ADMIN FILTER
+    if ($user->role->name !== 'Super Admin') {
+        $sportIds = is_string($user->sports_access)
+            ? json_decode($user->sports_access, true)
+            : $user->sports_access;
+
+        $eventsQuery->whereIn('sport_id', $sportIds ?? []);
+    }
+
+    $events = $eventsQuery->orderBy('name')->get(); // ✅ NO PAGINATION
+
+    // SPORTS (KEEP IF USED ELSEWHERE)
     $sportsQuery = \App\Models\Sport::with('types')->orderBy('name');
 
     if ($user->role->name !== 'Super Admin') {
         $sportsQuery->whereIn('id', $user->sports_access ?? []);
     }
 
-    $sports = $sportsQuery->paginate(10); // ✅ LIMIT TO 10 SPORTS PER PAGE
+    $sports = $sportsQuery->get();
 
-    // ✅ DO NOT LOAD ALL ATHLETES (LAZY LOAD VIA AJAX LATER)
-    $athletes = collect(); // empty by default
+    // ATHLETES (LOAD PROPERLY FOR INDIVIDUAL AWARDS)
+    $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
 
+    // DIVISIONS
     $divisionsQuery = \App\Models\Division::orderBy('name');
 
     if ($user->role->name !== 'Super Admin') {
@@ -105,7 +117,8 @@ class ResultDivisionController extends Controller
         'divisions',
         'tabs',
         'sports',
-        'athletes'
+        'athletes',
+        'events' // ✅ VERY IMPORTANT
     ));
 }
 

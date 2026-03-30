@@ -30,35 +30,32 @@ class ResultIndividualAwardController extends Controller
         ? $request->file('validation_file')->store('award-validations', 'public')
         : null;
 
-    foreach ($request->input('individual_results', []) as $sportId => $types) {
+    foreach ($request->input('individual_results', []) as $eventKey => $medalTypes) {
+        $event = Event::find($eventKey);
+        if (!$event) continue;
 
-    if (!is_array($types)) continue;
+        // ✅ Use event as source of truth
+        $division = $event->age_group;
+        $category = $event->category;
 
-    foreach ($types as $typeId => $medals) {
-
-        if (!is_array($medals)) continue;
-
-        foreach ($medals as $medal => $data) {
-
+        foreach ($medalTypes as $medalName => $data) {
             if (!is_array($data)) continue;
 
             $athleteId = $data['athlete'] ?? null;
-
             if (!$athleteId) continue;
 
-            // Get athlete and prefix SDO
             $athlete = \App\Models\Athlete::find($athleteId);
             $sdo = $athlete && $athlete->school_division
                 ? 'SDO - ' . $athlete->school_division
                 : null;
 
             $existing = IndividualAwardResult::where([
-                'event_id' => $eventId,
-                'division' => $request->division,
-                'category' => $request->category ?? null,
-                'sport_id' => $sportId,
-                'type_id'  => $typeId ?: null,
-                'medal'    => $medal,
+                'event_id' => $event->id,
+                'division' => $division,
+                'category' => $category,
+                'sport_id' => $event->sport_id,
+                'type_id'  => $event->sport_type_id,
+                'medal'    => $medalName,
                 'sdo'      => $sdo,
             ])->first();
 
@@ -66,12 +63,12 @@ class ResultIndividualAwardController extends Controller
 
             $award = IndividualAwardResult::updateOrCreate(
                 [
-                    'event_id' => $eventId,
-                    'division' => $request->division,
-                    'category' => $request->category ?? null,
-                    'sport_id' => $sportId,
-                    'type_id'  => $typeId ?: null,
-                    'medal'    => $medal,
+                    'event_id' => $event->id,
+                    'division' => $division,
+                    'category' => $category,
+                    'sport_id' => $event->sport_id,
+                    'type_id'  => $event->sport_type_id,
+                    'medal'    => $medalName,
                     'sdo'      => $sdo,
                 ],
                 [
@@ -92,7 +89,6 @@ class ResultIndividualAwardController extends Controller
             ]);
         }
     }
-}
 
     return back()->with('success', 'Individual awards saved successfully.');
 }
