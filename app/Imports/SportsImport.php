@@ -25,38 +25,38 @@ class SportsImport implements ToCollection, WithHeadingRow
             $level    = trim($row['level'] ?? '');
             $category = trim($row['category'] ?? '');
 
-            if (!$name || !$level) continue; // category may be empty for Paragames
+            if (!$name || !$level) continue;
 
-            // Determine if this is a Paragames entry
             $isParagames = strtolower($level) === 'paragames';
 
-            // For Paragames, ignore category
-            $categoryToSave = $isParagames ? null : $category;
+            // For Paragames, we create BOTH Boys and Girls automatically
+            $categoriesToSave = $isParagames ? ['Boys', 'Girls'] : [$category];
 
-            // Create or update sport
-            $sport = Sport::updateOrCreate(
-                ['name' => $name, 'division' => $level, 'category' => $categoryToSave],
-                ['level' => $level]
-            );
+            foreach ($categoriesToSave as $catToSave) {
+                // Create or update sport
+                $sport = Sport::updateOrCreate(
+                    ['name' => $name, 'division' => $level, 'category' => $catToSave],
+                    ['level' => $level]
+                );
 
-            // Add sport type
-            if ($typeName) {
-                SportType::firstOrCreate([
-                    'sport_id' => $sport->id,
-                    'type_name' => $typeName
+                // Add sport type
+                if ($typeName) {
+                    SportType::firstOrCreate([
+                        'sport_id' => $sport->id,
+                        'type_name' => $typeName
+                    ]);
+                }
+
+                // Audit log
+                AuditLog::create([
+                    'model_type' => 'Sport',
+                    'model_id' => $sport->id,
+                    'user_id' => $user->id,
+                    'old_values' => null,
+                    'new_values' => json_encode($sport->toArray()),
+                    'action' => "Imported Sport via CSV: {$name} | Type: {$typeName} | Level: {$level} | Category: {$catToSave}"
                 ]);
             }
-
-            // Audit log
-            AuditLog::create([
-                'model_type' => 'Sport',
-                'model_id' => $sport->id,
-                'user_id' => $user->id,
-                'old_values' => null,
-                'new_values' => json_encode($sport->toArray()),
-                'action' => "Imported Sport via CSV: {$name} | Type: {$typeName} | Level: {$level}" .
-                            ($isParagames ? '' : " | Category: {$category}")
-            ]);
         }
     }
 }

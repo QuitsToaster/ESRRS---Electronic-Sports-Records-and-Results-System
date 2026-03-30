@@ -430,10 +430,89 @@ public function paraUpdate(Request $request, Sport $sport)
     ]);
 
     try {
-        Excel::import(new SportsImport, $request->file('file'));
+        $file = $request->file('file');
+
+        // Keep track of counts per division & category
+        $importedCounts = [
+            'Elementary' => ['Boys' => 0, 'Girls' => 0],
+            'Secondary'  => ['Boys' => 0, 'Girls' => 0],
+            'Paragames'  => ['Boys' => 0, 'Girls' => 0],
+        ];
+
+        // Custom import that returns counts
+        Excel::import(new class($importedCounts, $user) extends \App\Imports\SportsImport {
+            protected $counts;
+            protected $user;
+
+            public function __construct(&$counts, $user)
+            {
+                $this->counts = &$counts;
+                $this->user = $user;
+            }
+
+            public function collection(\Illuminate\Support\Collection $rows)
+            {
+                foreach ($rows as $row) {
+                    if (!$row['name']) continue;
+
+                    $name     = trim($row['name']);
+                    $typeName = trim($row['type_of_sport'] ?? '');
+                    $level    = trim($row['level'] ?? '');
+                    $category = trim($row['category'] ?? '');
+
+                    if (!$name || !$level) continue;
+
+                    $isParagames = strtolower($level) === 'paragames';
+                    $categoriesToSave = $isParagames ? ['Boys', 'Girls'] : [$category];
+
+                    foreach ($categoriesToSave as $catToSave) {
+                        // Create or update sport
+                        $sport = \App\Models\Sport::updateOrCreate(
+                            ['name' => $name, 'division' => $level, 'category' => $catToSave],
+                            ['level' => $level]
+                        );
+
+                        // Add sport type
+                        if ($typeName) {
+                            \App\Models\SportType::firstOrCreate([
+                                'sport_id' => $sport->id,
+                                'type_name' => $typeName
+                            ]);
+                        }
+
+                        // Audit log
+                        \App\Models\AuditLog::create([
+                            'model_type' => 'Sport',
+                            'model_id' => $sport->id,
+                            'user_id' => $this->user->id,
+                            'old_values' => null,
+                            'new_values' => json_encode($sport->toArray()),
+                            'action' => "Imported Sport via CSV: {$name} | Type: {$typeName} | Level: {$level} | Category: {$catToSave}"
+                        ]);
+
+                        // Increment count
+                        if (isset($this->counts[$level][$catToSave])) {
+                            $this->counts[$level][$catToSave]++;
+                        }
+                    }
+                }
+            }
+        }, $file);
+
+        // Prepare message
+        $messages = [];
+        foreach ($importedCounts as $division => $cats) {
+            foreach ($cats as $cat => $count) {
+                if ($count > 0) {
+                    $messages[] = "{$count} {$division} {$cat}";
+                }
+            }
+        }
+        $messageStr = implode(', ', $messages);
 
         return redirect()->route('sports.index')
-            ->with('success', 'Sports uploaded successfully!');
+            ->with('success', 'Sports uploaded successfully! Created: ' . $messageStr);
+
     } catch (\Exception $e) {
         return back()->with('error', 'Failed to import CSV: ' . $e->getMessage());
     }
