@@ -140,11 +140,6 @@
                class="block px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors">
                 Login
             </a>
-
-            <a href="{{ route('attendance.check') }}"
-               class="block px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg text-center transition-colors">
-                Attendance
-            </a>
         </div>
     </div>
 </nav>
