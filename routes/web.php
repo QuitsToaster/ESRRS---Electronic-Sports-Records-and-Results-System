@@ -79,12 +79,16 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('gallery', [ViewerController::class, 'gallery'])->name('gallery');
 });
 
-// Attendance Scanner (PUBLIC)
-Route::get('/check-attendance', [AttendanceController::class, 'checkAttendance'])
-    ->name('attendance.check');
+// Attendance Scanner (PROTECTED)
+Route::middleware(['auth'])->group(function () {
 
-Route::post('/check-attendance', [AttendanceController::class, 'store'])
-    ->name('attendance.store');
+    Route::get('/check-attendance', [AttendanceController::class, 'checkAttendance'])
+        ->name('attendance.check');
+
+    Route::post('/check-attendance', [AttendanceController::class, 'store'])
+        ->name('attendance.store');
+
+});
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
