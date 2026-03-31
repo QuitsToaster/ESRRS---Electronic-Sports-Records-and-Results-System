@@ -113,11 +113,17 @@ class ResultAllAwardController extends Controller
             }
         }
 
-        // Update event status: Ongoing for Secretary, Finished for Manager
-        foreach (array_unique($processedEventIds) as $eventId) {
-            $eventStatus = $roleName === 'Tournament Manager' ? 'Finished' : 'Ongoing';
-            Event::where('id', $eventId)->update(['status' => $eventStatus]);
-        }
+        // ✅ Update event status based on role
+foreach (array_unique($processedEventIds) as $eventId) {
+
+    if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
+        $eventStatus = 'Finished and Awarded'; // ✅ UPDATED
+    } else {
+        $eventStatus = 'Ongoing';
+    }
+
+    Event::where('id', $eventId)->update(['status' => $eventStatus]);
+}
 
         return back()->with('success', 'Awards saved successfully.');
     }
@@ -135,10 +141,12 @@ class ResultAllAwardController extends Controller
         $user = Auth::user();
         $roleName = optional($user->role)->name;
 
-        // If Tournament Manager approves, mark event as Finished
-        if ($roleName === 'Tournament Manager') {
-            Event::where('id', $award->event_id)->update(['status' => 'Finished']);
-        }
+        // ✅ If Tournament Manager or Super Admin approves → Finished and Awarded
+if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
+    Event::where('id', $award->event_id)->update([
+        'status' => 'Finished and Awarded' // ✅ UPDATED
+    ]);
+}
 
         AuditLog::create([
             'model_type' => 'AllAwardResult',

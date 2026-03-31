@@ -102,7 +102,7 @@ function closePrivacyModal() {
     $statusCounts = [
         'Upcoming' => $allUpcomingEvents->where('status', 'Upcoming'),
         'Ongoing'  => $allUpcomingEvents->where('status', 'Ongoing'),
-        'Finished' => $allUpcomingEvents->where('status', 'Finished'),
+        'Finished' => $allUpcomingEvents->where('status', 'Finished and Awarded'),
         'Delayed'  => $allUpcomingEvents->where('status', 'Delayed'),
     ];
 @endphp
