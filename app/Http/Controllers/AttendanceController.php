@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Athlete;
 use App\Models\Coach;
 use App\Models\Attendance;
+use App\Models\Division;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
@@ -167,7 +168,48 @@ if (!$athlete) {
             return back()->with('error', 'QR Code not recognized.');
         }
 
+        // ================= DIVISION FILTER =================
+
+$user = Auth::user();
+
+// Get user's division IDs
+$divisionIds = is_array($user->divisions)
+    ? $user->divisions
+    : json_decode($user->divisions, true);
+
+// Get division names (e.g. "SDO - BATANES")
+$userDivisions = Division::whereIn('id', $divisionIds ?? [])
+    ->pluck('name')
+    ->toArray();
+
+// Normalize: remove "SDO - "
+$userDivisions = array_map(function ($d) {
+    return strtoupper(trim(str_replace('SDO -', '', $d)));
+}, $userDivisions);
+
+// ================= CHECK ATHLETE =================
+if ($athlete) {
+    $athleteDivision = strtoupper(trim($athlete->school_division));
+
+    if (!in_array($athleteDivision, $userDivisions)) {
+        return back()->with('error', 'This QR does not belong to your assigned division.');
+    }
+}
+
+// ================= CHECK COACH =================
+if ($coach && $coach->school) {
+    $coachDivision = strtoupper(trim($coach->school->division));
+
+    if (!in_array($coachDivision, $userDivisions)) {
+        return back()->with('error', 'This QR does not belong to your assigned division.');
+    }
+}
+
         $now = now();
+
+// ✅ GET CURRENT USER (Billeting Quarters)
+$currentUser = Auth::user();
+$location = $currentUser ? $currentUser->name : 'Unknown';
 
         $attendanceQuery = Attendance::query();
 
@@ -197,7 +239,8 @@ if (!$athlete) {
         if ($openAttendance) {
 
             $openAttendance->update([
-                'time_out' => $now
+                'time_out' => $now,
+                'location' => $location,
             ]);
 
             return back()->with('success', 'Time Out recorded.');
@@ -208,6 +251,7 @@ if (!$athlete) {
             'athlete_id' => $athlete->id ?? null,
             'coach_id' => $coach->id ?? null,
             'time_in' => $now,
+            'location' => $location,
         ]);
 
         return back()->with('success', 'Time In recorded.');

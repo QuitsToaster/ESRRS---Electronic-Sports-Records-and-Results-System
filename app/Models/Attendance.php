@@ -14,6 +14,7 @@ class Attendance extends Model
         'coach_id',
         'time_in',
         'time_out',
+        'location',
     ];
 
     // ADD THESE CASTS - THIS IS CRITICAL!

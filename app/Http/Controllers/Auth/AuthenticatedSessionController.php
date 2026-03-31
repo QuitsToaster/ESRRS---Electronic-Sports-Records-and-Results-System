@@ -32,6 +32,12 @@ class AuthenticatedSessionController extends Controller
     $user = Auth::user();
     $role = $user->role->name ?? null;
 
+    // ✅ PRIORITY REDIRECT FOR BILLETING QUARTERS
+    if ($role === 'Billeting Quarters') {
+        return redirect()->route('attendance.check');
+    }
+
+    // ✅ NORMAL MODULE-BASED REDIRECTS
     if (!empty($user->access) && is_array($user->access)) {
 
         foreach ($user->access as $module) {
@@ -75,13 +81,13 @@ class AuthenticatedSessionController extends Controller
      * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
-    {
-        Auth::guard('web')->logout();
+{
+    Auth::guard('web')->logout();
 
-        $request->session()->invalidate();
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
 
-        $request->session()->regenerateToken();
-
-        return redirect('/');
-    }
+    // ✅ Redirect to login page
+    return redirect()->route('login');
+}
 }

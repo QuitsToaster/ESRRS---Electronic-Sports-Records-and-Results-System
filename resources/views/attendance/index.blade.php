@@ -157,6 +157,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                     </tr>
                 </thead>
@@ -206,6 +207,8 @@
                                 <span class="text-gray-400">—</span>
                             @endif
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ $log->location ?? '-' }}
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ \Carbon\Carbon::parse($log->created_at)->format('M d, Y') }}
                         </td>
@@ -265,6 +268,8 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Division</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -307,6 +312,8 @@
                                 <span class="text-gray-400">—</span>
                             @endif
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ $record->location ?? '-' }}
                     </tr>
                     @empty
                     <tr>

@@ -80,23 +80,37 @@
                 <th width="30%">Name</th>
                 <th width="20%">Role</th>
                 <th width="30%">School</th>
-                <th width="20%">Time In</th>
+                <th width="15%">Time In</th>
+                <th width="25%">Location</th>
             </tr>
         </thead>
         <tbody>
             @foreach($attended as $record)
                 @php
-                    $role = $record->athlete ? 'Athlete' : ($record->coach ? 'Coach' : '-');
-                    $name = $record->athlete->full_name ?? $record->coach->name ?? '-';
-                    $team = $record->athlete->school->name ?? $record->coach->school->name ?? 'N/A';
-                    $timeIn = $record->time_in ? \Carbon\Carbon::parse($record->time_in)
-                                ->setTimezone('Asia/Manila')->format('h:i A') : '—';
-                @endphp
+    $role = $record->athlete ? 'Athlete' : ($record->coach ? 'Coach' : '-');
+
+    $name = $record->athlete
+        ? ($record->athlete->full_name ?? '-')
+        : ($record->coach->name ?? '-');
+
+    $team = $record->athlete && $record->athlete->school
+        ? $record->athlete->school->name
+        : ($record->coach && $record->coach->school
+            ? $record->coach->school->name
+            : 'N/A');
+
+    $timeIn = $record->time_in
+        ? \Carbon\Carbon::parse($record->time_in)
+            ->setTimezone('Asia/Manila')
+            ->format('h:i A')
+        : '—';
+@endphp
                 <tr>
                     <td>{{ $name }}</td>
                     <td>{{ $role }}</td>
                     <td>{{ $team }}</td>
                     <td>{{ $timeIn }}</td>
+                    <td>{{ $record->location ?? '—' }}</td>
                 </tr>
             @endforeach
         </tbody>

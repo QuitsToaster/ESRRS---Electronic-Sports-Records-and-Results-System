@@ -155,6 +155,51 @@
 
     <div class="max-w-7xl mx-auto">
 
+    {{-- ================= USER HEADER ================= --}}
+@php
+    use App\Models\Division;
+
+    $authUser = auth()->user();
+
+    // Get division IDs from user (assumes array or JSON)
+    $divisionIds = is_array($authUser->divisions)
+        ? $authUser->divisions
+        : json_decode($authUser->divisions, true);
+
+    // Fetch division names
+    $divisionNames = Division::whereIn('id', $divisionIds ?? [])
+        ->pluck('name')
+        ->toArray();
+@endphp
+
+<div class="modern-card p-4 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    
+    {{-- USER INFO --}}
+    <div>
+        <h2 class="text-lg font-semibold text-slate-900">
+            {{ $authUser->name }}
+        </h2>
+        <p class="text-sm text-slate-500">
+            Divisions:
+            <span class="font-medium text-slate-700">
+                {{ !empty($divisionNames) ? implode(', ', $divisionNames) : 'No Division Assigned' }}
+            </span>
+        </p>
+    </div>
+
+    {{-- LOGOUT BUTTON --}}
+    <form method="POST" action="{{ route('logout') }}">
+        @csrf
+        <button
+            type="submit"
+            class="px-4 py-2 rounded-lg bg-red-500 text-white text-sm font-medium hover:bg-red-600 transition"
+        >
+            Logout
+        </button>
+    </form>
+
+</div>
+
         {{-- ================= INSTRUCTIONS ================= --}}
         <div class="instructions mb-6 flex items-start gap-3">
             <svg class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -252,85 +297,129 @@
             </div>
 
             {{-- ================= RECENT ATTENDANCE ================= --}}
-            <div class="modern-card p-6">
-                <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
-                        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                        Today's Attendance
-                    </h2>
-                    @php
-                    use App\Models\Attendance;
-                    use Carbon\Carbon;
-                    $count = Attendance::whereDate('created_at', Carbon::today())->count();
-                    @endphp
-                    <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium">
-                        {{ $count }} entries
-                    </span>
-                </div>
+<div class="modern-card p-6">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-lg font-semibold text-slate-900 flex items-center gap-2">
+            <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            Today's Attendance
+        </h2>
 
+        @php
+        use App\Models\Attendance;
+        use Carbon\Carbon;
+
+        $authUser = auth()->user();
+
+        // ================= USER DIVISIONS =================
+        $divisionIds = is_array($authUser->divisions)
+            ? $authUser->divisions
+            : json_decode($authUser->divisions, true);
+
+        $userDivisions = Division::whereIn('id', $divisionIds ?? [])
+            ->pluck('name')
+            ->toArray();
+
+        // Normalize: remove "SDO - "
+        $userDivisions = array_map(function ($d) {
+            return strtoupper(trim(str_replace('SDO -', '', $d)));
+        }, $userDivisions);
+
+        // ================= COUNT (FILTERED) =================
+        $count = Attendance::whereDate('created_at', Carbon::today())
+            ->where(function ($q) use ($userDivisions) {
+
+                $q->whereHas('athlete', function ($q2) use ($userDivisions) {
+                    $q2->whereIn(\DB::raw('UPPER(school_division)'), $userDivisions);
+                })
+
+                ->orWhereHas('coach.school', function ($q2) use ($userDivisions) {
+                    $q2->whereIn(\DB::raw('UPPER(division)'), $userDivisions);
+                });
+
+            })
+            ->count();
+        @endphp
+
+        <span class="bg-slate-100 text-slate-600 px-3 py-1 rounded-full text-xs font-medium">
+            {{ $count }} entries
+        </span>
+    </div>
+
+    @php
+    // ================= RECENT FILTERED =================
+    $recent = Attendance::with(['athlete','coach.school'])
+        ->whereDate('created_at', Carbon::today())
+        ->where(function ($q) use ($userDivisions) {
+
+            $q->whereHas('athlete', function ($q2) use ($userDivisions) {
+                $q2->whereIn(\DB::raw('UPPER(school_division)'), $userDivisions);
+            })
+
+            ->orWhereHas('coach.school', function ($q2) use ($userDivisions) {
+                $q2->whereIn(\DB::raw('UPPER(division)'), $userDivisions);
+            });
+
+        })
+        ->latest()
+        ->limit(15)
+        ->get();
+    @endphp
+
+    <div class="overflow-y-auto max-h-[500px]">
+        <table class="simple-table">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Division</th>
+                    <th class="text-center">In</th>
+                    <th class="text-center">Out</th>
+                </tr>
+            </thead>
+            <tbody>
+                @forelse($recent as $r)
                 @php
-                $recent = Attendance::with(['athlete','coach'])
-                    ->whereDate('created_at', Carbon::today())
-                    ->latest()
-                    ->limit(15)
-                    ->get();
+                    $user = $r->athlete ?? $r->coach;
+                    $name = $user->name ?? trim($user->first_name.' '.$user->last_name);
+                    $division = $user->school_division ?? $user->school->division ?? '—';
                 @endphp
-
-                <div class="overflow-y-auto max-h-[500px]">
-                    <table class="simple-table">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Division</th>
-                                <th class="text-center">In</th>
-                                <th class="text-center">Out</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($recent as $r)
-                            @php
-                                $user = $r->athlete ?? $r->coach;
-                                $name = $user->name ?? trim($user->first_name.' '.$user->last_name);
-                                $division = $user->school_division ?? $user->school->school_division ?? '—';
-                            @endphp
-                            <tr>
-                                <td class="font-medium">{{ $name }}</td>
-                                <td class="text-slate-600">{{ $division }}</td>
-                                <td class="text-center">
-                                    @if($r->time_in)
-                                        <span class="badge badge-green">
-                                            {{ Carbon::parse($r->time_in)->format('h:i A') }}
-                                        </span>
-                                    @else
-                                        <span class="text-slate-300">—</span>
-                                    @endif
-                                </td>
-                                <td class="text-center">
-                                    @if($r->time_out)
-                                        <span class="badge badge-orange">
-                                            {{ Carbon::parse($r->time_out)->format('h:i A') }}
-                                        </span>
-                                    @else
-                                        <span class="text-slate-300">—</span>
-                                    @endif
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="4" class="text-center py-12 text-slate-400">
-                                    <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                    No attendance records today
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                <tr>
+                    <td class="font-medium">{{ $name }}</td>
+                    <td class="text-slate-600">{{ $division }}</td>
+                    <td class="text-center">
+                        @if($r->time_in)
+                            <span class="badge badge-green">
+                                {{ Carbon::parse($r->time_in)->format('h:i A') }}
+                            </span>
+                        @else
+                            <span class="text-slate-300">—</span>
+                        @endif
+                    </td>
+                    <td class="text-center">
+                        @if($r->time_out)
+                            <span class="badge badge-orange">
+                                {{ Carbon::parse($r->time_out)->format('h:i A') }}
+                            </span>
+                        @else
+                            <span class="text-slate-300">—</span>
+                        @endif
+                    </td>
+                </tr>
+                @empty
+                <tr>
+                    <td colspan="4" class="text-center py-12 text-slate-400">
+                        <svg class="w-12 h-12 mx-auto mb-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                        </svg>
+                        No attendance records for your division today
+                    </td>
+                </tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
+</div>
         </div>
     </div>
 
