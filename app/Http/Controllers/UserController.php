@@ -98,9 +98,19 @@ class UserController extends Controller
 
 
     // Store new user
-   public function store(Request $request)
+public function store(Request $request)
 {
-    $request->validate([
+    // Determine the role first
+    if ($request->filled('new_role')) {
+        $role = Role::firstOrCreate(['name' => trim($request->new_role)]);
+    } elseif ($request->filled('role_id')) {
+        $role = Role::findOrFail($request->role_id);
+    } else {
+        return back()->withErrors(['role_id' => 'Role is required'])->withInput();
+    }
+
+    // Base validation rules
+    $rules = [
         'name'             => 'required|string|max:255',
         'email'            => 'required|email|unique:users',
         'password'         => 'required|confirmed|min:6',
@@ -110,36 +120,37 @@ class UserController extends Controller
         'access'           => 'nullable|array',
         'sports_access'    => 'nullable|array',
         'sports_access.*'  => 'exists:sports,id',
-        'sport_type_access'   => 'nullable|array',
-        'sport_type_access.*' => 'exists:sport_types,id',
+        'sport_type_access'=> 'nullable|array',
+        'sport_type_access.*'=> 'exists:sport_types,id',
         'level_access'     => 'nullable|array',
         'category_access'  => 'nullable|array',
-        'divisions' => 'nullable|array',
-'divisions.*' => 'exists:divisions,id',
-    ]);
+    ];
 
-    if ($request->filled('new_role')) {
-        $role = Role::firstOrCreate(['name' => trim($request->new_role)]);
-    } elseif ($request->filled('role_id')) {
-        $role = Role::findOrFail($request->role_id);
-    } else {
-        return back()->withErrors(['role_id' => 'Role is required'])->withInput();
+    // Conditional rules for Billeting Quarters
+    if ($role->name === 'Billeting Quarters') {
+        $rules['divisions']   = 'required|array|min:1';
+        $rules['divisions.*'] = 'required|exists:divisions,id';
     }
 
+    // Validate request
+    $request->validate($rules);
+
+    // Create user
     $user = User::create([
-        'name'            => $request->name,
-        'email'           => $request->email,
-        'password'        => Hash::make($request->password),
-        'role_id'         => $role->id,
-        'access'          => $request->access ?? [],
-        'sports_access'   => $request->sports_access ?? [],
-        'sport_type_access'  => $request->sport_type_access ?? [],
-        'level_access'    => $request->level_access ?? [],
-        'category_access' => $request->category_access ?? [],
-        'divisions'        => $request->divisions ?? [], // saves array of division IDs
-        'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null, // ✅ save with prefix
+        'name'             => $request->name,
+        'email'            => $request->email,
+        'password'         => Hash::make($request->password),
+        'role_id'          => $role->id,
+        'access'           => $request->access ?? [],
+        'sports_access'    => $request->sports_access ?? [],
+        'sport_type_access'=> $request->sport_type_access ?? [],
+        'level_access'     => $request->level_access ?? [],
+        'category_access'  => $request->category_access ?? [],
+        'divisions'        => $request->divisions ?? [], // safe to keep as empty array
+        'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null,
     ]);
 
+    // Audit log
     AuditLog::create([
         'model_type' => 'User',
         'model_id'   => $user->id,
@@ -176,57 +187,81 @@ public function edit(User $user)
 // Update existing user
 public function update(Request $request, User $user)
 {
-    $request->validate([
-        'name'             => 'required|string|max:255',
-        'email'            => 'required|email|unique:users,email,' . $user->id,
-        'password'         => 'nullable|string|min:6|confirmed',
-        'role_id'          => 'nullable|exists:roles,id',
-        'new_role'         => 'nullable|string|max:50',
-        'access'           => 'nullable|array',
-        'level_access'     => 'nullable|array',
-        'category_access'  => 'nullable|array',
-        'sports_access'    => 'nullable|array',
-        'sport_type_access'=> 'nullable|array',
-        'divisions' => 'nullable|array',
-'divisions.*' => 'exists:divisions,id',
-    ]);
+    try {
+        // Determine the role first
+        if ($request->filled('new_role')) {
+            $role = Role::firstOrCreate(['name' => trim($request->new_role)]);
+        } elseif ($request->filled('role_id')) {
+            $role = Role::findOrFail($request->role_id);
+        } else {
+            return back()->withErrors(['role_id' => 'Role is required'])->withInput();
+        }
 
-    $oldValues = $user->toArray();
+        // Base validation rules
+        $rules = [
+            'name'             => 'required|string|max:255',
+            'email'            => 'required|email|unique:users,email,' . $user->id,
+            'password'         => 'nullable|string|min:6|confirmed',
+            'role_id'          => 'nullable|exists:roles,id',
+            'new_role'         => 'nullable|string|max:50',
+            'access'           => 'nullable|array',
+            'level_access'     => 'nullable|array',
+            'category_access'  => 'nullable|array',
+            'sports_access'    => 'nullable|array',
+            'sport_type_access'=> 'nullable|array',
+        ];
 
-    if ($request->filled('new_role')) {
-        $role = Role::firstOrCreate(['name' => $request->new_role]);
-    } else {
-        $role = Role::findOrFail($request->role_id);
+        // Only require divisions if role is Billeting Quarters
+        if ($role->name === 'Billeting Quarters') {
+            $rules['divisions']   = 'required|array|min:1';
+            $rules['divisions.*'] = 'required|exists:divisions,id';
+        } else {
+            // For other roles, ignore empty or missing divisions
+            $rules['divisions']   = 'nullable|array';
+            $rules['divisions.*'] = 'nullable|exists:divisions,id';
+        }
+
+        // Validate request
+        $request->validate($rules);
+
+        $oldValues = $user->toArray();
+
+        // Update user
+        $user->update([
+            'name'             => $request->name,
+            'email'            => $request->email,
+            'role_id'          => $role->id,
+            'access'           => $request->access ?? [],
+            'level_access'     => $request->level_access ?? [],
+            'category_access'  => $request->category_access ?? [],
+            'sports_access'    => $request->sports_access ?? [],
+            'sport_type_access'=> $request->sport_type_access ?? [],
+            'divisions'        => $role->name === 'Billeting Quarters' ? $request->divisions ?? [] : [],  
+            'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null,
+        ]);
+
+        // Only update password if filled
+        if ($request->filled('password')) {
+            $user->update(['password' => Hash::make($request->password)]);
+        }
+
+        // Audit log
+        AuditLog::create([
+            'model_type' => 'User',
+            'model_id'   => $user->id,
+            'user_id'    => auth()->id(),
+            'action'     => 'Updated User',
+            'old_values' => json_encode($oldValues),
+            'new_values' => json_encode($user->toArray()),
+        ]);
+
+        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+
+    } catch (\Illuminate\Validation\ValidationException $e) {
+        return back()->withErrors($e->errors())->withInput();
+    } catch (\Exception $e) {
+        return back()->with('error', "An error occurred: " . $e->getMessage())->withInput();
     }
-
-    $user->update([
-        'name'             => $request->name,
-        'email'            => $request->email,
-        'role_id'          => $role->id,
-        'access'           => $request->access ?? [],
-        'level_access'     => $request->level_access ?? [],
-        'category_access'  => $request->category_access ?? [],
-        'sports_access'    => $request->sports_access ?? [],
-        'sport_type_access'=> $request->sport_type_access ?? [],
-        'divisions'        => $request->divisions ?? [],  // saves array of division IDs
-        'contact_number'   => $request->contact_number ? '+63' . $request->contact_number : null, // ✅ save with prefix
-    ]);
-
-    if ($request->filled('password')) {
-        $user->update(['password' => Hash::make($request->password)]);
-    }
-
-    AuditLog::create([
-        'model_type' => 'User',
-        'model_id'   => $user->id,
-        'user_id'    => auth()->id(),
-        'action'     => 'Updated User',
-        'old_values' => json_encode($oldValues),
-        'new_values' => json_encode($user->toArray()),
-    ]);
-
-    return redirect()->route('users.index')
-        ->with('success', 'User updated successfully.');
 }
 
 

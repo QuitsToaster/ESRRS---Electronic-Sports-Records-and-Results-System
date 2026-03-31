@@ -27,6 +27,30 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 w-full">
 
 <form action="{{ route('users.update', $user) }}" method="POST" class="space-y-6">
+
+{{-- ================= ERROR / SUCCESS MESSAGES ================= --}}
+@if(session('success'))
+    <div class="mb-4 p-3 bg-green-100 text-green-800 rounded">
+        {{ session('success') }}
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="mb-4 p-3 bg-red-100 text-red-800 rounded">
+        {{ session('error') }}
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="mb-4 p-3 bg-red-50 border border-red-200 text-red-800 rounded">
+        <ul class="list-disc list-inside text-sm">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
 @csrf
 @method('PUT')
 
@@ -315,10 +339,11 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
 </div>
 
 
-{{-- ================= JS (UPDATED WITH GROUP LABEL HIDING AND PARAGAMES CATEGORIES) ================= --}}
+{{-- ================= JS (FULL UPDATED SCRIPT) ================= --}}
 <script>
 document.addEventListener('DOMContentLoaded', () => {
 
+    // ================= FILTER SPORTS & SPORT TYPES =================
     const levels = document.querySelectorAll('.levelCheckbox');
     const categories = document.querySelectorAll('.categoryCheckbox');
     const sports = document.querySelectorAll('.sportItem');
@@ -342,12 +367,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             let show = false;
 
-            // ✅ ALL LEVELS + ALL CATEGORIES → SHOW EVERYTHING
             if (allLevelsSelected && allCategoriesSelected) {
                 show = true;
-            }
-            // ✅ Paragames now has categories like Elementary/Secondary
-            else if (selectedLevels.includes(level) && selectedCategories.includes(category)) {
+            } else if (selectedLevels.includes(level) && selectedCategories.includes(category)) {
                 show = true;
             }
 
@@ -355,7 +377,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!show) item.querySelector('input').checked = false;
         });
 
-        // ✅ HIDE EMPTY GROUP LABELS IN SPORTS
+        // Hide empty group labels for sports
         const sportContainer = document.getElementById('sportsContainer');
         if (sportContainer) {
             const groupLabels = sportContainer.querySelectorAll('div.col-span-full');
@@ -384,7 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!show) item.querySelector('input').checked = false;
         });
 
-        // ✅ HIDE EMPTY GROUP LABELS IN SPORT TYPES
+        // Hide empty group labels for sport types
         const sportTypeContainer = document.getElementById('sportTypeContainer');
         if (sportTypeContainer) {
             const typeLabels = sportTypeContainer.querySelectorAll('div.col-span-full');
@@ -401,10 +423,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Event listeners for filtering
     levels.forEach(cb => cb.addEventListener('change', filterSports));
     categories.forEach(cb => cb.addEventListener('change', filterSports));
     sportCheckboxes.forEach(cb => cb.addEventListener('change', filterSportTypes));
 
+    // Master checkboxes
     function bind(masterId, className) {
         const master = document.getElementById(masterId);
         const items = document.querySelectorAll(className);
@@ -425,13 +449,11 @@ document.addEventListener('DOMContentLoaded', () => {
     bind('selectAllSports', '.sportCheckbox');
     bind('selectAllSportTypes', '.sportTypeCheckbox');
 
-    // INITIAL LOAD
+    // INITIAL FILTER
     filterSports();
-});
-</script>
-<script>
-    // ===================== DIVISIONS (BILLETING QUARTERS) =====================
-document.addEventListener('DOMContentLoaded', () => {
+
+
+    // ================= BILLETING QUARTERS DIVISIONS =================
     const roleSelect = document.querySelector('select[name="role_id"]');
     const divisionSection = document.getElementById('divisionSection');
     const divisionContainer = document.getElementById('divisionContainer');
@@ -443,12 +465,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     roleSelect.addEventListener('change', toggleDivisionSection);
-    toggleDivisionSection(); // initial check on page load
+    toggleDivisionSection(); // initial check
 
+    function addRemoveListener(btn) {
+        btn.addEventListener('click', () => {
+            const parent = btn.closest('.division-item');
+            if (parent) parent.remove();
+        });
+    }
+
+    // Attach to initial remove buttons
+    document.querySelectorAll('.removeDivisionBtn').forEach(addRemoveListener);
+
+    // Add new division
     addDivisionBtn.addEventListener('click', () => {
-        const newSelect = divisionContainer.children[0].cloneNode(true);
-        newSelect.value = ''; // reset selection
-        divisionContainer.appendChild(newSelect);
+        const template = divisionContainer.children[0].cloneNode(true);
+        template.querySelector('select').value = '';
+        divisionContainer.appendChild(template);
+
+        // Re-attach remove listener to the new button
+        addRemoveListener(template.querySelector('.removeDivisionBtn'));
     });
 });
 </script>
