@@ -440,7 +440,7 @@
                 </div>
                 <div class="flex-1 min-w-0">
                     <p class="font-semibold text-slate-700 truncate">{{ $name }}</p>
-                    <p class="text-xs text-slate-400 truncate">{{ $division }}</p>
+                    <p class="text-xs text-slate-400 truncate">{{ $division }} - {{ $r->athlete->event ?? '—' }}</p>
                 </div>
             </div>
             <div class="flex items-center gap-2 flex-shrink-0">
