@@ -7,6 +7,7 @@ use App\Models\Athlete;
 use App\Models\School;
 use App\Models\Sport;
 use App\Models\AuditLog;
+use App\Models\IndividualAwardResult; 
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\AthletesImport;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -410,10 +411,13 @@ class AthleteController extends Controller
     }
 
     public function qr(Athlete $athlete)
-    {
-        $qr = QrCode::format('png')->size(300)->generate($athlete->qr_code);
-        return response($qr)->header('Content-Type', 'image/png');
-    }
+{
+    $qr = QrCode::format('png')
+    ->size(300)
+    ->generate(url('/scan/' . $athlete->qr_code));
+
+    return response($qr)->header('Content-Type', 'image/png');
+}
 
   public function bulkUpload(Request $request)
 {
@@ -670,5 +674,64 @@ public function getFilterCount(Request $request)
         ]
     ]);
 }
+
+public function publicView($qr)
+{
+    // ==========================
+    // ✅ CLEAN QR INPUT
+    // ==========================
+    $clean = strtoupper($qr);
+
+    // remove spaces, new lines, tabs
+    $clean = preg_replace('/[\s\r\n\t]+/', '', $clean);
+
+    // extract ONLY valid QR pattern
+    if (preg_match('/(ESRRS-[A-Z0-9-]+)/', $clean, $match)) {
+        $clean = $match[1];
+    }
+
+    // ==========================
+    // ✅ FIND ATHLETE (SMART MATCH)
+    // ==========================
+    $athlete = Athlete::whereRaw("
+        REPLACE(REPLACE(REPLACE(UPPER(qr_code), ' ', ''), '\n', ''), '\r', '')
+        LIKE ?
+    ", ["%{$clean}%"])->first();
+
+    if (!$athlete) {
+        abort(404, 'Athlete not found for QR: ' . $clean);
+    }
+
+    // ==========================
+    // MEDALS (UNCHANGED)
+    // ==========================
+    $goldCount = IndividualAwardResult::where('athlete_id', $athlete->id)
+        ->where('medal', 'Gold')
+        ->count();
+
+    $silverCount = IndividualAwardResult::where('athlete_id', $athlete->id)
+        ->where('medal', 'Silver')
+        ->count();
+
+    $bronzeCount = IndividualAwardResult::where('athlete_id', $athlete->id)
+        ->where('medal', 'Bronze')
+        ->count();
+
+    $medals = IndividualAwardResult::with(['sport', 'event', 'type'])
+        ->where('athlete_id', $athlete->id)
+        ->where('status', 'approved')
+        ->get()
+        ->groupBy('medal');
+
+    return view('athletes.public-view', compact(
+        'athlete',
+        'goldCount',
+        'silverCount',
+        'bronzeCount',
+        'medals'
+    ));
+}
+
+
 
 }

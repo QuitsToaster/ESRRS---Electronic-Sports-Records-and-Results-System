@@ -1,10 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"
-      x-data="{ open: false, showTop: false }"
-      x-init="
-        window.addEventListener('scroll', () => { showTop = window.scrollY > 300 });
-        window.addEventListener('resize', () => { if (window.innerWidth >= 768) open = false });
-      "
+      x-data="viewerLayout()"
+      x-init="initLayout()"
       class="overflow-x-hidden">
 
 <head>
@@ -15,6 +12,7 @@
 
     @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
+    <script src="https://unpkg.com/html5-qrcode" defer></script>
 
     {{-- Fonts --}}
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -79,6 +77,15 @@
 
             {{-- Desktop Actions - Clean White Buttons --}}
             <div class="hidden md:flex items-center gap-3">
+                <button type="button"
+                        @click="openScanner()"
+                        class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center gap-2">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7V6a2 2 0 012-2h1m12 0h1a2 2 0 012 2v1m0 10v1a2 2 0 01-2 2h-1m-12 0H5a2 2 0 01-2-2v-1m3-7h12M8 12h.01M12 12h.01M16 12h.01" />
+                    </svg>
+                    Scan ID
+                </button>
+
                 <a href="{{ route('login') }}"
                    class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-sm hover:shadow transition-all duration-200 flex items-center gap-2">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,6 +143,11 @@
 
         {{-- Mobile Actions --}}
         <div class="pt-4 mt-2 border-t border-gray-200 space-y-2">
+            <button type="button"
+                    @click="openScanner(); open = false"
+                    class="block w-full px-4 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg text-center transition-colors">
+                Scan ID
+            </button>
             <a href="{{ route('login') }}"
                class="block px-4 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg text-center transition-colors">
                 Login
@@ -146,6 +158,64 @@
 
 {{-- Navbar Spacer --}}
 <div class="h-16"></div>
+
+{{-- ================= PUBLIC QR SCANNER MODAL ================= --}}
+<div x-show="scannerOpen"
+     x-cloak
+     x-transition
+     class="fixed inset-0 z-[120] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+     @click.self="closeScanner()">
+
+    <div class="w-full max-w-lg bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-200 bg-gradient-to-r from-green-600 to-green-700">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7V6a2 2 0 012-2h1m12 0h1a2 2 0 012 2v1m0 10v1a2 2 0 01-2 2h-1m-12 0H5a2 2 0 01-2-2v-1m3-7h12" />
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="text-white font-bold text-lg">Scan Athlete ID</h2>
+                    <p class="text-white/80 text-sm">Scan to see athlete details</p>
+                </div>
+            </div>
+
+            <button type="button" @click="closeScanner()" class="text-white/90 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+        </div>
+
+        <div class="p-5">
+            <div class="bg-gray-100 rounded-xl p-3 border border-gray-200">
+                <div id="public-qr-reader" class="w-full overflow-hidden rounded-lg"></div>
+            </div>
+
+            <p class="mt-4 text-sm text-gray-600">
+                Point the camera at the athlete QR code. Old printed IDs with raw
+            </p>
+
+            <template x-if="scannerError">
+                <div class="mt-4 px-4 py-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm" x-text="scannerError"></div>
+            </template>
+
+            <template x-if="scannerLoading">
+                <div class="mt-4 px-4 py-3 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 text-sm">
+                    Opening camera...
+                </div>
+            </template>
+
+            <div class="mt-5 flex items-center justify-end gap-3">
+                <button type="button"
+                        @click="closeScanner()"
+                        class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 font-medium">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {{-- Main Content --}}
 <main class="relative z-0 pointer-events-auto w-full overflow-x-hidden">
@@ -566,6 +636,128 @@
     </div> -->
 </footer>
 
+<script>
+function viewerLayout() {
+    return {
+        open: false,
+        showTop: false,
+
+        scannerOpen: false,
+        scannerLoading: false,
+        scannerError: '',
+        qrScannerInstance: null,
+        qrScannerStarted: false,
+
+        initLayout() {
+            window.addEventListener('scroll', () => {
+                this.showTop = window.scrollY > 300;
+            });
+
+            window.addEventListener('resize', () => {
+                if (window.innerWidth >= 768) this.open = false;
+            });
+        },
+
+        openScanner() {
+            this.scannerOpen = true;
+            this.scannerError = '';
+            this.scannerLoading = true;
+
+            this.$nextTick(() => {
+                this.startScanner();
+            });
+        },
+
+        async closeScanner() {
+            this.scannerOpen = false;
+            this.scannerLoading = false;
+            this.scannerError = '';
+
+            if (this.qrScannerInstance && this.qrScannerStarted) {
+                try {
+                    await this.qrScannerInstance.stop();
+                } catch (e) {}
+            }
+
+            if (this.qrScannerInstance) {
+                try {
+                    await this.qrScannerInstance.clear();
+                } catch (e) {}
+            }
+
+            this.qrScannerStarted = false;
+            this.qrScannerInstance = null;
+        },
+
+        normalizeQrText(decodedText) {
+            if (!decodedText) return null;
+
+            let text = String(decodedText).trim();
+
+            text = text.replace(/[\r\n\t ]+/g, '');
+
+            const scanMatch = text.match(/\/scan\/(eSRRS-[A-Z0-9-]+)/i);
+            if (scanMatch && scanMatch[1]) {
+                return scanMatch[1].toUpperCase();
+            }
+
+            const rawMatch = text.match(/(eSRRS-[A-Z0-9-]+)/i);
+            if (rawMatch && rawMatch[1]) {
+                return rawMatch[1].toUpperCase();
+            }
+
+            return null;
+        },
+
+        async startScanner() {
+            try {
+                if (typeof Html5Qrcode === 'undefined') {
+                    this.scannerLoading = false;
+                    this.scannerError = 'QR scanner library failed to load.';
+                    return;
+                }
+
+                if (this.qrScannerInstance && this.qrScannerStarted) {
+                    return;
+                }
+
+                this.qrScannerInstance = new Html5Qrcode('public-qr-reader');
+
+                await this.qrScannerInstance.start(
+                    { facingMode: 'environment' },
+                    {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                    },
+                    async (decodedText) => {
+                        const cleanQr = this.normalizeQrText(decodedText);
+
+                        if (!cleanQr) {
+                            this.scannerError = 'Invalid QR code. Please scan a valid athlete ID.';
+                            return;
+                        }
+
+                        try {
+                            if (this.qrScannerInstance && this.qrScannerStarted) {
+                                await this.qrScannerInstance.stop();
+                            }
+                        } catch (e) {}
+
+                        window.location.href = "{{ url('/scan') }}/" + encodeURIComponent(cleanQr);
+                    },
+                    () => {}
+                );
+
+                this.qrScannerStarted = true;
+                this.scannerLoading = false;
+            } catch (error) {
+                this.scannerLoading = false;
+                this.scannerError = 'Unable to access camera. Please allow camera permission and try again.';
+            }
+        }
+    }
+}
+</script>
 
 </body>
 </html>

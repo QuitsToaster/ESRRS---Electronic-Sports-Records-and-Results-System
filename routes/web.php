@@ -31,6 +31,7 @@ use SimpleSoftwareIO\QrCode\Facades\QrCode;
 |--------------------------------------------------------------------------
 */
 
+
 // Landing page
 Route::get('/', [ViewerController::class, 'home'])->name('landing');
 
@@ -49,6 +50,9 @@ Route::post('/switch-account', [SwitchAccountController::class, 'store'])->name(
 Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])
     ->name('users.reset-password');
 
+    Route::get('/scan/{qr}', [AthleteController::class, 'publicView'])
+    ->name('athletes.publicView');
+    
 /*
 |--------------------------------------------------------------------------
 | Viewer Routes (Public / No Auth)
@@ -211,6 +215,7 @@ Route::get('/athletes/filter-count', [AthleteController::class, 'getFilterCount'
     Route::delete('/{sport}', [SportController::class, 'paraDestroy'])->name('destroy');
 
 });
+
 
 
 
