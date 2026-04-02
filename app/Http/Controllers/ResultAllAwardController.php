@@ -117,7 +117,7 @@ class ResultAllAwardController extends Controller
 foreach (array_unique($processedEventIds) as $eventId) {
 
     if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
-        $eventStatus = 'Finished and Awarded'; // ✅ UPDATED
+        $eventStatus = 'Finished'; // ✅ UPDATED
     } else {
         $eventStatus = 'Ongoing';
     }
@@ -141,10 +141,10 @@ foreach (array_unique($processedEventIds) as $eventId) {
         $user = Auth::user();
         $roleName = optional($user->role)->name;
 
-        // ✅ If Tournament Manager or Super Admin approves → Finished and Awarded
+        // ✅ If Tournament Manager or Super Admin approves → Finished
 if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
     Event::where('id', $award->event_id)->update([
-        'status' => 'Finished and Awarded' // ✅ UPDATED
+        'status' => 'Finished' // ✅ UPDATED
     ]);
 }
 
