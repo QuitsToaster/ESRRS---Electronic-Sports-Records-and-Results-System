@@ -175,62 +175,77 @@
     {{-- ================= FILTERS & STATS ================= --}}
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <form method="GET" action="{{ route('users.index') }}" class="flex flex-wrap items-center gap-3">
-                {{-- Role Filter --}}
-                <div class="relative">
-                    <select name="role" class="w-full sm:w-40 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
-                        <option value="">All Roles</option>
-                        @foreach($roles as $roleOption)
-                            <option value="{{ $roleOption->id }}" {{ request('role') == $roleOption->id ? 'selected' : '' }}>
-                                {{ $roleOption->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
+            <form method="GET" action="{{ route('users.index') }}" class="flex flex-wrap items-center gap-3 w-full">
 
-                {{-- Level Filter --}}
-                <div class="relative">
-                    <select name="level" class="w-full sm:w-40 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
-                        <option value="">All Levels</option>
-                        @foreach(['Elementary','Secondary','Paragames'] as $levelOption)
-                            <option value="{{ $levelOption }}" {{ request('level') == $levelOption ? 'selected' : '' }}>
-                                {{ $levelOption }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
+    {{-- 🔍 SEARCH FIELD --}}
+    <div class="relative w-full sm:w-64">
+        <input type="text" 
+               name="search" 
+               value="{{ request('search') }}"
+               placeholder="Search name, email, role, contact..."
+               class="w-full px-4 py-2.5 pl-10 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all">
+        
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35M16 10a6 6 0 11-12 0 6 6 0 0112 0z" />
+        </svg>
+    </div>
 
-                {{-- Division Filter --}}
-                <div class="relative">
-                    <select name="division" class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
-                        <option value="">All Divisions</option>
-                        @foreach($divisions as $divOption)
-                            <option value="{{ $divOption->name }}" {{ request('division') == $divOption->name ? 'selected' : '' }}>
-                                {{ $divOption->name }}
-                            </option>
-                        @endforeach
-                    </select>
-                    <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                </div>
+    {{-- Role Filter --}}
+    <div class="relative">
+        <select name="role" class="w-full sm:w-40 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
+            <option value="">All Roles</option>
+            @foreach($roles as $roleOption)
+                <option value="{{ $roleOption->id }}" {{ request('role') == $roleOption->id ? 'selected' : '' }}>
+                    {{ $roleOption->name }}
+                </option>
+            @endforeach
+        </select>
+        <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+    </div>
 
-                <button type="submit"
-                        class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
-                    Filter
-                </button>
+    {{-- Level Filter --}}
+    <div class="relative">
+        <select name="level" class="w-full sm:w-40 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
+            <option value="">All Levels</option>
+            @foreach(['Elementary','Secondary','Paragames'] as $levelOption)
+                <option value="{{ $levelOption }}" {{ request('level') == $levelOption ? 'selected' : '' }}>
+                    {{ $levelOption }}
+                </option>
+            @endforeach
+        </select>
+        <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+    </div>
 
-                <a href="{{ route('users.index') }}"
-                   class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200">
-                    Clear
-                </a>
-            </form>
+    {{-- Division Filter --}}
+    <div class="relative">
+        <select name="division" class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
+            <option value="">All Divisions</option>
+            @foreach($divisions as $divOption)
+                <option value="{{ $divOption->name }}" {{ request('division') == $divOption->name ? 'selected' : '' }}>
+                    {{ $divOption->name }}
+                </option>
+            @endforeach
+        </select>
+        <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+        </svg>
+    </div>
+
+    {{-- BUTTONS --}}
+    <button type="submit"
+            class="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+        Search / Filter
+    </button>
+
+    <a href="{{ route('users.index') }}"
+       class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all duration-200">
+        Clear
+    </a>
+</form>
 
             {{-- Count Badge --}}
             <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl">
