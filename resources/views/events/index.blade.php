@@ -3,7 +3,7 @@
 @section('page-title', 'Events Management')
 
 @section('content')
-<div class="space-y-6">
+<div x-data="winnerModal()" class="space-y-6">
     {{-- ================= HEADER WITH GRADIENT ================= --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -20,13 +20,15 @@
             </div>
         </div>
         
-        <a href="{{ route('events.create') }}"
-           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add Event
-        </a>
+       @if(auth()->user()->role->name !== 'Awards Committee')
+<a href="{{ route('events.create') }}"
+   class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+    </svg>
+    Add Event
+</a>
+@endif
     </div>
 
     {{-- ================= INSTRUCTIONS CARD ================= --}}
@@ -61,6 +63,59 @@
         </div>
     </div>
 
+    {{-- ================= AWARDS COMMITTEE COUNT ================= --}}
+@if(auth()->user()->role->name === 'Awards Committee')
+
+@php
+    $pendingAwardCount = $events->filter(function($e) {
+        return $e->status === 'Finished';
+    })->count();
+
+    $awardedCount = $events->filter(function($e) {
+        return $e->status === 'Finished and Awarded';
+    })->count();
+@endphp
+
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+    {{-- 🔵 Pending Awards --}}
+    <div class="bg-yellow-50 border border-yellow-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+        <div>
+            <p class="text-sm text-yellow-700">Events need to be awarded</p>
+            <h2 class="text-2xl font-bold text-yellow-900">
+                {{ $pendingAwardCount }}
+            </h2>
+        </div>
+
+        <div class="w-10 h-10 bg-yellow-100 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+    </div>
+
+    {{-- 🟣 Awarded --}}
+    <div class="bg-purple-50 border border-purple-200 rounded-2xl p-5 flex items-center justify-between shadow-sm">
+        <div>
+            <p class="text-sm text-purple-700">Awarded Events</p>
+            <h2 class="text-2xl font-bold text-purple-900">
+                {{ $awardedCount }}
+            </h2>
+        </div>
+
+        <div class="w-10 h-10 bg-purple-100 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M5 13l4 4L19 7" />
+            </svg>
+        </div>
+    </div>
+
+</div>
+
+@endif
+
     {{-- ================= FILTERS & STATS ================= --}}
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -81,7 +136,7 @@
                 <div class="relative">
                     <select name="status" class="w-full sm:w-48 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
                         <option value="">All Status</option>
-                        @foreach(['Upcoming','Ongoing','Delayed','Finished'] as $s)
+                        @foreach(['Upcoming','Ongoing','Delayed','Finished', 'Finished and Awarded'] as $s)
                             <option value="{{ $s }}" {{ ($status ?? '') === $s ? 'selected' : '' }}>
                                 {{ $s }}
                             </option>
@@ -132,198 +187,506 @@
         </div>
     @endif
 
-    {{-- Events Table --}}
-    @if($events->isEmpty())
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-            <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-            </div>
-            <h3 class="text-lg font-medium text-gray-900 mb-1">No events found</h3>
-            <p class="text-gray-500 mb-4">Get started by creating your first event</p>
-            <a href="{{ route('events.create') }}" 
-               class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                </svg>
-                Add Event
-            </a>
+   {{-- Modern Events Grid --}}
+@if($events->isEmpty())
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+        <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
         </div>
-    @else
-        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200">
-                    <thead class="bg-gray-50">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Event</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matches</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Winners</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Venue</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        @foreach($events as $event)
-                            <tr class="hover:bg-gray-50 transition-colors">
-                                {{-- Status --}}
-                                <td class="px-6 py-4" x-data="{
-                                    status: '{{ $event->status }}',
-                                    reason: '{{ $event->status_reason ?? '' }}',
-                                    submitForm() { $refs.statusForm.submit(); }
-                                }">
-                                    <form method="POST" action="{{ route('events.updateStatus', $event->id) }}" x-ref="statusForm">
-                                        @csrf
-                                        <div class="flex items-center gap-2">
-                                            <select name="status" x-model="status" @change="submitForm()"
-                                                    class="px-3 py-1.5 rounded-lg text-xs font-medium border-0 focus:ring-2 focus:ring-offset-2
-                                                        @php
-                                                            echo match($event->status) {
-                                                                'Upcoming' => 'bg-blue-100 text-blue-700 focus:ring-blue-500',
-                                                                'Ongoing'  => 'bg-green-100 text-green-700 focus:ring-green-500',
-                                                                'Delayed'  => 'bg-yellow-100 text-yellow-700 focus:ring-yellow-500',
-                                                                'Finished' => 'bg-gray-200 text-gray-700 focus:ring-gray-500',
-                                                                default    => 'bg-gray-100 text-gray-600',
-                                                            };
-                                                        @endphp">
-                                                @foreach(['Upcoming','Ongoing','Delayed','Finished'] as $s)
-                                                    <option value="{{ $s }}" :selected="status === '{{ $s }}'">{{ $s }}</option>
-                                                @endforeach
-                                            </select>
-                                            
-                                            <template x-if="status === 'Delayed'">
-                                                <input type="text" name="status_reason" x-model="reason" 
-                                                       placeholder="Reason for delay..."
-                                                       class="w-40 px-2 py-1 text-xs border border-yellow-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
-                                                       @change="submitForm()">
-                                            </template>
-                                        </div>
-                                    </form>
-                                </td>
+        <h3 class="text-lg font-medium text-gray-900 mb-1">No events found</h3>
+        <p class="text-gray-500 mb-4">Get started by creating your first event</p>
+        <a href="{{ route('events.create') }}" 
+           class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-all duration-200">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+            </svg>
+            Add Event
+        </a>
+    </div>
+@else
+    @php
+        $filteredEvents = $events;
+        if(auth()->user()->role->name === 'Awards Committee') {
+            $filteredEvents = $events->filter(function($e) {
+                return in_array($e->status, ['Finished', 'Finished and Awarded']);
+            });
+        }
+    @endphp
 
-                                {{-- Date --}}
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    <div class="flex items-center gap-1 text-sm text-gray-600">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                        </svg>
-                                        {{ $event->start_date ? $event->start_date->format('M d, Y') : 'TBA' }}
-                                    </div>
-                                </td>
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        @forelse($filteredEvents as $event)
+            <div class="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden">
+                {{-- Card Header with Status --}}
+                <div class="px-5 pt-5 pb-3 border-b border-gray-50">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+    <button 
+        onclick="showEventNameModal('{{ addslashes($event->name) }}')"
+        class="text-left w-full group focus:outline-none"
+        title="Click to view full event name"
+    >
+        <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors duration-200">
+            {{ $event->name }}
+            <svg class="inline-block w-4 h-4 ml-1 text-gray-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+            </svg>
+        </h3>
+    </button>
+    <p class="text-sm text-gray-500">{{ $event->sport->name ?? 'Sport TBA' }}</p>
+</div>
 
-                                {{-- Sport & Event Name --}}
-                                <td class="px-6 py-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $event->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $event->sport->name ?? 'TBA' }}</div>
-                                </td>
-
-                                {{-- Event Type --}}
-                                <td class="px-6 py-4">
-                                    <span class="px-3 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
-                                        {{ $event->type ?? 'Regular' }}
-                                    </span>
-                                </td>
-
-                                {{-- Level --}}
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $event->age_group ?? 'TBA' }}
-                                </td>
-
-                                {{-- Category --}}
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                    {{ $event->category ?? 'TBA' }}
-                                </td>
-
-                                {{-- Matches --}}
-                                <td class="px-6 py-4">
-                                    @if(!empty($event->games) && is_array($event->games))
-                                        <div class="space-y-1">
-                                            @foreach($event->games as $game)
-                                                <div class="text-xs bg-gray-100 rounded-lg px-2 py-1">
-                                                    Game {{ $loop->iteration }}: {{ $game }}
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <span class="text-xs text-gray-400">TBA</span>
-                                    @endif
-                                </td>
-
-                                {{-- Winners --}}
-                                <td class="px-6 py-4">
-                                    @if(is_array($event->game_winners) && count($event->game_winners))
-                                        <div class="space-y-1">
-                                            @foreach($event->game_winners as $gameIndex => $divisionId)
-                                                @php
-                                                    $division = $event->divisions->firstWhere('id', $divisionId);
-                                                @endphp
-                                                <div class="text-xs bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1">
-                                                    Game {{ $gameIndex + 1 }}: {{ $division?->name ?? 'TBA' }}
-                                                </div>
-                                            @endforeach
-                                        </div>
-                                    @else
-                                        <span class="text-xs text-gray-400">TBA</span>
-                                    @endif
-                                </td>
-
-                                {{-- Venue --}}
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center gap-1 text-sm text-gray-600">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                        </svg>
-                                        {{ $event->venue ?? 'TBA' }}
-                                    </div>
-                                </td>
-
-                                {{-- Actions --}}
-                                <td class="px-6 py-4 text-right">
-                                    <div class="flex items-center justify-end gap-2">
-                                        <a href="{{ route('events.manage', $event->id) }}"
-                                           class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                           title="Manage">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            </svg>
-                                        </a>
-
-                                        <a href="{{ route('events.edit', $event->id) }}"
-                                           class="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
-                                           title="Edit">
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                            </svg>
-                                        </a>
-
-                                        <form action="{{ route('events.destroy', $event->id) }}"
-                                              method="POST"
-                                              onsubmit="return confirm('Are you sure you want to delete this event?')"
-                                              class="inline">
-                                            @csrf
-                                            @method('DELETE')
-                                            <button type="submit"
-                                                    class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                                    title="Delete">
-                                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                </svg>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+<!-- Modern Modal for viewing full event name -->
+<div id="eventNameModal" class="fixed inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center z-50 hidden transition-all duration-300" onclick="closeEventNameModal()">
+    <div class="relative max-w-lg w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="eventNameModalContent" onclick="event.stopPropagation()">
+        <!-- Glass morphism card -->
+        <div class="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/20 overflow-hidden">
+            <!-- Animated gradient header -->
+            <div class="relative bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-indigo-600/20 animate-pulse"></div>
+                <div class="relative flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">Event Details</h3>
+                    </div>
+                    <button onclick="closeEventNameModal()" class="text-white/80 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/10">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
             </div>
+            
+            <!-- Modal body with modern design -->
+            <div class="p-6">
+                <div class="bg-gradient-to-br from-gray-50 to-gray-100/50 rounded-xl p-5 border border-gray-200/50">
+                    <div class="flex items-start gap-3">
+                        <div class="flex-shrink-0">
+                            <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Full Event Name</p>
+                            <p class="text-gray-800 text-base leading-relaxed break-words font-medium" id="modalEventName"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Decorative floating elements -->
+        <div class="absolute -top-10 -right-10 w-32 h-32 bg-blue-400 rounded-full blur-3xl opacity-20 animate-pulse pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-32 h-32 bg-indigo-400 rounded-full blur-3xl opacity-20 animate-pulse pointer-events-none"></div>
+    </div>
+</div>
+
+<script>
+    let currentEventName = '';
+    
+    function showEventNameModal(eventName) {
+        const modal = document.getElementById('eventNameModal');
+        const modalContent = document.getElementById('eventNameModalContent');
+        const modalEventName = document.getElementById('modalEventName');
+        
+        currentEventName = eventName;
+        modalEventName.textContent = eventName;
+        modal.classList.remove('hidden');
+        
+        // Prevent body scroll when modal is open
+        document.body.style.overflow = 'hidden';
+        
+        // Trigger animation
+        setTimeout(() => {
+            modalContent.classList.remove('scale-95', 'opacity-0');
+            modalContent.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+    
+    function closeEventNameModal() {
+        const modal = document.getElementById('eventNameModal');
+        const modalContent = document.getElementById('eventNameModalContent');
+        
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            document.body.style.overflow = '';
+        }, 300);
+    }
+    
+    function copyEventNameToClipboard() {
+        if (currentEventName) {
+            navigator.clipboard.writeText(currentEventName).then(() => {
+                // Show temporary success feedback
+                const copyBtn = event.target.closest('button');
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = `
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Copied!
+                `;
+                copyBtn.classList.add('bg-green-600', 'hover:bg-green-700');
+                copyBtn.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-indigo-600', 'hover:from-blue-700', 'hover:to-indigo-700');
+                
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                    copyBtn.classList.remove('bg-green-600', 'hover:bg-green-700');
+                    copyBtn.classList.add('bg-gradient-to-r', 'from-blue-600', 'to-indigo-600', 'hover:from-blue-700', 'hover:to-indigo-700');
+                }, 2000);
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+            });
+        }
+    }
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('eventNameModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closeEventNameModal();
+            }
+        }
+    });
+    
+    // Optional: Add touch/swipe support for mobile
+    let touchStartY = 0;
+    document.getElementById('eventNameModal')?.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    });
+    
+    document.getElementById('eventNameModal')?.addEventListener('touchmove', (e) => {
+        const touchEndY = e.touches[0].clientY;
+        const diff = touchEndY - touchStartY;
+        if (diff > 50) {
+            closeEventNameModal();
+        }
+    });
+</script>
+                        
+                        {{-- Status Badge --}}
+                        @if(auth()->user()->role->name === 'Awards Committee')
+                            <span class="px-3 py-1 rounded-lg text-xs font-medium shrink-0 ml-2
+                                @php
+                                    echo match($event->status) {
+                                        'Upcoming' => 'bg-blue-100 text-blue-700',
+                                        'Ongoing'  => 'bg-green-100 text-green-700',
+                                        'Delayed'  => 'bg-yellow-100 text-yellow-700',
+                                        'Finished' => 'bg-gray-200 text-gray-700',
+                                        'Finished and Awarded' => 'bg-purple-500 text-white',
+                                        default    => 'bg-gray-100 text-gray-600',
+                                    };
+                                @endphp">
+                                {{ $event->status }}
+                            </span>
+                        @else
+                            <div x-data="{
+                                status: '{{ $event->status }}',
+                                reason: '{{ $event->status_reason ?? '' }}',
+                                submitForm() { $refs.statusForm.submit(); }
+                            }" class="shrink-0 ml-2">
+                                <form method="POST" action="{{ route('events.updateStatus', $event->id) }}" x-ref="statusForm">
+                                    @csrf
+                                    <select name="status" x-model="status" @change="submitForm()"
+                                        class="px-3 py-1 rounded-lg text-xs font-medium border-0 focus:ring-2 focus:ring-offset-2 cursor-pointer
+                                            @php
+                                                echo match($event->status) {
+                                                    'Upcoming' => 'bg-blue-100 text-blue-700 focus:ring-blue-500',
+                                                    'Ongoing'  => 'bg-green-100 text-green-700 focus:ring-green-500',
+                                                    'Delayed'  => 'bg-yellow-100 text-yellow-700 focus:ring-yellow-500',
+                                                    'Finished' => 'bg-gray-200 text-gray-700 focus:ring-gray-500',
+                                                    'Finished and Awarded' => 'bg-purple-500 text-white',
+                                                    default    => 'bg-gray-100 text-gray-600',
+                                                };
+                                            @endphp">
+                                        @foreach(['Upcoming','Ongoing','Delayed','Finished','Finished and Awarded'] as $s)
+                                            <option value="{{ $s }}" :selected="status === '{{ $s }}'">{{ $s }}</option>
+                                        @endforeach
+                                    </select>
+                                    
+                                    <template x-if="status === 'Delayed'">
+                                        <input type="text" name="status_reason" x-model="reason" 
+                                               placeholder="Reason..."
+                                               class="mt-2 w-full px-2 py-1 text-xs border border-yellow-200 rounded-lg focus:ring-2 focus:ring-yellow-200"
+                                               @change="submitForm()">
+                                    </template>
+                                </form>
+                            </div>
+                        @endif
+                    </div>
+                    
+                    {{-- Delay reason display --}}
+                    @if($event->status === 'Delayed' && $event->status_reason && auth()->user()->role->name === 'Awards Committee')
+                        <p class="text-xs text-yellow-600 mt-2">Reason: {{ $event->status_reason }}</p>
+                    @endif
+                </div>
+                
+                {{-- Card Body --}}
+                <div class="p-5 space-y-4">
+                    {{-- Date & Venue row --}}
+                    <div class="flex items-center gap-4 text-sm text-gray-600">
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span>{{ $event->start_date ? $event->start_date->format('M d, Y') : 'TBA' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                            <span>{{ $event->venue ?? 'TBA' }}</span>
+                        </div>
+                    </div>
+                    
+                    {{-- Type, Level, Category chips --}}
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-purple-100 text-purple-700">
+                            {{ $event->type ?? 'Regular' }}
+                        </span>
+                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+                            {{ $event->age_group ?? 'Level TBA' }}
+                        </span>
+                        <span class="px-2.5 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">
+                            {{ $event->category ?? 'Category TBA' }}
+                        </span>
+                    </div>
+                    
+                    {{-- Matches & Winners Section --}}
+                    <div class="bg-gray-50 rounded-xl p-3 space-y-2">
+                        {{-- Matches / Games --}}
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Matches</p>
+                            @if(auth()->user()->role->name === 'Awards Committee' && !empty($event->games) && is_array($event->games))
+                                @php
+                                    $gamesCount = count($event->games ?? []);
+                                    $savedWinners = is_array($event->game_winners) ? $event->game_winners : [];
+                                    $hasUnawardedGames = false;
+                                    for ($i = 0; $i < $gamesCount; $i++) {
+                                        if (empty($savedWinners[$i])) {
+                                            $hasUnawardedGames = true;
+                                            break;
+                                        }
+                                    }
+                                @endphp
+                                
+                                @if($hasUnawardedGames)
+                                    <button type="button"
+                                        @click='openWinnerModal(
+                                            {{ $event->id }},
+                                            @json($event->games),
+                                            @json($event->divisions->map(fn($d) => ["id" => $d->id, "name" => $d->name])->values()),
+                                            @json(array_values($savedWinners))
+                                        )'
+                                        class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg transition">
+                                        Set Winners
+                                    </button>
+                                @else
+                                    <span class="text-sm text-gray-500 italic">All winners assigned</span>
+                                @endif
+                            @elseif(!empty($event->games) && is_array($event->games))
+                                <div class="space-y-1">
+                                    @foreach($event->games as $game)
+                                        <div class="text-xs bg-white rounded-lg px-2 py-1 text-gray-700">
+                                            Game {{ $loop->iteration }}: {{ $game }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-sm text-gray-400 italic">No matches scheduled</span>
+                            @endif
+                        </div>
+                        
+                        {{-- Winners --}}
+                        <div>
+                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Winners</p>
+                            @if(is_array($event->game_winners) && count($event->game_winners))
+                                <div class="space-y-1">
+                                    @foreach($event->game_winners as $gameIndex => $divisionId)
+                                        @php
+                                            $division = $event->divisions->firstWhere('id', $divisionId);
+                                        @endphp
+                                        <div class="text-xs bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1">
+                                            Game {{ $gameIndex + 1 }}: {{ $division?->name ?? 'TBA' }}
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-sm text-gray-400 italic">No winners yet</span>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                
+                {{-- Card Footer Actions --}}
+                <div class="px-5 py-4 bg-gray-50/50 border-t border-gray-100 flex items-center justify-end gap-2">
+                    @if(auth()->user()->role->name === 'Awards Committee')
+                        @if($event->status === 'Finished')
+                            <form method="POST" action="{{ route('events.markAwarded', $event->id) }}">
+                                @csrf
+                                <button type="submit"
+                                        onclick="return confirm('Mark this event as Awarded?')"
+                                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl shadow-sm transition">
+                                    Mark as Awarded
+                                </button>
+                            </form>
+                        @else
+                            <span class="text-sm text-gray-400 italic">Not eligible for awarding</span>
+                        @endif
+                    @else
+                        <a href="{{ route('events.manage', $event->id) }}"
+                           class="px-4 py-2 text-blue-600 hover:bg-blue-50 rounded-xl text-sm font-medium transition">
+                            Manage
+                        </a>
+                        <a href="{{ route('events.edit', $event->id) }}"
+                           class="px-4 py-2 text-amber-600 hover:bg-amber-50 rounded-xl text-sm font-medium transition">
+                            Edit
+                        </a>
+                        <form action="{{ route('events.destroy', $event->id) }}"
+                              method="POST"
+                              onsubmit="return confirm('Are you sure you want to delete this event?')"
+                              class="inline">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit"
+                                    class="px-4 py-2 text-red-600 hover:bg-red-50 rounded-xl text-sm font-medium transition">
+                                Delete
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            </div>
+        @empty
+            <div class="col-span-full bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-1">No finished events available</h3>
+                <p class="text-gray-500">Check back later for completed events</p>
+            </div>
+        @endforelse
+    </div>
+            </div>
+
+
+               {{-- ================= WINNER MODAL ================= --}}
+<div x-show="show"
+     x-cloak
+     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+
+    <div @click.away="close()"
+         class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
+
+        <div class="flex items-center justify-between mb-4">
+            <h2 class="text-lg font-bold">Set Game Winners</h2>
+            <button type="button"
+                    @click="close()"
+                    class="text-gray-400 hover:text-gray-700 text-xl leading-none">
+                &times;
+            </button>
+        </div>
+
+        <form method="POST" :action="formAction">
+            @csrf
+
+            <template x-for="(game, index) in games" :key="index">
+                <div class="mb-4 border p-4 rounded-xl bg-gray-50">
+                    <p class="text-sm font-semibold mb-2">
+                        Game <span x-text="index + 1"></span>:
+                        <span x-text="game.name"></span>
+                    </p>
+
+                    {{-- Preserve already saved winners --}}
+                    <template x-if="game.locked && game.selectedWinner">
+                        <input type="hidden"
+                               :name="'game_winners[' + index + ']'"
+                               :value="game.selectedWinner">
+                    </template>
+
+                    <select :name="'game_winners[' + index + ']'"
+                            x-model="game.selectedWinner"
+                            :disabled="game.locked"
+                            class="w-full border rounded px-3 py-2"
+                            :class="game.locked ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white'">
+
+                        <option value="">-- Select Winner --</option>
+
+                        <template x-for="division in game.divisions" :key="division.id">
+                            <option :value="division.id" x-text="division.name"></option>
+                        </template>
+                    </select>
+
+                    <template x-if="game.locked">
+                        <p class="text-xs text-emerald-700 mt-2">
+                            Winner already set. This game is locked.
+                        </p>
+                    </template>
+                </div>
+            </template>
+
+            <div class="flex justify-end gap-3 mt-6">
+                <button type="button"
+                        @click="close()"
+                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">
+                    Save Winners
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
+
+<script>
+function winnerModal() {
+    return {
+        show: false,
+        games: [],
+        formAction: '',
+
+        openWinnerModal(eventId, gamesRaw, divisions, existingWinners = []) {
+            this.formAction = `/events/${eventId}/save-game-winners`;
+
+            this.games = (gamesRaw || []).map((g, index) => {
+                let participants = g.split(' vs ').map(v => v.trim());
+                let selectedWinner = existingWinners[index] ?? '';
+
+                return {
+                    name: g,
+                    divisions: divisions.filter(d => participants.includes(d.name)),
+                    selectedWinner: selectedWinner ? String(selectedWinner) : '',
+                    locked: !!selectedWinner
+                };
+            });
+
+            this.show = true;
+        },
+
+        close() {
+            this.show = false;
+            this.games = [];
+            this.formAction = '';
+        }
+    }
+}
+</script>
             
             {{-- Pagination --}}
             @if($events->hasPages())

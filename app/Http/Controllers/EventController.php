@@ -158,7 +158,7 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
         $request->validate([
             'sport_id'      => 'required|exists:sports,id',
             'sport_type_id' => 'required|exists:sport_types,id',
-            'status'        => 'required|in:Upcoming,Ongoing,Delayed,Finished',
+            'status'        => 'required|in:Upcoming,Ongoing,Delayed,Finished,Finished and Awarded',
             'age_group'     => 'nullable|string',
             'category'      => 'nullable|string',
             'is_ball_game'  => 'nullable|boolean',
@@ -312,7 +312,7 @@ public function saveWinners(Request $request, Event $event)
     public function updateStatus(Request $request, Event $event)
     {
         $request->validate([
-            'status' => 'required|in:Upcoming,Ongoing,Delayed,Finished',
+            'status' => 'required|in:Upcoming,Ongoing,Delayed,Finished,Finished and Awarded',
             'status_reason' => 'nullable|string|max:500',
         ]);
 
@@ -357,20 +357,41 @@ public function saveGameWinners(Request $request, Event $event)
         'game_winners.*' => 'nullable|exists:divisions,id',
     ]);
 
-    $oldValues = $event->game_winners;
+    $oldValues = is_array($event->game_winners) ? $event->game_winners : [];
+    $incomingWinners = $request->game_winners ?? [];
 
-    // Update event game winners
+    // Preserve already saved winners and only fill missing ones
+    $finalWinners = $oldValues;
+
+    foreach ($incomingWinners as $index => $divisionId) {
+        if (!empty($divisionId)) {
+            $finalWinners[$index] = $divisionId;
+        } elseif (!isset($finalWinners[$index])) {
+            $finalWinners[$index] = null;
+        }
+    }
+
+    // Make sure array indexes match game indexes
+    if (is_array($event->games)) {
+        foreach ($event->games as $index => $game) {
+            if (!array_key_exists($index, $finalWinners)) {
+                $finalWinners[$index] = null;
+            }
+        }
+        ksort($finalWinners);
+        $finalWinners = array_values($finalWinners);
+    }
+
     $event->update([
-        'game_winners' => $request->game_winners,
+        'game_winners' => $finalWinners,
     ]);
 
-    // Audit Log for event update
     AuditLog::create([
         'model_type' => 'Event',
         'model_id'   => $event->id,
         'user_id'    => auth()->id(),
         'old_values' => json_encode($oldValues),
-        'new_values' => json_encode($request->game_winners),
+        'new_values' => json_encode($finalWinners),
         'action'     => 'Updated Game Winners',
     ]);
 
@@ -378,21 +399,20 @@ public function saveGameWinners(Request $request, Event $event)
     // CREATE OR UPDATE ANNOUNCEMENT FOR WINNERS
     // -------------------------------
     $announcementContent = "Game winners have been updated for the event: {$event->name}.\n\n";
-    foreach ($request->game_winners as $index => $divisionId) {
+
+    foreach ($finalWinners as $index => $divisionId) {
         if ($divisionId) {
             $division = Division::find($divisionId);
-            $announcementContent .= "Game " . ($index + 1) . " Winner: " . $division->name . "\n";
+            $announcementContent .= "Game " . ($index + 1) . " Winner: " . ($division?->name ?? 'Unknown Division') . "\n";
         }
     }
 
     if (!empty(trim($announcementContent))) {
-        // Check if a Results announcement already exists for this event
         $announcement = Announcement::where('event_id', $event->id)
             ->where('type', 'Results')
             ->first();
 
         if ($announcement) {
-            // Update existing announcement
             $oldAnnouncement = $announcement->toArray();
 
             $announcement->update([
@@ -411,7 +431,6 @@ public function saveGameWinners(Request $request, Event $event)
                 'action'     => 'Updated Results Announcement',
             ]);
         } else {
-            // Create new announcement
             $announcement = Announcement::create([
                 'title'        => "Results Updated: {$event->name}",
                 'content'      => $announcementContent,
@@ -432,7 +451,27 @@ public function saveGameWinners(Request $request, Event $event)
         }
     }
 
-    return back()->with('success', 'Game winners saved successfully and announcement updated.');
+    return back()->with('success', 'Game winners saved successfully and previous winners were preserved.');
+}
+
+public function markAwarded($id)
+{
+    $event = \App\Models\Event::findOrFail($id);
+
+    // 🔒 SECURITY CHECK
+    if(auth()->user()->role->name !== 'Awards Committee') {
+        abort(403);
+    }
+
+    // Only allow if already finished
+    if($event->status !== 'Finished') {
+        return back()->with('error', 'Event must be finished first.');
+    }
+
+    $event->status = 'Finished and Awarded';
+    $event->save();
+
+    return back()->with('success', 'Event marked as Awarded.');
 }
 
 }

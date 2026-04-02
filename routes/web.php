@@ -167,6 +167,10 @@ Route::resource('sports', SportController::class);
     Route::post('/events/{event}/game-winners', 
     [EventController::class, 'saveGameWinners']
 )->name('events.saveGameWinners');
+Route::post('/events/{event}/save-game-winners', [EventController::class, 'saveGameWinners'])
+    ->name('events.saveGameWinners');
+Route::post('/events/{event}/mark-awarded', [EventController::class, 'markAwarded'])
+    ->name('events.markAwarded');
     Route::resource('coaches', CoachController::class);
     Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
     Route::resource('officials', OfficialController::class)->only(['index','create','store','destroy','edit','update']);

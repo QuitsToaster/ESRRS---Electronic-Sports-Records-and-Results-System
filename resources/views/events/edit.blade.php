@@ -58,6 +58,8 @@
         @csrf
         @method('PUT')
 
+        <input type="hidden" name="status" value="{{ old('status', $event->status) }}">
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
 
             {{-- Sport --}}

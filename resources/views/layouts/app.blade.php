@@ -247,11 +247,13 @@ document.addEventListener('DOMContentLoaded', () => {
                {{ request()->routeIs('events.index') ? 'bg-blue-700 font-semibold' : '' }}">
                 All Events
             </a>
-            <a href="{{ route('events.create') }}"
-               class="block px-4 py-2 rounded hover:bg-blue-600
-               {{ request()->routeIs('events.create') ? 'bg-blue-700 font-semibold' : '' }}">
-                Add Event
-            </a>
+            @if(auth()->user()->role->name !== 'Awards Committee')
+<a href="{{ route('events.create') }}"
+   class="block px-4 py-2 rounded hover:bg-blue-600
+   {{ request()->routeIs('events.create') ? 'bg-blue-700 font-semibold' : '' }}">
+    Add Event
+</a>
+@endif
 
         </div>
     </div>
