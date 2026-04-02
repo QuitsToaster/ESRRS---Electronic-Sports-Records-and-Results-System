@@ -52,7 +52,14 @@ Route::post('/users/{user}/reset-password', [UserController::class, 'resetPasswo
 
     Route::get('/scan/{qr}', [AthleteController::class, 'publicView'])
     ->name('athletes.publicView');
-    
+  
+    Route::get('/force-logout', function () {
+    auth()->logout();
+    request()->session()->invalidate();
+    request()->session()->regenerateToken();
+
+    return redirect('/login')->with('success', 'Please login again.');
+})->name('force.logout');
 /*
 |--------------------------------------------------------------------------
 | Viewer Routes (Public / No Auth)
