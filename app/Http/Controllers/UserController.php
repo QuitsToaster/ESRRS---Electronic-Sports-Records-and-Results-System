@@ -25,11 +25,30 @@ class UserController extends Controller
 
     // Search
 if ($search) {
-    $usersQuery->where(function($q) use ($search) {
-        $q->where('name', 'like', "%{$search}%")
-          ->orWhere('email', 'like', "%{$search}%")
-          ->orWhere('contact_number', 'like', "%{$search}%") // ✅ ADD THIS
-          ->orWhereHas('role', fn($r)=>$r->where('name', 'like', "%{$search}%"));
+
+    // Normalize search
+    $search = strtolower(trim($search));
+
+    // Split into words
+    $keywords = preg_split('/\s+/', $search);
+
+    $usersQuery->where(function ($q) use ($keywords) {
+
+        foreach ($keywords as $word) {
+
+            $q->where(function ($sub) use ($word) {
+
+                $sub->whereRaw('LOWER(name) LIKE ?', ["%{$word}%"])
+                    ->orWhereRaw('LOWER(email) LIKE ?', ["%{$word}%"])
+                    ->orWhereRaw('LOWER(contact_number) LIKE ?', ["%{$word}%"])
+                    ->orWhereHas('role', function ($r) use ($word) {
+                        $r->whereRaw('LOWER(name) LIKE ?', ["%{$word}%"]);
+                    });
+
+            });
+
+        }
+
     });
 }
 
