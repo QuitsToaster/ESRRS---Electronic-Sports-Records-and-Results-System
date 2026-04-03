@@ -10,6 +10,7 @@ use App\Models\Sport;
 use App\Models\SportType;
 use App\Models\AuditLog;
 use App\Models\Division;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
@@ -376,5 +377,31 @@ public function markAccountRequestDone(AccountRequest $accountRequest)
         ->with('success', 'Account request marked as done.');
 }
 
+public function exportPdf(Request $request)
+{
+    $roleId = $request->input('role');
 
+    $usersQuery = User::with('role');
+
+    if ($roleId && $roleId !== 'all') {
+        $usersQuery->where('role_id', $roleId);
+    }
+
+    $users = $usersQuery->get();
+
+    // GROUP BY ROLE
+    $groupedUsers = $users->groupBy(fn($u) => $u->role->name ?? 'No Role');
+
+    // ✅ LOAD LOOKUP DATA (IMPORTANT)
+    $sports = Sport::all();
+    $sportTypes = SportType::all();
+
+    $pdf = Pdf::loadView('users.export_pdf', [
+        'groupedUsers' => $groupedUsers,
+        'sports' => $sports,           // ✅ FIX
+        'sportTypes' => $sportTypes    // ✅ FIX
+    ])->setPaper('letter', 'landscape');
+
+    return $pdf->download('users_report.pdf');
+}
 }

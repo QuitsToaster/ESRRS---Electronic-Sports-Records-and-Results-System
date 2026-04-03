@@ -339,6 +339,8 @@ Route::prefix('results/all-awards')->group(function () {
         Route::get('/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
         Route::put('/{user}', [UserController::class, 'update'])->name('users.update');
         Route::delete('/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::get('/users/export/pdf', [UserController::class, 'exportPdf'])
+    ->name('users.export.pdf');
     });
 
     /*

@@ -36,7 +36,7 @@
     </div>
 </div>
 @endif
-<div class="space-y-6">
+<div x-data="{ showExportModal: false }" class="space-y-6">
     {{-- ================= HEADER WITH GRADIENT ================= --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -53,13 +53,26 @@
             </div>
         </div>
         
-        <a href="{{ route('users.create') }}"
-           class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Add User
-        </a>
+        <div class="flex items-center gap-2">
+
+    {{-- EXPORT BUTTON --}}
+    <button type="button"
+            @click="showExportModal = true"
+            class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500 hover:bg-green-600 text-white text-sm font-semibold rounded-xl shadow-md transition">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 4v12m0 0l-4-4m4 4l4-4M4 20h16"/>
+        </svg>
+        Export PDF
+    </button>
+
+    {{-- ADD USER --}}
+    <a href="{{ route('users.create') }}"
+       class="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-semibold rounded-xl shadow-md">
+        Add User
+    </a>
+
+</div>
     </div>
 
     {{-- ================= INSTRUCTIONS CARD ================= --}}
@@ -605,6 +618,57 @@
         </div>
     </div>
 </div>
+ {{-- ================= EXPORT MODAL ================= --}}
+
+    <div x-show="showExportModal"
+         x-cloak
+         class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+
+        <div @click.away="showExportModal = false"
+             class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6">
+
+            <h2 class="text-lg font-bold mb-4">Export Users</h2>
+
+            <form method="GET" action="{{ route('users.export.pdf') }}">
+
+                {{-- ROLE SELECT --}}
+                <div class="mb-4">
+                    <label class="text-sm font-medium text-gray-700">Select Role</label>
+
+                    <select name="role"
+                            class="w-full mt-1 px-4 py-2 border rounded-lg">
+
+                        <option value="all">All Accounts (Grouped by Role)</option>
+
+                        @foreach($roles as $roleOption)
+                            <option value="{{ $roleOption->id }}">
+                                {{ $roleOption->name }}
+                            </option>
+                        @endforeach
+
+                    </select>
+                </div>
+
+                {{-- BUTTONS --}}
+                <div class="flex justify-end gap-3">
+                    <button type="button"
+                            @click="showExportModal = false"
+                            class="px-4 py-2 bg-gray-100 rounded-lg">
+                        Cancel
+                    </button>
+
+                    <button type="submit"
+                            class="px-5 py-2 bg-green-600 text-white rounded-lg">
+                        Export PDF
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+
         </div>
     @endif
 
@@ -625,6 +689,8 @@
     background: #a0aec0;
 }
 </style>
+
+
 
 {{-- JS for user actions --}}
 <script>
