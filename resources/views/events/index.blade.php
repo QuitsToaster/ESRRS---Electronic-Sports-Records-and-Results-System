@@ -621,11 +621,11 @@
                         @if($event->status === 'Finished')
                             <form method="POST" action="{{ route('events.markAwarded', $event->id) }}">
                                 @csrf
-                                <button type="submit"
-                                        onclick="return confirm('Mark this event as Awarded?')"
-                                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl shadow-sm transition">
-                                    Mark as Awarded
-                                </button>
+                                <button type="button"
+    onclick="openAwardModal({{ $event->id }})"
+    class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold rounded-xl shadow-sm transition">
+    Mark as Awarded
+</button>
                             </form>
                         @else
                             <span class="text-sm text-gray-400 italic">Not eligible for awarding</span>
@@ -664,7 +664,35 @@
                 <p class="text-gray-500">Check back later for completed events</p>
             </div>
         @endforelse
+        {{-- ================= AWARD CONFIRM MODAL ================= --}}
+<div id="awardModal-{{ $event->id }}"
+     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+
+        <h2 class="text-lg font-bold mb-2">Confirm Award</h2>
+        <p class="text-sm text-gray-600 mb-6">
+            Are you sure you want to mark this event as <strong>Awarded</strong>?
+        </p>
+
+        <div class="flex justify-end gap-3">
+            <button onclick="closeAwardModal({{ $event->id }})"
+                    class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
+                Cancel
+            </button>
+
+            <form method="POST" action="{{ route('events.markAwarded', $event->id) }}">
+                @csrf
+                <button type="submit"
+                        class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg">
+                    Yes, Confirm
+                </button>
+            </form>
+        </div>
+
     </div>
+</div>
+</div>
             </div>
             
             {{-- Pagination --}}
@@ -686,6 +714,19 @@ function openWinnerModal(id) {
 
 function closeWinnerModal(id) {
     const modal = document.getElementById('winnerModal-' + id);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
+<script>
+function openAwardModal(id) {
+    const modal = document.getElementById('awardModal-' + id);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeAwardModal(id) {
+    const modal = document.getElementById('awardModal-' + id);
     modal.classList.add('hidden');
     modal.classList.remove('flex');
 }
