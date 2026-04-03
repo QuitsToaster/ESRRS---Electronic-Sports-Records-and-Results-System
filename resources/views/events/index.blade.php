@@ -3,7 +3,7 @@
 @section('page-title', 'Events Management')
 
 @section('content')
-<div x-data="winnerModal()" class="space-y-6">
+<div x-data="winnerModal()" x-init="init()" class="space-y-6">
     {{-- ================= HEADER WITH GRADIENT ================= --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -464,69 +464,155 @@
                     </div>
                     
                     {{-- Matches & Winners Section --}}
-                    <div class="bg-gray-50 rounded-xl p-3 space-y-2">
-                        {{-- Matches / Games --}}
-                        <div>
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Matches</p>
-                            @if(auth()->user()->role->name === 'Awards Committee' && !empty($event->games) && is_array($event->games))
-                                @php
-                                    $gamesCount = count($event->games ?? []);
-                                    $savedWinners = is_array($event->game_winners) ? $event->game_winners : [];
-                                    $hasUnawardedGames = false;
-                                    for ($i = 0; $i < $gamesCount; $i++) {
-                                        if (empty($savedWinners[$i])) {
-                                            $hasUnawardedGames = true;
-                                            break;
-                                        }
-                                    }
-                                @endphp
-                                
-                                @if($hasUnawardedGames)
-                                    <button type="button"
-                                        @click='openWinnerModal(
-                                            {{ $event->id }},
-                                            @json($event->games),
-                                            @json($event->divisions->map(fn($d) => ["id" => $d->id, "name" => $d->name])->values()),
-                                            @json(array_values($savedWinners))
-                                        )'
-                                        class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded-lg transition">
-                                        Set Winners
-                                    </button>
-                                @else
-                                    <span class="text-sm text-gray-500 italic">All winners assigned</span>
-                                @endif
-                            @elseif(!empty($event->games) && is_array($event->games))
-                                <div class="space-y-1">
-                                    @foreach($event->games as $game)
-                                        <div class="text-xs bg-white rounded-lg px-2 py-1 text-gray-700">
-                                            Game {{ $loop->iteration }}: {{ $game }}
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <span class="text-sm text-gray-400 italic">No matches scheduled</span>
-                            @endif
-                        </div>
-                        
-                        {{-- Winners --}}
-                        <div>
-                            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Winners</p>
-                            @if(is_array($event->game_winners) && count($event->game_winners))
-                                <div class="space-y-1">
-                                    @foreach($event->game_winners as $gameIndex => $divisionId)
-                                        @php
-                                            $division = $event->divisions->firstWhere('id', $divisionId);
-                                        @endphp
-                                        <div class="text-xs bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1">
-                                            Game {{ $gameIndex + 1 }}: {{ $division?->name ?? 'TBA' }}
-                                        </div>
-                                    @endforeach
-                                </div>
-                            @else
-                                <span class="text-sm text-gray-400 italic">No winners yet</span>
-                            @endif
-                        </div>
+<div class="bg-gray-50 rounded-xl p-3 space-y-3">
+
+    {{-- ================= MATCHES / GAMES ================= --}}
+    <div>
+        <div class="flex items-center justify-between mb-1.5">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                Matches
+            </p>
+
+            {{-- ✅ SET WINNERS BUTTON --}}
+            @if(auth()->user()->role->name === 'Awards Committee' && !empty($event->games))
+                <button type="button"
+                        onclick="openWinnerModal({{ $event->id }})"
+                        class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-lg">
+                    Set Winners
+                </button>
+            @endif
+        </div>
+
+        @if(!empty($event->games) && is_array($event->games))
+            <div class="space-y-1">
+                @foreach($event->games as $index => $game)
+                    <div class="text-xs bg-white rounded-lg px-2 py-1 text-gray-700">
+                        Game {{ $index + 1 }}: {{ $game }}
                     </div>
+                @endforeach
+            </div>
+        @else
+            <span class="text-sm text-gray-400 italic">
+                No matches scheduled
+            </span>
+        @endif
+    </div>
+
+    {{-- ================= WINNERS ================= --}}
+    <div>
+        <p class="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">
+            Winners
+        </p>
+
+        @if(is_array($event->game_winners) && count(array_filter($event->game_winners)))
+            <div class="space-y-1">
+                @foreach($event->game_winners as $gameIndex => $divisionId)
+                    @php
+                        $division = $event->divisions->firstWhere('id', $divisionId);
+                    @endphp
+
+                    <div class="text-xs bg-emerald-50 text-emerald-700 rounded-lg px-2 py-1">
+                        Game {{ $gameIndex + 1 }}:
+                        {{ $division?->name ?? 'TBA' }}
+                    </div>
+                @endforeach
+            </div>
+        @else
+            <span class="text-sm text-gray-400 italic">
+                No winners yet
+            </span>
+        @endif
+    </div>
+
+</div>
+
+
+{{-- ================= SIMPLE MODAL ================= --}}
+<div id="winnerModal-{{ $event->id }}"
+     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold">Set Winners</h2>
+            <button onclick="closeWinnerModal({{ $event->id }})"
+                    class="text-gray-500 text-xl">&times;</button>
+        </div>
+
+        <form method="POST" action="{{ route('events.saveGameWinners', $event->id) }}">
+            @csrf
+
+            @foreach($event->games ?? [] as $index => $game)
+                @php
+                    $existing = $event->game_winners[$index] ?? '';
+
+                    // Extract participants
+                    $participants = collect(explode(' vs ', $game))
+                        ->map(fn($p) => trim($p));
+
+                    // Filter divisions
+                    $filteredDivisions = $event->divisions->filter(function($division) use ($participants) {
+                        return $participants->contains($division->name);
+                    });
+                @endphp
+
+                <div class="mb-3">
+                    <label class="text-sm font-medium">
+                        Game {{ $index + 1 }}
+                    </label>
+
+                    {{-- ✅ IF LOCKED --}}
+                    @if($existing)
+                        {{-- Preserve value --}}
+                        <input type="hidden"
+                               name="game_winners[{{ $index }}]"
+                               value="{{ $existing }}">
+
+                        {{-- Disabled dropdown --}}
+                        <select disabled
+                                class="w-full border rounded px-3 py-2 mt-1 bg-gray-200 text-gray-500 cursor-not-allowed">
+
+                            @foreach($filteredDivisions as $division)
+                                <option value="{{ $division->id }}"
+                                    {{ $existing == $division->id ? 'selected' : '' }}>
+                                    {{ $division->name }}
+                                </option>
+                            @endforeach
+
+                        </select>
+
+                        <p class="text-xs text-emerald-600 mt-1">
+                            ✔ Winner already set (locked)
+                        </p>
+
+                    @else
+                        {{-- Editable dropdown --}}
+                        <select name="game_winners[{{ $index }}]"
+                                class="w-full border rounded px-3 py-2 mt-1">
+
+                            <option value="">-- Select Winner --</option>
+
+                            @foreach($filteredDivisions as $division)
+                                <option value="{{ $division->id }}">
+                                    {{ $division->name }}
+                                </option>
+                            @endforeach
+
+                        </select>
+                    @endif
+                </div>
+            @endforeach
+
+            <div class="flex justify-end mt-4">
+                <button type="submit"
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                    Save Winners
+                </button>
+            </div>
+        </form>
+
+    </div>
+</div>
                 </div>
                 
                 {{-- Card Footer Actions --}}
@@ -580,113 +666,6 @@
         @endforelse
     </div>
             </div>
-
-
-               {{-- ================= WINNER MODAL ================= --}}
-<div x-show="show"
-     x-cloak
-     class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-
-    <div @click.away="close()"
-         class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6 max-h-[90vh] overflow-y-auto">
-
-        <div class="flex items-center justify-between mb-4">
-            <h2 class="text-lg font-bold">Set Game Winners</h2>
-            <button type="button"
-                    @click="close()"
-                    class="text-gray-400 hover:text-gray-700 text-xl leading-none">
-                &times;
-            </button>
-        </div>
-
-        <form method="POST" :action="formAction">
-            @csrf
-
-            <template x-for="(game, index) in games" :key="index">
-                <div class="mb-4 border p-4 rounded-xl bg-gray-50">
-                    <p class="text-sm font-semibold mb-2">
-                        Game <span x-text="index + 1"></span>:
-                        <span x-text="game.name"></span>
-                    </p>
-
-                    {{-- Preserve already saved winners --}}
-                    <template x-if="game.locked && game.selectedWinner">
-                        <input type="hidden"
-                               :name="'game_winners[' + index + ']'"
-                               :value="game.selectedWinner">
-                    </template>
-
-                    <select :name="'game_winners[' + index + ']'"
-                            x-model="game.selectedWinner"
-                            :disabled="game.locked"
-                            class="w-full border rounded px-3 py-2"
-                            :class="game.locked ? 'bg-gray-200 text-gray-500 cursor-not-allowed' : 'bg-white'">
-
-                        <option value="">-- Select Winner --</option>
-
-                        <template x-for="division in game.divisions" :key="division.id">
-                            <option :value="division.id" x-text="division.name"></option>
-                        </template>
-                    </select>
-
-                    <template x-if="game.locked">
-                        <p class="text-xs text-emerald-700 mt-2">
-                            Winner already set. This game is locked.
-                        </p>
-                    </template>
-                </div>
-            </template>
-
-            <div class="flex justify-end gap-3 mt-6">
-                <button type="button"
-                        @click="close()"
-                        class="px-4 py-2 bg-gray-100 hover:bg-gray-200 rounded-lg">
-                    Cancel
-                </button>
-
-                <button type="submit"
-                        class="px-5 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold">
-                    Save Winners
-                </button>
-            </div>
-        </form>
-
-    </div>
-</div>
-
-<script>
-function winnerModal() {
-    return {
-        show: false,
-        games: [],
-        formAction: '',
-
-        openWinnerModal(eventId, gamesRaw, divisions, existingWinners = []) {
-            this.formAction = `/events/${eventId}/save-game-winners`;
-
-            this.games = (gamesRaw || []).map((g, index) => {
-                let participants = g.split(' vs ').map(v => v.trim());
-                let selectedWinner = existingWinners[index] ?? '';
-
-                return {
-                    name: g,
-                    divisions: divisions.filter(d => participants.includes(d.name)),
-                    selectedWinner: selectedWinner ? String(selectedWinner) : '',
-                    locked: !!selectedWinner
-                };
-            });
-
-            this.show = true;
-        },
-
-        close() {
-            this.show = false;
-            this.games = [];
-            this.formAction = '';
-        }
-    }
-}
-</script>
             
             {{-- Pagination --}}
             @if($events->hasPages())
@@ -697,4 +676,18 @@ function winnerModal() {
         </div>
     @endif
 </div>
+
+<script>
+function openWinnerModal(id) {
+    const modal = document.getElementById('winnerModal-' + id);
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+}
+
+function closeWinnerModal(id) {
+    const modal = document.getElementById('winnerModal-' + id);
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+}
+</script>
 @endsection
