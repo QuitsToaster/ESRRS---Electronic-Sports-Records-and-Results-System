@@ -210,12 +210,15 @@
     </div>
 
     <div class="flex flex-wrap gap-4">
-        @foreach(['Boys','Girls'] as $cat)
-            <label class="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="categoryCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500" name="category_access[]" value="{{ $cat }}">
-                <span class="text-gray-700">{{ $cat }}</span>
-            </label>
-        @endforeach
+        @foreach(['Boys','Girls','Mixed'] as $cat)
+    <label class="inline-flex items-center gap-2 cursor-pointer">
+        <input type="checkbox"
+               class="categoryCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+               name="category_access[]"
+               value="{{ $cat }}">
+        <span class="text-gray-700">{{ $cat }}</span>
+    </label>
+@endforeach
     </div>
 </div>
 
@@ -352,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const cats   = getChecked(catCBs);
 
         const allLevelSelected = levels.length === 3;
-        const allCatSelected   = cats.length === 2;
+        const allCatSelected   = cats.length === 3;
 
         sportItems.forEach(item => {
             const lvl = item.dataset.level;

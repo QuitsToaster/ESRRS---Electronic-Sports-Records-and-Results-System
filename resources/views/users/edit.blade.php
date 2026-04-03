@@ -242,9 +242,10 @@ $isSuperAdmin = $user->role && $user->role->name === 'Super Admin';
     </div>
 
     <div class="flex flex-wrap gap-4">
-        @foreach(['Boys','Girls'] as $cat)
+        @foreach(['Boys','Girls','Mixed'] as $cat)
             <label class="inline-flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" class="categoryCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                <input type="checkbox"
+                       class="categoryCheckbox rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                        name="category_access[]" value="{{ $cat }}"
                        {{ in_array($cat, old('category_access', $user->category_access ?? [])) ? 'checked' : '' }}>
                 <span class="text-gray-700">{{ $cat }}</span>
@@ -359,7 +360,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedCategories = getChecked(categories);
 
         const allLevelsSelected = selectedLevels.length === 3; // Elementary, Secondary, Paragames
-        const allCategoriesSelected = selectedCategories.length === 2; // Boys, Girls
+        const allCategoriesSelected = selectedCategories.length === 3; // Boys, Girls
 
         sports.forEach(item => {
             const level = item.dataset.level;
