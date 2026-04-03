@@ -79,26 +79,110 @@
     </div>
 
     {{-- ================= FILTERS & STATS ================= --}}
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+    <form method="GET" action="{{ route('para-sports.index') }}">
         <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
+
+            {{-- LEFT SIDE --}}
+            <div class="flex flex-wrap items-center gap-3">
+
+                <span class="text-sm text-gray-600">
+                    Manage para games and their categories
+                </span>
+
+                {{-- CATEGORY FILTER --}}
                 <div class="relative">
-                    <span class="text-sm text-gray-600">Manage para games and their categories</span>
+                    <select name="category"
+                            onchange="this.form.submit()"
+                            class="w-full sm:w-40 px-4 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all appearance-none bg-white">
+
+                        <option value="">All Categories</option>
+
+                        <option value="Boys" {{ ($category ?? '') == 'Boys' ? 'selected' : '' }}>
+                            Boys
+                        </option>
+
+                        <option value="Girls" {{ ($category ?? '') == 'Girls' ? 'selected' : '' }}>
+                            Girls
+                        </option>
+
+                        <option value="Mixed" {{ ($category ?? '') == 'Mixed' ? 'selected' : '' }}>
+                            Mixed
+                        </option>
+                    </select>
+
+                    <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none"
+                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M19 9l-7 7-7-7" />
+                    </svg>
                 </div>
+
             </div>
 
-            {{-- Count Badge --}}
+            {{-- RIGHT SIDE (COUNT) --}}
             <div class="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-xl">
                 <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                          d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
                 </svg>
+
                 <span class="text-sm text-gray-600">
                     <span class="font-semibold">Total Para Games:</span>
                     <span class="ml-1 font-bold text-gray-900">{{ $totalParaSports }}</span>
                 </span>
             </div>
+
+        </div>
+    </form>
+</div>
+
+    {{-- ================= BULK UPLOAD (PARA GAMES) ================= --}}
+@if(auth()->check() && auth()->user()->role->name === 'Super Admin')
+<div class="bg-amber-50 border border-amber-200 rounded-2xl p-5 shadow-sm">
+    <div class="flex items-start gap-3">
+        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+        </div>
+
+        <div class="flex-1">
+            <h3 class="font-semibold text-amber-900 mb-3">
+                Bulk Upload Para Games (CSV)
+            </h3>
+
+            <form action="{{ route('sports.bulkUpload') }}" method="POST" enctype="multipart/form-data"
+                  class="flex flex-wrap items-center gap-3">
+                @csrf
+
+                <input type="file"
+                       name="file"
+                       accept=".csv"
+                       required
+                       class="w-full sm:w-64 px-4 py-2.5 border border-amber-200 rounded-xl text-sm bg-white
+                              focus:ring-2 focus:ring-amber-200 focus:border-amber-400 transition-all">
+
+                <button type="submit"
+                        class="px-5 py-2.5 bg-gradient-to-r from-amber-500 to-amber-600
+                               hover:from-amber-600 hover:to-amber-700 text-white font-semibold rounded-xl shadow-md transition-all">
+                    Upload CSV
+                </button>
+            </form>
+
+            <p class="text-xs text-gray-600 mt-2">
+                <span class="font-medium">CSV headers must be:</span>
+                Name, Type of Sport, Level, Category
+                <br>
+                <span class="text-amber-700 font-medium">
+                    (Level must be "Paragames")
+                </span>
+            </p>
         </div>
     </div>
+</div>
+@endif
 
     {{-- Success Message --}}
     @if(session('success'))

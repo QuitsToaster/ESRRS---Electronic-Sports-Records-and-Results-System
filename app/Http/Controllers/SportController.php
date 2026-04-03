@@ -54,15 +54,17 @@ class SportController extends Controller
             'string',
             Rule::unique('sports')->where(function ($query) use ($request) {
                 return $query->where('division', $request->level)
-                             ->where('category', $request->category); // include category in uniqueness
+                             ->where('category', $request->category);
             }),
         ],
         'level' => 'required|in:Elementary,Secondary',
-        'category' => 'required|in:Boys,Girls',
+
+        // ✅ UPDATED HERE (added Mixed)
+        'category' => 'required|in:Boys,Girls,Mixed',
+
         'type_of_game.*' => 'nullable|string',
     ]);
 
-    // Create the sport
     $sport = Sport::create([
         'name'     => $request->name,
         'division' => $request->level,
@@ -70,7 +72,6 @@ class SportController extends Controller
         'category' => $request->category,
     ]);
 
-    // Create sport types
     if ($request->type_of_game) {
         foreach ($request->type_of_game as $type) {
             if ($type) {
@@ -79,7 +80,6 @@ class SportController extends Controller
         }
     }
 
-    // Audit log
     AuditLog::create([
         'model_type' => 'Sport',
         'model_id'   => $sport->id,
@@ -185,7 +185,10 @@ class SportController extends Controller
             })->ignore($sport->id),
         ],
         'level' => 'required|in:Elementary,Secondary',
-        'category' => 'required|in:Boys,Girls',
+
+        // ✅ UPDATED HERE (added Mixed)
+        'category' => 'required|in:Boys,Girls,Mixed',
+
         'type_of_game.*' => 'nullable|string',
     ]);
 
@@ -199,6 +202,7 @@ class SportController extends Controller
     ]);
 
     $sport->types()->delete();
+
     if ($request->type_of_game) {
         foreach ($request->type_of_game as $type) {
             if ($type) {
@@ -243,17 +247,22 @@ class SportController extends Controller
 
     // ---------------- PARA GAMES ----------------
 
-    public function paraIndex()
+    public function paraIndex(Request $request)
 {
-    $sports = Sport::with('types')
-        ->where('division', 'Paragames')
-        ->orderBy('name')
-        ->get();
+    $category = $request->query('category');
 
-    // ✅ Total para games count
+    $query = Sport::with('types')
+        ->where('division', 'Paragames');
+
+    if ($category) {
+        $query->where('category', $category);
+    }
+
+    $sports = $query->orderBy('name')->get();
+
     $totalParaSports = $sports->count();
 
-    return view('sports.para.index', compact('sports', 'totalParaSports'));
+    return view('sports.para.index', compact('sports', 'totalParaSports', 'category'));
 }
 
     public function paraCreate()
@@ -273,7 +282,10 @@ public function paraStore(Request $request)
                              ->where('category', $request->category);
             }),
         ],
-        'category' => 'required|in:Boys,Girls',
+
+        // ✅ UPDATED (added Mixed)
+        'category' => 'required|in:Boys,Girls,Mixed',
+
         'type_of_game.*' => 'nullable|string',
     ]);
 
@@ -324,7 +336,10 @@ public function paraUpdate(Request $request, Sport $sport)
                              ->where('category', $request->category);
             })->ignore($sport->id),
         ],
-        'category' => 'required|in:Boys,Girls',
+
+        // ✅ UPDATED (added Mixed)
+        'category' => 'required|in:Boys,Girls,Mixed',
+
         'type_of_game.*' => 'nullable|string',
     ]);
 
@@ -336,6 +351,7 @@ public function paraUpdate(Request $request, Sport $sport)
     ]);
 
     $sport->types()->delete();
+
     if ($request->type_of_game) {
         foreach ($request->type_of_game as $type) {
             if ($type) {
@@ -463,7 +479,17 @@ public function paraUpdate(Request $request, Sport $sport)
                     if (!$name || !$level) continue;
 
                     $isParagames = strtolower($level) === 'paragames';
-                    $categoriesToSave = $isParagames ? ['Boys', 'Girls'] : [$category];
+                    $isParagames = strtolower($level) === 'paragames';
+
+if ($isParagames) {
+    if (strtolower($category) === 'mixed') {
+        $categoriesToSave = ['Mixed'];
+    } else {
+        $categoriesToSave = ['Boys', 'Girls'];
+    }
+} else {
+    $categoriesToSave = [$category];
+}
 
                     foreach ($categoriesToSave as $catToSave) {
                         // Create or update sport

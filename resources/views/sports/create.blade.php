@@ -32,14 +32,17 @@
         </div>
 
         {{-- ================= CATEGORY ================= --}}
-        <div class="mb-4">
-            <label class="block text-gray-700 font-semibold mb-2">Category</label>
-            <select name="category" class="w-full border rounded px-3 py-2" required>
-                <option value="">-- Select Category --</option>
-                <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
-                <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
-            </select>
-        </div>
+<div class="mb-4">
+    <label class="block text-gray-700 font-semibold mb-2">Category</label>
+    <select name="category" class="w-full border rounded px-3 py-2" required>
+        <option value="">-- Select Category --</option>
+        <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
+        <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
+
+        {{-- ✅ NEW --}}
+        <option value="Mixed" {{ old('category') == 'Mixed' ? 'selected' : '' }}>Mixed</option>
+    </select>
+</div>
 
         {{-- ================= SPORT NAME ================= --}}
         <div>

@@ -27,16 +27,19 @@
         @csrf
 
         <!-- Category -->
-        <div>
-            <label class="block text-gray-700 font-semibold mb-2">
-                Category
-            </label>
-            <select name="category" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <option value="">-- Select Category --</option>
-                <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
-                <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
-            </select>
-        </div>
+<div>
+    <label class="block text-gray-700 font-semibold mb-2">
+        Category
+    </label>
+    <select name="category" required class="w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        <option value="">-- Select Category --</option>
+        <option value="Boys" {{ old('category') == 'Boys' ? 'selected' : '' }}>Boys</option>
+        <option value="Girls" {{ old('category') == 'Girls' ? 'selected' : '' }}>Girls</option>
+
+        {{-- ✅ NEW --}}
+        <option value="Mixed" {{ old('category') == 'Mixed' ? 'selected' : '' }}>Mixed</option>
+    </select>
+</div>
 
         <!-- Para Game Name -->
         <div>

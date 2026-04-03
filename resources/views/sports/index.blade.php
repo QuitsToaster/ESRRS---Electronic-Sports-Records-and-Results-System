@@ -101,6 +101,7 @@
                         <option value="">All Categories</option>
                         <option value="Boys" {{ ($category ?? '') == 'Boys' ? 'selected' : '' }}>Boys</option>
                         <option value="Girls" {{ ($category ?? '') == 'Girls' ? 'selected' : '' }}>Girls</option>
+                        <option value="Mixed" {{ ($category ?? '') == 'Mixed' ? 'selected' : '' }}>Mixed</option>
                     </select>
                     <svg class="w-5 h-5 text-gray-400 absolute right-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
