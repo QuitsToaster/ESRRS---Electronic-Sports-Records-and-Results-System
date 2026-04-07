@@ -73,6 +73,11 @@
                    class="{{ $linkClass }} {{ request()->routeIs('viewer.feedbacks') ? $activeClass : '' }}">
                     About
                 </a>
+
+                <a href="{{ route('viewer.me') }}" 
+                    class="{{ $linkClass }} {{ request()->routeIs('viewer.me') ? $activeClass : '' }}">
+                    M&E
+                </a>
             </div>
 
             {{-- Desktop Actions - Clean White Buttons --}}
@@ -139,6 +144,11 @@
         <a href="{{ route('viewer.feedbacks') }}" 
            class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.feedbacks') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
             About
+        </a>
+
+        <a href="{{ route('viewer.me') }}" 
+            class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.me') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
+            M&E
         </a>
 
         {{-- Mobile Actions --}}
@@ -599,8 +609,11 @@
                 Events
             </a>
             <a href="{{ route('viewer.gallery') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Gallery</a>
-            <a href="{{ route('viewer.announcements') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Announcements</a>
+            <a href="{{ route('viewer.announcements') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">News</a>
             <a href="{{ route('viewer.feedbacks') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">About Us</a>
+            <a href="{{ route('viewer.me') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">
+                M&E
+            </a>
         </div>
 
         {{-- Social Media --}}

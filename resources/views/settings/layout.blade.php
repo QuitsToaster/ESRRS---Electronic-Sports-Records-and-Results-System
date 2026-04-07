@@ -165,6 +165,121 @@ function addDeveloperRow() {
 }
 </script>
 
+{{-- =======================
+   M&E QR SETTINGS
+========================--}}
+@php
+    $meQrs = \App\Models\LayoutSetting::where('key', 'me_qr_settings')->first();
+    $meQrs = $meQrs ? json_decode($meQrs->value, true) : [];
+@endphp
+
+<div class="bg-white border rounded-lg p-6 shadow-sm">
+    <h2 class="text-xl font-semibold mb-4">M&E QR Code Settings</h2>
+    <p class="text-gray-600 mb-4">Add QR codes for Monitoring & Evaluation officials.</p>
+
+    <div id="me-qr-container" class="space-y-4">
+
+        @forelse($meQrs as $index => $qr)
+            <div class="grid grid-cols-1 sm:grid-cols-6 gap-4 items-center border p-3 rounded relative">
+
+                {{-- IMAGE --}}
+                <div class="sm:col-span-1">
+                    <img src="{{ isset($qr['image']) ? asset('storage/' . $qr['image']) : 'https://via.placeholder.com/100?text=QR' }}"
+                         class="h-20 w-20 object-contain rounded mb-2 border">
+
+                    <input type="file" name="me_qr_image[]" class="block text-sm text-gray-600">
+                    <input type="hidden" name="me_qr_existing_image[]" value="{{ $qr['image'] ?? '' }}">
+                </div>
+
+                {{-- LINK --}}
+                <div class="sm:col-span-2">
+                    <input type="url" name="me_qr_link[]" value="{{ $qr['link'] ?? '' }}"
+                           placeholder="QR Link (https://...)"
+                           class="w-full border rounded px-2 py-1">
+                </div>
+
+                {{-- NAME --}}
+                <div class="sm:col-span-2">
+                    <input type="text" name="me_qr_name[]" value="{{ $qr['name'] ?? '' }}"
+                           placeholder="Official Name"
+                           class="w-full border rounded px-2 py-1">
+                </div>
+
+                {{-- REMOVE --}}
+                <button type="button"
+                        onclick="this.closest('div').remove()"
+                        class="absolute top-2 right-2 text-red-600 font-bold">
+                    X
+                </button>
+
+            </div>
+        @empty
+            {{-- DEFAULT EMPTY ROW --}}
+            <div class="grid grid-cols-1 sm:grid-cols-6 gap-4 items-center border p-3 rounded relative">
+
+                <div class="sm:col-span-1">
+                    <img src="https://via.placeholder.com/100?text=QR"
+                         class="h-20 w-20 object-contain rounded mb-2 border">
+                    <input type="file" name="me_qr_image[]" class="block text-sm text-gray-600">
+                    <input type="hidden" name="me_qr_existing_image[]" value="">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <input type="url" name="me_qr_link[]" placeholder="QR Link"
+                           class="w-full border rounded px-2 py-1">
+                </div>
+
+                <div class="sm:col-span-2">
+                    <input type="text" name="me_qr_name[]" placeholder="Official Name"
+                           class="w-full border rounded px-2 py-1">
+                </div>
+
+                <button type="button" onclick="this.closest('div').remove()"
+                        class="absolute top-2 right-2 text-red-600 font-bold">X</button>
+            </div>
+        @endforelse
+
+    </div>
+
+    {{-- ADD BUTTON --}}
+    <button type="button" onclick="addMeQrRow()"
+            class="mt-4 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded shadow font-semibold">
+        + Add QR
+    </button>
+</div>
+
+<script>
+function addMeQrRow() {
+    const container = document.getElementById('me-qr-container');
+
+    const row = document.createElement('div');
+    row.className = 'grid grid-cols-1 sm:grid-cols-6 gap-4 items-center border p-3 rounded relative';
+
+    row.innerHTML = `
+        <div class="sm:col-span-1">
+            <img src="https://via.placeholder.com/100?text=QR"
+                 class="h-20 w-20 object-contain rounded mb-2 border">
+            <input type="file" name="me_qr_image[]" class="block text-sm text-gray-600">
+            <input type="hidden" name="me_qr_existing_image[]" value="">
+        </div>
+
+        <div class="sm:col-span-2">
+            <input type="url" name="me_qr_link[]" placeholder="QR Link"
+                   class="w-full border rounded px-2 py-1">
+        </div>
+
+        <div class="sm:col-span-2">
+            <input type="text" name="me_qr_name[]" placeholder="Official Name"
+                   class="w-full border rounded px-2 py-1">
+        </div>
+
+        <button type="button" onclick="this.closest('div').remove()"
+                class="absolute top-2 right-2 text-red-600 font-bold">X</button>
+    `;
+
+    container.appendChild(row);
+}
+</script>
 
         {{-- =======================
            BANNER IMAGES

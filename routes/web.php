@@ -74,6 +74,9 @@ Route::prefix('viewer')->name('viewer.')->group(function() {
     Route::get('announcements', [ViewerController::class, 'announcements'])->name('announcements');
     Route::get('feedbacks', [ViewerController::class, 'feedbacks'])->name('feedbacks');
     Route::post('feedbacks/send', [ViewerController::class, 'sendFeedback'])->name('feedbacks.send');
+    Route::get('me', function () {
+    return view('viewer.me');
+})->name('me');
 
     // Medal Tally
     Route::get('medal-tally', [ViewerController::class, 'medalTally'])->name('medalTally');

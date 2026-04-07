@@ -181,6 +181,37 @@ if ($request->hasFile('welcome_image')) {
     );
 }
 
+/* =======================
+   Save M&E QR SETTINGS
+=======================*/
+$qrImages = $request->file('me_qr_image') ?? [];
+$qrLinks = $request->me_qr_link ?? [];
+$qrNames = $request->me_qr_name ?? [];
+$existingImages = $request->me_qr_existing_image ?? [];
+
+$data = [];
+
+foreach ($qrLinks as $index => $link) {
+    if (empty($link) && empty($qrNames[$index])) continue;
+
+    $imagePath = $existingImages[$index] ?? null;
+
+    if (isset($qrImages[$index]) && $qrImages[$index]) {
+        $imagePath = $qrImages[$index]->store('me_qr', 'public');
+    }
+
+    $data[] = [
+        'image' => $imagePath,
+        'link' => $link,
+        'name' => $qrNames[$index] ?? '',
+    ];
+}
+
+LayoutSetting::updateOrCreate(
+    ['key' => 'me_qr_settings'],
+    ['value' => json_encode($data)]
+);
+
 
 
 return back()->with('success', 'Layout settings saved successfully!');
