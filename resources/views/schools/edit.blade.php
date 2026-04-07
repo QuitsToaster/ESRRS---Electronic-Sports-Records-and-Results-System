@@ -3,11 +3,32 @@
 @section('page-title', 'Edit School')
 
 @section('content')
+
+{{-- ================= ALERTS ================= --}}
+@if ($errors->any())
+    <div class="mb-4 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg">
+        <div class="font-semibold mb-2">Please fix the following errors:</div>
+        <ul class="list-disc list-inside text-sm space-y-1">
+            @foreach ($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+    </div>
+@endif
+
+@if(session('success'))
+    <div class="mb-4 p-4 bg-green-100 border border-green-300 text-green-700 rounded-lg">
+        {{ session('success') }}
+    </div>
+@endif
+
+{{-- ================= HEADER ================= --}}
 <div class="mb-6">
     <p class="text-sm text-gray-600 mt-1">
         Edit the details of the school.
     </p>
 </div>
+
 <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-6 w-full">
 
     <form action="{{ route('schools.update', $school->id) }}" method="POST" enctype="multipart/form-data" class="space-y-4 w-full">
@@ -41,23 +62,24 @@
             @error('school_address') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
         </div>
 
-        {{-- Division (Dropdown) --}}
-<div>
-    <label class="block text-gray-700 font-semibold mb-1">Division</label>
-    <select name="division" class="w-full border rounded px-3 py-2">
-        <option value="">Select Division</option>
-        <option value="Elementary" {{ old('division', $school->division)=='Elementary' ? 'selected':'' }}>Elementary</option>
-        <option value="Secondary" {{ old('division', $school->division)=='Secondary' ? 'selected':'' }}>Secondary</option>
-    </select>
-</div>
+        {{-- Division --}}
+        <div>
+            <label class="block text-gray-700 font-semibold mb-1">Division</label>
+            <select name="division" class="w-full border rounded px-3 py-2">
+                <option value="">Select Division</option>
+                <option value="Elementary" {{ old('division', $school->division)=='Elementary' ? 'selected':'' }}>Elementary</option>
+                <option value="Secondary" {{ old('division', $school->division)=='Secondary' ? 'selected':'' }}>Secondary</option>
+            </select>
+            @error('division') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+        </div>
 
-{{-- School Division (Text) --}}
-<div>
-    <label class="block text-gray-700 font-semibold mb-1">School Division (City/Region)</label>
-    <input type="text" name="school_division" value="{{ old('school_division', $school->school_division) }}"
-           class="w-full border rounded px-3 py-2">
-</div>
-
+        {{-- School Division --}}
+        <div>
+            <label class="block text-gray-700 font-semibold mb-1">School Division (City/Region)</label>
+            <input type="text" name="school_division" value="{{ old('school_division', $school->school_division) }}"
+                   class="w-full border rounded px-3 py-2">
+            @error('school_division') <p class="text-red-600 text-sm mt-1">{{ $message }}</p> @enderror
+        </div>
 
         {{-- School Code --}}
         <div>
