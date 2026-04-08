@@ -139,34 +139,58 @@ class AttendanceController extends Controller
             'qr_code' => 'required|string',
         ]);
 
-        $code = $request->qr_code;
+        $rawInput = $request->qr_code;
 
-// ✅ Normalize scanned QR
-$code = strtoupper($code);
-$code = preg_replace('/[^A-Z0-9]/', '', $code); // remove EVERYTHING except letters & numbers
+// =====================================================
+// ✅ STEP 1: CLEAN INPUT
+// =====================================================
+$code = strtoupper(trim($rawInput));
 
-// 🔍 Normalize DB values during comparison
-$athlete = Athlete::all()->first(function ($a) use ($code) {
-    $dbCode = strtoupper($a->qr_code);
-    $dbCode = preg_replace('/[^A-Z0-9]/', '', $dbCode);
+// Remove spaces, line breaks
+$code = preg_replace('/[\r\n\t ]+/', '', $code);
 
-    return $dbCode === $code;
-});
+// =====================================================
+// ✅ STEP 2: EXTRACT QR FROM URL (NEW QR FORMAT)
+// Example: http://127.0.0.1:8000/scan/eSRRS-XXXX
+// =====================================================
+if (preg_match('/\/scan\/(eSRRS-[A-Z0-9-]+)/i', $code, $matches)) {
+    $code = strtoupper($matches[1]);
+}
 
+// =====================================================
+// ✅ STEP 3: HANDLE RAW QR (OLD FORMAT)
+// Example: eSRRS-XXXX-XXXX
+// =====================================================
+if (preg_match('/(eSRRS-[A-Z0-9-]+)/i', $code, $matches)) {
+    $code = strtoupper($matches[1]);
+}
+
+// =====================================================
+// ✅ STEP 4: FINAL NORMALIZED CODE
+// Keep dashes! (VERY IMPORTANT)
+// =====================================================
+$normalizedCode = strtoupper($code);
+
+// =====================================================
+// 🔍 FIND ATHLETE
+// =====================================================
+$athlete = Athlete::whereRaw("UPPER(qr_code) = ?", [$normalizedCode])->first();
+
+// =====================================================
+// 🔍 FIND COACH IF NOT ATHLETE
+// =====================================================
 $coach = null;
 
 if (!$athlete) {
-    $coach = Coach::all()->first(function ($c) use ($code) {
-        $dbCode = strtoupper($c->qr_code);
-        $dbCode = preg_replace('/[^A-Z0-9]/', '', $dbCode);
-
-        return $dbCode === $code;
-    });
+    $coach = Coach::whereRaw("UPPER(qr_code) = ?", [$normalizedCode])->first();
 }
 
-        if (!$athlete && !$coach) {
-            return back()->with('error', 'QR Code not recognized.');
-        }
+// =====================================================
+// ❌ NOT FOUND
+// =====================================================
+if (!$athlete && !$coach) {
+    return back()->with('error', 'QR Code not recognized.');
+}
 
         // ================= DIVISION FILTER =================
 
