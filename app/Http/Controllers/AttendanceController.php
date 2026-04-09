@@ -163,31 +163,32 @@ $extracted = $match[0] ?? $raw;
 $normalizedInput = preg_replace('/[^A-Z0-9]/', '', $extracted);
 
 // =====================================================
-// 🔍 STEP 4: MATCH ATHLETE (FULL NORMALIZED MATCH)
+// 🔥 STEP 4: NORMALIZE INPUT (REMOVE NON-ALPHANUMERIC)
 // =====================================================
-$athlete = Athlete::all()->first(function ($a) use ($normalizedInput) {
-
-    $db = strtoupper($a->qr_code);
-
-    // remove EVERYTHING except A-Z0-9
-    $dbNormalized = preg_replace('/[^A-Z0-9]/', '', $db);
-
-    return $dbNormalized === $normalizedInput;
-});
+$normalizedInput = preg_replace('/[^A-Z0-9]/', '', $extracted);
 
 // =====================================================
-// 🔍 STEP 5: MATCH COACH
+// 🔍 STEP 5: MATCH ATHLETE (DATABASE LEVEL - FAST)
+// =====================================================
+$athlete = Athlete::whereRaw("
+    REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+        UPPER(qr_code),
+        '-', ''), ' ', ''), '\n', ''), '\r', ''), '\t', '')
+    = ?
+", [$normalizedInput])->first();
+
+// =====================================================
+// 🔍 STEP 6: MATCH COACH
 // =====================================================
 $coach = null;
 
 if (!$athlete) {
-    $coach = Coach::all()->first(function ($c) use ($normalizedInput) {
-
-        $db = strtoupper($c->qr_code);
-        $dbNormalized = preg_replace('/[^A-Z0-9]/', '', $db);
-
-        return $dbNormalized === $normalizedInput;
-    });
+    $coach = Coach::whereRaw("
+        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            UPPER(qr_code),
+            '-', ''), ' ', ''), '\n', ''), '\r', ''), '\t', '')
+        = ?
+    ", [$normalizedInput])->first();
 }
 
 // =====================================================

@@ -677,34 +677,53 @@ public function getFilterCount(Request $request)
 
 public function publicView($qr)
 {
-    // ==========================
-    // ✅ CLEAN QR INPUT
-    // ==========================
-    $clean = strtoupper($qr);
+    // =====================================================
+    // ✅ STEP 1: CLEAN INPUT (VERY FLEXIBLE)
+    // =====================================================
+    $clean = strtoupper(trim($qr));
 
-    // remove spaces, new lines, tabs
-    $clean = preg_replace('/[\s\r\n\t]+/', '', $clean);
+    // remove spaces, line breaks, tabs, quotes
+    $clean = preg_replace('/[\s\r\n\t"\']+/', '', $clean);
 
-    // extract ONLY valid QR pattern
-    if (preg_match('/(ESRRS-[A-Z0-9-]+)/', $clean, $match)) {
-        $clean = $match[1];
+    // =====================================================
+    // ✅ STEP 2: EXTRACT VALID QR ONLY
+    // Works for:
+    // - full URL
+    // - partial URL
+    // - raw QR
+    // - broken QR
+    // =====================================================
+    if (preg_match('/(ESRRS-[A-Z0-9\-]+)/', $clean, $match)) {
+        $extracted = $match[1];
+    } else {
+        $extracted = $clean;
     }
 
-    // ==========================
-    // ✅ FIND ATHLETE (SMART MATCH)
-    // ==========================
+    // =====================================================
+    // ✅ STEP 3: NORMALIZE INPUT (REMOVE ALL SYMBOLS)
+    // =====================================================
+    $normalizedInput = preg_replace('/[^A-Z0-9]/', '', $extracted);
+
+    // =====================================================
+    // 🔍 STEP 4: MATCH ATHLETE (FAST + FLEXIBLE)
+    // =====================================================
     $athlete = Athlete::whereRaw("
-        REPLACE(REPLACE(REPLACE(UPPER(qr_code), ' ', ''), '\n', ''), '\r', '')
-        LIKE ?
-    ", ["%{$clean}%"])->first();
+        REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(
+            UPPER(qr_code),
+            '-', ''), ' ', ''), '\n', ''), '\r', ''), '\t', '')
+        = ?
+    ", [$normalizedInput])->first();
 
+    // =====================================================
+    // ❌ NOT FOUND
+    // =====================================================
     if (!$athlete) {
-        abort(404, 'Athlete not found for QR: ' . $clean);
+        abort(404, 'Athlete not found.');
     }
 
-    // ==========================
-    // MEDALS (UNCHANGED)
-    // ==========================
+    // =====================================================
+    // 🥇 MEDALS (UNCHANGED)
+    // =====================================================
     $goldCount = IndividualAwardResult::where('athlete_id', $athlete->id)
         ->where('medal', 'Gold')
         ->count();
@@ -731,7 +750,6 @@ public function publicView($qr)
         'medals'
     ));
 }
-
 
 
 }
