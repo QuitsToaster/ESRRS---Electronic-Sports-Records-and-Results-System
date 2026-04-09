@@ -260,31 +260,46 @@ $location = $currentUser ? $currentUser->name : 'Unknown';
             return back()->with('error', 'Duplicate scan detected. Please wait.');
         }
 
-        // Check for OPEN attendance (no time_out)
-        $openAttendance = (clone $attendanceQuery)
-            ->whereNull('time_out')
-            ->latest()
-            ->first();
+        $mode = $request->mode ?? 'time_in';
 
-        if ($openAttendance) {
+// ================= TIME OUT MODE =================
+if ($mode === 'time_out') {
 
-            $openAttendance->update([
-                'time_out' => $now,
-                'location' => $location,
-            ]);
+    $openAttendance = (clone $attendanceQuery)
+        ->whereNull('time_out')
+        ->latest()
+        ->first();
 
-            return back()->with('success', 'Time Out recorded.');
-        }
-
-        // Create TIME IN
-        Attendance::create([
-            'athlete_id' => $athlete->id ?? null,
-            'coach_id' => $coach->id ?? null,
-            'time_in' => $now,
+    // ✅ IF EXISTING TIME IN → NORMAL FLOW
+    if ($openAttendance) {
+        $openAttendance->update([
+            'time_out' => $now,
             'location' => $location,
         ]);
 
-        return back()->with('success', 'Time In recorded.');
+        return back()->with('success', 'Time Out recorded.');
+    }
+
+    // 🔥 NO TIME IN FOUND → STILL ALLOW TIME OUT
+    Attendance::create([
+        'athlete_id' => $athlete->id ?? null,
+        'coach_id' => $coach->id ?? null,
+        'time_out' => $now,
+        'location' => $location,
+    ]);
+
+    return back()->with('success', 'Time Out recorded (no prior Time In).');
+}
+
+// ================= TIME IN MODE =================
+Attendance::create([
+    'athlete_id' => $athlete->id ?? null,
+    'coach_id' => $coach->id ?? null,
+    'time_in' => $now,
+    'location' => $location,
+]);
+
+return back()->with('success', 'Time In recorded.');
     }
 
     public function exportPdf(Request $request)

@@ -348,32 +348,35 @@
 
         </div>
 
-        {{-- ================= RIGHT SIDE (REAL ID PREVIEW) ================= --}}
-        <div class="w-full lg:w-1/2 flex flex-col items-center justify-start lg:justify-center bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-4 sm:p-6 sticky top-0 lg:sticky lg:top-4 self-start">
+        {{-- ================= RIGHT SIDE (REAL ID PREVIEW - FULL SIZE) ================= --}}
+<div class="w-full lg:w-1/2 flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl p-6 sticky top-4 self-start">
 
-            <div class="mb-3 sm:mb-4">
-                <h4 class="font-bold text-gray-700 flex items-center gap-2 text-sm sm:text-base">
-                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
-                    </svg>
-                    Live ID Preview
-                </h4>
-            </div>
+    {{-- HEADER --}}
+    <div class="mb-4">
+        <h4 class="font-bold text-gray-700 flex items-center gap-2 text-base">
+            <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            Live ID Preview
+        </h4>
+    </div>
 
-            <div id="previewCard"
-                 class="w-full max-w-[340px] min-h-[220px] sm:min-h-[240px] bg-white rounded-xl shadow-xl flex items-center justify-center p-3 sm:p-4 transition-all duration-300 border border-gray-100 overflow-x-auto">
+    {{-- FULL SIZE PREVIEW CONTAINER --}}
+    <div id="previewCard"
+         class="w-full h-full min-h-[420px] bg-white rounded-2xl shadow-xl flex items-center justify-center p-6 transition-all duration-300 border border-gray-100">
 
-                <div class="text-center text-gray-400">
-                    <svg class="w-8 h-8 sm:w-12 sm:h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <p class="text-xs sm:text-sm">Select an athlete to preview ID card</p>
-                </div>
-
-            </div>
-
+        {{-- EMPTY STATE --}}
+        <div class="text-center text-gray-400">
+            <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <p class="text-sm">Select an athlete to preview ID card</p>
         </div>
+
+    </div>
+
+</div>
 
     </div>
 </div>
@@ -521,76 +524,82 @@ if (searchInput) {
     });
 }
 
-/* ================= SELECT ATHLETE + REAL PREVIEW ================= */
+/* ================= SELECT ATHLETE + REAL PREVIEW (FIXED) ================= */
 function selectAthlete(a) {
     document.getElementById('selectedAthleteId').value = a.id;
 
+    console.log('Selected Athlete:', a); // DEBUG
+
+    // ================= SAFE VALUES =================
+    let fullName = `${a.last_name ?? ''}, ${a.first_name ?? ''} ${a.middle_initial ?? ''}`;
+    let school = a.school?.name ?? 'No School';
+    let division = a.school_division ?? '—';
+    let event = a.event ?? '—'; // ✅ FIXED (string column)
+
     let photo = a.profile_photo
         ? `/storage/${a.profile_photo}`
-        : '';
+        : null;
 
     let qrUrl = `/athletes/${a.id}/qr`;
 
     const previewCard = document.getElementById('previewCard');
-    
-    // Responsive sizing for preview cards
-    const isMobile = window.innerWidth < 640;
-    const cardWidth = isMobile ? '130px' : '150px';
-    const cardHeight = isMobile ? '190px' : '210px';
-    const photoSize = isMobile ? 'w-10 h-14' : 'w-12 h-16';
-    const qrSize = isMobile ? 'w-14 h-14' : 'w-16 h-16';
-    
+
     previewCard.innerHTML = `
-        <div class="flex gap-3 sm:gap-4 overflow-x-auto pb-2 justify-center w-full">
+        <div class="flex gap-4 justify-center w-full">
+
             <!-- FRONT -->
-            <div class="w-[${cardWidth}] h-[${cardHeight}] relative rounded-xl overflow-hidden shadow-lg flex-shrink-0"
+            <div class="w-[150px] h-[210px] relative rounded-xl overflow-hidden shadow-lg"
                 style="background-image:url('/storage/id_templates/id-template-front.png'); background-size:cover;">
 
-                ${photo ? `<img src="${photo}"
-                    class="absolute top-8 sm:top-10 left-1/2 transform -translate-x-1/2 ${photoSize} object-cover rounded-md shadow-sm border-2 border-white">` : ''}
+                ${photo ? `
+                <img src="${photo}"
+                    class="absolute top-10 left-1/2 transform -translate-x-1/2 w-12 h-16 object-cover rounded-md border-2 border-white">
+                ` : ''}
 
-                <div class="absolute bottom-12 sm:bottom-14 w-full text-center">
-                    <p class="font-bold text-[10px] sm:text-xs text-blue-900 px-1 truncate">
-                        ${a.last_name}, ${a.first_name} ${a.middle_initial ?? ''}
+                <div class="absolute bottom-14 w-full text-center">
+                    <p class="font-bold text-xs text-blue-900 px-1 truncate">
+                        ${fullName}
                     </p>
                 </div>
 
-                <div class="absolute bottom-8 sm:bottom-9 w-full text-center">
-                    <p class="text-[8px] sm:text-[10px] text-blue-800 px-1 truncate">
-                        ${a.school?.name ?? ''}
+                <div class="absolute bottom-9 w-full text-center">
+                    <p class="text-[10px] text-blue-800 px-1 truncate">
+                        ${school}
                     </p>
                 </div>
 
-                <div class="absolute bottom-4 sm:bottom-5 w-full text-center">
-                    <p class="text-[7px] sm:text-[9px] text-blue-800 px-1 truncate">
-                        SDO - ${a.school_division ?? ''}
+                <div class="absolute bottom-5 w-full text-center">
+                    <p class="text-[9px] text-blue-800 px-1 truncate">
+                        SDO - ${division}
                     </p>
                 </div>
 
-                <div class="absolute bottom-0 w-full text-center bg-blue-900/80 py-0.5 sm:py-1">
-                    <p class="text-[8px] sm:text-[10px] font-bold text-white uppercase truncate">
-                        ${a.event ?? ''}
+                <div class="absolute bottom-0 w-full text-center bg-blue-900/80 py-1">
+                    <p class="text-[10px] font-bold text-white uppercase truncate">
+                        ${event}
                     </p>
                 </div>
 
             </div>
 
             <!-- BACK -->
-            <div class="w-[${cardWidth}] h-[${cardHeight}] relative rounded-xl overflow-hidden shadow-lg flex-shrink-0"
+            <div class="w-[150px] h-[210px] relative rounded-xl overflow-hidden shadow-lg"
                 style="background-image:url('/storage/id_templates/id-template-back.png'); background-size:cover;">
 
                 <div class="absolute inset-0 flex flex-col items-center justify-center">
                     <img src="${qrUrl}"
-                        class="${qrSize} rounded-lg shadow-md">
-                    <div class="mt-1 sm:mt-2 text-[6px] sm:text-[8px] font-mono text-blue-800 bg-white/80 px-1.5 sm:px-2 py-0.5 rounded-full">
+                        class="w-16 h-16 rounded-lg shadow-md">
+                    <div class="mt-2 text-[8px] font-mono text-blue-800 bg-white/80 px-2 py-1 rounded-full">
                         ${a.qr_code ?? ''}
                     </div>
                 </div>
 
             </div>
+
         </div>
     `;
 }
+
 
 // Handle window resize for preview responsiveness
 window.addEventListener('resize', function() {

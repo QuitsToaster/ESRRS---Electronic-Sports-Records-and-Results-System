@@ -62,5 +62,9 @@ public function attendances()
     return $this->hasMany(\App\Models\Attendance::class, 'athlete_id');
 }
 
+public function event()
+{
+    return $this->belongsTo(Event::class);
+}
 }
 
