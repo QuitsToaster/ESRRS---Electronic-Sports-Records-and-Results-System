@@ -85,39 +85,58 @@ class SchoolController extends Controller
     public function update(Request $request, School $school)
 {
     $request->validate([
-    'name'=>'required|string|unique:schools,name,'.$school->id,
-    'school_type'=>'nullable|in:Public,Private',
-    'school_address'=>'nullable|string',
-    'division'=>'required|in:Elementary,Secondary',
-    'school_division'=>'nullable|string',
-    'school_code'=>'nullable|string|unique:schools,school_code,'.$school->id,
-    'logo'=>'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
-]);
+        // ❌ REMOVE UNIQUE VALIDATION
+        'name' => 'required|string|max:255',
+
+        'school_type' => 'nullable|in:Public,Private',
+        'school_address' => 'nullable|string',
+        'division' => 'required|in:Elementary,Secondary',
+        'school_division' => 'nullable|string',
+
+        // ❌ REMOVE UNIQUE HERE ALSO
+        'school_code' => 'nullable|string|max:255',
+
+        'logo' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
+    ]);
 
     $oldValues = $school->toArray();
 
-    $data = $request->only([
-    'name','school_type','school_address','division','school_division','school_code'
-]);
+    /* ================= DATA ================= */
+    $data = [
+        'name'             => strtoupper($request->name), // ✅ FORCE UPPERCASE (optional but consistent)
+        'school_type'      => $request->school_type,
+        'school_address'   => $request->school_address,
+        'division'         => $request->division,
+        'school_division'  => $request->school_division,
+        'school_code'      => $request->school_code,
+        'province'         => $request->province,
+        'city'             => $request->city,
+    ];
 
+    /* ================= LOGO ================= */
     if ($request->hasFile('logo')) {
-        if ($school->logo) Storage::disk('public')->delete($school->logo);
+        if ($school->logo) {
+            Storage::disk('public')->delete($school->logo);
+        }
+
         $data['logo'] = $request->file('logo')->store('logos','public');
     }
 
+    /* ================= UPDATE ================= */
     $school->update($data);
 
-    // Audit log
+    /* ================= AUDIT ================= */
     AuditLog::create([
-        'model_type'=>'School',
-        'model_id'=>$school->id,
-        'user_id'=>Auth::id(),
-        'old_values'=>json_encode($oldValues),
-        'new_values'=>json_encode($school->toArray()),
-        'action'=>'Updated School: '.$school->name,
+        'model_type' => 'School',
+        'model_id'   => $school->id,
+        'user_id'    => Auth::id(),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($school->fresh()->toArray()),
+        'action'     => 'Updated School: '.$school->name,
     ]);
 
-    return redirect()->route('schools.index')->with('success','School updated successfully!');
+    return redirect()->route('schools.index')
+        ->with('success','School updated successfully!');
 }
 
     public function destroy(School $school)
