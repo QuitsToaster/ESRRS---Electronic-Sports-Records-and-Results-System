@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Athlete;
 use App\Models\Coach;
 use App\Models\Attendance;
+use App\Models\User;
 use App\Models\Division;
 use Carbon\Carbon;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -111,6 +112,10 @@ class AttendanceController extends Controller
             ->latest()
             ->paginate(15, ['*'], 'logs_page');
 
+        $billetingUsers = User::whereHas('role', function ($q) {
+            $q->where('name', 'Billeting Quarters');
+        })->get();
+
         return view('attendance.index', compact(
             'attended',
             'notAttended',
@@ -118,7 +123,8 @@ class AttendanceController extends Controller
             'divisions',
             'selectedDivision',
             'userDivision',
-            'logs'
+            'logs',
+            'billetingUsers'
         ));
     }
 
@@ -304,11 +310,30 @@ return back()->with('success', 'Time In recorded.');
 
     public function exportPdf(Request $request)
 {
-    $today = Carbon::today();
+    $date = $request->date ?? Carbon::today();
     $selectedDivision = $request->division;
+    $billetingUser = $request->billeting_user;
 
-    // ================= LOGS =================
-    $logs = Attendance::with(['athlete','coach.school'])
+    // ================= GET USER NAME (LOCATION) =================
+    $location = null;
+
+    if ($billetingUser) {
+        $user = \App\Models\User::find($billetingUser);
+        if ($user) {
+            $location = $user->name;
+        }
+    }
+
+    // ================= ATTENDED (FILTERED ONLY) =================
+    $attended = Attendance::with(['athlete.school','coach.school'])
+        ->whereDate('created_at', $date)
+
+        // ✅ FILTER BY LOCATION (KEY FIX)
+        ->when($location, function ($q) use ($location) {
+            $q->where('location', $location);
+        })
+
+        // ✅ OPTIONAL: FILTER BY DIVISION
         ->when($selectedDivision, function ($query) use ($selectedDivision) {
 
             $query->where(function ($q) use ($selectedDivision) {
@@ -324,63 +349,70 @@ return back()->with('success', 'Time In recorded.');
             });
 
         })
+
         ->latest()
+        ->limit(500) // 🔥 LIMIT TO PREVENT CRASH
         ->get();
 
-    // ================= ATTENDED =================
-    $attended = Attendance::with(['athlete','coach.school'])
-        ->whereDate('created_at', $today)
-        ->when($selectedDivision, function ($query) use ($selectedDivision) {
+    // ================= GET USER DIVISIONS (BILLETING ACCESS) =================
+$userDivisions = [];
 
-            $query->where(function ($q) use ($selectedDivision) {
+if ($billetingUser) {
+    $user = \App\Models\User::find($billetingUser);
 
-                $q->whereHas('athlete', function ($q2) use ($selectedDivision) {
-                    $q2->where('school_division', $selectedDivision);
-                })
+    if ($user) {
+        $divisionIds = is_array($user->divisions)
+            ? $user->divisions
+            : json_decode($user->divisions, true);
 
-                ->orWhereHas('coach.school', function ($q2) use ($selectedDivision) {
-                    $q2->where('division', $selectedDivision);
-                });
+        $userDivisions = Division::whereIn('id', $divisionIds ?? [])
+            ->pluck('name')
+            ->toArray();
 
-            });
+        // Normalize: remove "SDO - "
+        $userDivisions = array_map(function ($d) {
+            return strtoupper(trim(str_replace('SDO -', '', $d)));
+        }, $userDivisions);
+    }
+}
 
-        })
-        ->get();
+// ================= NOT ATTENDED ATHLETES (FIXED) =================
+$notAttended = Athlete::with('school')
 
-    // ================= NOT ATTENDED ATHLETES =================
-    $notAttended = Athlete::whereDoesntHave('attendances', function ($query) use ($today) {
-            $query->whereDate('created_at', $today);
-        })
-        ->when($selectedDivision, function ($query) use ($selectedDivision) {
-            $query->where('school_division', $selectedDivision);
-        })
-        ->get();
+    // ✅ FILTER BY BILLETING DIVISIONS
+    ->when(!empty($userDivisions), function ($query) use ($userDivisions) {
+        $query->whereIn(\DB::raw('UPPER(school_division)'), $userDivisions);
+    })
 
-    // ================= NOT ATTENDED COACHES =================
-    $notAttendedCoaches = Coach::with('school')
-        ->whereDoesntHave('attendances', function ($query) use ($today) {
-            $query->whereDate('created_at', $today);
-        })
-        ->when($selectedDivision, function ($query) use ($selectedDivision) {
-            $query->whereHas('school', function ($q) use ($selectedDivision) {
-                $q->where('division', $selectedDivision);
-            });
-        })
-        ->get();
+    // ✅ STILL OPTIONAL DIVISION FILTER FROM MODAL
+    ->when($selectedDivision, function ($query) use ($selectedDivision) {
+        $query->where('school_division', $selectedDivision);
+    })
 
+    ->whereDoesntHave('attendances', function ($query) use ($date, $location) {
+        $query->whereDate('created_at', $date);
+
+        if ($location) {
+            $query->where('location', $location);
+        }
+    })
+
+    ->limit(300)
+    ->get();
     // ================= GENERATED DATE =================
     $generatedAt = now()->format('F d, Y h:i A');
 
-    // ================= CREATE PDF =================
+    // ================= PDF =================
     $pdf = Pdf::loadView('attendance.export', compact(
-        'logs',
         'attended',
         'notAttended',
-        'notAttendedCoaches',
         'selectedDivision',
         'generatedAt'
     ));
 
-    return $pdf->download('eSRRS-attendance-report.pdf');
+    // 🔥 IMPORTANT (PREVENT MEMORY CRASH)
+    $pdf->setPaper('letter', 'portrait');
+
+    return $pdf->download('attendance-report.pdf');
 }
 }

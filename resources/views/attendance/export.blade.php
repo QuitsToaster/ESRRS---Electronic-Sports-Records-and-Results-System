@@ -135,25 +135,6 @@
         </tbody>
     </table>
 
-    {{-- Not Attended Coaches --}}
-    <h2>Coaches without Attendance Today</h2>
-    <table>
-        <thead>
-            <tr>
-                <th width="50%">Name</th>
-                <th width="50%">School</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach($notAttendedCoaches as $coach)
-                <tr>
-                    <td>{{ $coach->name }}</td>
-                    <td>{{ $coach->school->name ?? 'N/A' }}</td>
-                </tr>
-            @endforeach
-        </tbody>
-    </table>
-
     <div class="footer">
         © {{ date('Y') }} CAVRAA Monitoring System – SDO Santiago City
     </div>

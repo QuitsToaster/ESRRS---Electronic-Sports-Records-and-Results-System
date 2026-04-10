@@ -20,15 +20,16 @@
             </div>
         </div>
 
-        <form action="{{ route('attendance.export') }}" method="GET" target="_blank">
-            <button type="submit"
-                class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Export Attendance (PDF)
-            </button>
-        </form>
+        <button onclick="openExportModal()"
+    class="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white text-sm font-semibold rounded-xl shadow-md hover:shadow-lg transition-all duration-200">
+    
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+    </svg>
+
+    Export Attendance (PDF)
+</button>
     </div>
 
     {{-- ================= DIVISION FILTER ================= --}}
@@ -436,4 +437,67 @@
         </div>
     </div>
 </div>
+
+{{-- ================= EXPORT MODAL ================= --}}
+<div id="exportModal"
+     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 p-4">
+
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-md p-6">
+
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-bold">Export Attendance</h2>
+            <button onclick="closeExportModal()" class="text-gray-500 text-xl">&times;</button>
+        </div>
+
+        <form method="GET" action="{{ route('attendance.export') }}" target="_blank" class="space-y-4">
+
+            {{-- Billeting Quarters --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Billeting Quarters
+                </label>
+
+                <select name="billeting_user"
+                        class="w-full border rounded px-3 py-2">
+                    <option value="">All Billeting Quarters</option>
+
+                    @foreach($billetingUsers as $user)
+                        <option value="{{ $user->id }}">
+                            {{ $user->name }}
+                        </option>
+                    @endforeach
+                </select>
+            </div>
+
+            {{-- Date --}}
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">
+                    Select Date
+                </label>
+
+                <input type="date"
+                       name="date"
+                       value="{{ date('Y-m-d') }}"
+                       class="w-full border rounded px-3 py-2">
+            </div>
+
+            {{-- Submit --}}
+            <button type="submit"
+                class="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-xl">
+                Export PDF
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+function openExportModal(){
+    document.getElementById('exportModal').classList.remove('hidden');
+    document.getElementById('exportModal').classList.add('flex');
+}
+
+function closeExportModal(){
+    document.getElementById('exportModal').classList.add('hidden');
+}
+</script>
 @endsection
