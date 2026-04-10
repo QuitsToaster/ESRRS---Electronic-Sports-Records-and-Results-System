@@ -295,7 +295,7 @@ class AthleteController extends Controller
         'last_name'        => 'nullable|string|max:255',
         'sex'              => 'nullable|in:Male,Female',
         'birthdate'        => 'nullable|date',
-        'school_id'        => 'nullable|exists:schools,id',
+        'school_name' => 'nullable|string|max:255',
         'municipality'     => 'nullable|string|max:255',
 
         'sport_name'       => 'nullable|string|max:255',
@@ -317,6 +317,28 @@ class AthleteController extends Controller
     if ($request->hasFile('profile_photo')) {
         $photoPath = $request->file('profile_photo')->store('athletes', 'public');
     }
+
+    /* ================= SCHOOL FIX (TYPE FIELD) ================= */
+
+$schoolId = $athlete->school_id;
+
+if ($request->filled('school_name')) {
+
+    // ✅ FORCE UPPERCASE (consistent with your system)
+    $cleanSchool = strtoupper(trim($request->school_name));
+
+    // ✅ FIND OR CREATE SCHOOL
+    $school = School::firstOrCreate([
+        'name' => $cleanSchool
+    ], [
+        // fallback values if new
+        'division' => $request->division ?? 'N/A',
+        'school_division' => $request->school_division ?? 'N/A',
+        'school_type' => $request->school_type ?? 'N/A',
+    ]);
+
+    $schoolId = $school->id;
+}
 
     /* ================= SPORT FIX (FORCE SAVE + UPPERCASE) ================= */
 
@@ -346,7 +368,7 @@ if ($request->filled('sport_name')) {
         'last_name'             => $request->last_name,
         'sex'                   => $request->sex,
         'birthdate'             => $request->birthdate,
-        'school_id'             => $request->school_id,
+        'school_id' => $schoolId,
 
         // ✅ FORCE SAVE EVERY TIME
     'sport_id'              => $sportId,

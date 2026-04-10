@@ -142,16 +142,20 @@
            class="w-full border rounded px-3 py-2">
 </div>
 
-{{-- TEAM --}}
+{{-- SCHOOL (EDITABLE TEXT FIELD) --}}
 <div class="mb-4">
-    <label class="font-medium">Team / School</label>
-    <select name="school_id" class="w-full border rounded px-3 py-2">
-        @foreach($schools as $school)
-            <option value="{{ $school->id }}" {{ $athlete->school_id==$school->id?'selected':'' }}>
-                {{ $school->name }}
-            </option>
-        @endforeach
-    </select>
+    <label class="font-medium">School</label>
+
+    <input type="text"
+           name="school_name"
+           value="{{ old('school_name', $athlete->school->name ?? '') }}"
+           placeholder="Type or edit school name"
+           oninput="this.value = this.value.toUpperCase()"
+           class="w-full border rounded px-3 py-2">
+
+    <p class="text-sm text-gray-500 mt-1">
+        You can edit or change the school directly.
+    </p>
 </div>
 
 {{-- ✅ SPORT (EDITABLE TEXT FIELD) --}}
