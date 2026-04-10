@@ -298,8 +298,6 @@ class AthleteController extends Controller
         'school_id'        => 'nullable|exists:schools,id',
         'municipality'     => 'nullable|string|max:255',
 
-        // ✅ ADD THIS
-        'sport_id'         => 'nullable|exists:sports,id',
         'sport_name'       => 'nullable|string|max:255',
 
         'division'         => 'nullable|in:Elementary,Secondary,Paragames',
@@ -320,33 +318,29 @@ class AthleteController extends Controller
         $photoPath = $request->file('profile_photo')->store('athletes', 'public');
     }
 
-    /* ================= SPORT FIX ================= */
-    $sportId   = $athlete->sport_id;
-    $eventName = $athlete->event;
+    /* ================= SPORT FIX (FORCE SAVE + UPPERCASE) ================= */
 
-    // ✅ Existing sport selected
-    if ($request->sport_id) {
-        $sport = Sport::find($request->sport_id);
+$sportId   = $athlete->sport_id;
+$eventName = $athlete->event;
 
-        if ($sport) {
-            $sportId   = $sport->id;
-            $eventName = $sport->name;
-        }
-    }
+if ($request->filled('sport_name')) {
 
-    // ✅ New sport typed
-    elseif ($request->sport_name) {
+    // ✅ FORCE UPPERCASE (as requested)
+    $cleanSport = strtoupper(trim($request->sport_name));
 
-        $sport = Sport::firstOrCreate([
-            'name' => $request->sport_name
-        ]);
+    // ✅ ALWAYS update event (THIS FIXES YOUR ISSUE)
+    $eventName = $cleanSport;
 
-        $sportId   = $sport->id;
-        $eventName = $sport->name;
-    }
+    // ✅ Optional: sync to sports table
+    $sport = Sport::firstOrCreate([
+        'name' => $cleanSport
+    ]);
 
-    /* ================= UPDATE DATA ================= */
-    $data = array_filter([
+    $sportId = $sport->id;
+}
+
+    /* ================= UPDATE (NO array_filter!) ================= */
+    $data = [
         'first_name'            => $request->first_name,
         'middle_initial'        => $request->middle_initial,
         'last_name'             => $request->last_name,
@@ -354,27 +348,24 @@ class AthleteController extends Controller
         'birthdate'             => $request->birthdate,
         'school_id'             => $request->school_id,
 
-        // ✅ FIXED HERE
-        'sport_id'              => $sportId,
-        'event'                 => $eventName,
+        // ✅ FORCE SAVE EVERY TIME
+    'sport_id'              => $sportId,
+    'event'                 => $eventName,
 
-        'division'              => $request->division,
-        'category'              => $request->category,
-        'status'                => $request->status,
-        'region'                => $request->region,
-        'school_type'           => $request->school_type,
-        'school_address'        => $request->school_address,
-        'school_division'       => $request->school_division,
-        'municipality'          => $request->municipality,
-        'school_code'           => $request->school_code,
-        'lrn'                   => $request->lrn,
-        'legislative_district'  => $request->legislative_district,
-        'qr_code'               => $request->qr_code,
-    ], function ($value) {
-        return !is_null($value);
-    });
-
-    $data['profile_photo'] = $photoPath;
+    'division'              => $request->division,
+    'category'              => $request->category,
+    'status'                => $request->status,
+    'region'                => $request->region,
+    'school_type'           => $request->school_type,
+    'school_address'        => $request->school_address,
+    'school_division'       => $request->school_division,
+    'municipality'          => $request->municipality,
+    'school_code'           => $request->school_code,
+    'lrn'                   => $request->lrn,
+    'legislative_district'  => $request->legislative_district,
+    'qr_code'               => $request->qr_code,
+    'profile_photo'         => $photoPath,
+    ];
 
     $athlete->update($data);
 

@@ -154,25 +154,19 @@
     </select>
 </div>
 
-{{-- SPORT --}}
+{{-- ✅ SPORT (EDITABLE TEXT FIELD) --}}
 <div class="mb-4">
-    <label class="font-medium">Select Existing Sport</label>
-    <select name="sport_id" class="w-full border rounded px-3 py-2">
-        <option value="">-- Select Sport --</option>
-        @foreach($sports as $sport)
-            <option value="{{ $sport->id }}" {{ $athlete->sport_id==$sport->id?'selected':'' }}>
-                {{ $sport->name }}
-            </option>
-        @endforeach
-    </select>
-</div>
+    <label class="font-medium">Sport</label>
 
-<div class="mb-4">
-    <label class="font-medium">Or Add New Sport</label>
     <input type="text"
            name="sport_name"
-           placeholder="Type sport if not listed"
+           value="{{ old('sport_name', $athlete->event ?? ($athlete->sport->name ?? '')) }}"
+           placeholder="Type or edit sport name"
            class="w-full border rounded px-3 py-2">
+
+    <p class="text-sm text-gray-500 mt-1">
+        You can edit the sport name directly.
+    </p>
 </div>
 
 {{-- DIVISION & CATEGORY --}}
