@@ -482,4 +482,113 @@ public function markAwarded($id)
     return back()->with('success', 'Event marked as Awarded.');
 }
 
+public function bulkUpload(Request $request)
+{
+    $request->validate([
+        'csv_file' => 'required|file|mimes:csv,txt',
+    ]);
+
+    $file = fopen($request->file('csv_file')->getRealPath(), 'r');
+
+    $header = fgetcsv($file);
+    $header = array_map(fn($h) => strtolower(trim($h)), $header);
+
+    $lastDay = null;
+    $lastTime = null;
+
+    $created = 0; // ✅ DEBUG COUNTER
+
+    while (($row = fgetcsv($file)) !== false) {
+
+        $data = array_combine($header, $row);
+
+        // -----------------------------
+        // NORMALIZE INPUT
+        // -----------------------------
+        $day = trim($data['day'] ?? '') ?: $lastDay;
+        $time = trim($data['time'] ?? '') ?: $lastTime;
+        $eventName = trim($data['event'] ?? '');
+        $type = trim($data['type of event'] ?? '');
+        $category = ucfirst(strtolower(trim($data['category'] ?? '')));
+        $gender = ucfirst(strtolower(trim($data['gender'] ?? '')));
+
+        if ($day) $lastDay = $day;
+        if ($time) $lastTime = $time;
+
+        if (!$eventName) continue;
+
+        // -----------------------------
+        // PARSE DATE
+        // -----------------------------
+        try {
+            $parsedDate = $day ? \Carbon\Carbon::parse($day) : null;
+        } catch (\Exception $e) {
+            $parsedDate = null;
+        }
+
+        // -----------------------------
+        // PARSE TIME
+        // -----------------------------
+        try {
+            $parsedTime = $time
+                ? \Carbon\Carbon::parse($time)->format('H:i:s')
+                : null;
+        } catch (\Exception $e) {
+            $parsedTime = null;
+        }
+
+        // -----------------------------
+        // FIND SPORT (VERY FLEXIBLE)
+        // -----------------------------
+        $sport = Sport::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($eventName) . '%'])->first();
+
+        // ❗ FALLBACK: CREATE SPORT IF NOT FOUND
+        if (!$sport) {
+            $sport = Sport::create([
+                'name' => ucfirst($eventName),
+                'division' => 'Regular'
+            ]);
+        }
+
+        // -----------------------------
+        // FIND SPORT TYPE
+        // -----------------------------
+        $sportType = $sport->sportTypes()
+            ->whereRaw('LOWER(type_name) LIKE ?', ['%' . strtolower($type) . '%'])
+            ->first();
+
+        // ❗ FALLBACK: CREATE TYPE IF NOT FOUND
+        if (!$sportType && $type) {
+            $sportType = \App\Models\SportType::create([
+                'sport_id' => $sport->id,
+                'type_name' => ucfirst($type),
+            ]);
+        }
+
+        // If still no type → skip
+        if (!$sportType) continue;
+
+        // -----------------------------
+        // CREATE EVENT
+        // -----------------------------
+        Event::create([
+            'sport_id'      => $sport->id,
+            'sport_type_id' => $sportType->id,
+            'name'          => $sportType->type_name,
+            'custom_name'   => $eventName,
+            'status'        => 'Upcoming',
+            'age_group'     => $category,
+            'category'      => $gender,
+            'start_date'    => $parsedDate,
+            'event_time'    => $parsedTime,
+        ]);
+
+        $created++; // ✅ count success
+    }
+
+    fclose($file);
+
+    return back()->with('success', "Bulk upload complete! {$created} events created.");
+}
+
 }

@@ -174,6 +174,9 @@ Route::post('/events/{event}/save-game-winners', [EventController::class, 'saveG
     ->name('events.saveGameWinners');
 Route::post('/events/{event}/mark-awarded', [EventController::class, 'markAwarded'])
     ->name('events.markAwarded');
+
+Route::post('/events/bulk-upload', [EventController::class, 'bulkUpload'])
+    ->name('events.bulkUpload');
     Route::resource('coaches', CoachController::class);
     Route::get('coaches/{coach}/qr', [CoachController::class, 'qr'])->name('coaches.qr');
     Route::resource('officials', OfficialController::class)->only(['index','create','store','destroy','edit','update']);

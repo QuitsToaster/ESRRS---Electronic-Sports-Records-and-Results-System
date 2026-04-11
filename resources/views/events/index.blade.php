@@ -63,6 +63,55 @@
         </div>
     </div>
 
+    {{-- ================= BULK CSV UPLOAD ================= --}}
+@if(auth()->user()->role->name !== 'Awards Committee')
+<div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+
+    <div class="flex items-start justify-between flex-wrap gap-4">
+        <div>
+            <h3 class="text-lg font-semibold text-gray-900">Bulk Upload Schedule</h3>
+            <p class="text-sm text-gray-500 mt-1">
+                Upload a CSV file to quickly create multiple events.
+            </p>
+        </div>
+    </div>
+
+    {{-- SAMPLE FORMAT --}}
+    <div class="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-600">
+        <p class="font-semibold mb-2 text-gray-700">Accepted CSV Format:</p>
+<pre class="whitespace-pre-wrap">Day,Time,Event,Type of Event,Category,Gender
+April 12, 2026,7:00 AM,Basketball,3x3,Secondary,Boys
+, ,Basketball,5x5,Secondary,Girls</pre>
+        <p class="mt-2 text-gray-500 italic">
+            • System is NOT case-sensitive (accepts lowercase, uppercase, mixed)  
+            • Empty Day/Time will reuse previous row values  
+        </p>
+    </div>
+
+    {{-- FORM --}}
+    <form action="{{ route('events.bulkUpload') }}" method="POST" enctype="multipart/form-data" class="mt-5 space-y-4">
+        @csrf
+
+        <div class="flex flex-col sm:flex-row gap-3 items-center">
+            <input type="file"
+                   name="csv_file"
+                   accept=".csv"
+                   required
+                   class="w-full sm:w-auto border border-gray-300 rounded-xl px-3 py-2 text-sm file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white hover:file:bg-blue-700">
+
+            <button type="submit"
+                    class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl shadow-md transition">
+                Upload CSV
+            </button>
+        </div>
+
+        @error('csv_file')
+            <p class="text-red-500 text-sm">{{ $message }}</p>
+        @enderror
+    </form>
+</div>
+@endif
+
     {{-- ================= AWARDS COMMITTEE COUNT ================= --}}
 @if(auth()->user()->role->name === 'Awards Committee')
 
