@@ -920,13 +920,28 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
 
 @php
 // ==============================
-// 🚀 GROUP EVENTS BY LABEL
+// 🚀 GROUP EVENTS (FIX DUPLICATES)
 // ==============================
-$groupedEvents = $events->sortBy('name')->groupBy(function($event){
+
+// STEP 1: GROUP BY TAB (Elementary Boys, etc.)
+$groupedEvents = $events->groupBy(function($event){
     if ($event->age_group === 'Paragames') {
         return 'Paragames';
     }
     return $event->age_group . ' ' . $event->category;
+});
+
+// STEP 2: REMOVE DUPLICATES (same sport + type)
+$groupedEvents = $groupedEvents->map(function ($eventsList) {
+
+    return $eventsList
+        ->groupBy(function($event){
+            return $event->sport_id . '-' . $event->sport_type_id;
+        })
+        ->map(function($group){
+            return $group->first(); // ✅ KEEP ONLY ONE EVENT PER TYPE
+        })
+        ->values(); // reset index
 });
 
 $divisions = \App\Models\Division::orderBy('name')->get();
