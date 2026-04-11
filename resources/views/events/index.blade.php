@@ -79,13 +79,16 @@
     {{-- SAMPLE FORMAT --}}
     <div class="mt-4 bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-600">
         <p class="font-semibold mb-2 text-gray-700">Accepted CSV Format:</p>
-<pre class="whitespace-pre-wrap">Day,Time,Event,Type of Event,Category,Gender
-April 12, 2026,7:00 AM,Basketball,3x3,Secondary,Boys
-, ,Basketball,5x5,Secondary,Girls</pre>
-        <p class="mt-2 text-gray-500 italic">
-            • System is NOT case-sensitive (accepts lowercase, uppercase, mixed)  
-            • Empty Day/Time will reuse previous row values  
-        </p>
+<pre class="whitespace-pre-wrap">Day,Time,Event,Type of Event,Category,Gender,Venue
+April 12, 2026,7:00 AM - 8:00 PM,Basketball,3x3,Secondary,Boys,City Gym
+, ,Basketball,5x5,Secondary,Girls,Main Court</pre>
+
+<p class="mt-2 text-gray-500 italic">
+    • System is NOT case-sensitive (accepts lowercase, uppercase, mixed)<br>
+    • Time accepts ranges (e.g. 7:00 AM - 8:00 PM or 7:00 A.M to 8:00 P.M)<br>
+    • Only the FIRST time will be saved as event start time<br>
+    • Empty Day/Time will reuse previous row values  
+</p>
     </div>
 
     {{-- FORM --}}

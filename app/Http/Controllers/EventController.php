@@ -496,7 +496,7 @@ public function bulkUpload(Request $request)
     $lastDay = null;
     $lastTime = null;
 
-    $created = 0; // ✅ DEBUG COUNTER
+    $created = 0;
 
     while (($row = fgetcsv($file)) !== false) {
 
@@ -506,14 +506,15 @@ public function bulkUpload(Request $request)
         // NORMALIZE INPUT
         // -----------------------------
         $day = trim($data['day'] ?? '') ?: $lastDay;
-        $time = trim($data['time'] ?? '') ?: $lastTime;
+        $timeRaw = trim($data['time'] ?? '') ?: $lastTime;
         $eventName = trim($data['event'] ?? '');
         $type = trim($data['type of event'] ?? '');
         $category = ucfirst(strtolower(trim($data['category'] ?? '')));
         $gender = ucfirst(strtolower(trim($data['gender'] ?? '')));
+        $venue = trim($data['venue'] ?? null);
 
         if ($day) $lastDay = $day;
-        if ($time) $lastTime = $time;
+        if ($timeRaw) $lastTime = $timeRaw;
 
         if (!$eventName) continue;
 
@@ -527,22 +528,39 @@ public function bulkUpload(Request $request)
         }
 
         // -----------------------------
-        // PARSE TIME
+        // 🧠 SMART TIME PARSER (RANGE SUPPORT)
         // -----------------------------
-        try {
-            $parsedTime = $time
-                ? \Carbon\Carbon::parse($time)->format('H:i:s')
-                : null;
-        } catch (\Exception $e) {
-            $parsedTime = null;
+        $parsedTime = null;
+
+        if ($timeRaw) {
+            try {
+                // Normalize text
+                $cleanTime = strtolower($timeRaw);
+
+                // remove dots (A.M → AM)
+                $cleanTime = str_replace('.', '', $cleanTime);
+
+                // replace "to" with "-"
+                $cleanTime = str_replace(' to ', '-', $cleanTime);
+
+                // split range
+                $parts = preg_split('/\s*-\s*/', $cleanTime);
+
+                // get FIRST time only
+                $startTime = trim($parts[0]);
+
+                $parsedTime = \Carbon\Carbon::parse($startTime)->format('H:i:s');
+
+            } catch (\Exception $e) {
+                $parsedTime = null;
+            }
         }
 
         // -----------------------------
-        // FIND SPORT (VERY FLEXIBLE)
+        // FIND SPORT
         // -----------------------------
         $sport = Sport::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($eventName) . '%'])->first();
 
-        // ❗ FALLBACK: CREATE SPORT IF NOT FOUND
         if (!$sport) {
             $sport = Sport::create([
                 'name' => ucfirst($eventName),
@@ -557,7 +575,6 @@ public function bulkUpload(Request $request)
             ->whereRaw('LOWER(type_name) LIKE ?', ['%' . strtolower($type) . '%'])
             ->first();
 
-        // ❗ FALLBACK: CREATE TYPE IF NOT FOUND
         if (!$sportType && $type) {
             $sportType = \App\Models\SportType::create([
                 'sport_id' => $sport->id,
@@ -565,7 +582,6 @@ public function bulkUpload(Request $request)
             ]);
         }
 
-        // If still no type → skip
         if (!$sportType) continue;
 
         // -----------------------------
@@ -579,11 +595,12 @@ public function bulkUpload(Request $request)
             'status'        => 'Upcoming',
             'age_group'     => $category,
             'category'      => $gender,
+            'venue'         => $venue,
             'start_date'    => $parsedDate,
             'event_time'    => $parsedTime,
         ]);
 
-        $created++; // ✅ count success
+        $created++;
     }
 
     fclose($file);
