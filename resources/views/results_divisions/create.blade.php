@@ -920,32 +920,61 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
 
 @php
 // ==============================
-// 🚀 GROUP EVENTS (FIX DUPLICATES)
+// 🚀 GROUP EVENTS (SUPER ADMIN: SPORT → TAB)
 // ==============================
 
-// STEP 1: GROUP BY TAB (Elementary Boys, etc.)
-$groupedEvents = $events->groupBy(function($event){
-    if ($event->age_group === 'Paragames') {
-        return 'Paragames';
-    }
-    return $event->age_group . ' ' . $event->category;
-});
+if ($user->role->name === 'Super Admin') {
 
-// STEP 2: REMOVE DUPLICATES (same sport + type)
-$groupedEvents = $groupedEvents->map(function ($eventsList) {
+    $groupedEvents = $events->groupBy('sport_id')->map(function ($sportEvents) {
 
-    return $eventsList
-        ->groupBy(function($event){
-            return $event->sport_id . '-' . $event->sport_type_id;
-        })
-        ->map(function($group){
-            return $group->first(); // ✅ KEEP ONLY ONE EVENT PER TYPE
-        })
-        ->values(); // reset index
-});
+        $sportName = optional($sportEvents->first()->sport)->name ?? 'Unknown Sport';
+
+        return [
+            'sport_name' => $sportName,
+
+            'tabs' => $sportEvents->groupBy(function($event){
+                if ($event->age_group === 'Paragames') {
+                    return 'Paragames';
+                }
+                return $event->age_group . ' ' . $event->category;
+            })->map(function ($eventsList) {
+
+                return $eventsList
+                    ->groupBy(function($event){
+                        return $event->sport_id . '-' . $event->sport_type_id;
+                    })
+                    ->map(fn($group) => $group->first())
+                    ->values();
+
+            })
+        ];
+
+    });
+
+} else {
+
+    // ✅ ORIGINAL LOGIC (NON SUPER ADMIN)
+    $groupedEvents = $events->groupBy(function($event){
+        if ($event->age_group === 'Paragames') {
+            return 'Paragames';
+        }
+        return $event->age_group . ' ' . $event->category;
+    });
+
+    $groupedEvents = $groupedEvents->map(function ($eventsList) {
+
+        return $eventsList
+            ->groupBy(function($event){
+                return $event->sport_id . '-' . $event->sport_type_id;
+            })
+            ->map(fn($group) => $group->first())
+            ->values();
+    });
+}
 
 $divisions = \App\Models\Division::orderBy('name')->get();
 @endphp
+
 
 {{-- ================================================= --}}
 {{-- 🏆 ALL AWARDS FORM --}}
@@ -961,79 +990,173 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 @csrf
 
-@foreach($groupedEvents as $label => $eventsList)
+{{-- ================= SUPER ADMIN VIEW ================= --}}
+@if($user->role->name === 'Super Admin')
 
-    {{-- 🔥 GROUP LABEL --}}
-    <h2 class="text-2xl font-bold mt-8 mb-4 text-blue-700">
-        {{ strtoupper($label) }}
-    </h2>
+    @foreach($groupedEvents as $sportGroup)
 
-    @foreach($eventsList as $event)
-        @php if (!is_object($event)) continue; @endphp
+        {{-- 🏀 SPORT --}}
+        <h1 class="text-3xl font-bold mt-10 mb-4 text-indigo-700">
+            {{ strtoupper($sportGroup['sport_name']) }}
+        </h1>
 
-        <h3 class="font-semibold mt-4">
-            {{ strtoupper($event->name ?? 'Unnamed Event') }}
-        </h3>
+        @foreach($sportGroup['tabs'] as $label => $eventsList)
 
-        <table class="w-full border text-sm mt-2">
-            <thead class="bg-gray-200 text-center">
-                <tr>
-                    <th class="border px-2 py-2">Event</th>
-                    <th class="border bg-yellow-300">Gold</th>
-                    <th class="border bg-gray-300">Silver</th>
-                    <th class="border bg-orange-200">Bronze</th>
-                </tr>
-            </thead>
+            {{-- 📂 CATEGORY --}}
+            <h2 class="text-2xl font-bold mt-6 mb-3 text-blue-600">
+                {{ strtoupper($label) }}
+            </h2>
 
-            <tbody>
-                <tr>
-                    <td class="border px-2 font-medium">{{ $event->name }}</td>
+            @foreach($eventsList as $event)
+                @php if (!is_object($event)) continue; @endphp
 
-                    @foreach(['Gold','Silver','Bronze'] as $medal)
-                    <td class="border px-2 py-2 align-top">
-                        <div x-data="{ divisions:[''] }">
+                <h3 class="font-semibold mt-4">
+                    {{ strtoupper($event->name ?? 'Unnamed Event') }}
+                </h3>
 
-                            <template x-for="(division,index) in divisions" :key="index">
-                                <div class="flex gap-2 mb-2">
+                <table class="w-full border text-sm mt-2">
+                    <thead class="bg-gray-200 text-center">
+                        <tr>
+                            <th class="border px-2 py-2">Event</th>
+                            <th class="border bg-yellow-300">Gold</th>
+                            <th class="border bg-gray-300">Silver</th>
+                            <th class="border bg-orange-200">Bronze</th>
+                        </tr>
+                    </thead>
 
-                                    <select
-                                        :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
-                                        class="w-full border rounded px-2 py-1 text-sm"
-                                    >
-                                        <option value="">-- Select Division / SDO --</option>
-                                        @foreach($divisions as $divisionOption)
-                                            <option value="{{ $divisionOption->name }}">
-                                                {{ $divisionOption->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+                    <tbody>
+                        <tr>
+                            <td class="border px-2 font-medium">{{ $event->name }}</td>
+
+                            @foreach(['Gold','Silver','Bronze'] as $medal)
+                            <td class="border px-2 py-2 align-top">
+                                <div x-data="{ divisions:[''] }">
+
+                                    <template x-for="(division,index) in divisions" :key="index">
+                                        <div class="flex gap-2 mb-2">
+
+                                            <select
+                                                :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
+                                                class="w-full border rounded px-2 py-1 text-sm"
+                                            >
+                                                <option value="">-- Select Division / SDO --</option>
+                                                @foreach($divisions as $divisionOption)
+                                                    <option value="{{ $divisionOption->name }}">
+                                                        {{ $divisionOption->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+
+                                            <button type="button"
+                                                    x-show="divisions.length > 1"
+                                                    @click="divisions.splice(index,1)"
+                                                    class="bg-red-500 text-white px-2 rounded text-xs">
+                                                ✕
+                                            </button>
+
+                                        </div>
+                                    </template>
 
                                     <button type="button"
-                                            x-show="divisions.length > 1"
-                                            @click="divisions.splice(index,1)"
-                                            class="bg-red-500 text-white px-2 rounded text-xs">
-                                        ✕
+                                            @click="divisions.push('')"
+                                            class="text-blue-600 text-xs hover:underline">
+                                        + Add Division
                                     </button>
 
                                 </div>
-                            </template>
+                            </td>
+                            @endforeach
 
-                            <button type="button"
-                                    @click="divisions.push('')"
-                                    class="text-blue-600 text-xs hover:underline">
-                                + Add Division
-                            </button>
+                        </tr>
+                    </tbody>
+                </table>
 
-                        </div>
-                    </td>
-                    @endforeach
-                </tr>
-            </tbody>
-        </table>
+            @endforeach
+
+        @endforeach
+
     @endforeach
 
-@endforeach
+{{-- ================= NON SUPER ADMIN ================= --}}
+@else
 
+    @foreach($groupedEvents as $label => $eventsList)
+
+        <h2 class="text-2xl font-bold mt-8 mb-4 text-blue-700">
+            {{ strtoupper($label) }}
+        </h2>
+
+        @foreach($eventsList as $event)
+            @php if (!is_object($event)) continue; @endphp
+
+            <h3 class="font-semibold mt-4">
+                {{ strtoupper($event->name ?? 'Unnamed Event') }}
+            </h3>
+
+            <table class="w-full border text-sm mt-2">
+                <thead class="bg-gray-200 text-center">
+                    <tr>
+                        <th class="border px-2 py-2">Event</th>
+                        <th class="border bg-yellow-300">Gold</th>
+                        <th class="border bg-gray-300">Silver</th>
+                        <th class="border bg-orange-200">Bronze</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td class="border px-2 font-medium">{{ $event->name }}</td>
+
+                        @foreach(['Gold','Silver','Bronze'] as $medal)
+                        <td class="border px-2 py-2 align-top">
+                            <div x-data="{ divisions:[''] }">
+
+                                <template x-for="(division,index) in divisions" :key="index">
+                                    <div class="flex gap-2 mb-2">
+
+                                        <select
+                                            :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
+                                            class="w-full border rounded px-2 py-1 text-sm"
+                                        >
+                                            <option value="">-- Select Division / SDO --</option>
+                                            @foreach($divisions as $divisionOption)
+                                                <option value="{{ $divisionOption->name }}">
+                                                    {{ $divisionOption->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+
+                                        <button type="button"
+                                                x-show="divisions.length > 1"
+                                                @click="divisions.splice(index,1)"
+                                                class="bg-red-500 text-white px-2 rounded text-xs">
+                                            ✕
+                                        </button>
+
+                                    </div>
+                                </template>
+
+                                <button type="button"
+                                        @click="divisions.push('')"
+                                        class="text-blue-600 text-xs hover:underline">
+                                    + Add Division
+                                </button>
+
+                            </div>
+                        </td>
+                        @endforeach
+
+                    </tr>
+                </tbody>
+            </table>
+
+        @endforeach
+
+    @endforeach
+
+@endif
+
+{{-- ================= ACTION BUTTON ================= --}}
 <div class="flex justify-end mt-6">
     @if($user->role->name === 'Super Admin')
         <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded">
@@ -1048,7 +1171,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
     @endif
 </div>
 
-{{-- MODAL --}}
+{{-- ================= MODAL ================= --}}
 <div x-show="showModal" x-cloak
      class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
     <div class="bg-white p-6 rounded shadow w-96">
@@ -1083,8 +1206,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 <form method="POST"
       action="{{ route('results_individual.store') }}"
-      enctype="multipart/form-data"
-      x-data="{ showModal: false }">
+      enctype="multipart/form-data">
 
 @csrf
 
@@ -1094,71 +1216,157 @@ $divisions = \App\Models\Division::orderBy('name')->get();
     $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
 @endphp
 
-@foreach($groupedEvents as $label => $eventsList)
+{{-- ================= SUPER ADMIN VIEW ================= --}}
+@if($user->role->name === 'Super Admin')
 
-    {{-- 🔥 GROUP LABEL --}}
-    <h2 class="text-2xl font-bold mt-8 mb-4 text-green-700">
-        {{ strtoupper($label) }}
-    </h2>
+    @foreach($groupedEvents as $sportGroup)
 
-    @foreach($eventsList as $event)
-        @php if (!is_object($event)) continue; @endphp
+        {{-- 🏀 SPORT --}}
+        <h1 class="text-3xl font-bold mt-10 mb-4 text-green-700">
+            {{ strtoupper($sportGroup['sport_name']) }}
+        </h1>
 
-        <h3 class="font-semibold mt-4">
-            {{ strtoupper($event->name) }}
-        </h3>
+        @foreach($sportGroup['tabs'] as $label => $eventsList)
 
-        <table class="w-full border text-sm mt-2">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border px-2 py-2">Event</th>
-                    <th class="border px-2 py-2 bg-yellow-100">Gold</th>
-                    <th class="border px-2 py-2 bg-gray-200">Silver</th>
-                    <th class="border px-2 py-2 bg-orange-200">Bronze</th>
-                </tr>
-            </thead>
+            {{-- 📂 CATEGORY --}}
+            <h2 class="text-2xl font-bold mt-6 mb-3 text-green-600">
+                {{ strtoupper($label) }}
+            </h2>
 
-            <tbody>
-                <tr>
-                    <td class="border px-2 font-medium">{{ $event->name }}</td>
+            @foreach($eventsList as $event)
+                @php if (!is_object($event)) continue; @endphp
 
-                    @foreach(['Gold','Silver','Bronze'] as $medal)
-                    <td class="border px-3 py-3 align-top">
+                <h3 class="font-semibold mt-4">
+                    {{ strtoupper($event->name) }}
+                </h3>
 
-                        <div x-data="{ selectedAthlete: null }">
-                            <input 
-                                list="athletes_list_{{ $event->id }}_{{ $medal }}"
-                                x-model="selectedAthlete"
-                                placeholder="Type athlete name..."
-                                class="w-full border rounded px-2 py-1 text-sm">
+                <table class="w-full border text-sm mt-2">
+                    <thead class="bg-gray-100">
+                        <tr>
+                            <th class="border px-2 py-2">Event</th>
+                            <th class="border px-2 py-2 bg-yellow-100">Gold</th>
+                            <th class="border px-2 py-2 bg-gray-200">Silver</th>
+                            <th class="border px-2 py-2 bg-orange-200">Bronze</th>
+                        </tr>
+                    </thead>
 
-                            <datalist id="athletes_list_{{ $event->id }}_{{ $medal }}">
-                                @foreach($athletes as $athlete)
-                                    <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
-                                @endforeach
-                            </datalist>
+                    <tbody>
+                        <tr>
+                            <td class="border px-2 font-medium">{{ $event->name }}</td>
 
-                            <input type="hidden"
-                                   :value="getAthleteId(selectedAthlete)"
-                                   name="individual_results[{{ $event->id }}][{{ $medal }}][athlete]">
+                            @foreach(['Gold','Silver','Bronze'] as $medal)
+                            <td class="border px-3 py-3 align-top">
 
-                            <input type="hidden"
-                                   :value="getAthleteSDO(selectedAthlete)"
-                                   name="individual_results[{{ $event->id }}][{{ $medal }}][sdo]">
+                                <div x-data="{ selectedAthlete: null }">
+                                    <input 
+                                        list="athletes_list_{{ $event->id }}_{{ $medal }}"
+                                        x-model="selectedAthlete"
+                                        placeholder="Type athlete name..."
+                                        class="w-full border rounded px-2 py-1 text-sm">
 
-                            <div class="text-xs text-gray-600 mt-1"
-                                 x-html="getAthleteInfo(selectedAthlete)"></div>
-                        </div>
+                                    <datalist id="athletes_list_{{ $event->id }}_{{ $medal }}">
+                                        @foreach($athletes as $athlete)
+                                            <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
+                                        @endforeach
+                                    </datalist>
 
-                    </td>
-                    @endforeach
-                </tr>
-            </tbody>
-        </table>
+                                    <input type="hidden"
+                                           :value="getAthleteId(selectedAthlete)"
+                                           name="individual_results[{{ $event->id }}][{{ $medal }}][athlete]">
+
+                                    <input type="hidden"
+                                           :value="getAthleteSDO(selectedAthlete)"
+                                           name="individual_results[{{ $event->id }}][{{ $medal }}][sdo]">
+
+                                    <div class="text-xs text-gray-600 mt-1"
+                                         x-html="getAthleteInfo(selectedAthlete)"></div>
+                                </div>
+
+                            </td>
+                            @endforeach
+
+                        </tr>
+                    </tbody>
+                </table>
+
+            @endforeach
+
+        @endforeach
+
     @endforeach
 
-@endforeach
+{{-- ================= NON SUPER ADMIN ================= --}}
+@else
 
+    @foreach($groupedEvents as $label => $eventsList)
+
+        <h2 class="text-2xl font-bold mt-8 mb-4 text-green-700">
+            {{ strtoupper($label) }}
+        </h2>
+
+        @foreach($eventsList as $event)
+            @php if (!is_object($event)) continue; @endphp
+
+            <h3 class="font-semibold mt-4">
+                {{ strtoupper($event->name) }}
+            </h3>
+
+            <table class="w-full border text-sm mt-2">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-2 py-2">Event</th>
+                        <th class="border px-2 py-2 bg-yellow-100">Gold</th>
+                        <th class="border px-2 py-2 bg-gray-200">Silver</th>
+                        <th class="border px-2 py-2 bg-orange-200">Bronze</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    <tr>
+                        <td class="border px-2 font-medium">{{ $event->name }}</td>
+
+                        @foreach(['Gold','Silver','Bronze'] as $medal)
+                        <td class="border px-3 py-3 align-top">
+
+                            <div x-data="{ selectedAthlete: null }">
+                                <input 
+                                    list="athletes_list_{{ $event->id }}_{{ $medal }}"
+                                    x-model="selectedAthlete"
+                                    placeholder="Type athlete name..."
+                                    class="w-full border rounded px-2 py-1 text-sm">
+
+                                <datalist id="athletes_list_{{ $event->id }}_{{ $medal }}">
+                                    @foreach($athletes as $athlete)
+                                        <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
+                                    @endforeach
+                                </datalist>
+
+                                <input type="hidden"
+                                       :value="getAthleteId(selectedAthlete)"
+                                       name="individual_results[{{ $event->id }}][{{ $medal }}][athlete]">
+
+                                <input type="hidden"
+                                       :value="getAthleteSDO(selectedAthlete)"
+                                       name="individual_results[{{ $event->id }}][{{ $medal }}][sdo]">
+
+                                <div class="text-xs text-gray-600 mt-1"
+                                     x-html="getAthleteInfo(selectedAthlete)"></div>
+                            </div>
+
+                        </td>
+                        @endforeach
+
+                    </tr>
+                </tbody>
+            </table>
+
+        @endforeach
+
+    @endforeach
+
+@endif
+
+{{-- ================= SUBMIT BUTTON ================= --}}
 <div class="flex justify-end mt-6">
     <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
         Save Individual Awards
