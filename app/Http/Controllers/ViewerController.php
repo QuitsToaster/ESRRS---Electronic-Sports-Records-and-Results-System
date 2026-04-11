@@ -272,6 +272,8 @@ public function participantShow(Division $division, Request $request)
         return [
             'id'           => $event->id,
             'name'         => $event->name,
+            'custom_name'  => $event->custom_name, // ✅ ADD
+    'event_time'   => $event->event_time,
             'start_date'   => $event->start_date?->toDateString(),
             'venue'        => $event->venue,
             'age_group'    => $event->age_group,

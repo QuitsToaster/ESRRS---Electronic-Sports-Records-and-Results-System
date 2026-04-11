@@ -91,6 +91,18 @@
 
 @csrf
 
+{{-- ================= OPTIONAL EVENT NAME ================= --}}
+<div>
+    <label class="block font-semibold">
+        Event Name
+        <span class="text-sm text-gray-500">(Optional)</span>
+    </label>
+    <input type="text"
+           name="custom_name"
+           placeholder="Enter custom event name (optional)"
+           class="w-full border rounded px-3 py-2">
+</div>
+
 {{-- SPORT SEARCH --}}
 <div class="relative">
     <label class="block font-semibold">Sport *</label>
@@ -153,6 +165,17 @@
            x-model="category"
            readonly
            class="w-full border rounded px-3 py-2 bg-gray-100">
+</div>
+
+{{-- ================= EVENT TIME ================= --}}
+<div>
+    <label class="block font-semibold">
+        Event Time
+        <span class="text-sm text-gray-500">(Optional)</span>
+    </label>
+    <input type="time"
+           name="event_time"
+           class="w-full border rounded px-3 py-2">
 </div>
 
 {{-- VENUE --}}

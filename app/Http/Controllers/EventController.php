@@ -109,11 +109,14 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
             'sport_id'      => $sport->id,
             'sport_type_id' => $sportType->id,
             'name'          => $sportType->type_name,
+            'custom_name'   => $request->custom_name,
             'status'        => 'Upcoming',
             'age_group'     => $ageGroup,
             'category'      => $request->category,
             'venue'         => $request->venue,
             'start_date'    => $request->start_date,
+            // ✅ SAVE TIME
+            'event_time'    => $request->event_time,
             'games'         => array_values(array_filter($request->games ?? [])),
         ]);
 
@@ -168,6 +171,8 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
             'divisions.*'   => 'exists:divisions,id',
             'games'         => 'nullable|array',
             'games.*'       => 'nullable|string|max:255',
+            'custom_name' => 'nullable|string|max:255',
+'event_time'  => 'nullable',
         ]);
 
         $oldValues = $event->load('divisions')->toArray();
@@ -182,6 +187,9 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
             'venue'         => $request->venue,
             'start_date'    => $request->start_date,
             'games'         => array_values(array_filter($request->games ?? [])),
+
+            'custom_name'   => $request->custom_name,
+    'event_time'    => $request->event_time,
         ]);
 
         $event->divisions()->sync($request->divisions);

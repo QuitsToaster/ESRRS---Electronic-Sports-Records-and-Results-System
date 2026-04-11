@@ -228,11 +228,13 @@
         title="Click to view full event name"
     >
         <h3 class="text-lg font-semibold text-gray-900 mb-1 line-clamp-1 group-hover:text-blue-600 transition-colors duration-200">
-            {{ $event->name }}
-            <svg class="inline-block w-4 h-4 ml-1 text-gray-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-            </svg>
-        </h3>
+    {{-- ✅ SHOW CUSTOM NAME IF EXISTS --}}
+    {{ $event->custom_name ?: $event->name }}
+
+    <svg class="inline-block w-4 h-4 ml-1 text-gray-400 group-hover:text-blue-500 opacity-0 group-hover:opacity-100 transition-all duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+    </svg>
+</h3>
     </button>
     <p class="text-sm text-gray-500">{{ $event->sport->name ?? 'Sport TBA' }}</p>
 </div>
@@ -433,22 +435,43 @@
                 
                 {{-- Card Body --}}
                 <div class="p-5 space-y-4">
-                    {{-- Date & Venue row --}}
-                    <div class="flex items-center gap-4 text-sm text-gray-600">
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
-                            <span>{{ $event->start_date ? $event->start_date->format('M d, Y') : 'TBA' }}</span>
-                        </div>
-                        <div class="flex items-center gap-1.5">
-                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <span>{{ $event->venue ?? 'TBA' }}</span>
-                        </div>
-                    </div>
+                    {{-- Date, Time & Venue row --}}
+<div class="flex flex-wrap items-center gap-4 text-sm text-gray-600">
+
+    {{-- DATE --}}
+    <div class="flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>
+            {{ $event->start_date ? $event->start_date->format('M d, Y') : 'TBA' }}
+        </span>
+    </div>
+
+    {{-- TIME (PH TIME) --}}
+    <div class="flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3" />
+        </svg>
+        <span>
+            {{ $event->event_time 
+                ? \Carbon\Carbon::parse($event->event_time)
+                    ->timezone('Asia/Manila')
+                    ->format('h:i A') 
+                : 'TBA' }}
+        </span>
+    </div>
+
+    {{-- VENUE --}}
+    <div class="flex items-center gap-1.5">
+        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+        <span>{{ $event->venue ?? 'TBA' }}</span>
+    </div>
+
+</div>
                     
                     {{-- Type, Level, Category chips --}}
                     <div class="flex flex-wrap gap-2">

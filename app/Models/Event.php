@@ -11,9 +11,11 @@ class Event extends Model
 
    protected $fillable = [
     'name',
+    'custom_name', 
     'sport_id',
     'sport_type_id',
     'start_date',
+    'event_time',
     'venue',
     'status',
     'status_reason',
