@@ -92,8 +92,8 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
             'category'      => 'nullable|string',
             'venue'         => 'nullable|string|max:255',
             'start_date'    => 'nullable|date',
-            'divisions'     => 'required|array|min:1',
-            'divisions.*'   => 'exists:divisions,id',
+            'divisions'     => 'nullable|array',
+'divisions.*'   => 'nullable|exists:divisions,id',
             'games'         => 'nullable|array',
             'games.*'       => 'nullable|string|max:255',
         ]);
@@ -120,7 +120,9 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
             'games'         => array_values(array_filter($request->games ?? [])),
         ]);
 
-        $event->divisions()->sync($request->divisions);
+        if ($request->filled('divisions')) {
+    $event->divisions()->sync(array_filter($request->divisions));
+}
 
         // -------------------------------
         // CREATE ANNOUNCEMENT FOR NEW EVENT
@@ -167,8 +169,8 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
             'is_ball_game'  => 'nullable|boolean',
             'venue'         => 'nullable|string|max:255',
             'start_date'    => 'nullable|date',
-            'divisions'     => 'required|array|min:1',
-            'divisions.*'   => 'exists:divisions,id',
+            'divisions'     => 'nullable|array',
+'divisions.*'   => 'nullable|exists:divisions,id',
             'games'         => 'nullable|array',
             'games.*'       => 'nullable|string|max:255',
             'custom_name' => 'nullable|string|max:255',
@@ -191,8 +193,9 @@ $events = $query->orderBy('start_date')->paginate(10); // adjust 10 as needed
             'custom_name'   => $request->custom_name,
     'event_time'    => $request->event_time,
         ]);
-
-        $event->divisions()->sync($request->divisions);
+if ($request->filled('divisions')) {
+    $event->divisions()->sync(array_filter($request->divisions));
+}
 
         AuditLog::create([
             'model_type' => 'Event',

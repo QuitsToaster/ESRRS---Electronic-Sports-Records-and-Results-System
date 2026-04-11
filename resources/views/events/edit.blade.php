@@ -151,25 +151,36 @@
         </div>
 
         {{-- PARTICIPATING DIVISIONS --}}
-        <div class="mt-6" x-data="{ divisions: @js(old('divisions', $event->divisions->pluck('id')->toArray())) }">
-            <label class="block font-semibold mb-2">Participating Divisions *</label>
+<div class="mt-6" x-data="{ divisions: @js(old('divisions', $event->divisions->pluck('id')->toArray())) }">
+    <label class="block font-semibold mb-2">
+        Participating Divisions 
+        <span class="text-sm text-gray-500">(Optional)</span>
+    </label>
 
-            <template x-for="(division, index) in divisions" :key="index">
-                <div class="flex gap-2 mb-2">
-                    <select name="divisions[]" x-model="divisions[index]" class="flex-1 border rounded px-3 py-2" required>
-                        <option value="">Select Division</option>
-                        @foreach($divisions as $division)
-                            <option value="{{ $division->id }}">{{ $division->name }}</option>
-                        @endforeach
-                    </select>
-                    <button type="button" x-show="divisions.length > 1" @click="divisions.splice(index, 1)" class="px-3 bg-red-500 text-white rounded">✕</button>
-                </div>
-            </template>
+    <template x-for="(division, index) in divisions" :key="index">
+        <div class="flex gap-2 mb-2">
+            <select name="divisions[]" x-model="divisions[index]" class="flex-1 border rounded px-3 py-2">
+                <option value="">Select Division</option>
+                @foreach($divisions as $divisionOption)
+                    <option value="{{ $divisionOption->id }}">{{ $divisionOption->name }}</option>
+                @endforeach
+            </select>
 
-            <button type="button" @click="divisions.push('')" class="mt-2 px-4 py-2 bg-green-600 text-white rounded">
-                + Add Another Division
+            <button type="button"
+                    x-show="divisions.length > 1"
+                    @click="divisions.splice(index, 1)"
+                    class="px-3 bg-red-500 text-white rounded">
+                ✕
             </button>
         </div>
+    </template>
+
+    <button type="button"
+            @click="divisions.push('')"
+            class="mt-2 px-4 py-2 bg-green-600 text-white rounded">
+        + Add Another Division
+    </button>
+</div>
 
         {{-- 🔥 GAMES SECTION --}}
         <div class="pt-6 border-t">

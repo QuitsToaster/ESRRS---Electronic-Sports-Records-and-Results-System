@@ -204,6 +204,40 @@ public function participantShow(Division $division, Request $request)
 
     /*
     |--------------------------------------------------------------------------
+    | AUTO UPDATE EVENT STATUS (ONGOING)
+    |--------------------------------------------------------------------------
+    */
+    $now = \Carbon\Carbon::now('Asia/Manila');
+
+    \App\Models\Event::whereNotIn('status', ['Ongoing', 'Finished', 'Delayed'])
+        ->whereNotNull('start_date')
+        ->whereNotNull('event_time')
+        ->get()
+        ->each(function ($event) use ($now) {
+
+            $eventDate = \Carbon\Carbon::parse($event->start_date)->format('Y-m-d');
+
+$eventDateTime = \Carbon\Carbon::createFromFormat(
+    'Y-m-d H:i:s',
+    $eventDate . ' ' . $event->event_time,
+    'Asia/Manila'
+);
+
+            // ✅ If current time >= event time → set to Ongoing
+            if ($now->greaterThanOrEqualTo($eventDateTime)) {
+
+                // ❗ Do NOT override delayed
+                if (strtolower($event->status) !== 'delayed') {
+
+                    $event->update([
+                        'status' => 'Ongoing'
+                    ]);
+                }
+            }
+        });
+
+    /*
+    |--------------------------------------------------------------------------
     | BASE QUERY
     |--------------------------------------------------------------------------
     */
@@ -230,12 +264,11 @@ public function participantShow(Division $division, Request $request)
 
     /*
     |--------------------------------------------------------------------------
-    | SINGLE COUNT + LABEL
+    | COUNT + LABEL
     |--------------------------------------------------------------------------
     */
     $eventsCount = $filteredQuery->count();
 
-    // Dynamic label
     if ($status) {
         $eventsLabel = ucfirst($status) . ' Events';
     } elseif ($search) {
@@ -272,8 +305,8 @@ public function participantShow(Division $division, Request $request)
         return [
             'id'           => $event->id,
             'name'         => $event->name,
-            'custom_name'  => $event->custom_name, // ✅ ADD
-    'event_time'   => $event->event_time,
+            'custom_name'  => $event->custom_name,
+            'event_time'   => $event->event_time,
             'start_date'   => $event->start_date?->toDateString(),
             'venue'        => $event->venue,
             'age_group'    => $event->age_group,
