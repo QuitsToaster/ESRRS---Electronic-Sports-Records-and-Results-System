@@ -12,121 +12,160 @@ use Illuminate\Support\Facades\Auth;
 class ResultAllAwardController extends Controller
 {
     public function store(Request $request)
-    {
-        $user = auth()->user();
-        $roleName = optional($user->role)->name;
+{
+    $user = auth()->user();
+    $roleName = optional($user->role)->name;
 
-        // Status depends on role
-        $status = $roleName === 'Tournament Secretary' ? 'pending' : 'approved';
+    // ================= STATUS =================
+    $status = $roleName === 'Tournament Secretary' ? 'pending' : 'approved';
 
-        $filePath = $request->hasFile('validation_file')
-            ? $request->file('validation_file')->store('award-validations', 'public')
-            : null;
+    // ================= FILE =================
+    $filePath = $request->hasFile('validation_file')
+        ? $request->file('validation_file')->store('award-validations', 'public')
+        : null;
 
-        $results = $request->input('results', []);
+    $results = $request->input('results', []);
 
-        if (!is_array($results)) {
-            return back()->with('error', 'Invalid results format.');
-        }
+    if (!is_array($results)) {
+        return back()->with('error', 'Invalid results format.');
+    }
 
-        $processedEventIds = []; // Track events that got awards
+    // ================= FIX: GET FALLBACK EVENT =================
+    $event = Event::where('is_active', 1)->first() ?? Event::first();
 
-        foreach ($results as $eventId => $sports) {
-            $event = Event::find($eventId);
-            if (!$event) continue; // Skip if event not found
-            if (!is_array($sports)) continue;
+    if (!$event) {
+        return back()->with('error', 'No event available. Please create or activate an event.');
+    }
 
-            foreach ($sports as $sportId => $medals) {
-                if (!is_array($medals)) continue;
+    // ================= FIX: DYNAMIC DIVISION =================
 
-                foreach ($medals as $medalName => $selectedSdos) {
-                    if (!is_array($selectedSdos)) {
-                        $selectedSdos = [$selectedSdos];
-                    }
+// Priority:
+// 1. User level access (correct for TS like Paragames)
+// 2. Fallback to event ONLY if empty
 
-                    foreach ($selectedSdos as $sdoValue) {
-    if (empty($sdoValue)) continue;
+$defaultDivision = null;
 
-    // ✅ GET division & category FROM EVENT (FIX)
-    $division = $event->age_group;
-    $category = $event->category;
+// ✅ If Tournament Secretary / restricted user → use their assigned level
+if (!empty($user->level_access)) {
 
-    $existing = AllAwardResult::where([
-        'event_id' => $eventId,
-        'division' => $division,
-        'category' => $category,
-        'sport_id' => $sportId,
-        'type_id' => $event->sport_type_id,
-        'sdo' => $sdoValue,
-        'medal' => $medalName,
-    ])->first();
+    // If only one (e.g., Paragames user)
+    if (count($user->level_access) === 1) {
+        $defaultDivision = $user->level_access[0];
+    } else {
+        // If multiple, fallback to event OR first match
+        $defaultDivision = $event->age_group ?? $user->level_access[0];
+    }
 
-    $oldValues = $existing ? $existing->toArray() : null;
-
-    $award = AllAwardResult::updateOrCreate(
-        [
-            'event_id' => $eventId,
-            'division' => $division,   // ✅ FIXED
-            'category' => $category,   // ✅ FIXED
-            'sport_id' => $sportId,
-            'type_id' => $event->sport_type_id,
-            'sdo' => $sdoValue,
-            'medal' => $medalName,
-        ],
-        [
-            'count' => 1,
-            'status' => $status,
-            'awarded_by' => $user->id,
-            'validation_file' => $filePath,
-            'event_name' => $event->name,
-        ]
-    );
-
-    AuditLog::create([
-        'model_type' => 'AllAwardResult',
-        'model_id'   => $award->id,
-        'user_id'    => $user->id,
-        'action'     => $existing
-            ? "Updated All Award | Event: $eventId | Sport: $sportId | Medal: $medalName"
-            : "Created All Award | Event: $eventId | Sport: $sportId | Medal: $medalName",
-        'old_values' => $oldValues ? json_encode($oldValues) : null,
-        'new_values' => json_encode($award->toArray()),
-        'description' => json_encode([
-            'performed_by' => $user->name,
-            'role' => $roleName,
-            'event_id' => $eventId,
-            'sport_id' => $sportId,
-            'type_id' => $event->sport_type_id,
-            'division' => $division,   // ✅ FIXED
-            'category' => $category,   // ✅ FIXED
-            'sdo' => $sdoValue,
-            'medal' => $medalName,
-            'status' => $status,
-            'ip_address' => request()->ip(),
-            'user_agent' => request()->userAgent(),
-        ]),
-    ]);
-
-    $processedEventIds[] = $eventId;
+} else {
+    // Super Admin fallback
+    $defaultDivision = $event->age_group ?? null;
 }
+
+
+// ================= CATEGORY =================
+$defaultCategory = null;
+
+if (!empty($user->category_access)) {
+
+    if (count($user->category_access) === 1) {
+        $defaultCategory = $user->category_access[0];
+    } else {
+        $defaultCategory = $event->category ?? $user->category_access[0];
+    }
+
+} else {
+    $defaultCategory = $event->category ?? null;
+}
+
+    // ================= PROCESS =================
+    foreach ($results as $sportId => $types) {
+
+        if (!is_array($types)) continue;
+
+        foreach ($types as $typeId => $medals) {
+
+            if (!is_array($medals)) continue;
+
+            foreach ($medals as $medalName => $selectedSdos) {
+
+                if (!is_array($selectedSdos)) {
+                    $selectedSdos = [$selectedSdos];
+                }
+
+                foreach ($selectedSdos as $sdoValue) {
+
+                    if (empty($sdoValue)) continue;
+
+                    // ================= CHECK EXISTING =================
+                    $existing = AllAwardResult::where([
+                        'event_id' => $event->id,
+                        'sport_id' => $sportId,
+                        'type_id'  => $typeId ?: null,
+                        'sdo'      => $sdoValue,
+                        'medal'    => $medalName,
+                    ])->first();
+
+                    $oldValues = $existing ? $existing->toArray() : null;
+
+                    // ================= SAVE =================
+                    $award = AllAwardResult::updateOrCreate(
+                        [
+                            'event_id' => $event->id, // ✅ FIXED
+                            'sport_id' => $sportId,
+                            'type_id'  => $typeId ?: null,
+                            'sdo'      => $sdoValue,
+                            'medal'    => $medalName,
+                        ],
+                        [
+                            'division' => $defaultDivision,
+                            'category' => $defaultCategory,
+                            'count' => 1,
+                            'status' => $status,
+                            'awarded_by' => $user->id,
+                            'validation_file' => $filePath,
+                            'event_name' => $event->name,
+                        ]
+                    );
+
+                    // ================= AUDIT =================
+                    AuditLog::create([
+                        'model_type' => 'AllAwardResult',
+                        'model_id'   => $award->id,
+                        'user_id'    => $user->id,
+                        'action'     => $existing
+                            ? "Updated All Award | Sport: $sportId | Type: $typeId | Medal: $medalName"
+                            : "Created All Award | Sport: $sportId | Type: $typeId | Medal: $medalName",
+                        'old_values' => $oldValues ? json_encode($oldValues) : null,
+                        'new_values' => json_encode($award->toArray()),
+                        'description' => json_encode([
+                            'performed_by' => $user->name,
+                            'role' => $roleName,
+                            'event_id' => $event->id,
+                            'sport_id' => $sportId,
+                            'type_id' => $typeId,
+                            'division' => $defaultDivision,
+                            'category' => $defaultCategory,
+                            'sdo' => $sdoValue,
+                            'medal' => $medalName,
+                            'status' => $status,
+                            'ip_address' => request()->ip(),
+                            'user_agent' => request()->userAgent(),
+                        ]),
+                    ]);
                 }
             }
         }
+    }
 
-        // ✅ Update event status based on role
-foreach (array_unique($processedEventIds) as $eventId) {
-
+    // ================= UPDATE EVENT STATUS =================
     if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
-        $eventStatus = 'Finished'; // ✅ UPDATED
+        $event->update(['status' => 'Finished']);
     } else {
-        $eventStatus = 'Ongoing';
+        $event->update(['status' => 'Ongoing']);
     }
 
-    Event::where('id', $eventId)->update(['status' => $eventStatus]);
+    return back()->with('success', 'Awards saved successfully.');
 }
-
-        return back()->with('success', 'Awards saved successfully.');
-    }
 
     public function approveAll(Request $request)
     {
@@ -208,35 +247,38 @@ if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
     }
 
     public function revise($id)
-    {
-        $award = AllAwardResult::findOrFail($id);
-        $old = $award->toArray();
-        $user = Auth::user();
+{
+    $award = AllAwardResult::findOrFail($id);
+    $old = $award->toArray();
+    $user = Auth::user();
 
-        AuditLog::create([
-            'model_type' => 'AllAwardResult',
-            'model_id' => $award->id,
-            'user_id' => $user->id,
-            'action' => sprintf(
-                'Deleted All Award for Revision | Event ID: %s | Medal: %s | SDO: %s',
-                $award->event_id,
-                strtoupper($award->medal),
-                $award->sdo
-            ),
-            'old_values' => json_encode($old),
-            'new_values' => json_encode([]),
-            'description' => json_encode([
-                'deleted_by' => $user->name,
-                'role' => optional($user->role)->name,
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]),
-        ]);
+    // ✅ DO NOT DELETE — just allow editing
+    $award->update([
+        'status' => 'needs_revision',
+    ]);
 
-        $award->delete();
+    AuditLog::create([
+        'model_type' => 'AllAwardResult',
+        'model_id' => $award->id,
+        'user_id' => $user->id,
+        'action' => sprintf(
+            'Marked All Award for Revision | Event ID: %s | Medal: %s | SDO: %s',
+            $award->event_id,
+            strtoupper($award->medal),
+            $award->sdo
+        ),
+        'old_values' => json_encode($old),
+        'new_values' => json_encode($award->toArray()),
+        'description' => json_encode([
+            'updated_by' => $user->name,
+            'role' => optional($user->role)->name,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]),
+    ]);
 
-        return back()->with('success', 'Award sent for revision successfully.');
-    }
+    return back()->with('success', 'Award ready for revision.');
+}
 
     public function forwardForValidation(Request $request)
     {
@@ -299,20 +341,45 @@ if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
     }
 
     public function updateFromRevision(Request $request)
-    {
-        $award = AllAwardResult::findOrFail($request->award_id);
+{
+    $award = AllAwardResult::findOrFail($request->award_id);
 
-        $event = Event::find($award->event_id);
+    $oldValues = $award->toArray();
+    $user = Auth::user();
 
-        $award->update([
-            'medal' => $request->medal,
-            'sdo' => $request->sdo,
-            'status' => 'pending',
-            'revision_message' => null,
-            'type_id' => $event->sport_type_id ?? null,
-            'event_name' => $event->name ?? null,
-        ]);
+    // ✅ DO NOT TOUCH type_id
+    // Keep original type_id so it matches original submission
 
-        return back()->with('success', 'Award resubmitted successfully.');
-    }
+    $award->update([
+        'medal' => $request->medal,
+        'sdo' => $request->sdo,
+        'status' => 'pending',
+        'revision_message' => null,
+        // ❌ REMOVED: type_id overwrite
+        // ❌ REMOVED: event_name overwrite (optional but safer)
+    ]);
+
+    // ================= AUDIT =================
+    AuditLog::create([
+        'model_type' => 'AllAwardResult',
+        'model_id'   => $award->id,
+        'user_id'    => $user->id,
+        'action'     => sprintf(
+            'Resubmitted All Award | Event ID: %s | Medal: %s | SDO: %s',
+            $award->event_id,
+            strtoupper($request->medal),
+            $request->sdo
+        ),
+        'old_values' => json_encode($oldValues),
+        'new_values' => json_encode($award->toArray()),
+        'description' => json_encode([
+            'resubmitted_by' => $user->name,
+            'role' => optional($user->role)->name,
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]),
+    ]);
+
+    return back()->with('success', 'Award resubmitted successfully.');
+}
 }

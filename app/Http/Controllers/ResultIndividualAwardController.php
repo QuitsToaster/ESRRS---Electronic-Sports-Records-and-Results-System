@@ -16,78 +16,158 @@ class ResultIndividualAwardController extends Controller
     $user = auth()->user();
     $roleName = optional($user->role)->name;
 
+    // ================= STATUS =================
     $status = $roleName === 'Tournament Secretary'
         ? 'pending'
         : 'approved';
 
-    $eventId = $request->event_id ?? Event::where('is_active', 1)->value('id');
-
-    if (!$eventId || !Event::where('id', $eventId)->exists()) {
-        return back()->with('error', 'Invalid or no active event found.');
-    }
-
+    // ================= FILE =================
     $filePath = $request->hasFile('validation_file')
         ? $request->file('validation_file')->store('award-validations', 'public')
         : null;
 
-    foreach ($request->input('individual_results', []) as $eventKey => $medalTypes) {
-        $event = Event::find($eventKey);
-        if (!$event) continue;
+    $results = $request->input('individual_results', []);
 
-        // ✅ Use event as source of truth
-        $division = $event->age_group;
-        $category = $event->category;
+    if (!is_array($results)) {
+        return back()->with('error', 'Invalid results format.');
+    }
 
-        foreach ($medalTypes as $medalName => $data) {
-            if (!is_array($data)) continue;
+    // ================= GET EVENT =================
+    $event = Event::where('is_active', 1)->first() ?? Event::first();
 
-            $athleteId = $data['athlete'] ?? null;
-            if (!$athleteId) continue;
+    if (!$event) {
+        return back()->with('error', 'No event available.');
+    }
 
-            $athlete = \App\Models\Athlete::find($athleteId);
-            $sdo = $athlete && $athlete->school_division
-                ? 'SDO - ' . $athlete->school_division
-                : null;
+    // ================= FIX: DYNAMIC DIVISION =================
 
-            $existing = IndividualAwardResult::where([
-                'event_id' => $event->id,
-                'division' => $division,
-                'category' => $category,
-                'sport_id' => $event->sport_id,
-                'type_id'  => $event->sport_type_id,
-                'medal'    => $medalName,
-                'sdo'      => $sdo,
-            ])->first();
+// Priority:
+// 1. User level access (correct for TS like Paragames)
+// 2. Fallback to event ONLY if needed
 
-            $oldValues = $existing ? $existing->toArray() : null;
+$defaultDivision = null;
 
-            $award = IndividualAwardResult::updateOrCreate(
-                [
+if (!empty($user->level_access)) {
+
+    // Single assigned division (e.g., Paragames TS)
+    if (count($user->level_access) === 1) {
+        $defaultDivision = $user->level_access[0];
+    } else {
+        // Multiple access → fallback to event OR first
+        $defaultDivision = $event->age_group ?? $user->level_access[0];
+    }
+
+} else {
+    // Super Admin fallback
+    $defaultDivision = $event->age_group ?? null;
+}
+
+
+// ================= CATEGORY =================
+$defaultCategory = null;
+
+if (!empty($user->category_access)) {
+
+    if (count($user->category_access) === 1) {
+        $defaultCategory = $user->category_access[0];
+    } else {
+        $defaultCategory = $event->category ?? $user->category_access[0];
+    }
+
+} else {
+    $defaultCategory = $event->category ?? null;
+}
+
+    // ================= PROCESS =================
+    foreach ($results as $sportId => $types) {
+
+        if (!is_array($types)) continue;
+
+        foreach ($types as $typeId => $medals) {
+
+            if (!is_array($medals)) continue;
+
+            foreach ($medals as $medalName => $data) {
+
+                if (!is_array($data)) continue;
+
+                $athleteId = $data['athlete'] ?? null;
+                if (!$athleteId) continue;
+
+                // ================= GET ATHLETE =================
+                $athlete = \App\Models\Athlete::find($athleteId);
+
+                if (!$athlete) continue;
+
+                // ✅ AUTO SDO (LIKE YOUR SYSTEM)
+                $sdo = $athlete->school_division
+                    ? 'SDO - ' . $athlete->school_division
+                    : null;
+
+                // ================= CHECK EXISTING =================
+                $existing = IndividualAwardResult::where([
                     'event_id' => $event->id,
-                    'division' => $division,
-                    'category' => $category,
-                    'sport_id' => $event->sport_id,
-                    'type_id'  => $event->sport_type_id,
+                    'sport_id' => $sportId,
+                    'type_id'  => $typeId ?: null,
                     'medal'    => $medalName,
-                    'sdo'      => $sdo,
-                ],
-                [
-                    'athlete_id' => $athleteId,
-                    'status' => $status,
-                    'awarded_by' => $user->id,
-                    'validation_file' => $filePath,
-                ]
-            );
+                ])->first();
 
-            AuditLog::create([
-                'model_type' => 'IndividualAwardResult',
-                'model_id'   => $award->id,
-                'user_id'    => $user->id,
-                'action'     => $existing ? "Updated Individual Award" : "Created Individual Award",
-                'old_values' => $oldValues ? json_encode($oldValues) : null,
-                'new_values' => json_encode($award->toArray()),
-            ]);
+                $oldValues = $existing ? $existing->toArray() : null;
+
+                // ================= SAVE =================
+                $award = IndividualAwardResult::updateOrCreate(
+                    [
+                        'event_id' => $event->id,
+                        'sport_id' => $sportId,
+                        'type_id'  => $typeId ?: null,
+                        'medal'    => $medalName,
+                    ],
+                    [
+                        'division' => $defaultDivision,
+                        'category' => $defaultCategory,
+                        'athlete_id' => $athleteId,
+                        'sdo' => $sdo,
+                        'status' => $status,
+                        'awarded_by' => $user->id,
+                        'validation_file' => $filePath,
+                    ]
+                );
+
+                // ================= AUDIT =================
+                AuditLog::create([
+                    'model_type' => 'IndividualAwardResult',
+                    'model_id'   => $award->id,
+                    'user_id'    => $user->id,
+                    'action'     => $existing
+                        ? "Updated Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName"
+                        : "Created Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName",
+                    'old_values' => $oldValues ? json_encode($oldValues) : null,
+                    'new_values' => json_encode($award->toArray()),
+                    'description' => json_encode([
+                        'performed_by' => $user->name,
+                        'role' => $roleName,
+                        'event_id' => $event->id,
+                        'sport_id' => $sportId,
+                        'type_id' => $typeId,
+                        'division' => $defaultDivision,
+                        'category' => $defaultCategory,
+                        'athlete_id' => $athleteId,
+                        'sdo' => $sdo,
+                        'medal' => $medalName,
+                        'status' => $status,
+                        'ip_address' => request()->ip(),
+                        'user_agent' => request()->userAgent(),
+                    ]),
+                ]);
+            }
         }
+    }
+
+    // ================= EVENT STATUS =================
+    if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
+        $event->update(['status' => 'Finished']);
+    } else {
+        $event->update(['status' => 'Ongoing']);
     }
 
     return back()->with('success', 'Individual awards saved successfully.');

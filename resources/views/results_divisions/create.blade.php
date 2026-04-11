@@ -919,60 +919,24 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
 </select>
 
 @php
-// ==============================
-// 🚀 GROUP EVENTS (SUPER ADMIN: SPORT → TAB)
-// ==============================
+// =====================================================
+// 🚀 NEW: SPORT → TYPE (NO EVENT DEPENDENCY)
+// =====================================================
 
-if ($user->role->name === 'Super Admin') {
 
-    $groupedEvents = $events->groupBy('sport_id')->map(function ($sportEvents) {
+$query = Sport::with(['types']) // make sure relation exists
+    ->orderBy('name');
 
-        $sportName = optional($sportEvents->first()->sport)->name ?? 'Unknown Sport';
-
-        return [
-            'sport_name' => $sportName,
-
-            'tabs' => $sportEvents->groupBy(function($event){
-                if ($event->age_group === 'Paragames') {
-                    return 'Paragames';
-                }
-                return $event->age_group . ' ' . $event->category;
-            })->map(function ($eventsList) {
-
-                return $eventsList
-                    ->groupBy(function($event){
-                        return $event->sport_id . '-' . $event->sport_type_id;
-                    })
-                    ->map(fn($group) => $group->first())
-                    ->values();
-
-            })
-        ];
-
-    });
-
-} else {
-
-    // ✅ ORIGINAL LOGIC (NON SUPER ADMIN)
-    $groupedEvents = $events->groupBy(function($event){
-        if ($event->age_group === 'Paragames') {
-            return 'Paragames';
-        }
-        return $event->age_group . ' ' . $event->category;
-    });
-
-    $groupedEvents = $groupedEvents->map(function ($eventsList) {
-
-        return $eventsList
-            ->groupBy(function($event){
-                return $event->sport_id . '-' . $event->sport_type_id;
-            })
-            ->map(fn($group) => $group->first())
-            ->values();
-    });
+// ================= ROLE FILTER =================
+if ($user->role->name !== 'Super Admin') {
+    $query->whereIn('id', $user->sports_access ?? []);
 }
 
+// ================= PAGINATION =================
+$sports = $query->paginate(10); // adjust per page if needed
+
 $divisions = \App\Models\Division::orderBy('name')->get();
+
 @endphp
 
 
@@ -990,171 +954,91 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 @csrf
 
-{{-- ================= SUPER ADMIN VIEW ================= --}}
-@if($user->role->name === 'Super Admin')
+{{-- ================= UNIVERSAL VIEW (NO EVENTS DEPENDENCY) ================= --}}
+@foreach($sports as $sport)
 
-    @foreach($groupedEvents as $sportGroup)
+    {{-- 🏀 SPORT --}}
+    <h1 class="text-3xl font-bold mt-10 mb-4 text-indigo-700">
+        {{ strtoupper($sport->name) }}
+    </h1>
 
-        {{-- 🏀 SPORT --}}
-        <h1 class="text-3xl font-bold mt-10 mb-4 text-indigo-700">
-            {{ strtoupper($sportGroup['sport_name']) }}
-        </h1>
+    {{-- ================= TYPES ================= --}}
+    @forelse($sport->types as $type)
 
-        @foreach($sportGroup['tabs'] as $label => $eventsList)
+        <h2 class="text-xl font-semibold mt-4 mb-2 text-blue-600">
+            {{ strtoupper($type->type_name) }}
+        </h2>
 
-            {{-- 📂 CATEGORY --}}
-            <h2 class="text-2xl font-bold mt-6 mb-3 text-blue-600">
-                {{ strtoupper($label) }}
-            </h2>
+        {{-- ================= TABLE ================= --}}
+        <table class="w-full border text-sm mt-2">
+            <thead class="bg-gray-200 text-center">
+                <tr>
+                    <th class="border px-2 py-2">Sport</th>
+                    <th class="border bg-yellow-300">Gold</th>
+                    <th class="border bg-gray-300">Silver</th>
+                    <th class="border bg-orange-200">Bronze</th>
+                </tr>
+            </thead>
 
-            @foreach($eventsList as $event)
-                @php if (!is_object($event)) continue; @endphp
+            <tbody>
+                <tr>
+                    <td class="border px-2 font-medium">
+                        {{ $sport->name }} - {{ $type->type_name }}
+                    </td>
 
-                <h3 class="font-semibold mt-4">
-                    {{ strtoupper($event->name ?? 'Unnamed Event') }}
-                </h3>
+                    @foreach(['Gold','Silver','Bronze'] as $medal)
+                    <td class="border px-2 py-2 align-top">
+                        <div x-data="{ divisions:[''] }">
 
-                <table class="w-full border text-sm mt-2">
-                    <thead class="bg-gray-200 text-center">
-                        <tr>
-                            <th class="border px-2 py-2">Event</th>
-                            <th class="border bg-yellow-300">Gold</th>
-                            <th class="border bg-gray-300">Silver</th>
-                            <th class="border bg-orange-200">Bronze</th>
-                        </tr>
-                    </thead>
+                            <template x-for="(division,index) in divisions" :key="index">
+                                <div class="flex gap-2 mb-2">
 
-                    <tbody>
-                        <tr>
-                            <td class="border px-2 font-medium">{{ $event->name }}</td>
-
-                            @foreach(['Gold','Silver','Bronze'] as $medal)
-                            <td class="border px-2 py-2 align-top">
-                                <div x-data="{ divisions:[''] }">
-
-                                    <template x-for="(division,index) in divisions" :key="index">
-                                        <div class="flex gap-2 mb-2">
-
-                                            <select
-                                                :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
-                                                class="w-full border rounded px-2 py-1 text-sm"
-                                            >
-                                                <option value="">-- Select Division / SDO --</option>
-                                                @foreach($divisions as $divisionOption)
-                                                    <option value="{{ $divisionOption->name }}">
-                                                        {{ $divisionOption->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-
-                                            <button type="button"
-                                                    x-show="divisions.length > 1"
-                                                    @click="divisions.splice(index,1)"
-                                                    class="bg-red-500 text-white px-2 rounded text-xs">
-                                                ✕
-                                            </button>
-
-                                        </div>
-                                    </template>
+                                    <select
+                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][]"
+                                        class="w-full border rounded px-2 py-1 text-sm"
+                                    >
+                                        <option value="">-- Select Division / SDO --</option>
+                                        @foreach($divisions as $divisionOption)
+                                            <option value="{{ $divisionOption->name }}">
+                                                {{ $divisionOption->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
 
                                     <button type="button"
-                                            @click="divisions.push('')"
-                                            class="text-blue-600 text-xs hover:underline">
-                                        + Add Division
+                                            x-show="divisions.length > 1"
+                                            @click="divisions.splice(index,1)"
+                                            class="bg-red-500 text-white px-2 rounded text-xs">
+                                        ✕
                                     </button>
 
                                 </div>
-                            </td>
-                            @endforeach
+                            </template>
 
-                        </tr>
-                    </tbody>
-                </table>
+                            <button type="button"
+                                    @click="divisions.push('')"
+                                    class="text-blue-600 text-xs hover:underline">
+                                + Add Division
+                            </button>
 
-            @endforeach
+                        </div>
+                    </td>
+                    @endforeach
 
-        @endforeach
+                </tr>
+            </tbody>
+        </table>
 
-    @endforeach
+    @empty
+        <p class="text-gray-500 text-sm">No sport types available.</p>
+    @endforelse
 
-{{-- ================= NON SUPER ADMIN ================= --}}
-@else
+@endforeach
 
-    @foreach($groupedEvents as $label => $eventsList)
-
-        <h2 class="text-2xl font-bold mt-8 mb-4 text-blue-700">
-            {{ strtoupper($label) }}
-        </h2>
-
-        @foreach($eventsList as $event)
-            @php if (!is_object($event)) continue; @endphp
-
-            <h3 class="font-semibold mt-4">
-                {{ strtoupper($event->name ?? 'Unnamed Event') }}
-            </h3>
-
-            <table class="w-full border text-sm mt-2">
-                <thead class="bg-gray-200 text-center">
-                    <tr>
-                        <th class="border px-2 py-2">Event</th>
-                        <th class="border bg-yellow-300">Gold</th>
-                        <th class="border bg-gray-300">Silver</th>
-                        <th class="border bg-orange-200">Bronze</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <tr>
-                        <td class="border px-2 font-medium">{{ $event->name }}</td>
-
-                        @foreach(['Gold','Silver','Bronze'] as $medal)
-                        <td class="border px-2 py-2 align-top">
-                            <div x-data="{ divisions:[''] }">
-
-                                <template x-for="(division,index) in divisions" :key="index">
-                                    <div class="flex gap-2 mb-2">
-
-                                        <select
-                                            :name="'results[{{ $event->id }}][{{ $event->sport_id ?? 0 }}][{{ $medal }}][]'"
-                                            class="w-full border rounded px-2 py-1 text-sm"
-                                        >
-                                            <option value="">-- Select Division / SDO --</option>
-                                            @foreach($divisions as $divisionOption)
-                                                <option value="{{ $divisionOption->name }}">
-                                                    {{ $divisionOption->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-
-                                        <button type="button"
-                                                x-show="divisions.length > 1"
-                                                @click="divisions.splice(index,1)"
-                                                class="bg-red-500 text-white px-2 rounded text-xs">
-                                            ✕
-                                        </button>
-
-                                    </div>
-                                </template>
-
-                                <button type="button"
-                                        @click="divisions.push('')"
-                                        class="text-blue-600 text-xs hover:underline">
-                                    + Add Division
-                                </button>
-
-                            </div>
-                        </td>
-                        @endforeach
-
-                    </tr>
-                </tbody>
-            </table>
-
-        @endforeach
-
-    @endforeach
-
-@endif
+{{-- ================= PAGINATION ================= --}}
+<div class="mt-6">
+    {{ $sports->links() }}
+</div>
 
 {{-- ================= ACTION BUTTON ================= --}}
 <div class="flex justify-end mt-6">
@@ -1216,155 +1100,89 @@ $divisions = \App\Models\Division::orderBy('name')->get();
     $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
 @endphp
 
-{{-- ================= SUPER ADMIN VIEW ================= --}}
-@if($user->role->name === 'Super Admin')
+{{-- ================= UNIVERSAL VIEW (NO EVENTS DEPENDENCY) ================= --}}
+@foreach($sports as $sport)
 
-    @foreach($groupedEvents as $sportGroup)
+    {{-- 🏀 SPORT --}}
+    <h1 class="text-3xl font-bold mt-10 mb-4 text-green-700">
+        {{ strtoupper($sport->name) }}
+    </h1>
 
-        {{-- 🏀 SPORT --}}
-        <h1 class="text-3xl font-bold mt-10 mb-4 text-green-700">
-            {{ strtoupper($sportGroup['sport_name']) }}
-        </h1>
+    {{-- ================= TYPES ================= --}}
+    @forelse($sport->types as $type)
 
-        @foreach($sportGroup['tabs'] as $label => $eventsList)
-
-            {{-- 📂 CATEGORY --}}
-            <h2 class="text-2xl font-bold mt-6 mb-3 text-green-600">
-                {{ strtoupper($label) }}
-            </h2>
-
-            @foreach($eventsList as $event)
-                @php if (!is_object($event)) continue; @endphp
-
-                <h3 class="font-semibold mt-4">
-                    {{ strtoupper($event->name) }}
-                </h3>
-
-                <table class="w-full border text-sm mt-2">
-                    <thead class="bg-gray-100">
-                        <tr>
-                            <th class="border px-2 py-2">Event</th>
-                            <th class="border px-2 py-2 bg-yellow-100">Gold</th>
-                            <th class="border px-2 py-2 bg-gray-200">Silver</th>
-                            <th class="border px-2 py-2 bg-orange-200">Bronze</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        <tr>
-                            <td class="border px-2 font-medium">{{ $event->name }}</td>
-
-                            @foreach(['Gold','Silver','Bronze'] as $medal)
-                            <td class="border px-3 py-3 align-top">
-
-                                <div x-data="{ selectedAthlete: null }">
-                                    <input 
-                                        list="athletes_list_{{ $event->id }}_{{ $medal }}"
-                                        x-model="selectedAthlete"
-                                        placeholder="Type athlete name..."
-                                        class="w-full border rounded px-2 py-1 text-sm">
-
-                                    <datalist id="athletes_list_{{ $event->id }}_{{ $medal }}">
-                                        @foreach($athletes as $athlete)
-                                            <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
-                                        @endforeach
-                                    </datalist>
-
-                                    <input type="hidden"
-                                           :value="getAthleteId(selectedAthlete)"
-                                           name="individual_results[{{ $event->id }}][{{ $medal }}][athlete]">
-
-                                    <input type="hidden"
-                                           :value="getAthleteSDO(selectedAthlete)"
-                                           name="individual_results[{{ $event->id }}][{{ $medal }}][sdo]">
-
-                                    <div class="text-xs text-gray-600 mt-1"
-                                         x-html="getAthleteInfo(selectedAthlete)"></div>
-                                </div>
-
-                            </td>
-                            @endforeach
-
-                        </tr>
-                    </tbody>
-                </table>
-
-            @endforeach
-
-        @endforeach
-
-    @endforeach
-
-{{-- ================= NON SUPER ADMIN ================= --}}
-@else
-
-    @foreach($groupedEvents as $label => $eventsList)
-
-        <h2 class="text-2xl font-bold mt-8 mb-4 text-green-700">
-            {{ strtoupper($label) }}
+        <h2 class="text-xl font-semibold mt-4 mb-2 text-green-600">
+            {{ strtoupper($type->type_name) }}
         </h2>
 
-        @foreach($eventsList as $event)
-            @php if (!is_object($event)) continue; @endphp
+        {{-- ================= TABLE ================= --}}
+        <table class="w-full border text-sm mt-2">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border px-2 py-2">Sport</th>
+                    <th class="border px-2 py-2 bg-yellow-100">Gold</th>
+                    <th class="border px-2 py-2 bg-gray-200">Silver</th>
+                    <th class="border px-2 py-2 bg-orange-200">Bronze</th>
+                </tr>
+            </thead>
 
-            <h3 class="font-semibold mt-4">
-                {{ strtoupper($event->name) }}
-            </h3>
+            <tbody>
+                <tr>
+                    <td class="border px-2 font-medium">
+                        {{ $sport->name }} - {{ $type->type_name }}
+                    </td>
 
-            <table class="w-full border text-sm mt-2">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="border px-2 py-2">Event</th>
-                        <th class="border px-2 py-2 bg-yellow-100">Gold</th>
-                        <th class="border px-2 py-2 bg-gray-200">Silver</th>
-                        <th class="border px-2 py-2 bg-orange-200">Bronze</th>
-                    </tr>
-                </thead>
+                    @foreach(['Gold','Silver','Bronze'] as $medal)
+                    <td class="border px-3 py-3 align-top">
 
-                <tbody>
-                    <tr>
-                        <td class="border px-2 font-medium">{{ $event->name }}</td>
+                        <div x-data="{ selectedAthlete: null }">
 
-                        @foreach(['Gold','Silver','Bronze'] as $medal)
-                        <td class="border px-3 py-3 align-top">
+                            {{-- 🔍 SEARCH INPUT --}}
+                            <input 
+                                list="athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}"
+                                x-model="selectedAthlete"
+                                placeholder="Type athlete name..."
+                                class="w-full border rounded px-2 py-1 text-sm">
 
-                            <div x-data="{ selectedAthlete: null }">
-                                <input 
-                                    list="athletes_list_{{ $event->id }}_{{ $medal }}"
-                                    x-model="selectedAthlete"
-                                    placeholder="Type athlete name..."
-                                    class="w-full border rounded px-2 py-1 text-sm">
+                            {{-- DATALIST --}}
+                            <datalist id="athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}">
+                                @foreach($athletes as $athlete)
+                                    <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
+                                @endforeach
+                            </datalist>
 
-                                <datalist id="athletes_list_{{ $event->id }}_{{ $medal }}">
-                                    @foreach($athletes as $athlete)
-                                        <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
-                                    @endforeach
-                                </datalist>
+                            {{-- HIDDEN VALUES --}}
+                            <input type="hidden"
+                                   :value="getAthleteId(selectedAthlete)"
+                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][athlete]">
 
-                                <input type="hidden"
-                                       :value="getAthleteId(selectedAthlete)"
-                                       name="individual_results[{{ $event->id }}][{{ $medal }}][athlete]">
+                            <input type="hidden"
+                                   :value="getAthleteSDO(selectedAthlete)"
+                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][sdo]">
 
-                                <input type="hidden"
-                                       :value="getAthleteSDO(selectedAthlete)"
-                                       name="individual_results[{{ $event->id }}][{{ $medal }}][sdo]">
+                            {{-- INFO --}}
+                            <div class="text-xs text-gray-600 mt-1"
+                                 x-html="getAthleteInfo(selectedAthlete)"></div>
 
-                                <div class="text-xs text-gray-600 mt-1"
-                                     x-html="getAthleteInfo(selectedAthlete)"></div>
-                            </div>
+                        </div>
 
-                        </td>
-                        @endforeach
+                    </td>
+                    @endforeach
 
-                    </tr>
-                </tbody>
-            </table>
+                </tr>
+            </tbody>
+        </table>
 
-        @endforeach
+    @empty
+        <p class="text-gray-500 text-sm">No sport types available.</p>
+    @endforelse
 
-    @endforeach
+@endforeach
 
-@endif
+{{-- ================= PAGINATION ================= --}}
+<div class="mt-6">
+    {{ $sports->links() }}
+</div>
 
 {{-- ================= SUBMIT BUTTON ================= --}}
 <div class="flex justify-end mt-6">
