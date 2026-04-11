@@ -8,8 +8,8 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    server: {
-        host: '10.0.5.192',
-        port: 5173,
-    },
+    // server: {
+    //     host: '10.0.5.192',
+    //     port: 5173,
+    // },
 });

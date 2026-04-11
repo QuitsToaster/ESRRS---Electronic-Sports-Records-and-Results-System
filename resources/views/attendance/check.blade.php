@@ -565,36 +565,67 @@
     </div>
 
     <script>
-        const qrInput = document.getElementById('qr_code');
-        const qrForm = document.getElementById('qrForm');
-        const scannerBtn = document.getElementById('scannerMode');
-        const cameraBtn = document.getElementById('cameraMode');
-        const cameraBox = document.getElementById('cameraBox');
-        const httpsWarning = document.getElementById('httpsWarning');
-        const scanningLoader = document.getElementById('scanningLoader');
+const qrInput = document.getElementById('qr_code');
+const qrForm = document.getElementById('qrForm');
+const scannerBtn = document.getElementById('scannerMode');
+const cameraBtn = document.getElementById('cameraMode');
+const cameraBox = document.getElementById('cameraBox');
+const httpsWarning = document.getElementById('httpsWarning');
+const scanningLoader = document.getElementById('scanningLoader');
 
-        let qrScanner;
-
-        // Live time update
-        function updateLiveTime() {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            const timeElem = document.getElementById('liveTime');
-            if (timeElem) timeElem.textContent = timeStr;
-            
-            const currentTimeElem = document.getElementById('currentTime');
-            if (currentTimeElem) currentTimeElem.textContent = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        }
-        updateLiveTime();
-        setInterval(updateLiveTime, 1000);
-
-       // ================= TIME MODE TOGGLE (PERSISTED) =================
 const timeInBtn = document.getElementById('timeInBtn');
 const timeOutBtn = document.getElementById('timeOutBtn');
 const modeInput = document.getElementById('mode');
 
-function setMode(mode) {
-    // save mode 🔥
+let qrScanner = null;
+let submitting = false;
+
+// ================= 🔥 FORCE INPUT FOCUS =================
+function forceFocus() {
+    if (!qrInput) return;
+
+    qrInput.focus();
+
+    // keep cursor at end
+    const val = qrInput.value;
+    qrInput.value = '';
+    qrInput.value = val;
+}
+
+// ALWAYS keep focus (important for scanners)
+setInterval(() => {
+    if (document.activeElement !== qrInput) {
+        qrInput.focus();
+    }
+}, 500);
+
+// ================= LIVE TIME =================
+function updateLiveTime() {
+    const now = new Date();
+
+    document.getElementById('liveTime').textContent =
+        now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+    document.getElementById('currentTime').textContent =
+        now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+updateLiveTime();
+setInterval(updateLiveTime, 1000);
+
+// ================= SECURE CHECK =================
+const isSecure =
+    location.protocol === 'https:' ||
+    location.hostname === 'localhost' ||
+    location.hostname === '127.0.0.1';
+
+if (!isSecure) {
+    cameraBtn.disabled = true;
+    cameraBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    httpsWarning.classList.remove('hidden');
+}
+
+// ================= TIME MODE =================
+function setTimeMode(mode) {
     localStorage.setItem('attendance_mode', mode);
 
     modeInput.value = mode;
@@ -607,102 +638,122 @@ function setMode(mode) {
     } else {
         timeOutBtn.classList.add('active');
     }
+
+    forceFocus(); // 🔥 KEEP INPUT ACTIVE
 }
 
-// button clicks
-timeInBtn.onclick = () => setMode('time_in');
-timeOutBtn.onclick = () => setMode('time_out');
+timeInBtn.onclick = () => setTimeMode('time_in');
+timeOutBtn.onclick = () => setTimeMode('time_out');
 
-// 🔥 LOAD SAVED MODE (instead of always time_in)
-const savedMode = localStorage.getItem('attendance_mode') || 'time_in';
-setMode(savedMode);
+// ================= SCANNER MODE =================
+function setScannerMode(mode) {
+    localStorage.setItem('scanner_mode', mode);
 
-        /* Mode button states */
-        function setActiveMode(active) {
-            [scannerBtn, cameraBtn].forEach(btn => btn.classList.remove('active'));
-            if (active === 'scanner') {
-                scannerBtn.classList.add('active');
-            } else {
-                cameraBtn.classList.add('active');
-            }
-        }
+    scannerBtn.classList.remove('active');
+    cameraBtn.classList.remove('active');
 
-        /* Detect secure context */
-        const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+    if (mode === 'scanner') {
+        scannerBtn.classList.add('active');
+        stopCamera();
+        cameraBox.classList.add('hidden');
+    } else {
+        cameraBtn.classList.add('active');
+        cameraBox.classList.remove('hidden');
+        startCamera();
+    }
 
-        /* Disable camera if not secure */
-        if (!isSecure) {
-            cameraBtn.disabled = true;
-            cameraBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            httpsWarning.classList.remove('hidden');
-        }
+    forceFocus(); // 🔥 ALWAYS RETURN FOCUS
+}
 
-        /* External Scanner */
-        let submitting = false;
+scannerBtn.onclick = () => setScannerMode('scanner');
 
-        function submitQR() {
-            if(submitting) return;
-            const value = qrInput.value.trim();
-            if(value){
-                submitting = true;
-                if(scanningLoader) scanningLoader.classList.remove('hidden');
+cameraBtn.onclick = () => {
+    if (!isSecure) return;
+    setScannerMode('camera');
+};
+
+// ================= EXTERNAL SCANNER =================
+function submitQR() {
+    if (submitting) return;
+
+    const value = qrInput.value.trim();
+    if (!value) return;
+
+    submitting = true;
+    scanningLoader.classList.remove('hidden');
+
+    qrForm.submit();
+}
+
+qrInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        submitQR();
+    }
+});
+
+// ================= CAMERA SCANNER =================
+function startCamera() {
+    if (qrScanner) return;
+
+    qrScanner = new Html5Qrcode("qr-reader");
+
+    qrScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: 250 },
+        decodedText => {
+            if (submitting) return;
+
+            qrInput.value = decodedText.trim();
+            submitting = true;
+
+            qrScanner.pause(true);
+
+            scanningLoader.classList.remove('hidden');
+
+            setTimeout(() => {
                 qrForm.submit();
-            }
-        }
+            }, 300);
+        },
+        () => {}
+    ).catch(() => {
+        alert("Camera access failed.");
+        setScannerMode('scanner');
+    });
+}
 
-        qrInput.addEventListener('keydown', e => {
-            if(e.key === 'Enter'){
-                e.preventDefault();
-                submitQR();
-            }
-        });
+function stopCamera() {
+    if (!qrScanner) return;
 
-        /* Camera Scanner */
-        cameraBtn.onclick = () => {
-            if (!isSecure) return;
-            setActiveMode('camera');
-            cameraBox.classList.remove('hidden');
-            qrInput.blur();
-            startCamera();
-        };
-
-        scannerBtn.onclick = () => {
-            setActiveMode('scanner');
-            stopCamera();
-            cameraBox.classList.add('hidden');
-            qrInput.focus();
-        };
-
-        function startCamera() {
-            qrScanner = new Html5Qrcode("qr-reader");
-            qrScanner.start(
-                { facingMode: "environment" },
-                { fps: 10, qrbox: 250 },
-                decodedText => {
-                    qrInput.value = decodedText.trim();
-                    stopCamera();
-                    if(scanningLoader) scanningLoader.classList.remove('hidden');
-                    qrForm.submit();
-                },
-                () => {}
-            ).catch(() => alert("Camera access failed. Please allow permission or use HTTPS."));
-        }
-
-        function stopCamera() {
-            if (qrScanner) qrScanner.stop().then(() => qrScanner.clear());
+    qrScanner.stop()
+        .then(() => qrScanner.clear())
+        .catch(() => {})
+        .finally(() => {
             qrScanner = null;
-        }
+        });
+}
 
-        /* Auto-hide toasts */
-        setTimeout(() => {
-            const successToast = document.getElementById('successToast');
-            const errorToast = document.getElementById('errorToast');
-            if(successToast) setTimeout(() => successToast.remove(), 4000);
-            if(errorToast) setTimeout(() => errorToast.remove(), 4000);
-        }, 100);
+// ================= RESTORE STATE =================
+window.addEventListener('load', () => {
+    const savedTimeMode = localStorage.getItem('attendance_mode') || 'time_in';
+    const savedScannerMode = localStorage.getItem('scanner_mode') || 'scanner';
 
-        /* Initial active state */
-        setActiveMode('scanner');
-    </script>
+    setTimeMode(savedTimeMode);
+
+    if (savedScannerMode === 'camera' && isSecure) {
+        setScannerMode('camera');
+    } else {
+        setScannerMode('scanner');
+    }
+
+    forceFocus(); // 🔥 INITIAL FOCUS
+});
+
+// ================= AUTO HIDE TOAST =================
+setTimeout(() => {
+    document.getElementById('successToast')?.remove();
+    document.getElementById('errorToast')?.remove();
+}, 4000);
+</script>
 </body>
 </html>
