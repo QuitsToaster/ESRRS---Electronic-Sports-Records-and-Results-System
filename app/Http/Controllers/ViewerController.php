@@ -112,36 +112,38 @@ public function home()
 public function participantShow(Division $division, Request $request)
 {
     /* =========================================================
-       TEAM AWARDS (all_award_results)
+       TEAM AWARDS (ONLY APPROVED)
     ========================================================== */
 
     $teamRegular = AllAwardResult::with(['sport', 'sportType'])
+        ->where('status', 'approved') // ✅ ADD THIS
         ->whereRaw('UPPER(sdo) = ?', [strtoupper($division->name)])
         ->whereIn('division', ['Elementary', 'Secondary'])
         ->get();
 
     $teamParagames = AllAwardResult::with(['sport', 'sportType'])
+        ->where('status', 'approved') // ✅ ADD THIS
         ->whereRaw('UPPER(sdo) = ?', [strtoupper($division->name)])
         ->where('division', 'Paragames')
         ->get();
 
-   /* =========================================================
-   INDIVIDUAL AWARDS (FILTER BY SDO CASE-INSENSITIVE)
-   ========================================================== */
+    /* =========================================================
+       INDIVIDUAL AWARDS (ALREADY APPROVED - KEEP)
+    ========================================================== */
 
-   $individualRegular = IndividualAwardResult::with(['sport','athlete'])
-       ->whereIn('division', ['Elementary','Secondary'])
-       ->where('status', 'approved')
-       ->whereRaw('UPPER(sdo) = ?', [strtoupper($division->name)])
-       ->latest()
-       ->get();
+    $individualRegular = IndividualAwardResult::with(['sport','athlete'])
+        ->whereIn('division', ['Elementary','Secondary'])
+        ->where('status', 'approved')
+        ->whereRaw('UPPER(sdo) = ?', [strtoupper($division->name)])
+        ->latest()
+        ->get();
 
-   $individualParagames = IndividualAwardResult::with(['sport','athlete'])
-       ->where('division', 'Paragames')
-       ->where('status', 'approved')
-       ->whereRaw('UPPER(sdo) = ?', [strtoupper($division->name)])
-       ->latest()
-       ->get();
+    $individualParagames = IndividualAwardResult::with(['sport','athlete'])
+        ->where('division', 'Paragames')
+        ->where('status', 'approved')
+        ->whereRaw('UPPER(sdo) = ?', [strtoupper($division->name)])
+        ->latest()
+        ->get();
 
     /* =========================================================
        MERGED TEAM RESULTS
@@ -162,7 +164,7 @@ public function participantShow(Division $division, Request $request)
     ]);
 
     /* =========================================================
-       MEDAL COUNTS (TEAM + INDIVIDUAL)
+       MEDAL COUNTS (ONLY APPROVED)
     ========================================================== */
 
     $regularCounts = [
