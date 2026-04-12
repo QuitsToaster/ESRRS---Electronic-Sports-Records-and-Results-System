@@ -49,10 +49,10 @@
                     Home
                 </a>
                 
-                <a href="{{ route('viewer.participants') }}" 
+                <!-- <a href="{{ route('viewer.participants') }}" 
                    class="{{ $linkClass }} {{ request()->routeIs('viewer.participants') ? $activeClass : '' }}">
                     SDO
-                </a>
+                </a> -->
                 
                 <a href="{{ route('viewer.medalTally') }}" 
                    class="{{ $linkClass }} {{ request()->routeIs('viewer.medalTally') ? $activeClass : '' }}">
@@ -121,10 +121,10 @@
             Home
         </a>
         
-        <a href="{{ route('viewer.participants') }}" 
+        <!-- <a href="{{ route('viewer.participants') }}" 
            class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.participants') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
             SDO
-        </a>
+        </a> -->
         
         <a href="{{ route('viewer.medalTally') }}" 
            class="block px-4 py-3 rounded-lg text-gray-700 font-medium {{ request()->routeIs('viewer.medalTally') ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50' }} transition-colors">
@@ -602,7 +602,7 @@
         <div class="flex flex-col gap-2">
             <h3 class="text-2xl font-semibold mb-2" style="font-family: 'Poppins', sans-serif;">Quick Links</h3>
             <a href="{{ route('viewer.home') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Home</a>
-            <a href="{{ route('viewer.participants') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">SDO</a>
+            <!-- <a href="{{ route('viewer.participants') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">SDO</a> -->
             <a href="{{ route('viewer.medalTally') }}" class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">Medals</a>
             <a href="{{ route('viewer.events') }}" 
             class="hover:text-blue-600 transition" style="font-family: 'Poppins', sans-serif;">
