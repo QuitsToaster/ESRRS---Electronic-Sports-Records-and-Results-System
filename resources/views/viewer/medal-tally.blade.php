@@ -114,72 +114,101 @@
          }">
 
          {{-- ================= ALL MEDALS AWARDED ================= --}}
-        @php
-            use App\Models\IndividualAwardResult;
-            use App\Models\Sport;
+@php
+    use App\Models\IndividualAwardResult;
+    use App\Models\Sport;
 
-            $individualResults = IndividualAwardResult::with(['sport','athlete','event'])
-                ->latest()->get();
+    $individualResults = IndividualAwardResult::with(['sport','athlete','event','type'])
+        ->latest()->get();
 
-            $sports = Sport::orderBy('name')->get();
-        @endphp
+    $sports = Sport::with('types')->orderBy('name')->get();
+@endphp
 
-        <div class="mt-20">
-            <h2 class="text-center text-6xl font-extrabold mb-10 text-yellow-400">
-                Individual Awards
-            </h2>
+<div class="mt-20">
+    <h2 class="text-center text-6xl font-extrabold mb-10 text-yellow-400">
+        Individual Awards
+    </h2>
 
-            @foreach(['Elementary','Secondary','Paragames'] as $division)
-                <h3 class="text-3xl font-semibold text-white mb-4">{{ $division }}</h3>
+    @foreach(['Elementary','Secondary','Paragames'] as $division)
+        <h3 class="text-3xl font-semibold text-white mb-4">{{ $division }}</h3>
 
-                @foreach($sports as $sport)
-                    @php
-                        $rows = $individualResults
-                            ->where('status', 'approved')
-                            ->where('division', $division)
-                            ->where('sport_id', $sport->id);
-                    @endphp
+        @foreach($sports as $sport)
 
-                    @if($rows->isNotEmpty())
-                        <h4 class="text-xl text-yellow-300 mb-2">{{ $sport->name }}</h4>
+            @php
+                $rows = $individualResults
+                    ->where('status', 'approved')
+                    ->where('division', $division)
+                    ->where('sport_id', $sport->id)
+                    ->groupBy('type_id'); // ✅ GROUP BY TYPE
+            @endphp
 
-                        <table class="w-full mb-6 bg-white/10 text-white rounded-xl">
-                            <thead class="bg-white/20">
-                                <tr>
-                                    <!-- <th class="px-4 py-2">Event</th> -->
-                                    <th class="px-4 py-2">Athlete</th>
-                                    <th class="px-4 py-2">Category</th>
-                                    <th class="px-4 py-2">School</th>
-                                    <th class="px-4 py-2">Municipality/Town/City</th>
-                                    <th class="px-4 py-2">Division</th>
-                                    <th class="px-4 py-2">Medal</th>
-                                    <th class="px-4 py-2">Date</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($rows as $r)
-                                    <tr class="border-b border-white/20">
-                                        <!-- <td class="px-4 py-2">{{ $r->event?->name }}</td> -->
-                                        <td class="px-4 py-2">{{ $r->athlete?->full_name }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->category }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->school_name }}</td>
-                                        <td class="px-4 py-2">{{ $r->athlete?->municipality }}</td>
-                                        <td class="px-4 py-2">SDO - {{ $r->athlete?->school_division }}</td>
-                                        <td class="px-4 py-2 font-bold
-                                            {{ $r->medal==='Gold'?'text-yellow-400':($r->medal==='Silver'?'text-gray-300':'text-orange-400') }}">
-                                            {{ $r->medal }}
-                                        </td>
-                                        <td class="px-4 py-2">
-                                            {{ $r->created_at?->format('M d, Y') }}
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    @endif
-                @endforeach
+            @foreach($rows as $typeId => $groupedRows)
+
+                @php
+                    $typeName = optional($groupedRows->first()->type)->type_name ?? 'N/A';
+                @endphp
+
+                {{-- ================= SPORT + TYPE HEADER ================= --}}
+                <h4 class="text-xl text-yellow-300 mb-2">
+                    {{ $sport->name }} - {{ $typeName }}
+                </h4>
+
+                <table class="w-full mb-6 bg-white/10 text-white rounded-xl">
+                    <thead class="bg-white/20">
+                        <tr>
+                            <th class="px-4 py-2">Athlete</th>
+                            <th class="px-4 py-2">Category</th>
+                            <th class="px-4 py-2">School</th>
+                            <th class="px-4 py-2">Municipality/Town/City</th>
+                            <th class="px-4 py-2">Division</th>
+                            <th class="px-4 py-2">Medal</th>
+                            <th class="px-4 py-2">Date</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach($groupedRows as $r)
+                            <tr class="border-b border-white/20">
+
+                                <td class="px-4 py-2">
+                                    {{ $r->athlete?->full_name }}
+                                </td>
+
+                                <td class="px-4 py-2">
+                                    {{ $r->athlete?->category }}
+                                </td>
+
+                                <td class="px-4 py-2">
+                                    {{ $r->athlete?->school_name }}
+                                </td>
+
+                                <td class="px-4 py-2">
+                                    {{ $r->athlete?->municipality }}
+                                </td>
+
+                                <td class="px-4 py-2">
+                                    SDO - {{ $r->athlete?->school_division }}
+                                </td>
+
+                                <td class="px-4 py-2 font-bold
+                                    {{ $r->medal==='Gold'?'text-yellow-400':($r->medal==='Silver'?'text-gray-300':'text-orange-400') }}">
+                                    {{ $r->medal }}
+                                </td>
+
+                                <td class="px-4 py-2">
+                                    {{ $r->created_at?->format('M d, Y') }}
+                                </td>
+
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+
             @endforeach
-        </div>
+
+        @endforeach
+    @endforeach
+</div>
 
         <<div class="flex items-center my-12">
   <div class="flex-grow h-0.5 bg-gray-300"></div>
