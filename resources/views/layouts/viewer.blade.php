@@ -678,7 +678,7 @@ function viewerLayout() {
         if (!this.scannerOpen) {
             window.location.reload();
         }
-    },90000); // 1 minute and 30 seconds
+    },120000); // 2 minutes
 },
 
         openScanner() {
