@@ -23,7 +23,7 @@
 
         {{-- TOP LABEL --}}
         <div class="text-xs uppercase tracking-wider text-gray-300 mb-1">
-            Partial & Unofficial Result
+            Partial & Unofficial Results
         </div>
 
         {{-- TIME --}}
