@@ -493,11 +493,13 @@ function closePrivacyModal() {
 
     {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
 <section
+    class="order-1 lg:order-2 flex flex-col justify-start h-full"
     x-data="{
         activeTab: 'regular',
         open: false,
         division: null,
         medals: { gold: [], silver: [], bronze: [] },
+        currentTime: '',
 
         switchTab(tab) { this.activeTab = tab },
 
@@ -509,9 +511,27 @@ function closePrivacyModal() {
                 bronze: results.filter(r => r.medal === 'Bronze'),
             };
             this.open = true;
+        },
+
+        initClock() {
+            const update = () => {
+                const now = new Date();
+                this.currentTime = now.toLocaleString('en-PH', {
+                    timeZone: 'Asia/Manila',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+            };
+            update();
+            setInterval(update, 1000);
         }
     }"
-    class="order-1 lg:order-2 flex flex-col justify-start h-full"
+    x-init="initClock()"
 >
 @php
 use App\Models\AllAwardResult;
@@ -615,7 +635,47 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
             <div class="absolute inset-0 bg-black/30"></div>
         </div>
 
-        <div class="relative px-6 py-6 max-h-[600px] overflow-y-auto overflow-x-hidden">
+        <div class="relative px-6 py-6 max-h-[900px] flex flex-col overflow-hidden">
+
+       {{-- ================= HEADER: REAL-TIME (MODERN & NOTICEABLE) ================= --}}
+<div class="text-center mb-6 relative z-10">
+    {{-- Status Badge --}}
+    <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm rounded-full px-4 py-1.5 mb-3 border border-white/20 shadow-lg">
+        <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500"></span>
+        </span>
+        <span class="text-xs font-semibold uppercase tracking-wider text-white/90">Live Updates</span>
+    </div>
+
+    {{-- Main Title --}}
+    <h2 class="text-2xl md:text-3xl font-black tracking-tighter uppercase bg-gradient-to-r from-yellow-200 via-yellow-400 to-amber-500 bg-clip-text text-transparent drop-shadow-lg">
+        Partial & Unofficial Results
+    </h2>
+    
+    {{-- Real-time Clock Card --}}
+    <div class="inline-block mt-2 bg-black/30 backdrop-blur-sm rounded-2xl px-5 py-2 border border-white/10 shadow-md">
+        <p class="text-sm md:text-base font-medium text-white/90">
+            <span class="opacity-75 mr-1">As of now:</span>
+            <span class="font-mono font-bold text-yellow-300" x-text="currentTime"></span>
+        </p>
+    </div>
+
+    {{-- ================= MODERN NOTE ================= --}}
+    <div class="mt-5 max-w-2xl mx-auto text-center">
+        <div class="bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 backdrop-blur-sm rounded-2xl px-5 py-3 border border-yellow-400/30 shadow-sm transition-all duration-300 hover:border-yellow-400/60 hover:shadow-md">
+            <div class="flex items-center justify-center gap-2 mb-1">
+                <svg class="w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
+                <p class="font-bold text-xs uppercase tracking-wider text-yellow-200">Important Note</p>
+            </div>
+            <p class="text-xs md:text-sm text-white/90 font-medium">
+                Medal tally is based on the official reports submitted by the Tournament Secretary and validated by the Tournament Director.
+            </p>
+        </div>
+    </div>
+</div>
+
+
 
             {{-- Tabs --}}
 <div class="flex gap-4 mb-6 text-white font-semibold">
@@ -652,7 +712,7 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
 
             {{-- Medal Rows --}}
-            <div class="space-y-4 md:space-y-6">
+            <div class="flex-1 overflow-y-auto space-y-4 md:space-y-6 pr-2">
 
                 {{-- Regular --}}
                 <template x-if="activeTab === 'regular'">
