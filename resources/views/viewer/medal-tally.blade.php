@@ -5,6 +5,49 @@
 @section('content')
 <section class="relative py-10 min-h-screen -mt-16">
 
+{{-- ================= FLOATING REAL-TIME PH TIME WITH NOTES ================= --}}
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-[999]"
+     x-data="{
+        now: new Date(),
+        updateTime() {
+            setInterval(() => {
+                this.now = new Date();
+            }, 1000);
+        }
+     }"
+     x-init="updateTime()">
+
+    <div class="bg-black/70 backdrop-blur-md text-white
+                px-6 py-4 rounded-2xl shadow-xl border border-white/20
+                text-center w-[340px]">
+
+        {{-- TOP LABEL --}}
+        <div class="text-xs uppercase tracking-wider text-gray-300 mb-1">
+            Partial & Unofficial Result
+        </div>
+
+        {{-- TIME --}}
+        <div class="font-bold text-yellow-300 text-sm md:text-base">
+            <span x-text="now.toLocaleString('en-PH', {
+                timeZone: 'Asia/Manila',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: true
+            })"></span>
+        </div>
+
+        {{-- NOTE (ALWAYS VISIBLE) --}}
+        <div class="mt-2 text-[10px] text-gray-300 leading-tight">
+            Note: Report of Medal Tally is based from reporting of Tournament Secretary and validation of Tournament Director
+        </div>
+
+    </div>
+</div>
+
     {{-- ================= BACKGROUND ================= --}}
     <div class="absolute inset-0">
         <img src="{{ asset('storage/medalbg.jpg') }}"
