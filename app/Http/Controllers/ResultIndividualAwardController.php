@@ -32,51 +32,12 @@ class ResultIndividualAwardController extends Controller
         return back()->with('error', 'Invalid results format.');
     }
 
-    // ================= GET EVENT =================
+    // ================= EVENT =================
     $event = Event::where('is_active', 1)->first() ?? Event::first();
 
     if (!$event) {
         return back()->with('error', 'No event available.');
     }
-
-    // ================= FIX: DYNAMIC DIVISION =================
-
-// Priority:
-// 1. User level access (correct for TS like Paragames)
-// 2. Fallback to event ONLY if needed
-
-$defaultDivision = null;
-
-if (!empty($user->level_access)) {
-
-    // Single assigned division (e.g., Paragames TS)
-    if (count($user->level_access) === 1) {
-        $defaultDivision = $user->level_access[0];
-    } else {
-        // Multiple access → fallback to event OR first
-        $defaultDivision = $event->age_group ?? $user->level_access[0];
-    }
-
-} else {
-    // Super Admin fallback
-    $defaultDivision = $event->age_group ?? null;
-}
-
-
-// ================= CATEGORY =================
-$defaultCategory = null;
-
-if (!empty($user->category_access)) {
-
-    if (count($user->category_access) === 1) {
-        $defaultCategory = $user->category_access[0];
-    } else {
-        $defaultCategory = $event->category ?? $user->category_access[0];
-    }
-
-} else {
-    $defaultCategory = $event->category ?? null;
-}
 
     // ================= PROCESS =================
     foreach ($results as $sportId => $types) {
@@ -92,14 +53,16 @@ if (!empty($user->category_access)) {
                 if (!is_array($data)) continue;
 
                 $athleteId = $data['athlete'] ?? null;
+                $division  = $data['division'] ?? null;   // ✅ FROM FORM
+                $category  = $data['category'] ?? null;   // ✅ FROM FORM
+
                 if (!$athleteId) continue;
 
                 // ================= GET ATHLETE =================
                 $athlete = \App\Models\Athlete::find($athleteId);
-
                 if (!$athlete) continue;
 
-                // ✅ AUTO SDO (LIKE YOUR SYSTEM)
+                // ================= AUTO SDO =================
                 $sdo = $athlete->school_division
                     ? 'SDO - ' . $athlete->school_division
                     : null;
@@ -123,8 +86,10 @@ if (!empty($user->category_access)) {
                         'medal'    => $medalName,
                     ],
                     [
-                        'division' => $defaultDivision,
-                        'category' => $defaultCategory,
+                        // ✅ FIX: USE FORM VALUES
+                        'division' => $division,
+                        'category' => $category,
+
                         'athlete_id' => $athleteId,
                         'sdo' => $sdo,
                         'status' => $status,
@@ -149,8 +114,11 @@ if (!empty($user->category_access)) {
                         'event_id' => $event->id,
                         'sport_id' => $sportId,
                         'type_id' => $typeId,
-                        'division' => $defaultDivision,
-                        'category' => $defaultCategory,
+
+                        // ✅ LOG CORRECT VALUES
+                        'division' => $division,
+                        'category' => $category,
+
                         'athlete_id' => $athleteId,
                         'sdo' => $sdo,
                         'medal' => $medalName,

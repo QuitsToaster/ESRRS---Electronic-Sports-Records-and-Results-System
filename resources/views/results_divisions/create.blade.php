@@ -653,84 +653,82 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
                 @foreach($pendingResults as $r)
                     <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
                         <div class="flex flex-wrap items-start justify-between gap-4">
+
                             <div class="flex-1 min-w-0">
+
+                                {{-- HEADER --}}
                                 <div class="flex items-center gap-3 flex-wrap mb-2">
                                     <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
                                     <span class="text-xs text-gray-500">•</span>
                                     <span class="text-sm text-gray-600">{{ $r->type->type_name ?? 'ALL EVENTS' }}</span>
                                 </div>
+
+                                {{-- ✅ NEW: DIVISION + CATEGORY LABEL --}}
+                                <div class="flex gap-2 mb-2">
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                                        @if($r->division === 'Elementary') bg-blue-100 text-blue-700
+                                        @elseif($r->division === 'Secondary') bg-purple-100 text-purple-700
+                                        @elseif($r->division === 'Paragames') bg-green-100 text-green-700
+                                        @else bg-gray-100 text-gray-700
+                                        @endif">
+                                        {{ $r->division ?? 'N/A' }}
+                                    </span>
+
+                                    <span class="text-xs px-2 py-0.5 rounded-full font-medium
+                                        @if($r->category === 'Boys') bg-blue-200 text-blue-800
+                                        @elseif($r->category === 'Girls') bg-pink-200 text-pink-800
+                                        @elseif($r->category === 'Mixed') bg-gray-200 text-gray-800
+                                        @else bg-gray-100 text-gray-700
+                                        @endif">
+                                        {{ $r->category ?? 'Mixed' }}
+                                    </span>
+                                </div>
+
+                                {{-- DETAILS --}}
                                 <div class="flex flex-wrap gap-3 text-sm">
                                     <div class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                        </svg>
                                         <span class="text-gray-600">{{ $r->sdo }}</span>
                                     </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
+
+                                    <div>
                                         <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
                                             @if($r->medal === 'Gold') bg-amber-100 text-amber-700
                                             @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
                                             @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
-                                            @else bg-blue-100 text-blue-700 @endif">
+                                            @endif">
                                             {{ $r->medal }}
                                         </span>
                                     </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"></path>
-                                        </svg>
+
+                                    <div>
                                         <span class="text-gray-600 font-medium">{{ $r->count }} award(s)</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-4">
-                                {{-- VALIDATION FILE --}}
-                                @if($r->validation_file)
-                                    @php
-                                        $fileUrl = asset('storage/' . $r->validation_file);
-                                        $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-                                    @endphp
-
-                                    @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
-                                        <a href="{{ $fileUrl }}" target="_blank" class="block w-12 h-12 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition flex-shrink-0">
-                                            <img src="{{ $fileUrl }}" class="w-full h-full object-cover">
-                                        </a>
-                                    @else
-                                        <a href="{{ $fileUrl }}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium flex-shrink-0">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                            </svg>
-                                            View PDF
-                                        </a>
-                                    @endif
-                                @else
-                                    <span class="text-gray-400 text-sm flex-shrink-0">—</span>
-                                @endif
-
-                                {{-- ACTIONS --}}
-                                <div class="flex items-center gap-2 flex-shrink-0">
-                                    <form method="POST" action="{{ route('approve_all_awards') }}" class="inline">
-                                        @csrf
-                                        <input type="hidden" name="award_id" value="{{ $r->id }}">
-                                        <button class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-lg transition">
-                                            Approve
-                                        </button>
-                                    </form>
-                                    <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'all' })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-lg transition">
-                                        Reject
+                            {{-- ACTIONS --}}
+                            <div class="flex items-center gap-2">
+                                <form method="POST" action="{{ route('approve_all_awards') }}">
+                                    @csrf
+                                    <input type="hidden" name="award_id" value="{{ $r->id }}">
+                                    <button class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg">
+                                        Approve
                                     </button>
-                                </div>
+                                </form>
+
+                                <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'all' })"
+                                        class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg">
+                                    Reject
+                                </button>
                             </div>
+
                         </div>
                     </div>
                 @endforeach
             </div>
         </div>
     @endif
+
 
     {{-- ================= REJECT MODAL ================= --}}
     <div x-data="{ open:false, awardId:null, awardType:null, message:'' }"
@@ -790,84 +788,76 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
     {{-- ================= INDIVIDUAL AWARDS ================= --}}
     @if($pendingIndividual->count())
         <div>
-            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
                 Individual Awards
             </h4>
 
             <div class="grid gap-4">
                 @foreach($pendingIndividual as $r)
                     <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
-                        <div class="flex flex-wrap items-start justify-between gap-4">
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-3 flex-wrap mb-2">
-                                    <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
-                                    <span class="text-xs text-gray-500">•</span>
-                                    <span class="text-sm text-gray-600">{{ $r->type->type_name ?? '-' }}</span>
+
+                        <div class="flex flex-wrap justify-between gap-4">
+
+                            <div class="flex-1">
+
+                                {{-- HEADER --}}
+                                <div class="flex gap-2 mb-2">
+                                    <span class="font-semibold">{{ $r->sport->name }}</span>
+                                    <span>•</span>
+                                    <span>{{ $r->type->type_name }}</span>
                                 </div>
-                                <div class="flex flex-wrap gap-3 text-sm mb-2">
-                                    <div class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
-                                        </svg>
-                                        <span class="text-gray-600">{{ $r->sdo }}</span>
-                                    </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
-                                            @if($r->medal === 'Gold') bg-amber-100 text-amber-700
-                                            @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
-                                            @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
-                                            @else bg-blue-100 text-blue-700 @endif">
-                                            {{ $r->medal }}
-                                        </span>
-                                    </div>
+
+                                {{-- ✅ NEW LABEL --}}
+                                <div class="flex gap-2 mb-2">
+                                    <span class="text-xs px-2 py-0.5 rounded-full
+                                        @if($r->division === 'Elementary') bg-blue-100 text-blue-700
+                                        @elseif($r->division === 'Secondary') bg-purple-100 text-purple-700
+                                        @elseif($r->division === 'Paragames') bg-green-100 text-green-700
+                                        @endif">
+                                        {{ $r->division }}
+                                    </span>
+
+                                    <span class="text-xs px-2 py-0.5 rounded-full
+                                        @if($r->category === 'Boys') bg-blue-200 text-blue-800
+                                        @elseif($r->category === 'Girls') bg-pink-200 text-pink-800
+                                        @elseif($r->category === 'Mixed') bg-gray-200 text-gray-800
+                                        @endif">
+                                        {{ $r->category ?? 'Mixed' }}
+                                    </span>
                                 </div>
-                                <div class="flex items-center gap-1.5 text-sm">
-                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                                    </svg>
-                                    <span class="text-gray-700">{{ $r->athlete ? $r->athlete->last_name . ', ' . $r->athlete->first_name : '-' }}</span>
+
+                                {{-- DETAILS --}}
+                                <div class="text-sm text-gray-600 mb-1">
+                                    {{ $r->athlete?->last_name }}, {{ $r->athlete?->first_name }}
                                 </div>
+
+                                <div class="text-sm">{{ $r->sdo }}</div>
+
+                                <span class="text-xs px-2 py-0.5 rounded-full mt-1 inline-block
+                                    @if($r->medal === 'Gold') bg-amber-100 text-amber-700
+                                    @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
+                                    @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
+                                    @endif">
+                                    {{ $r->medal }}
+                                </span>
+
                             </div>
 
-                            <div class="flex items-center gap-4">
-                                {{-- VALIDATION FILE --}}
-                                @if($r->validation_file)
-                                    @php
-                                        $fileUrl = asset('storage/' . $r->validation_file);
-                                        $ext = strtolower(pathinfo($r->validation_file, PATHINFO_EXTENSION));
-                                    @endphp
+                            {{-- ACTIONS --}}
+                            <div class="flex gap-2">
+                                <button @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })"
+                                        class="px-3 py-1.5 bg-green-50 text-green-700 rounded">
+                                    Approve
+                                </button>
 
-                                    @if(in_array($ext, ['jpg','jpeg','png','gif','webp']))
-                                        <a href="{{ $fileUrl }}" target="_blank" class="block w-12 h-12 rounded-lg overflow-hidden shadow-sm hover:shadow-md transition flex-shrink-0">
-                                            <img src="{{ $fileUrl }}" class="w-full h-full object-cover">
-                                        </a>
-                                    @else
-                                        <a href="{{ $fileUrl }}" target="_blank" class="inline-flex items-center gap-1 text-indigo-600 hover:text-indigo-800 text-sm font-medium flex-shrink-0">
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-                                            </svg>
-                                            View PDF
-                                        </a>
-                                    @endif
-                                @else
-                                    <span class="text-gray-400 text-sm flex-shrink-0">—</span>
-                                @endif
-
-                                {{-- ACTIONS --}}
-                                <div class="flex items-center gap-2 flex-shrink-0">
-                                    <button class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-sm font-medium rounded-lg transition" @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })">
-                                        Approve
-                                    </button>
-                                    <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })" class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 text-sm font-medium rounded-lg transition">
-                                        Reject
-                                    </button>
-                                </div>
+                                <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })"
+                                        class="px-3 py-1.5 bg-red-50 text-red-700 rounded">
+                                    Reject
+                                </button>
                             </div>
+
                         </div>
+
                     </div>
                 @endforeach
             </div>
@@ -954,13 +944,41 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 @csrf
 
-{{-- ================= UNIVERSAL VIEW (NO EVENTS DEPENDENCY) ================= --}}
+{{-- ================= UNIVERSAL VIEW ================= --}}
 @foreach($sports as $sport)
 
     {{-- 🏀 SPORT --}}
-    <h1 class="text-3xl font-bold mt-10 mb-4 text-indigo-700">
-        {{ strtoupper($sport->name) }}
-    </h1>
+    <div class="mt-10 mb-4">
+
+        {{-- SPORT TITLE --}}
+        <h1 class="text-3xl font-bold text-indigo-700">
+            {{ strtoupper($sport->name) }}
+        </h1>
+
+        {{-- ✅ NEW: SPORT LABEL (FROM DB) --}}
+        <div class="mt-2">
+            <span class="text-xs px-3 py-1 rounded-full font-medium
+                @if($sport->division === 'Elementary') bg-blue-100 text-blue-700
+                @elseif($sport->division === 'Secondary') bg-purple-100 text-purple-700
+                @elseif($sport->division === 'Paragames') bg-green-100 text-green-700
+                @else bg-gray-100 text-gray-700
+                @endif
+            ">
+                {{ $sport->division ?? 'N/A' }}
+            </span>
+
+            <span class="text-xs px-3 py-1 rounded-full font-medium ml-1
+                @if($sport->category === 'Boys') bg-blue-200 text-blue-800
+                @elseif($sport->category === 'Girls') bg-pink-200 text-pink-800
+                @elseif($sport->category === 'Mixed') bg-gray-200 text-gray-800
+                @else bg-gray-100 text-gray-700
+                @endif
+            ">
+                {{ $sport->category ?? 'Mixed' }}
+            </span>
+        </div>
+
+    </div>
 
     {{-- ================= TYPES ================= --}}
     @forelse($sport->types as $type)
@@ -983,7 +1001,34 @@ $divisions = \App\Models\Division::orderBy('name')->get();
             <tbody>
                 <tr>
                     <td class="border px-2 font-medium">
-                        {{ $sport->name }} - {{ $type->type_name }}
+                        <div>
+                            <div class="font-semibold">
+                                {{ $sport->name }} - {{ $type->type_name }}
+                            </div>
+
+                            {{-- ✅ REPEAT LABEL INSIDE TABLE --}}
+                            <div class="mt-1 flex gap-1">
+                                <span class="text-[10px] px-2 py-0.5 rounded
+                                    @if($sport->division === 'Elementary') bg-blue-100 text-blue-700
+                                    @elseif($sport->division === 'Secondary') bg-purple-100 text-purple-700
+                                    @elseif($sport->division === 'Paragames') bg-green-100 text-green-700
+                                    @else bg-gray-100 text-gray-700
+                                    @endif
+                                ">
+                                    {{ $sport->division }}
+                                </span>
+
+                                <span class="text-[10px] px-2 py-0.5 rounded
+                                    @if($sport->category === 'Boys') bg-blue-200 text-blue-800
+                                    @elseif($sport->category === 'Girls') bg-pink-200 text-pink-800
+                                    @elseif($sport->category === 'Mixed') bg-gray-200 text-gray-800
+                                    @else bg-gray-100 text-gray-700
+                                    @endif
+                                ">
+                                    {{ $sport->category ?? 'Mixed' }}
+                                </span>
+                            </div>
+                        </div>
                     </td>
 
                     @foreach(['Gold','Silver','Bronze'] as $medal)
@@ -994,7 +1039,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                                 <div class="flex gap-2 mb-2">
 
                                     <select
-                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][]"
+                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][{{ $loop->index }}][sdo]"
                                         class="w-full border rounded px-2 py-1 text-sm"
                                     >
                                         <option value="">-- Select Division / SDO --</option>
@@ -1004,6 +1049,16 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                                             </option>
                                         @endforeach
                                     </select>
+
+                                    {{-- ✅ PASS DIVISION --}}
+                                    <input type="hidden"
+                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][{{ $loop->index }}][division]"
+                                        value="{{ $sport->division }}">
+
+                                    {{-- ✅ PASS CATEGORY --}}
+                                    <input type="hidden"
+                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][{{ $loop->index }}][category]"
+                                        value="{{ $sport->category }}">
 
                                     <button type="button"
                                             x-show="divisions.length > 1"
@@ -1100,13 +1155,40 @@ $divisions = \App\Models\Division::orderBy('name')->get();
     $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
 @endphp
 
-{{-- ================= UNIVERSAL VIEW (NO EVENTS DEPENDENCY) ================= --}}
+{{-- ================= UNIVERSAL VIEW ================= --}}
 @foreach($sports as $sport)
 
     {{-- 🏀 SPORT --}}
-    <h1 class="text-3xl font-bold mt-10 mb-4 text-green-700">
-        {{ strtoupper($sport->name) }}
-    </h1>
+    <div class="mt-10 mb-4">
+
+        <h1 class="text-3xl font-bold text-green-700">
+            {{ strtoupper($sport->name) }}
+        </h1>
+
+        {{-- ✅ NEW: SPORT LABEL --}}
+        <div class="mt-2">
+            <span class="text-xs px-3 py-1 rounded-full font-medium
+                @if($sport->division === 'Elementary') bg-blue-100 text-blue-700
+                @elseif($sport->division === 'Secondary') bg-purple-100 text-purple-700
+                @elseif($sport->division === 'Paragames') bg-green-100 text-green-700
+                @else bg-gray-100 text-gray-700
+                @endif
+            ">
+                {{ $sport->division ?? 'N/A' }}
+            </span>
+
+            <span class="text-xs px-3 py-1 rounded-full font-medium ml-1
+                @if($sport->category === 'Boys') bg-blue-200 text-blue-800
+                @elseif($sport->category === 'Girls') bg-pink-200 text-pink-800
+                @elseif($sport->category === 'Mixed') bg-gray-200 text-gray-800
+                @else bg-gray-100 text-gray-700
+                @endif
+            ">
+                {{ $sport->category ?? 'Mixed' }}
+            </span>
+        </div>
+
+    </div>
 
     {{-- ================= TYPES ================= --}}
     @forelse($sport->types as $type)
@@ -1129,7 +1211,34 @@ $divisions = \App\Models\Division::orderBy('name')->get();
             <tbody>
                 <tr>
                     <td class="border px-2 font-medium">
-                        {{ $sport->name }} - {{ $type->type_name }}
+                        <div>
+                            <div class="font-semibold">
+                                {{ $sport->name }} - {{ $type->type_name }}
+                            </div>
+
+                            {{-- ✅ LABEL INSIDE TABLE --}}
+                            <div class="mt-1 flex gap-1">
+                                <span class="text-[10px] px-2 py-0.5 rounded
+                                    @if($sport->division === 'Elementary') bg-blue-100 text-blue-700
+                                    @elseif($sport->division === 'Secondary') bg-purple-100 text-purple-700
+                                    @elseif($sport->division === 'Paragames') bg-green-100 text-green-700
+                                    @else bg-gray-100 text-gray-700
+                                    @endif
+                                ">
+                                    {{ $sport->division }}
+                                </span>
+
+                                <span class="text-[10px] px-2 py-0.5 rounded
+                                    @if($sport->category === 'Boys') bg-blue-200 text-blue-800
+                                    @elseif($sport->category === 'Girls') bg-pink-200 text-pink-800
+                                    @elseif($sport->category === 'Mixed') bg-gray-200 text-gray-800
+                                    @else bg-gray-100 text-gray-700
+                                    @endif
+                                ">
+                                    {{ $sport->category ?? 'Mixed' }}
+                                </span>
+                            </div>
+                        </div>
                     </td>
 
                     @foreach(['Gold','Silver','Bronze'] as $medal)
@@ -1137,7 +1246,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
                         <div x-data="{ selectedAthlete: null }">
 
-                            {{-- 🔍 SEARCH INPUT --}}
+                            {{-- 🔍 SEARCH --}}
                             <input 
                                 list="athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}"
                                 x-model="selectedAthlete"
@@ -1151,7 +1260,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                                 @endforeach
                             </datalist>
 
-                            {{-- HIDDEN VALUES --}}
+                            {{-- ================= HIDDEN VALUES ================= --}}
                             <input type="hidden"
                                    :value="getAthleteId(selectedAthlete)"
                                    name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][athlete]">
@@ -1159,6 +1268,15 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                             <input type="hidden"
                                    :value="getAthleteSDO(selectedAthlete)"
                                    name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][sdo]">
+
+                            {{-- ✅ CRITICAL FIX (DIVISION + CATEGORY FROM SPORT) --}}
+                            <input type="hidden"
+                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][division]"
+                                   value="{{ $sport->division }}">
+
+                            <input type="hidden"
+                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][category]"
+                                   value="{{ $sport->category }}">
 
                             {{-- INFO --}}
                             <div class="text-xs text-gray-600 mt-1"
@@ -1184,7 +1302,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
     {{ $sports->links() }}
 </div>
 
-{{-- ================= SUBMIT BUTTON ================= --}}
+{{-- ================= SUBMIT ================= --}}
 <div class="flex justify-end mt-6">
     <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded">
         Save Individual Awards

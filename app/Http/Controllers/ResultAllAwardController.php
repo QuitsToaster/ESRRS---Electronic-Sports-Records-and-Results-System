@@ -30,52 +30,12 @@ class ResultAllAwardController extends Controller
         return back()->with('error', 'Invalid results format.');
     }
 
-    // ================= FIX: GET FALLBACK EVENT =================
+    // ================= EVENT =================
     $event = Event::where('is_active', 1)->first() ?? Event::first();
 
     if (!$event) {
-        return back()->with('error', 'No event available. Please create or activate an event.');
+        return back()->with('error', 'No event available.');
     }
-
-    // ================= FIX: DYNAMIC DIVISION =================
-
-// Priority:
-// 1. User level access (correct for TS like Paragames)
-// 2. Fallback to event ONLY if empty
-
-$defaultDivision = null;
-
-// ✅ If Tournament Secretary / restricted user → use their assigned level
-if (!empty($user->level_access)) {
-
-    // If only one (e.g., Paragames user)
-    if (count($user->level_access) === 1) {
-        $defaultDivision = $user->level_access[0];
-    } else {
-        // If multiple, fallback to event OR first match
-        $defaultDivision = $event->age_group ?? $user->level_access[0];
-    }
-
-} else {
-    // Super Admin fallback
-    $defaultDivision = $event->age_group ?? null;
-}
-
-
-// ================= CATEGORY =================
-$defaultCategory = null;
-
-if (!empty($user->category_access)) {
-
-    if (count($user->category_access) === 1) {
-        $defaultCategory = $user->category_access[0];
-    } else {
-        $defaultCategory = $event->category ?? $user->category_access[0];
-    }
-
-} else {
-    $defaultCategory = $event->category ?? null;
-}
 
     // ================= PROCESS =================
     foreach ($results as $sportId => $types) {
@@ -86,13 +46,15 @@ if (!empty($user->category_access)) {
 
             if (!is_array($medals)) continue;
 
-            foreach ($medals as $medalName => $selectedSdos) {
+            foreach ($medals as $medalName => $entries) {
 
-                if (!is_array($selectedSdos)) {
-                    $selectedSdos = [$selectedSdos];
-                }
+                if (!is_array($entries)) continue;
 
-                foreach ($selectedSdos as $sdoValue) {
+                foreach ($entries as $entry) {
+
+                    $sdoValue = $entry['sdo'] ?? null;
+                    $division = $entry['division'] ?? null;   // ✅ FROM FORM
+                    $category = $entry['category'] ?? null;   // ✅ FROM FORM
 
                     if (empty($sdoValue)) continue;
 
@@ -110,15 +72,17 @@ if (!empty($user->category_access)) {
                     // ================= SAVE =================
                     $award = AllAwardResult::updateOrCreate(
                         [
-                            'event_id' => $event->id, // ✅ FIXED
+                            'event_id' => $event->id,
                             'sport_id' => $sportId,
                             'type_id'  => $typeId ?: null,
                             'sdo'      => $sdoValue,
                             'medal'    => $medalName,
                         ],
                         [
-                            'division' => $defaultDivision,
-                            'category' => $defaultCategory,
+                            // ✅ FIX: USE FORM VALUE (NOT DEFAULT)
+                            'division' => $division,
+                            'category' => $category,
+
                             'count' => 1,
                             'status' => $status,
                             'awarded_by' => $user->id,
@@ -143,8 +107,11 @@ if (!empty($user->category_access)) {
                             'event_id' => $event->id,
                             'sport_id' => $sportId,
                             'type_id' => $typeId,
-                            'division' => $defaultDivision,
-                            'category' => $defaultCategory,
+
+                            // ✅ LOG CORRECT VALUES
+                            'division' => $division,
+                            'category' => $category,
+
                             'sdo' => $sdoValue,
                             'medal' => $medalName,
                             'status' => $status,
@@ -157,7 +124,7 @@ if (!empty($user->category_access)) {
         }
     }
 
-    // ================= UPDATE EVENT STATUS =================
+    // ================= EVENT STATUS =================
     if (in_array($roleName, ['Tournament Manager', 'Super Admin'])) {
         $event->update(['status' => 'Finished']);
     } else {
