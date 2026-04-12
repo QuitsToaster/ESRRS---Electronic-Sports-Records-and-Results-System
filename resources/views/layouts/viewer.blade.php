@@ -228,7 +228,7 @@
 </div>
 
 {{-- Main Content --}}
-<main class="relative z-0 pointer-events-auto w-full overflow-x-hidden">
+<main class="relative pointer-events-auto w-full overflow-x-hidden">
     @yield('content')
 </main>
 

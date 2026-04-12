@@ -6,7 +6,7 @@
 <section class="relative py-10 min-h-screen -mt-16">
 
 {{-- ================= FLOATING REAL-TIME PH TIME WITH NOTES ================= --}}
-<div class="fixed top-20 left-1/2 -translate-x-1/2 z-[999]"
+<div class="fixed top-20 left-1/2 -translate-x-1/2 z-[99999]"
      x-data="{
         now: new Date(),
         updateTime() {
@@ -49,7 +49,7 @@
 </div>
 
     {{-- ================= BACKGROUND ================= --}}
-    <div class="absolute inset-0">
+    <div class="absolute inset-0 z-0">
         <img src="{{ asset('storage/medalbg.jpg') }}"
              class="w-full h-full object-cover brightness-75 blur-sm">
         <div class="absolute inset-0 bg-black/30"></div>
