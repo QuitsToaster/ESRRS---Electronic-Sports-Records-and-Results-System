@@ -690,11 +690,11 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 >
     <div
         @click.away="open = false"
-        class="bg-white text-gray-800 rounded-xl shadow-2xl max-w-4xl w-full max-h-[85vh] overflow-y-auto border-4 border-red-600"
+        class="bg-white text-gray-800 rounded-xl shadow-2xl max-w-5xl w-full h-[85vh] flex flex-col border-4 border-red-600"
     >
 
-        {{-- 🔴 TOP BREAKING NEWS BAR --}}
-        <div class="bg-red-600 flex items-center justify-between px-5 py-3 text-white">
+        {{-- 🔴 TOP BAR --}}
+        <div class="bg-red-600 flex items-center justify-between px-5 py-3 text-white flex-shrink-0">
             <div class="flex items-center gap-3">
                 <span class="bg-yellow-400 text-black px-3 py-1 text-xs font-extrabold tracking-widest rounded">
                     eSRRS
@@ -713,102 +713,129 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
             </button>
         </div>
 
-        {{-- 📺 STUDIO CONTENT --}}
-        <div class="p-5 space-y-8 bg-gray-50">
+        {{-- 📺 CONTENT (3 COLUMN SCROLLABLE) --}}
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 overflow-hidden">
 
-            {{-- Medal Sections --}}
-            <template x-for="(list, type) in medals" :key="type">
-                <div>
-
-                    {{-- LOWER THIRD BANNER --}}
-                    <div
-                        class="flex items-center justify-between px-4 py-2 mb-4 rounded-md font-bold uppercase tracking-wide text-sm"
-                        :class="{
-                            'bg-yellow-400 text-black': type === 'gold',
-                            'bg-gray-300 text-black': type === 'silver',
-                            'bg-orange-400 text-black': type === 'bronze'
-                        }"
-                    >
-                        <span x-text="type + ' Medal Results'"></span>
-                        <span x-text="list.length + ' Awarded'"></span>
-                    </div>
-
-                    {{-- RESULTS LIST --}}
-                    <div class="space-y-3">
-                        <template x-for="m in list" :key="m.id">
-    <div
-        class="bg-white border-l-4 p-4 rounded-md shadow-sm hover:shadow-md hover:bg-gray-100 transition cursor-pointer"
-        :class="{
-            'border-yellow-500': type === 'gold',
-            'border-gray-400': type === 'silver',
-            'border-orange-500': type === 'bronze'
-        }"
-        @click="window.location.href = `/viewer/participants/${division.id}`"
-    >
-        {{-- Headline --}}
-        <div class="flex justify-between items-center mb-2">
-            <!-- <strong
-                class="text-lg font-semibold text-gray-800"
-                x-text="m.sportType?.type_name ?? 'Event Type'"
-            ></strong> -->
-            <span
-                class="text-lg font-bold text-red-600 uppercase"
-                x-text="m.sport?.name ?? 'Sport'"
-            ></span>
-        </div>
-
-        {{-- Info Strip --}}
-        <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-600">
-            <div class="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-600">
-
-    <span>
-        Level:
-        <strong class="text-gray-800" x-text="m.division ?? 'N/A'"></strong>
-    </span>
-
-    <span>
-        Category:
-        <strong class="text-gray-800" x-text="m.category ?? 'N/A'"></strong>
-    </span>
-
-    <span>
-        Awarded:
-        <strong class="text-gray-800"
-            x-text="m.created_at
-                ? new Date(m.created_at).toLocaleDateString(
-                    'en-US',
-                    { month: 'short', day: '2-digit', year: 'numeric' }
-                )
-                : 'N/A'"
-        ></strong>
-    </span>
-
-</div>
-        </div>
-    </div>
-</template>
-
-                        {{-- EMPTY STATE --}}
-                        <p
-                            x-show="list.length === 0"
-                            class="text-gray-500 italic text-sm text-center py-4"
-                        >
-                            No medals awarded
-                        </p>
-                    </div>
+            {{-- ================= GOLD ================= --}}
+            <div class="flex flex-col bg-white rounded-lg shadow overflow-hidden">
+                <div class="bg-yellow-400 text-black font-bold text-center py-2 flex-shrink-0">
+                    GOLD ( <span x-text="medals.gold.length"></span> )
                 </div>
-            </template>
+
+                <div class="flex-1 overflow-y-auto p-3 space-y-3">
+                    <template x-for="m in medals.gold" :key="m.id">
+                        <div
+                            class="border-l-4 border-yellow-500 p-3 rounded bg-white hover:bg-gray-100 cursor-pointer"
+                            @click="window.location.href = `/viewer/participants/${division.id}`"
+                        >
+                            <div class="font-bold text-red-600 text-sm"
+                                 x-text="(m.sport?.name ?? 'Sport')">
+                            </div>
+
+                            <div class="text-xs text-gray-600 mt-1">
+                                <div>
+                                    Level: <strong x-text="m.division"></strong>
+                                </div>
+                                <div>
+                                    Category: <strong x-text="m.category"></strong>
+                                </div>
+                                <div>
+                                    <strong
+                                        x-text="new Date(m.created_at).toLocaleDateString()">
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p x-show="medals.gold.length === 0" class="text-center text-gray-400 text-sm">
+                        No medals
+                    </p>
+                </div>
+            </div>
+
+            {{-- ================= SILVER ================= --}}
+            <div class="flex flex-col bg-white rounded-lg shadow overflow-hidden">
+                <div class="bg-gray-300 text-black font-bold text-center py-2 flex-shrink-0">
+                    SILVER ( <span x-text="medals.silver.length"></span> )
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-3 space-y-3">
+                    <template x-for="m in medals.silver" :key="m.id">
+                        <div
+                            class="border-l-4 border-gray-400 p-3 rounded bg-white hover:bg-gray-100 cursor-pointer"
+                            @click="window.location.href = `/viewer/participants/${division.id}`"
+                        >
+                            <div class="font-bold text-red-600 text-sm"
+                                 x-text="(m.sport?.name ?? 'Sport')">
+                            </div>
+
+                            <div class="text-xs text-gray-600 mt-1">
+                                <div>
+                                    Level: <strong x-text="m.division"></strong>
+                                </div>
+                                <div>
+                                    Category: <strong x-text="m.category"></strong>
+                                </div>
+                                <div>
+                                    <strong
+                                        x-text="new Date(m.created_at).toLocaleDateString()">
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p x-show="medals.silver.length === 0" class="text-center text-gray-400 text-sm">
+                        No medals
+                    </p>
+                </div>
+            </div>
+
+            {{-- ================= BRONZE ================= --}}
+            <div class="flex flex-col bg-white rounded-lg shadow overflow-hidden">
+                <div class="bg-orange-400 text-black font-bold text-center py-2 flex-shrink-0">
+                    BRONZE ( <span x-text="medals.bronze.length"></span> )
+                </div>
+
+                <div class="flex-1 overflow-y-auto p-3 space-y-3">
+                    <template x-for="m in medals.bronze" :key="m.id">
+                        <div
+                            class="border-l-4 border-orange-500 p-3 rounded bg-white hover:bg-gray-100 cursor-pointer"
+                            @click="window.location.href = `/viewer/participants/${division.id}`"
+                        >
+                            <div class="font-bold text-red-600 text-sm"
+                                 x-text="(m.sport?.name ?? 'Sport')">
+                            </div>
+
+                            <div class="text-xs text-gray-600 mt-1">
+                                <div>
+                                    Level: <strong x-text="m.division"></strong>
+                                </div>
+                                <div>
+                                    Category: <strong x-text="m.category"></strong>
+                                </div>
+                                <div>
+                                    <strong
+                                        x-text="new Date(m.created_at).toLocaleDateString()">
+                                    </strong>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <p x-show="medals.bronze.length === 0" class="text-center text-gray-400 text-sm">
+                        No medals
+                    </p>
+                </div>
+            </div>
 
         </div>
 
-        {{-- 📡 FOOTER TICKER --}}
-        <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 flex justify-between items-center border-t">
-            <span class=" tracking-wide font-semibold">
-                eSRRS • Official Medal Records
-            </span>
-            <span class="italic">
-                Press ESC or click outside to close
-            </span>
+        {{-- 📡 FOOTER --}}
+        <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 flex justify-between items-center border-t flex-shrink-0">
+            <span class="font-semibold">eSRRS • Official Medal Records</span>
+            <span class="italic">Press ESC or click outside to close</span>
         </div>
 
     </div>
