@@ -662,14 +662,24 @@ function viewerLayout() {
         qrScannerStarted: false,
 
         initLayout() {
-            window.addEventListener('scroll', () => {
-                this.showTop = window.scrollY > 300;
-            });
+    // ================= SCROLL BUTTON =================
+    window.addEventListener('scroll', () => {
+        this.showTop = window.scrollY > 300;
+    });
 
-            window.addEventListener('resize', () => {
-                if (window.innerWidth >= 768) this.open = false;
-            });
-        },
+    // ================= MOBILE MENU AUTO CLOSE =================
+    window.addEventListener('resize', () => {
+        if (window.innerWidth >= 768) this.open = false;
+    });
+
+    // ================= AUTO REFRESH EVERY 30 SECONDS =================
+    setInterval(() => {
+        // prevent refresh while QR scanner is open
+        if (!this.scannerOpen) {
+            window.location.reload();
+        }
+    }, 30000); // 30,000 ms = 30 seconds
+},
 
         openScanner() {
             this.scannerOpen = true;
