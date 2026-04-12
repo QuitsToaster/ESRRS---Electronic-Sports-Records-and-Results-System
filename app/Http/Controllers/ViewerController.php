@@ -202,39 +202,53 @@ public function participantShow(Division $division, Request $request)
     $search = $request->input('search');
     $status = $request->input('status');
 
-    /*
-    |--------------------------------------------------------------------------
-    | AUTO UPDATE EVENT STATUS (ONGOING)
-    |--------------------------------------------------------------------------
-    */
-    $now = \Carbon\Carbon::now('Asia/Manila');
+   /*
+|--------------------------------------------------------------------------
+| AUTO UPDATE EVENT STATUS (ONGOING + FINISHED)
+|--------------------------------------------------------------------------
+*/
+$now = \Carbon\Carbon::now('Asia/Manila');
 
-    \App\Models\Event::whereNotIn('status', ['Ongoing', 'Finished', 'Delayed'])
-        ->whereNotNull('start_date')
-        ->whereNotNull('event_time')
-        ->get()
-        ->each(function ($event) use ($now) {
+\App\Models\Event::whereNotNull('start_date')
+    ->whereNotNull('event_time')
+    ->get()
+    ->each(function ($event) use ($now) {
 
-            $eventDate = \Carbon\Carbon::parse($event->start_date)->format('Y-m-d');
+        $eventDate = \Carbon\Carbon::parse($event->start_date)->format('Y-m-d');
 
-$eventDateTime = \Carbon\Carbon::createFromFormat(
-    'Y-m-d H:i:s',
-    $eventDate . ' ' . $event->event_time,
-    'Asia/Manila'
-);
+        $eventDateTime = \Carbon\Carbon::createFromFormat(
+            'Y-m-d H:i:s',
+            $eventDate . ' ' . $event->event_time,
+            'Asia/Manila'
+        );
 
-            // ✅ If current time >= event time → set to Ongoing
-            if ($now->greaterThanOrEqualTo($eventDateTime)) {
+        // ================= ONGOING =================
+        if ($now->greaterThanOrEqualTo($eventDateTime)) {
 
-                // ❗ Do NOT override delayed
-                if (strtolower($event->status) !== 'delayed') {
+            if (strtolower($event->status) !== 'delayed' && $event->status !== 'Finished') {
 
-                    $event->update([
-                        'status' => 'Ongoing'
-                    ]);
-                }
+                $event->update([
+                    'status' => 'Ongoing'
+                ]);
             }
-        });
+        }
+
+        // ================= FINISHED (AFTER 2 HOURS, SAME DAY ONLY) =================
+        $twoHoursAfter = $eventDateTime->copy()->addHours(2);
+
+        if (
+            $now->greaterThanOrEqualTo($twoHoursAfter) &&
+            $now->isSameDay($eventDateTime) // ✅ ONLY WITHIN SAME DAY
+        ) {
+
+            if (strtolower($event->status) !== 'delayed') {
+
+                $event->update([
+                    'status' => 'Finished'
+                ]);
+            }
+        }
+    });
 
     /*
     |--------------------------------------------------------------------------

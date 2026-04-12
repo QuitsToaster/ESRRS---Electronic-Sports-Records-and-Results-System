@@ -73,144 +73,203 @@
 
 </div>
 
-    {{-- ================= EVENTS BY SPORT ================= --}}
+    {{-- ================= EVENTS DISPLAY ================= --}}
 @if($events->isEmpty())
+
     <div class="text-center text-gray-500 py-24 text-lg">
         No events available at the moment.
     </div>
+
 @else
 
 @php
+    // GROUP BY SPORT
     $groupedEvents = $events->groupBy(function ($event) {
         return $event->sport->name ?? 'Other Events';
     });
+
+    // pagination size
+    $perPage = 6;
 @endphp
 
 <div x-data="eventsPage()" class="space-y-14">
 
-    @foreach($groupedEvents as $sportName => $sportEvents)
+@foreach($groupedEvents as $sportName => $sportEvents)
 
-        {{-- ================= SPORT HEADER ================= --}}
-        <div>
-            <h2 class="text-3xl font-bold text-white mb-6 border-l-4 border-red-500 pl-4">
-                {{ $sportName }}
-            </h2>
+    @php
+    $sportKey = \Illuminate\Support\Str::slug($sportName);
 
-            {{-- ================= EVENTS GRID PER SPORT ================= --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+    $currentPage = request($sportKey . '_page', 1);
 
-                @foreach($sportEvents as $event)
+    $chunks = $sportEvents->values()->chunk($perPage);
+
+    $currentChunk = $chunks->get($currentPage - 1, collect());
+
+    $divisionGroups = $currentChunk->groupBy('age_group');
+@endphp
+
+    {{-- ================= SPORT HEADER ================= --}}
+    <div>
+        <h2 class="text-3xl font-bold text-white mb-6 border-l-4 border-red-500 pl-4">
+            {{ $sportName }}
+        </h2>
+
+        {{-- ================= DIVISION ================= --}}
+        @foreach(['Elementary','Secondary','Paragames'] as $division)
+
+            @if(isset($divisionGroups[$division]))
+
+                <div class="mb-8">
+                    <h3 class="text-xl font-semibold text-gray-300 mb-4">
+                        {{ $division }}
+                    </h3>
 
                     @php
-                        $statusColor = match($event->status) {
-                            'Upcoming' => 'bg-green-500/20 text-green-400',
-                            'Ongoing'  => 'bg-blue-500/20 text-blue-400',
-                            'Finished' => 'bg-green-500/20 text-gray-300',
-                            'Delayed'  => 'bg-red-500/20 text-red-400',
-                            default    => 'bg-gray-700 text-gray-300',
-                        };
+                        $categoryGroups = $divisionGroups[$division]->groupBy('category');
                     @endphp
 
-                    <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-7 hover:border-red-500/40 transition duration-300 shadow-lg hover:shadow-red-500/10">
+                    {{-- ================= CATEGORY ================= --}}
+                    @foreach(['Boys','Girls','Mixed'] as $category)
 
-                        <div class="flex justify-between items-start mb-4">
-                            <h3 class="text-2xl font-semibold leading-tight group-hover:text-red-400 transition">
-    {{ $event->custom_name ?: $event->name }}
-</h3>
+                        @if(isset($categoryGroups[$category]))
 
-                            <span class="px-3 py-1 text-xs rounded-full font-medium {{ $statusColor }}">
-                                {{ ucfirst($event->status) }}
-                            </span>
-                        </div>
+                            <div class="mb-6">
+                                <h4 class="text-lg font-medium text-gray-400 mb-4 pl-2 border-l-2 border-gray-600">
+                                    {{ $category }}
+                                </h4>
 
-                        <div class="flex flex-wrap gap-2 mb-4 text-xs">
-                            <span class="bg-gray-800 px-3 py-1 rounded-full">
-                                {{ $event->age_group }}
-                            </span>
-                            <span class="bg-gray-800 px-3 py-1 rounded-full">
-                                {{ $event->category }}
-                            </span>
-                        </div>
+                                {{-- ================= EVENTS GRID ================= --}}
+                                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
 
-                        <div class="space-y-2 text-sm text-gray-400">
+                                    @foreach($categoryGroups[$category] as $event)
 
-    {{-- DATE --}}
-    <div>
-        <span class="text-gray-500">Date:</span>
-        {{ $event->start_date?->format('M d, Y') ?? 'TBA' }}
-    </div>
+                                        @php
+                                            $statusColor = match($event->status) {
+                                                'Upcoming' => 'bg-green-500/20 text-green-400',
+                                                'Ongoing'  => 'bg-blue-500/20 text-blue-400',
+                                                'Finished' => 'bg-green-500/20 text-gray-300',
+                                                'Delayed'  => 'bg-red-500/20 text-red-400',
+                                                default    => 'bg-gray-700 text-gray-300',
+                                            };
+                                        @endphp
 
-    {{-- TIME (PH TIME) --}}
-    <div>
-        <span class="text-gray-500">Time:</span>
-        {{ $event->event_time
-            ? \Carbon\Carbon::parse($event->event_time)
-                ->timezone('Asia/Manila')
-                ->format('h:i A')
-            : 'TBA' }}
-    </div>
+                                        <div class="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-3xl p-7 hover:border-red-500/40 transition duration-300 shadow-lg hover:shadow-red-500/10">
 
-    {{-- VENUE --}}
-    <div>
-        <span class="text-gray-500">Venue:</span>
-        {{ $event->venue ?? 'TBA' }}
-    </div>
+                                            <div class="flex justify-between items-start mb-4">
+                                                <h3 class="text-2xl font-semibold leading-tight group-hover:text-red-400 transition">
+                                                    {{ $event->custom_name ?: $event->name }}
+                                                </h3>
 
-</div>
+                                                <span class="px-3 py-1 text-xs rounded-full font-medium {{ $statusColor }}">
+                                                    {{ ucfirst($event->status) }}
+                                                </span>
+                                            </div>
 
-                        @if(strtolower($event->status) === 'delayed' && $event->status_reason)
-                            <div class="mt-3 text-xs text-red-400 italic">
-                                Reason: {{ $event->status_reason }}
+                                            <div class="flex flex-wrap gap-2 mb-4 text-xs">
+                                                <span class="bg-gray-800 px-3 py-1 rounded-full">
+                                                    {{ $event->age_group }}
+                                                </span>
+                                                <span class="bg-gray-800 px-3 py-1 rounded-full">
+                                                    {{ $event->category }}
+                                                </span>
+                                            </div>
+
+                                            <div class="space-y-2 text-sm text-gray-400">
+
+                                                <div>
+                                                    <span class="text-gray-500">Date:</span>
+                                                    {{ $event->start_date?->format('M d, Y') ?? 'TBA' }}
+                                                </div>
+
+                                                <div>
+                                                    <span class="text-gray-500">Time:</span>
+                                                    {{ $event->event_time
+                                                        ? \Carbon\Carbon::parse($event->event_time)
+                                                            ->timezone('Asia/Manila')
+                                                            ->format('h:i A')
+                                                        : 'TBA' }}
+                                                </div>
+
+                                                <div>
+                                                    <span class="text-gray-500">Venue:</span>
+                                                    {{ $event->venue ?? 'TBA' }}
+                                                </div>
+
+                                            </div>
+
+                                            @if(strtolower($event->status) === 'delayed' && $event->status_reason)
+                                                <div class="mt-3 text-xs text-red-400 italic">
+                                                    Reason: {{ $event->status_reason }}
+                                                </div>
+                                            @endif
+
+                                            <button
+                                                @click="activeEvent = {{ $event->id }}"
+                                                class="mt-6 w-full bg-red-600 hover:bg-red-700 py-2.5 rounded-xl font-semibold transition">
+                                                View Details
+                                            </button>
+
+                                        </div>
+
+                                    @endforeach
+
+                                </div>
                             </div>
+
                         @endif
 
-                        <button
-                            @click="activeEvent = {{ $event->id }}"
-                            class="mt-6 w-full bg-red-600 hover:bg-red-700 py-2.5 rounded-xl font-semibold transition">
-                            View Details
-                        </button>
+                    @endforeach
 
-                    </div>
+                </div>
 
-                @endforeach
+            @endif
+
+        @endforeach
+
+        {{-- ================= PAGINATION ================= --}}
+        @if($chunks->count() > 1)
+            <div class="flex justify-center mt-6 gap-2">
+
+                @for($i = 1; $i <= $chunks->count(); $i++)
+                    <a href="{{ request()->fullUrlWithQuery([$sportKey . '_page' => $i]) }}"
+                       class="px-3 py-1 rounded-lg text-sm
+                       {{ $i == $currentPage
+                            ? 'bg-red-600 text-white'
+                            : 'bg-gray-800 text-gray-300 hover:bg-gray-700' }}">
+                        {{ $i }}
+                    </a>
+                @endfor
 
             </div>
-        </div>
+        @endif
 
-    @endforeach
+    </div>
 
+@endforeach
 
-    {{-- ================= MODALS (SCROLLABLE FIXED) ================= --}}
+{{-- ================= MODALS ================= --}}
 <template x-for="event in {{ $eventsJson->toJson() }}" :key="event.id">
     <div x-show="activeEvent === event.id"
          x-transition.opacity
          class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4"
          style="display:none">
 
-        {{-- ✅ MODAL CONTAINER WITH MAX HEIGHT --}}
         <div @click.away="activeEvent = null"
              class="bg-gray-950 border border-white/10 w-full max-w-4xl rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
 
-            {{-- ================= HEADER (FIXED) ================= --}}
             <div class="p-6 border-b border-white/10 flex justify-between items-start shrink-0">
                 <div>
                     <h3 class="text-3xl font-bold"
-                        x-text="event.custom_name ? event.custom_name : event.name">
-                    </h3>
+                        x-text="event.custom_name ? event.custom_name : event.name"></h3>
                     <p class="text-gray-400 mt-1 text-sm"
-                       x-text="event.category + ' • ' + event.age_group">
-                    </p>
+                       x-text="event.category + ' • ' + event.age_group"></p>
                 </div>
                 <button @click="activeEvent = null"
-                        class="text-gray-500 hover:text-white text-3xl leading-none">
-                    &times;
-                </button>
+                        class="text-gray-500 hover:text-white text-3xl leading-none">&times;</button>
             </div>
 
-            {{-- ================= BODY (SCROLLABLE) ================= --}}
             <div class="p-8 space-y-8 overflow-y-auto">
 
-                {{-- INFO --}}
                 <div class="grid md:grid-cols-3 gap-6 text-sm bg-white/5 rounded-2xl p-6 border border-white/10">
                     <div>
                         <div class="text-gray-400 text-xs uppercase mb-1">Sport</div>
@@ -220,66 +279,8 @@
                         <div class="text-gray-400 text-xs uppercase mb-1">Venue</div>
                         <div x-text="event.venue ?? 'TBA'"></div>
                     </div>
-
-                    {{-- DATE --}}
-                    <div>
-                        <div class="text-gray-400 text-xs uppercase mb-1">Date</div>
-                        <div x-text="event.start_date
-                            ? new Date(event.start_date).toLocaleDateString('en-US',
-                              {month:'short',day:'numeric',year:'numeric'})
-                            : 'TBA'">
-                        </div>
-                    </div>
-
-                    {{-- TIME --}}
-                    <div>
-                        <div class="text-gray-400 text-xs uppercase mb-1">Time</div>
-                        <div x-text="event.event_time
-                            ? new Date('1970-01-01T' + event.event_time)
-                                .toLocaleTimeString('en-US',
-                                {hour:'2-digit', minute:'2-digit', hour12:true, timeZone:'Asia/Manila'})
-                            : 'TBA'">
-                        </div>
-                    </div>
                 </div>
 
-                {{-- MATCHES --}}
-                <div>
-                    <h4 class="text-xl font-semibold mb-5">Matches & Winners</h4>
-
-                    <template x-for="(game, index) in event.games" :key="index">
-                        <div class="mb-4 bg-white/5 border border-white/10 rounded-xl p-4 hover:bg-white/10 transition">
-                            <div class="text-xs text-gray-400 uppercase mb-1">
-                                Game <span x-text="index + 1"></span>
-                            </div>
-
-                            <div class="text-sm mb-3" x-text="game"></div>
-
-                            <div>
-                                <span class="text-xs text-gray-500 uppercase">Winner</span>
-                                <div class="mt-1 px-3 py-1 inline-block rounded-full text-sm font-semibold"
-                                     :class="event.game_winners[index]
-                                        ? 'bg-green-600/20 text-green-400'
-                                        : 'bg-gray-700 text-gray-400'"
-                                     x-text="event.game_winners[index] ?? 'TBA'">
-                                </div>
-                            </div>
-                        </div>
-                    </template>
-
-                    <div x-show="!event.games.length" class="italic text-gray-500">
-                        No games assigned yet.
-                    </div>
-                </div>
-
-            </div>
-
-            {{-- ================= FOOTER (FIXED) ================= --}}
-            <div class="p-6 border-t border-white/10 text-right shrink-0">
-                <button @click="activeEvent = null"
-                        class="px-6 py-2 bg-gray-800 hover:bg-gray-700 rounded-xl transition">
-                    Close
-                </button>
             </div>
 
         </div>
