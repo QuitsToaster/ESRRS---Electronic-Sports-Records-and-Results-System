@@ -572,10 +572,22 @@ $medalTallyRegular = $divisions->map(function($division) use ($regularRaw) {
         'bronze' => $bronze,
         'total'  => $gold + $silver + $bronze,
         'results'=> AllAwardResult::with(['sport','sportType'])
-                ->where('status','approved')
-                ->whereIn('division',['Elementary','Secondary'])
-                ->where('sdo',$division->name)
-                ->get(),
+        ->where('status','approved')
+        ->whereIn('division',['Elementary','Secondary'])
+        ->where('sdo',$division->name)
+        ->get()
+        ->map(function($r){
+            return [
+                'id' => $r->id,
+                'sport' => $r->sport,
+                'sportType' => $r->sportType, // ✅ FORCE INCLUDE
+                'type_id' => $r->type_id,
+                'division' => $r->division,
+                'category' => $r->category,
+                'created_at' => $r->created_at,
+                'medal' => $r->medal,
+            ];
+        }),
     ];
 });
 
@@ -607,10 +619,22 @@ $medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
         'bronze' => $bronze,
         'total'  => $gold + $silver + $bronze,
         'results'=> AllAwardResult::with(['sport','sportType'])
-                ->where('status','approved')
-                ->where('division','Paragames')
-                ->where('sdo',$division->name)
-                ->get(),
+        ->where('status','approved')
+        ->whereIn('division',['Elementary','Secondary'])
+        ->where('sdo',$division->name)
+        ->get()
+        ->map(function($r){
+            return [
+                'id' => $r->id,
+                'sport' => $r->sport,
+                'sportType' => $r->sportType, // ✅ FORCE INCLUDE
+                'type_id' => $r->type_id,
+                'division' => $r->division,
+                'category' => $r->category,
+                'created_at' => $r->created_at,
+                'medal' => $r->medal,
+            ];
+        }),
     ];
 });
 
@@ -773,7 +797,7 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
             </button>
         </div>
 
-        {{-- 📺 CONTENT (3 COLUMN SCROLLABLE) --}}
+        {{-- 📺 CONTENT --}}
         <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 overflow-hidden">
 
             {{-- ================= GOLD ================= --}}
@@ -784,33 +808,28 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
                     <template x-for="m in medals.gold" :key="m.id">
-                        <div
-                            class="border-l-4 border-yellow-500 p-3 rounded bg-white hover:bg-gray-100 cursor-pointer"
-                            @click="window.location.href = `/viewer/participants/${division.id}`"
-                        >
-                            <div class="font-bold text-red-600 text-sm"
-                                 x-text="(m.sport?.name ?? 'Sport')">
+                        <div class="border-l-4 border-yellow-500 p-3 rounded bg-white hover:bg-gray-100">
+
+                            {{-- ✅ SPORT + TYPE --}}
+                            <div class="font-bold text-red-600 text-sm">
+                                <span x-text="m.sport?.name ?? 'Sport'"></span>
+
+                                <span class="text-gray-500 font-semibold ml-1">
+                                    —
+                                    <span x-text="m.sportType?.type_name ?? ('Type #' + m.type_id)"></span>
+                                </span>
                             </div>
 
                             <div class="text-xs text-gray-600 mt-1">
+                                <div>Level: <strong x-text="m.division"></strong></div>
+                                <div>Category: <strong x-text="m.category"></strong></div>
                                 <div>
-                                    Level: <strong x-text="m.division"></strong>
-                                </div>
-                                <div>
-                                    Category: <strong x-text="m.category"></strong>
-                                </div>
-                                <div>
-                                    <strong
-                                        x-text="new Date(m.created_at).toLocaleDateString()">
-                                    </strong>
+                                    <strong x-text="new Date(m.created_at).toLocaleDateString()"></strong>
                                 </div>
                             </div>
+
                         </div>
                     </template>
-
-                    <p x-show="medals.gold.length === 0" class="text-center text-gray-400 text-sm">
-                        No medals
-                    </p>
                 </div>
             </div>
 
@@ -822,33 +841,27 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
                     <template x-for="m in medals.silver" :key="m.id">
-                        <div
-                            class="border-l-4 border-gray-400 p-3 rounded bg-white hover:bg-gray-100 cursor-pointer"
-                            @click="window.location.href = `/viewer/participants/${division.id}`"
-                        >
-                            <div class="font-bold text-red-600 text-sm"
-                                 x-text="(m.sport?.name ?? 'Sport')">
+                        <div class="border-l-4 border-gray-400 p-3 rounded bg-white hover:bg-gray-100">
+
+                            <div class="font-bold text-red-600 text-sm">
+                                <span x-text="m.sport?.name ?? 'Sport'"></span>
+
+                                <span class="text-gray-500 font-semibold ml-1">
+                                    —
+                                    <span x-text="m.sportType?.type_name ?? ('Type #' + m.type_id)"></span>
+                                </span>
                             </div>
 
                             <div class="text-xs text-gray-600 mt-1">
+                                <div>Level: <strong x-text="m.division"></strong></div>
+                                <div>Category: <strong x-text="m.category"></strong></div>
                                 <div>
-                                    Level: <strong x-text="m.division"></strong>
-                                </div>
-                                <div>
-                                    Category: <strong x-text="m.category"></strong>
-                                </div>
-                                <div>
-                                    <strong
-                                        x-text="new Date(m.created_at).toLocaleDateString()">
-                                    </strong>
+                                    <strong x-text="new Date(m.created_at).toLocaleDateString()"></strong>
                                 </div>
                             </div>
+
                         </div>
                     </template>
-
-                    <p x-show="medals.silver.length === 0" class="text-center text-gray-400 text-sm">
-                        No medals
-                    </p>
                 </div>
             </div>
 
@@ -860,40 +873,34 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
                     <template x-for="m in medals.bronze" :key="m.id">
-                        <div
-                            class="border-l-4 border-orange-500 p-3 rounded bg-white hover:bg-gray-100 cursor-pointer"
-                            @click="window.location.href = `/viewer/participants/${division.id}`"
-                        >
-                            <div class="font-bold text-red-600 text-sm"
-                                 x-text="(m.sport?.name ?? 'Sport')">
+                        <div class="border-l-4 border-orange-500 p-3 rounded bg-white hover:bg-gray-100">
+
+                            <div class="font-bold text-red-600 text-sm">
+                                <span x-text="m.sport?.name ?? 'Sport'"></span>
+
+                                <span class="text-gray-500 font-semibold ml-1">
+                                    —
+                                    <span x-text="m.sportType?.type_name ?? ('Type #' + m.type_id)"></span>
+                                </span>
                             </div>
 
                             <div class="text-xs text-gray-600 mt-1">
+                                <div>Level: <strong x-text="m.division"></strong></div>
+                                <div>Category: <strong x-text="m.category"></strong></div>
                                 <div>
-                                    Level: <strong x-text="m.division"></strong>
-                                </div>
-                                <div>
-                                    Category: <strong x-text="m.category"></strong>
-                                </div>
-                                <div>
-                                    <strong
-                                        x-text="new Date(m.created_at).toLocaleDateString()">
-                                    </strong>
+                                    <strong x-text="new Date(m.created_at).toLocaleDateString()"></strong>
                                 </div>
                             </div>
+
                         </div>
                     </template>
-
-                    <p x-show="medals.bronze.length === 0" class="text-center text-gray-400 text-sm">
-                        No medals
-                    </p>
                 </div>
             </div>
 
         </div>
 
-        {{-- 📡 FOOTER --}}
-        <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 flex justify-between items-center border-t flex-shrink-0">
+        {{-- FOOTER --}}
+        <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 flex justify-between items-center border-t">
             <span class="font-semibold">eSRRS • Official Medal Records</span>
             <span class="italic">Press ESC or click outside to close</span>
         </div>
