@@ -209,8 +209,8 @@
                                        class="rounded border-gray-300 text-blue-600 focus:ring-blue-200">
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Para Game Name</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type of Game</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type of Game</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                         </tr>
                     </thead>
@@ -228,6 +228,10 @@
                                     <div class="text-sm font-medium text-gray-900">{{ $sport->name }}</div>
                                 </td>
 
+                                <td class="px-6 py-4 text-sm text-gray-600">
+                                    {{ $sport->category ?? '-' }}
+                                </td>
+
                                 <td class="px-6 py-4">
                                     @if($sport->types->count())
                                         <div class="flex flex-wrap gap-1">
@@ -240,10 +244,6 @@
                                     @else
                                         <span class="text-xs text-gray-400 italic">No type added</span>
                                     @endif
-                                </td>
-
-                                <td class="px-6 py-4 text-sm text-gray-600">
-                                    {{ $sport->category ?? '-' }}
                                 </td>
 
                                 <td class="px-6 py-4 text-right">

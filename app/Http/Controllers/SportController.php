@@ -173,7 +173,7 @@ class SportController extends Controller
 
     public function update(Request $request, $id)
 {
-    $sport = Sport::findOrFail($id);
+    $sport = Sport::with('types')->findOrFail($id);
 
     $request->validate([
         'name' => [
@@ -185,15 +185,13 @@ class SportController extends Controller
             })->ignore($sport->id),
         ],
         'level' => 'required|in:Elementary,Secondary',
-
-        // ✅ UPDATED HERE (added Mixed)
         'category' => 'required|in:Boys,Girls,Mixed',
-
         'type_of_game.*' => 'nullable|string',
     ]);
 
     $oldValues = $sport->toArray();
 
+    // ================= UPDATE SPORT =================
     $sport->update([
         'name'     => $request->name,
         'level'    => $request->level,
@@ -201,16 +199,40 @@ class SportController extends Controller
         'division' => $request->level,
     ]);
 
-    $sport->types()->delete();
+    // ================= HANDLE TYPES SAFELY =================
+    $existingTypes = $sport->types()->get();
 
-    if ($request->type_of_game) {
-        foreach ($request->type_of_game as $type) {
-            if ($type) {
-                $sport->types()->create(['type_name' => $type]);
-            }
+    $newTypes = collect($request->type_of_game)
+        ->filter(fn($t) => !empty($t))
+        ->map(fn($t) => trim($t))
+        ->unique()
+        ->values();
+
+    foreach ($existingTypes as $type) {
+
+        $isUsedInAll = \App\Models\AllAwardResult::where('type_id', $type->id)->exists();
+        $isUsedInInd = \App\Models\IndividualAwardResult::where('type_id', $type->id)->exists();
+
+        $isUsed = $isUsedInAll || $isUsedInInd;
+
+        // ❌ DELETE ONLY IF NOT USED AND NOT IN NEW LIST
+        if (!$isUsed && !$newTypes->contains($type->type_name)) {
+            $type->delete();
         }
     }
 
+    // ================= ADD NEW TYPES =================
+    foreach ($newTypes as $typeName) {
+        $exists = $existingTypes->firstWhere('type_name', $typeName);
+
+        if (!$exists) {
+            $sport->types()->create([
+                'type_name' => $typeName
+            ]);
+        }
+    }
+
+    // ================= AUDIT =================
     AuditLog::create([
         'model_type' => 'Sport',
         'model_id'   => $sport->id,
@@ -327,6 +349,8 @@ public function paraStore(Request $request)
    // PARA GAMES UPDATE
 public function paraUpdate(Request $request, Sport $sport)
 {
+    $sport->load('types');
+
     $request->validate([
         'name' => [
             'required',
@@ -336,30 +360,51 @@ public function paraUpdate(Request $request, Sport $sport)
                              ->where('category', $request->category);
             })->ignore($sport->id),
         ],
-
-        // ✅ UPDATED (added Mixed)
         'category' => 'required|in:Boys,Girls,Mixed',
-
         'type_of_game.*' => 'nullable|string',
     ]);
 
     $oldValues = $sport->toArray();
 
+    // ================= UPDATE =================
     $sport->update([
         'name' => $request->name,
         'category' => $request->category,
     ]);
 
-    $sport->types()->delete();
+    // ================= SAFE TYPE HANDLING =================
+    $existingTypes = $sport->types()->get();
 
-    if ($request->type_of_game) {
-        foreach ($request->type_of_game as $type) {
-            if ($type) {
-                $sport->types()->create(['type_name' => $type]);
-            }
+    $newTypes = collect($request->type_of_game)
+        ->filter(fn($t) => !empty($t))
+        ->map(fn($t) => trim($t))
+        ->unique()
+        ->values();
+
+    foreach ($existingTypes as $type) {
+
+        $isUsedInAll = \App\Models\AllAwardResult::where('type_id', $type->id)->exists();
+        $isUsedInInd = \App\Models\IndividualAwardResult::where('type_id', $type->id)->exists();
+
+        $isUsed = $isUsedInAll || $isUsedInInd;
+
+        if (!$isUsed && !$newTypes->contains($type->type_name)) {
+            $type->delete();
         }
     }
 
+    // ADD NEW
+    foreach ($newTypes as $typeName) {
+        $exists = $existingTypes->firstWhere('type_name', $typeName);
+
+        if (!$exists) {
+            $sport->types()->create([
+                'type_name' => $typeName
+            ]);
+        }
+    }
+
+    // ================= AUDIT =================
     AuditLog::create([
         'model_type' => 'Sport',
         'model_id' => $sport->id,
