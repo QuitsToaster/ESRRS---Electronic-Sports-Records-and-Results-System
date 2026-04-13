@@ -168,21 +168,15 @@ public function participantShow(Division $division, Request $request)
     ========================================================== */
 
     $regularCounts = [
-        'Gold'   => $teamRegular->where('medal','Gold')->count()
-                    + $individualRegular->where('medal','Gold')->count(),
-        'Silver' => $teamRegular->where('medal','Silver')->count()
-                    + $individualRegular->where('medal','Silver')->count(),
-        'Bronze' => $teamRegular->where('medal','Bronze')->count()
-                    + $individualRegular->where('medal','Bronze')->count(),
+        'Gold'   => $teamRegular->where('medal','Gold')->count(),
+        'Silver' => $teamRegular->where('medal','Silver')->count(),
+        'Bronze' => $teamRegular->where('medal','Bronze')->count(),
     ];
 
     $paragamesCounts = [
-        'Gold'   => $teamParagames->where('medal','Gold')->count()
-                    + $individualParagames->where('medal','Gold')->count(),
-        'Silver' => $teamParagames->where('medal','Silver')->count()
-                    + $individualParagames->where('medal','Silver')->count(),
-        'Bronze' => $teamParagames->where('medal','Bronze')->count()
-                    + $individualParagames->where('medal','Bronze')->count(),
+        'Gold'   => $teamParagames->where('medal','Gold')->count(),
+        'Silver' => $teamParagames->where('medal','Silver')->count(),
+        'Bronze' => $teamParagames->where('medal','Bronze')->count(),
     ];
 
     return view('viewer.participants-show', compact(
