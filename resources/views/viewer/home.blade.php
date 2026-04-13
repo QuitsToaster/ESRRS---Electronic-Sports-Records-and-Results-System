@@ -327,168 +327,7 @@ function closePrivacyModal() {
         </h1>
 
         {{-- Desktop: Small | BIG | Small — Mobile: Stack --}}
-        <div class="grid grid-cols-1 lg:grid-cols-[2fr_5fr_2fr] gap-4 items-stretch">
-
-          {{-- ================= LEFT: LATEST NEWS & ANNOUNCEMENTS ================= --}}
-<section
-    class="order-2 lg:order-1 h-full"
-    x-data="{
-        search: '',
-        allAnnouncements: {{ $allAnnouncements->toJson() }},
-        latestAnnouncements: {{ $latestAnnouncements->toJson() }},
-    }"
->
-    <div class="h-full bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
-        
-        {{-- Header with accent --}}
-        <div class="flex items-center justify-between mb-5">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                    </svg>
-                </div>
-                <h2 class="text-lg font-bold text-gray-900 tracking-wide">
-                    Latest News & Announcements
-                </h2>
-            </div>
-            
-            {{-- Live indicator --}}
-            <span class="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-full">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                </span>
-                <span class="text-[10px] font-semibold text-blue-700">LIVE</span>
-            </span>
-        </div>
-
-        {{-- Search Bar --}}
-        <div class="relative mb-5">
-            <input
-                type="text"
-                placeholder="Search announcements..."
-                x-model="search"
-                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
-            >
-            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            
-            {{-- Clear search button --}}
-            <button x-show="search" 
-                    @click="search = ''" 
-                    x-cloak
-                    class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-
-        {{-- Announcements List --}}
-        <div class="space-y-3 overflow-y-auto pr-1 flex-1 custom-scrollbar">
-            <template
-                x-for="announcement in (
-                    search
-                        ? allAnnouncements.filter(a =>
-                            a.title.toLowerCase().includes(search.toLowerCase()) ||
-                            a.content.toLowerCase().includes(search.toLowerCase())
-                          )
-                        : latestAnnouncements
-                ).slice(0, 5)"
-                :key="announcement.id"
-            >
-                <a
-                    :href="'{{ route('viewer.announcements') }}#announcement-' + announcement.id"
-                    class="group block rounded-xl border border-gray-100 bg-white p-4 hover:border-blue-200 hover:shadow-md transition-all duration-200 relative"
-                >
-                    {{-- Type badge --}}
-                    <div class="flex items-center gap-2 mb-2">
-                        <span class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-semibold border border-blue-200"
-                              x-text="announcement.type || 'NEWS'">
-                        </span>
-                        <span class="text-xs text-gray-400" 
-                              x-text="new Date(announcement.published_at).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric',
-                                  year: 'numeric'
-                              })">
-                        </span>
-                    </div>
-
-                    {{-- Title --}}
-                    <h4 class="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors text-base mb-2"
-                        x-text="announcement.title">
-                    </h4>
-
-                    {{-- Preview content --}}
-                    <p class="text-sm text-gray-600 line-clamp-2"
-                       x-text="announcement.content.length > 120
-                           ? announcement.content.substring(0,120) + '...'
-                           : announcement.content">
-                    </p>
-
-                    {{-- Read more indicator --}}
-                    <div class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span>Read more</span>
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </div>
-                </a>
-            </template>
-
-            {{-- Empty state --}}
-            <template x-if="search && allAnnouncements.length === 0">
-                <div class="text-center py-8">
-                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                    </svg>
-                    <p class="text-sm text-gray-500">No announcements found.</p>
-                    <button @click="search = ''" class="mt-2 text-xs text-blue-600 hover:text-blue-700">
-                        Clear search
-                    </button>
-                </div>
-            </template>
-        </div>
-
-        {{-- View all link --}}
-        <div class="mt-4 pt-3 border-t border-gray-100">
-            <a href="{{ route('viewer.announcements') }}" 
-               class="flex items-center justify-between text-sm text-gray-600 hover:text-blue-700 transition-colors group">
-                <span class="font-medium">View all announcements</span>
-                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </a>
-        </div>
-    </div>
-</section>
-
-{{-- Custom scrollbar for announcements --}}
-<style>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
-}
-.line-clamp-2 {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: hidden;
-    overflow: hidden;
-}
-</style>
+        <div class="w-full">
 
 
     {{-- ================= CENTER SECTION: MEDAL TALLY ================= --}}
@@ -735,32 +574,197 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 </div>
 
 
-            {{-- Medal Rows --}}
-            <div class="flex-1 overflow-y-auto space-y-4 md:space-y-6 pr-2">
+            {{-- ================= MEDAL TABLE ================= --}}
+<div class="flex-1 overflow-y-auto pr-2">
 
-                {{-- Regular --}}
-                <template x-if="activeTab === 'regular'">
-                    <div>
-                        @foreach($medalTallyRegular as $index => $division)
-                            <div @click="openModal(@js($division), @js($division->results))">
-                                @include('viewer.partials.medal-row', compact('division','index'))
-                            </div>
-                        @endforeach
-                    </div>
-                </template>
+    {{-- ================= REGULAR TABLE ================= --}}
+    <template x-if="activeTab === 'regular'">
+        <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
-                {{-- Para --}}
-                <template x-if="activeTab === 'para'">
-                    <div>
-                        @foreach($medalTallyPara as $index => $division)
-                            <div @click="openModal(@js($division), @js($division->results))">
-                                @include('viewer.partials.medal-row', compact('division','index'))
-                            </div>
-                        @endforeach
+            {{-- HEADER --}}
+            <div class="grid grid-cols-4 bg-black text-white text-sm font-bold">
+                <div class="p-3 text-left">Division (SDO)</div>
+
+                <div class="p-3 text-center border-l">Elementary
+                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                        <span>G</span><span>S</span><span>B</span>
                     </div>
-                </template>
+                </div>
+
+                <div class="p-3 text-center border-l">Secondary
+                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                        <span>G</span><span>S</span><span>B</span>
+                    </div>
+                </div>
+
+                <div class="p-3 text-center border-l">Overall
+                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                        <span>G</span><span>S</span><span>B</span>
+                    </div>
+                </div>
+            </div>
+
+            {{-- BODY --}}
+            @foreach($divisions as $division)
+
+            @php
+                $all = \App\Models\AllAwardResult::with(['sport','sportType'])
+                    ->where('status','approved')
+                    ->where('sdo',$division->name)
+                    ->get();
+
+                // ✅ FORCE MAP (THIS IS THE FIX)
+                $mapped = $all->map(fn($r)=>[
+                    'id'=>$r->id,
+                    'sport'=>$r->sport,
+                    'sportType'=>$r->sportType,
+                    'type_name'=>$r->sportType->type_name ?? null, // ✅ ADD THIS
+                    'type_id'=>$r->type_id,
+                    'division'=>$r->division,
+                    'category'=>$r->category,
+                    'created_at'=>$r->created_at,
+                    'medal'=>$r->medal,
+                ]);
+
+                $elem = $mapped->where('division','Elementary');
+                $sec  = $mapped->where('division','Secondary');
+
+                $elemGold   = $elem->where('medal','Gold')->count();
+                $elemSilver = $elem->where('medal','Silver')->count();
+                $elemBronze = $elem->where('medal','Bronze')->count();
+
+                $secGold   = $sec->where('medal','Gold')->count();
+                $secSilver = $sec->where('medal','Silver')->count();
+                $secBronze = $sec->where('medal','Bronze')->count();
+
+                $overall = $mapped->whereIn('division',['Elementary','Secondary']);
+            @endphp
+
+            <div class="grid grid-cols-4 border-t">
+
+                {{-- SDO --}}
+                <div class="p-3 font-semibold flex items-center gap-2">
+                    @if($division->logo)
+                        <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
+                    @endif
+                    {{ $division->name }}
+                </div>
+
+                {{-- ELEMENTARY --}}
+                <div 
+                    class="grid grid-cols-3 text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
+                    @click="openModal(@js($division), @js($elem->values()))"
+                >
+                    <span class="font-bold text-yellow-600">{{ $elemGold }}</span>
+                    <span class="font-bold text-gray-600">{{ $elemSilver }}</span>
+                    <span class="font-bold text-orange-600">{{ $elemBronze }}</span>
+                </div>
+
+                {{-- SECONDARY --}}
+                <div 
+                    class="grid grid-cols-3 text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
+                    @click="openModal(@js($division), @js($sec->values()))"
+                >
+                    <span class="font-bold text-yellow-600">{{ $secGold }}</span>
+                    <span class="font-bold text-gray-600">{{ $secSilver }}</span>
+                    <span class="font-bold text-orange-600">{{ $secBronze }}</span>
+                </div>
+
+                {{-- OVERALL --}}
+                <div 
+                    class="grid grid-cols-3 text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                    @click="openModal(@js($division), @js($overall->values()))"
+                >
+                    <span class="font-bold text-yellow-700">{{ $elemGold + $secGold }}</span>
+                    <span class="font-bold text-gray-700">{{ $elemSilver + $secSilver }}</span>
+                    <span class="font-bold text-orange-700">{{ $elemBronze + $secBronze }}</span>
+                </div>
 
             </div>
+
+            @endforeach
+
+        </div>
+    </template>
+
+    {{-- ================= PARAGAMES TABLE ================= --}}
+    <template x-if="activeTab === 'para'">
+        <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
+
+            {{-- HEADER --}}
+            <div class="grid grid-cols-3 bg-purple-700 text-white text-sm font-bold">
+                <div class="p-3 text-left">Division (SDO)</div>
+
+                <div class="p-3 text-center border-l">Paragames
+                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                        <span>G</span><span>S</span><span>B</span>
+                    </div>
+                </div>
+
+                <div class="p-3 text-center border-l">Total</div>
+            </div>
+
+            @foreach($divisions as $division)
+
+            @php
+                $paraRaw = \App\Models\AllAwardResult::with(['sport','sportType'])
+                    ->where('status','approved')
+                    ->where('sdo',$division->name)
+                    ->where('division','Paragames')
+                    ->get();
+
+                $para = $paraRaw->map(fn($r)=>[
+                    'id'=>$r->id,
+                    'sport'=>$r->sport,
+                    'sportType'=>$r->sportType,
+                    'type_name'=>$r->sportType->type_name ?? null,
+                    'type_id'=>$r->type_id,
+                    'division'=>$r->division,
+                    'category'=>$r->category,
+                    'created_at'=>$r->created_at,
+                    'medal'=>$r->medal,
+                ]);
+
+                $gold   = $para->where('medal','Gold')->count();
+                $silver = $para->where('medal','Silver')->count();
+                $bronze = $para->where('medal','Bronze')->count();
+            @endphp
+
+            <div class="grid grid-cols-3 border-t">
+
+                <div class="p-3 font-semibold flex items-center gap-2">
+                    @if($division->logo)
+                        <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
+                    @endif
+                    {{ $division->name }}
+                </div>
+
+                <div 
+                    class="grid grid-cols-3 text-center border-l p-3 cursor-pointer hover:bg-purple-50"
+                    @click="openModal(@js($division), @js($para->values()))"
+                >
+                    <span class="font-bold text-yellow-600">{{ $gold }}</span>
+                    <span class="font-bold text-gray-600">{{ $silver }}</span>
+                    <span class="font-bold text-orange-600">{{ $bronze }}</span>
+                </div>
+
+                <div 
+                    class="grid grid-cols-3 text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                    @click="openModal(@js($division), @js($para->values()))"
+                >
+                    <span class="font-bold text-yellow-700">{{ $gold }}</span>
+                    <span class="font-bold text-gray-700">{{ $silver }}</span>
+                    <span class="font-bold text-orange-700">{{ $bronze }}</span>
+                </div>
+
+            </div>
+
+            @endforeach
+
+        </div>
+    </template>
+
+</div>
         </div>
     </div>
 </div>
@@ -800,9 +804,9 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
         {{-- 📺 CONTENT --}}
         <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 overflow-hidden">
 
-            {{-- ================= GOLD ================= --}}
+            {{-- GOLD --}}
             <div class="flex flex-col bg-white rounded-lg shadow overflow-hidden">
-                <div class="bg-yellow-400 text-black font-bold text-center py-2 flex-shrink-0">
+                <div class="bg-yellow-400 text-black font-bold text-center py-2">
                     GOLD ( <span x-text="medals.gold.length"></span> )
                 </div>
 
@@ -810,13 +814,12 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                     <template x-for="m in medals.gold" :key="m.id">
                         <div class="border-l-4 border-yellow-500 p-3 rounded bg-white hover:bg-gray-100">
 
-                            {{-- ✅ SPORT + TYPE --}}
                             <div class="font-bold text-red-600 text-sm">
                                 <span x-text="m.sport?.name ?? 'Sport'"></span>
 
                                 <span class="text-gray-500 font-semibold ml-1">
                                     —
-                                    <span x-text="m.sportType?.type_name ?? ('Type #' + m.type_id)"></span>
+                                    <span x-text="m.sportType && m.sportType.type_name ? m.sportType.type_name : ('Type #' + m.type_id)"></span>
                                 </span>
                             </div>
 
@@ -833,9 +836,9 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 </div>
             </div>
 
-            {{-- ================= SILVER ================= --}}
+            {{-- SILVER --}}
             <div class="flex flex-col bg-white rounded-lg shadow overflow-hidden">
-                <div class="bg-gray-300 text-black font-bold text-center py-2 flex-shrink-0">
+                <div class="bg-gray-300 text-black font-bold text-center py-2">
                     SILVER ( <span x-text="medals.silver.length"></span> )
                 </div>
 
@@ -848,7 +851,7 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                                 <span class="text-gray-500 font-semibold ml-1">
                                     —
-                                    <span x-text="m.sportType?.type_name ?? ('Type #' + m.type_id)"></span>
+                                    <span x-text="m.sportType && m.sportType.type_name ? m.sportType.type_name : ('Type #' + m.type_id)"></span>
                                 </span>
                             </div>
 
@@ -865,9 +868,9 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 </div>
             </div>
 
-            {{-- ================= BRONZE ================= --}}
+            {{-- BRONZE --}}
             <div class="flex flex-col bg-white rounded-lg shadow overflow-hidden">
-                <div class="bg-orange-400 text-black font-bold text-center py-2 flex-shrink-0">
+                <div class="bg-orange-400 text-black font-bold text-center py-2">
                     BRONZE ( <span x-text="medals.bronze.length"></span> )
                 </div>
 
@@ -880,7 +883,7 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                                 <span class="text-gray-500 font-semibold ml-1">
                                     —
-                                    <span x-text="m.sportType?.type_name ?? ('Type #' + m.type_id)"></span>
+                                    <span x-text="m.sportType && m.sportType.type_name ? m.sportType.type_name : ('Type #' + m.type_id)"></span>
                                 </span>
                             </div>
 
@@ -908,184 +911,121 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
     </div>
 </div>
 </section>
-
-
-
-
-           {{-- ================= RIGHT SECTION: UPCOMING EVENTS ================= --}}
-<section
-    class="order-3 h-full"
-    x-data="{
-        eventSearch: '',
-
-        allEvents: {{ $allUpcomingEvents->toJson() }},
-        latestEvents: {{ $latestUpcomingEvents->toJson() }},
-        
-        get filteredEvents() {
-            if (!this.eventSearch) return this.latestEvents.slice(0, 5);
-            return this.allEvents.filter(e =>
-                e.name?.toLowerCase().includes(this.eventSearch.toLowerCase()) ||
-                e.sport?.name?.toLowerCase().includes(this.eventSearch.toLowerCase())
-            ).slice(0, 5);
-        }
-    }"
->
-    <div class="h-full bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
-
-        {{-- Header with blue icon --}}
-        <div class="flex items-center justify-between mb-5">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                </div>
-                <h2 class="text-lg font-bold text-gray-900 tracking-wide">
-                    Upcoming Events
-                </h2>
-            </div>
-            
-            {{-- Live indicator --}}
-            <span class="flex items-center gap-1.5 px-2 py-1 bg-blue-50 rounded-full">
-                <span class="relative flex h-2 w-2">
-                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                    <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
-                </span>
-                <span class="text-[10px] font-semibold text-blue-700">LIVE</span>
-            </span>
-        </div>
-
-        {{-- Search Bar --}}
-        <div class="relative mb-4">
-            <input
-                type="text"
-                placeholder="Search events or sports..."
-                x-model="eventSearch"
-                class="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-400 transition-all"
-            >
-            <svg class="w-4 h-4 text-gray-400 absolute left-3 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            
-            {{-- Clear search --}}
-            <button x-show="eventSearch" 
-                    @click="eventSearch = ''" 
-                    x-cloak
-                    class="absolute right-3 top-3 text-gray-400 hover:text-gray-600">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
-        </div>
-
-        {{-- Events List --}}
-        <div class="space-y-3 overflow-y-auto pr-1 flex-1 custom-scrollbar">
-            <template x-for="event in filteredEvents" :key="event.id">
-                <a
-                    :href="'{{ route('viewer.events') }}#event-' + event.id"
-                    class="group block p-4 rounded-xl bg-gray-50 border border-gray-100 hover:border-blue-200 hover:shadow-md transition-all duration-200"
-                >
-                    {{-- Event Header with date badge --}}
-                    <div class="flex items-start justify-between mb-2">
-                        <div>
-                            {{-- Sport Badge --}}
-                            <span class="inline-block px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full text-[10px] font-semibold border border-blue-200 mb-2"
-                                  x-text="event.sport?.name ?? 'TBA'">
-                            </span>
-                        </div>
-                        <span class="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded-full border border-gray-200"
-                              x-text="new Date(event.start_date).toLocaleDateString('en-US', {
-                                  month: 'short',
-                                  day: 'numeric'
-                              })">
-                        </span>
-                    </div>
-
-                    {{-- Event Name --}}
-                    <h4 class="font-semibold text-gray-900 group-hover:text-blue-700 transition-colors text-base mb-2"
-                        x-text="event.name">
-                    </h4>
-
-                    {{-- Event Details Grid --}}
-                    <div class="grid grid-cols-2 gap-y-2 mt-2">
-                        <div class="flex items-center gap-1 text-xs text-gray-500">
-                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            <span x-text="event.age_group ?? 'All'"></span>
-                        </div>
-                        <div class="flex items-center gap-1 text-xs text-gray-500">
-                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-                            </svg>
-                            <span x-text="event.category ?? 'Open'"></span>
-                        </div>
-                        <div class="flex items-center gap-1 text-xs text-gray-500 col-span-2">
-                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                            </svg>
-                            <span x-text="event.venue ?? 'TBA'" class="truncate"></span>
-                        </div>
-                    </div>
-
-                    {{-- Read more indicator --}}
-                    <div class="mt-3 flex items-center gap-1 text-xs font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span>View event details</span>
-                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
-                    </div>
-                </a>
-            </template>
-
-            {{-- Empty State --}}
-            <template x-if="filteredEvents.length === 0">
-                <div class="text-center py-8">
-                    <svg class="w-12 h-12 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-sm text-gray-500">No events found</p>
-                    <button @click="eventSearch = ''" class="mt-2 text-xs text-blue-600 hover:text-blue-700">
-                        Clear search
-                    </button>
-                </div>
-            </template>
-        </div>
-
-        {{-- View all link --}}
-        <div class="mt-4 pt-3 border-t border-gray-100">
-            <a href="{{ route('viewer.events') }}" 
-               class="flex items-center justify-between text-sm text-gray-600 hover:text-blue-700 transition-colors group">
-                <span class="font-medium">View all events</span>
-                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                </svg>
-            </a>
-        </div>
-    </div>
-</section>
-
-{{-- Custom scrollbar for events --}}
-<style>
-.custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #cbd5e0;
-    border-radius: 4px;
-}
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    background: #a0aec0;
-}
-</style>
 {{-- ================= END DASHBOARD STRIP ================= --}}
 
 
+{{-- ================= BOTTOM STACK: NEWS + EVENTS ================= --}}
+<section class="py-10 bg-gray-100 px-4 space-y-6">
+
+    {{-- ================= LATEST NEWS & ANNOUNCEMENTS ================= --}}
+    <section
+        x-data="{
+            search: '',
+            allAnnouncements: {{ $allAnnouncements->toJson() }},
+            latestAnnouncements: {{ $latestAnnouncements->toJson() }},
+        }"
+    >
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+
+            <h2 class="text-xl font-bold text-gray-900 mb-4">
+                Latest News & Announcements
+            </h2>
+
+            {{-- Search --}}
+            <input
+                type="text"
+                placeholder="Search announcements..."
+                x-model="search"
+                class="mb-4 w-full px-4 py-2 border rounded-xl text-sm"
+            >
+
+            {{-- List --}}
+            <div class="space-y-3 max-h-[300px] overflow-y-auto">
+                <template
+                    x-for="announcement in (
+                        search
+                            ? allAnnouncements.filter(a =>
+                                a.title.toLowerCase().includes(search.toLowerCase()) ||
+                                a.content.toLowerCase().includes(search.toLowerCase())
+                              )
+                            : latestAnnouncements
+                    ).slice(0, 5)"
+                    :key="announcement.id"
+                >
+                    <a
+                        :href="'{{ route('viewer.announcements') }}#announcement-' + announcement.id"
+                        class="block p-4 border rounded-xl hover:bg-gray-50"
+                    >
+                        <h4 class="font-semibold text-gray-800"
+                            x-text="announcement.title"></h4>
+
+                        <p class="text-sm text-gray-600 mt-1"
+                           x-text="announcement.content.substring(0,100) + '...'"></p>
+                    </a>
+                </template>
+            </div>
+
+            <a href="{{ route('viewer.announcements') }}"
+               class="mt-4 text-sm text-blue-600 hover:underline">
+                View all announcements →
+            </a>
+        </div>
+    </section>
+
+    {{-- ================= UPCOMING EVENTS ================= --}}
+    <section
+        x-data="{
+            eventSearch: '',
+            allEvents: {{ $allUpcomingEvents->toJson() }},
+            latestEvents: {{ $latestUpcomingEvents->toJson() }},
+
+            get filteredEvents() {
+                if (!this.eventSearch) return this.latestEvents.slice(0, 5);
+                return this.allEvents.filter(e =>
+                    e.name?.toLowerCase().includes(this.eventSearch.toLowerCase()) ||
+                    e.sport?.name?.toLowerCase().includes(this.eventSearch.toLowerCase())
+                ).slice(0, 5);
+            }
+        }"
+    >
+        <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col">
+
+            <h2 class="text-xl font-bold text-gray-900 mb-4">
+                Upcoming Events
+            </h2>
+
+            {{-- Search --}}
+            <input
+                type="text"
+                placeholder="Search events..."
+                x-model="eventSearch"
+                class="mb-4 w-full px-4 py-2 border rounded-xl text-sm"
+            >
+
+            {{-- List --}}
+            <div class="space-y-3 max-h-[300px] overflow-y-auto">
+                <template x-for="event in filteredEvents" :key="event.id">
+                    <a
+                        :href="'{{ route('viewer.events') }}#event-' + event.id"
+                        class="block p-4 border rounded-xl hover:bg-gray-50"
+                    >
+                        <h4 class="font-semibold text-gray-800"
+                            x-text="event.name"></h4>
+
+                        <p class="text-xs text-gray-500 mt-1"
+                           x-text="event.sport?.name ?? 'TBA'"></p>
+                    </a>
+                </template>
+            </div>
+
+            <a href="{{ route('viewer.events') }}"
+               class="mt-4 text-sm text-blue-600 hover:underline">
+                View all events →
+            </a>
+        </div>
+    </section>
+
+</section>
 <!-- {{-- ================= LIVE GAMES ================= --}}
 <section class="relative py-16 overflow-hidden">
 
