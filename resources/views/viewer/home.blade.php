@@ -582,23 +582,28 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
         <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
             {{-- HEADER --}}
-            <div class="grid grid-cols-4 bg-black text-white text-sm font-bold">
+            <div class="bg-black text-white text-sm font-bold"
+                 style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr;">
+                 
                 <div class="p-3 text-left">Division (SDO)</div>
 
-                <div class="p-3 text-center border-l">Elementary
-                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                <div class="p-3 text-center border-l">
+                    Elementary
+                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
                         <span>G</span><span>S</span><span>B</span>
                     </div>
                 </div>
 
-                <div class="p-3 text-center border-l">Secondary
-                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                <div class="p-3 text-center border-l">
+                    Secondary
+                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
                         <span>G</span><span>S</span><span>B</span>
                     </div>
                 </div>
 
-                <div class="p-3 text-center border-l">Overall
-                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                <div class="p-3 text-center border-l">
+                    Overall
+                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
                         <span>G</span><span>S</span><span>B</span>
                     </div>
                 </div>
@@ -613,12 +618,11 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                     ->where('sdo',$division->name)
                     ->get();
 
-                // ✅ FORCE MAP (THIS IS THE FIX)
                 $mapped = $all->map(fn($r)=>[
                     'id'=>$r->id,
                     'sport'=>$r->sport,
                     'sportType'=>$r->sportType,
-                    'type_name'=>$r->sportType->type_name ?? null, // ✅ ADD THIS
+                    'type_name'=>$r->sportType->type_name ?? null,
                     'type_id'=>$r->type_id,
                     'division'=>$r->division,
                     'category'=>$r->category,
@@ -640,7 +644,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 $overall = $mapped->whereIn('division',['Elementary','Secondary']);
             @endphp
 
-            <div class="grid grid-cols-4 border-t">
+            <div class="border-t"
+                 style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr;">
 
                 {{-- SDO --}}
                 <div class="p-3 font-semibold flex items-center gap-2">
@@ -652,7 +657,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                 {{-- ELEMENTARY --}}
                 <div 
-                    class="grid grid-cols-3 text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
+                    style="display:grid; grid-template-columns: repeat(3,1fr);"
+                    class="text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
                     @click="openModal(@js($division), @js($elem->values()))"
                 >
                     <span class="font-bold text-yellow-600">{{ $elemGold }}</span>
@@ -662,7 +668,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                 {{-- SECONDARY --}}
                 <div 
-                    class="grid grid-cols-3 text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
+                    style="display:grid; grid-template-columns: repeat(3,1fr);"
+                    class="text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
                     @click="openModal(@js($division), @js($sec->values()))"
                 >
                     <span class="font-bold text-yellow-600">{{ $secGold }}</span>
@@ -672,7 +679,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 
                 {{-- OVERALL --}}
                 <div 
-                    class="grid grid-cols-3 text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                    style="display:grid; grid-template-columns: repeat(3,1fr);"
+                    class="text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
                     @click="openModal(@js($division), @js($overall->values()))"
                 >
                     <span class="font-bold text-yellow-700">{{ $elemGold + $secGold }}</span>
@@ -692,11 +700,14 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
         <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
             {{-- HEADER --}}
-            <div class="grid grid-cols-3 bg-purple-700 text-white text-sm font-bold">
+            <div class="bg-purple-700 text-white text-sm font-bold"
+                 style="display:grid; grid-template-columns: 2fr 1fr 1fr;">
+
                 <div class="p-3 text-left">Division (SDO)</div>
 
-                <div class="p-3 text-center border-l">Paragames
-                    <div class="grid grid-cols-3 text-xs mt-1 font-semibold">
+                <div class="p-3 text-center border-l">
+                    Paragames
+                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
                         <span>G</span><span>S</span><span>B</span>
                     </div>
                 </div>
@@ -730,7 +741,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 $bronze = $para->where('medal','Bronze')->count();
             @endphp
 
-            <div class="grid grid-cols-3 border-t">
+            <div class="border-t"
+                 style="display:grid; grid-template-columns: 2fr 1fr 1fr;">
 
                 <div class="p-3 font-semibold flex items-center gap-2">
                     @if($division->logo)
@@ -740,7 +752,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 </div>
 
                 <div 
-                    class="grid grid-cols-3 text-center border-l p-3 cursor-pointer hover:bg-purple-50"
+                    style="display:grid; grid-template-columns: repeat(3,1fr);"
+                    class="text-center border-l p-3 cursor-pointer hover:bg-purple-50"
                     @click="openModal(@js($division), @js($para->values()))"
                 >
                     <span class="font-bold text-yellow-600">{{ $gold }}</span>
@@ -749,7 +762,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 </div>
 
                 <div 
-                    class="grid grid-cols-3 text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
+                    style="display:grid; grid-template-columns: repeat(3,1fr);"
+                    class="text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
                     @click="openModal(@js($division), @js($para->values()))"
                 >
                     <span class="font-bold text-yellow-700">{{ $gold }}</span>
