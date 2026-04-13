@@ -642,92 +642,111 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
     </div>
 
     {{-- ================= ALL AWARDS ================= --}}
-    @if($pendingResults->count())
-        <div class="mb-8">
-            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
-                <span class="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
-                All Awards
-            </h4>
+@if($pendingResults->count())
 
-            <div class="grid gap-4">
-                @foreach($pendingResults as $r)
-                    <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
-                        <div class="flex flex-wrap items-start justify-between gap-4">
+@php
+    $chunkSize = 10; // items per page
+    $allAwardChunks = $pendingResults->chunk($chunkSize)->values();
+@endphp
 
-                            <div class="flex-1 min-w-0">
+<div x-data="{ page: 0 }" class="mb-8">
 
-                                {{-- HEADER --}}
-                                <div class="flex items-center gap-3 flex-wrap mb-2">
-                                    <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
-                                    <span class="text-xs text-gray-500">•</span>
-                                    <span class="text-sm text-gray-600">{{ $r->type->type_name ?? 'ALL EVENTS' }}</span>
-                                </div>
+    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <span class="w-1.5 h-1.5 bg-amber-400 rounded-full"></span>
+        All Awards
+    </h4>
 
-                                {{-- ✅ NEW: DIVISION + CATEGORY LABEL --}}
-                                <div class="flex gap-2 mb-2">
-                                    <span class="text-xs px-2 py-0.5 rounded-full font-medium
-                                        @if($r->division === 'Elementary') bg-blue-100 text-blue-700
-                                        @elseif($r->division === 'Secondary') bg-purple-100 text-purple-700
-                                        @elseif($r->division === 'Paragames') bg-green-100 text-green-700
-                                        @else bg-gray-100 text-gray-700
-                                        @endif">
-                                        {{ $r->division ?? 'N/A' }}
-                                    </span>
+    {{-- ================= PAGE BUTTONS ================= --}}
+    <div class="flex flex-wrap gap-2 mb-4">
+        @foreach($allAwardChunks as $index => $chunk)
+            <button
+                @click="page = {{ $index }}"
+                :class="page === {{ $index }} 
+                    ? 'bg-amber-500 text-white' 
+                    : 'bg-gray-100 text-gray-600'"
+                class="px-3 py-1 text-xs rounded-lg font-medium transition">
+                Page {{ $index + 1 }}
+            </button>
+        @endforeach
+    </div>
 
-                                    <span class="text-xs px-2 py-0.5 rounded-full font-medium
-                                        @if($r->category === 'Boys') bg-blue-200 text-blue-800
-                                        @elseif($r->category === 'Girls') bg-pink-200 text-pink-800
-                                        @elseif($r->category === 'Mixed') bg-gray-200 text-gray-800
-                                        @else bg-gray-100 text-gray-700
-                                        @endif">
-                                        {{ $r->category ?? 'Mixed' }}
-                                    </span>
-                                </div>
+    {{-- ================= DATA ================= --}}
+    @foreach($allAwardChunks as $index => $chunk)
+        <div x-show="page === {{ $index }}" class="grid gap-4">
 
-                                {{-- DETAILS --}}
-                                <div class="flex flex-wrap gap-3 text-sm">
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-gray-600">{{ $r->sdo }}</span>
-                                    </div>
+            @foreach($chunk as $r)
+            <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+                <div class="flex flex-wrap items-start justify-between gap-4">
 
-                                    <div>
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium 
-                                            @if($r->medal === 'Gold') bg-amber-100 text-amber-700
-                                            @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
-                                            @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
-                                            @endif">
-                                            {{ $r->medal }}
-                                        </span>
-                                    </div>
+                    <div class="flex-1 min-w-0">
 
-                                    <div>
-                                        <span class="text-gray-600 font-medium">{{ $r->count }} award(s)</span>
-                                    </div>
-                                </div>
-                            </div>
+                        {{-- HEADER --}}
+                        <div class="flex items-center gap-3 flex-wrap mb-2">
+                            <span class="text-sm font-semibold text-gray-900">{{ $r->sport->name ?? 'N/A' }}</span>
+                            <span class="text-xs text-gray-500">•</span>
+                            <span class="text-sm text-gray-600">{{ $r->type->type_name ?? 'ALL EVENTS' }}</span>
+                        </div>
 
-                            {{-- ACTIONS --}}
-                            <div class="flex items-center gap-2">
-                                <form method="POST" action="{{ route('approve_all_awards') }}">
-                                    @csrf
-                                    <input type="hidden" name="award_id" value="{{ $r->id }}">
-                                    <button class="px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-lg">
-                                        Approve
-                                    </button>
-                                </form>
+                        {{-- LABELS --}}
+                        <div class="flex gap-2 mb-2">
+                            <span class="text-xs px-2 py-0.5 rounded-full
+                                @if($r->division === 'Elementary') bg-blue-100 text-blue-700
+                                @elseif($r->division === 'Secondary') bg-purple-100 text-purple-700
+                                @elseif($r->division === 'Paragames') bg-green-100 text-green-700
+                                @endif">
+                                {{ $r->division }}
+                            </span>
 
-                                <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'all' })"
-                                        class="px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-700 rounded-lg">
-                                    Reject
-                                </button>
-                            </div>
+                            <span class="text-xs px-2 py-0.5 rounded-full
+                                @if($r->category === 'Boys') bg-blue-200 text-blue-800
+                                @elseif($r->category === 'Girls') bg-pink-200 text-pink-800
+                                @elseif($r->category === 'Mixed') bg-gray-200 text-gray-800
+                                @endif">
+                                {{ $r->category ?? 'Mixed' }}
+                            </span>
+                        </div>
 
+                        {{-- DETAILS --}}
+                        <div class="flex flex-wrap gap-3 text-sm">
+                            <span>{{ $r->sdo }}</span>
+
+                            <span class="px-2 py-0.5 rounded-full text-xs
+                                @if($r->medal === 'Gold') bg-amber-100 text-amber-700
+                                @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
+                                @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
+                                @endif">
+                                {{ $r->medal }}
+                            </span>
+
+                            <span>{{ $r->count }} award(s)</span>
                         </div>
                     </div>
-                @endforeach
+
+                    {{-- ACTIONS --}}
+                    <div class="flex gap-2">
+                        <form method="POST" action="{{ route('approve_all_awards') }}">
+                            @csrf
+                            <input type="hidden" name="award_id" value="{{ $r->id }}">
+                            <button class="px-3 py-1.5 bg-green-50 text-green-700 rounded-lg">
+                                Approve
+                            </button>
+                        </form>
+
+                        <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'all' })"
+                                class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg">
+                            Reject
+                        </button>
+                    </div>
+
+                </div>
             </div>
+            @endforeach
+
         </div>
-    @endif
+    @endforeach
+
+</div>
+@endif
 
 
     {{-- ================= REJECT MODAL ================= --}}
@@ -786,84 +805,98 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
     </div>
 
     {{-- ================= INDIVIDUAL AWARDS ================= --}}
-    @if($pendingIndividual->count())
-        <div>
-            <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
-                Individual Awards
-            </h4>
+@if($pendingIndividual->count())
 
-            <div class="grid gap-4">
-                @foreach($pendingIndividual as $r)
-                    <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
+@php
+    $chunkSize = 10;
+    $individualChunks = $pendingIndividual->chunk($chunkSize)->values();
+@endphp
 
-                        <div class="flex flex-wrap justify-between gap-4">
+<div x-data="{ page: 0 }">
 
-                            <div class="flex-1">
+    <h4 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+        Individual Awards
+    </h4>
 
-                                {{-- HEADER --}}
-                                <div class="flex gap-2 mb-2">
-                                    <span class="font-semibold">{{ $r->sport->name }}</span>
-                                    <span>•</span>
-                                    <span>{{ $r->type->type_name }}</span>
-                                </div>
+    {{-- PAGE BUTTONS --}}
+    <div class="flex flex-wrap gap-2 mb-4">
+        @foreach($individualChunks as $index => $chunk)
+            <button
+                @click="page = {{ $index }}"
+                :class="page === {{ $index }} 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600'"
+                class="px-3 py-1 text-xs rounded-lg font-medium">
+                Page {{ $index + 1 }}
+            </button>
+        @endforeach
+    </div>
 
-                                {{-- ✅ NEW LABEL --}}
-                                <div class="flex gap-2 mb-2">
-                                    <span class="text-xs px-2 py-0.5 rounded-full
-                                        @if($r->division === 'Elementary') bg-blue-100 text-blue-700
-                                        @elseif($r->division === 'Secondary') bg-purple-100 text-purple-700
-                                        @elseif($r->division === 'Paragames') bg-green-100 text-green-700
-                                        @endif">
-                                        {{ $r->division }}
-                                    </span>
+    {{-- DATA --}}
+    @foreach($individualChunks as $index => $chunk)
+        <div x-show="page === {{ $index }}" class="grid gap-4">
 
-                                    <span class="text-xs px-2 py-0.5 rounded-full
-                                        @if($r->category === 'Boys') bg-blue-200 text-blue-800
-                                        @elseif($r->category === 'Girls') bg-pink-200 text-pink-800
-                                        @elseif($r->category === 'Mixed') bg-gray-200 text-gray-800
-                                        @endif">
-                                        {{ $r->category ?? 'Mixed' }}
-                                    </span>
-                                </div>
+            @foreach($chunk as $r)
+            <div class="bg-gray-50 rounded-xl p-4 hover:shadow-md transition">
 
-                                {{-- DETAILS --}}
-                                <div class="text-sm text-gray-600 mb-1">
-                                    {{ $r->athlete?->last_name }}, {{ $r->athlete?->first_name }}
-                                </div>
+                <div class="flex justify-between gap-4">
 
-                                <div class="text-sm">{{ $r->sdo }}</div>
+                    <div class="flex-1">
 
-                                <span class="text-xs px-2 py-0.5 rounded-full mt-1 inline-block
-                                    @if($r->medal === 'Gold') bg-amber-100 text-amber-700
-                                    @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
-                                    @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
-                                    @endif">
-                                    {{ $r->medal }}
-                                </span>
-
-                            </div>
-
-                            {{-- ACTIONS --}}
-                            <div class="flex gap-2">
-                                <button @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })"
-                                        class="px-3 py-1.5 bg-green-50 text-green-700 rounded">
-                                    Approve
-                                </button>
-
-                                <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })"
-                                        class="px-3 py-1.5 bg-red-50 text-red-700 rounded">
-                                    Reject
-                                </button>
-                            </div>
-
+                        <div class="flex gap-2 mb-2">
+                            <span class="font-semibold">{{ $r->sport->name }}</span>
+                            <span>•</span>
+                            <span>{{ $r->type->type_name }}</span>
                         </div>
 
-                    </div>
-                @endforeach
-            </div>
-        </div>
-    @endif
+                        <div class="flex gap-2 mb-2">
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                                {{ $r->division }}
+                            </span>
 
+                            <span class="text-xs px-2 py-0.5 rounded-full bg-gray-200 text-gray-800">
+                                {{ $r->category ?? 'Mixed' }}
+                            </span>
+                        </div>
+
+                        <div class="text-sm">
+                            {{ $r->athlete?->last_name }}, {{ $r->athlete?->first_name }}
+                        </div>
+
+                        <div class="text-sm">{{ $r->sdo }}</div>
+
+                        <span class="text-xs px-2 py-0.5 rounded-full
+                            @if($r->medal === 'Gold') bg-amber-100 text-amber-700
+                            @elseif($r->medal === 'Silver') bg-gray-100 text-gray-700
+                            @elseif($r->medal === 'Bronze') bg-orange-100 text-orange-700
+                            @endif">
+                            {{ $r->medal }}
+                        </span>
+
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button @click="$dispatch('open-modal', { awardId: {{ $r->id }}, type: 'individual' })"
+                                class="px-3 py-1.5 bg-green-50 text-green-700 rounded">
+                            Approve
+                        </button>
+
+                        <button @click="$dispatch('open-reject', { id: {{ $r->id }}, type: 'individual' })"
+                                class="px-3 py-1.5 bg-red-50 text-red-700 rounded">
+                            Reject
+                        </button>
+                    </div>
+
+                </div>
+
+            </div>
+            @endforeach
+
+        </div>
+    @endforeach
+
+</div>
+@endif
     @if($pendingResults->count() === 0 && $pendingIndividual->count() === 0)
         <div class="text-center py-10">
             <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
