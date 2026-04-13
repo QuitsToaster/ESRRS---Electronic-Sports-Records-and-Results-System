@@ -769,16 +769,17 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
     </div>
 </div>
 
-{{-- ================= TV NEWS STYLE MODAL (LIGHT THEME) ================= --}}
+{{-- ================= TV NEWS STYLE MODAL (FULLSCREEN FIXED - Z INDEX FIX) ================= --}}
 <div
     x-show="open"
     x-transition.opacity
     @keydown.escape.window="open = false"
-    class="fixed inset-0 bg-black/40 flex items-center justify-center z-50 px-4"
+    class="fixed inset-0 bg-black/60 z-[200] flex flex-col"
 >
+
     <div
         @click.away="open = false"
-        class="bg-white text-gray-800 rounded-xl shadow-2xl max-w-5xl w-full h-[85vh] flex flex-col border-4 border-red-600"
+        class="w-full h-full flex flex-col bg-white text-gray-800"
     >
 
         {{-- 🔴 TOP BAR --}}
@@ -788,21 +789,21 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                     eSRRS
                 </span>
                 <h3
-                    class="text-lg md:text-xl font-extrabold uppercase tracking-wide"
+                    class="text-sm md:text-xl font-extrabold uppercase tracking-wide truncate"
                     x-text="division?.name + ' — Medal Update'"
                 ></h3>
             </div>
 
             <button
                 @click="open = false"
-                class="text-white text-2xl font-bold hover:text-gray-200"
+                class="text-white text-3xl font-bold hover:text-gray-200 leading-none"
             >
                 &times;
             </button>
         </div>
 
         {{-- 📺 CONTENT --}}
-        <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 overflow-hidden">
+        <div class="flex-1 grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-gray-50 overflow-y-auto">
 
             {{-- GOLD --}}
             <div class="flex flex-col bg-white rounded-lg shadow overflow-hidden">
@@ -813,10 +814,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
                     <template x-for="m in medals.gold" :key="m.id">
                         <div class="border-l-4 border-yellow-500 p-3 rounded bg-white hover:bg-gray-100">
-
                             <div class="font-bold text-red-600 text-sm">
                                 <span x-text="m.sport?.name ?? 'Sport'"></span>
-
                                 <span class="text-gray-500 font-semibold ml-1">
                                     —
                                     <span x-text="m.sportType && m.sportType.type_name ? m.sportType.type_name : ('Type #' + m.type_id)"></span>
@@ -830,7 +829,6 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                                     <strong x-text="new Date(m.created_at).toLocaleDateString()"></strong>
                                 </div>
                             </div>
-
                         </div>
                     </template>
                 </div>
@@ -845,10 +843,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
                     <template x-for="m in medals.silver" :key="m.id">
                         <div class="border-l-4 border-gray-400 p-3 rounded bg-white hover:bg-gray-100">
-
                             <div class="font-bold text-red-600 text-sm">
                                 <span x-text="m.sport?.name ?? 'Sport'"></span>
-
                                 <span class="text-gray-500 font-semibold ml-1">
                                     —
                                     <span x-text="m.sportType && m.sportType.type_name ? m.sportType.type_name : ('Type #' + m.type_id)"></span>
@@ -862,7 +858,6 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                                     <strong x-text="new Date(m.created_at).toLocaleDateString()"></strong>
                                 </div>
                             </div>
-
                         </div>
                     </template>
                 </div>
@@ -877,10 +872,8 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                 <div class="flex-1 overflow-y-auto p-3 space-y-3">
                     <template x-for="m in medals.bronze" :key="m.id">
                         <div class="border-l-4 border-orange-500 p-3 rounded bg-white hover:bg-gray-100">
-
                             <div class="font-bold text-red-600 text-sm">
                                 <span x-text="m.sport?.name ?? 'Sport'"></span>
-
                                 <span class="text-gray-500 font-semibold ml-1">
                                     —
                                     <span x-text="m.sportType && m.sportType.type_name ? m.sportType.type_name : ('Type #' + m.type_id)"></span>
@@ -894,7 +887,6 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
                                     <strong x-text="new Date(m.created_at).toLocaleDateString()"></strong>
                                 </div>
                             </div>
-
                         </div>
                     </template>
                 </div>
@@ -903,7 +895,7 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
         </div>
 
         {{-- FOOTER --}}
-        <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 flex justify-between items-center border-t">
+        <div class="bg-gray-100 text-gray-600 text-xs px-4 py-2 flex justify-between items-center border-t flex-shrink-0">
             <span class="font-semibold">eSRRS • Official Medal Records</span>
             <span class="italic">Press ESC or click outside to close</span>
         </div>
