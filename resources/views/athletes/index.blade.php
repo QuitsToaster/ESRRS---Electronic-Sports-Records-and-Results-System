@@ -1040,7 +1040,7 @@ setTimeout(() => {
 
 {{-- Pagination links --}}
 <div class="mt-4">
-    {{ $athletes->links() }}
+    {{ $athletes->appends(request()->query())->withPath(url()->current())->links() }}
 </div>
 
 {{-- QR MODAL --}}

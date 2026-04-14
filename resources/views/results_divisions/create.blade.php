@@ -1125,7 +1125,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 {{-- ================= PAGINATION ================= --}}
 <div class="mt-6">
-    {{ $sports->links() }}
+    {{ $sports->withPath(url()->current())->links() }}
 </div>
 
 {{-- ================= ACTION BUTTON ================= --}}
@@ -1357,7 +1357,7 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 {{-- ================= PAGINATION ================= --}}
 <div class="mt-6">
-    {{ $sports->links() }}
+    {{ $sports->withPath(url()->current())->links() }}
 </div>
 
 {{-- ================= SUBMIT ================= --}}
