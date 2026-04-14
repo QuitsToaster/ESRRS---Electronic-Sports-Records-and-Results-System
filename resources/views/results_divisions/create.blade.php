@@ -1277,45 +1277,70 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                     @foreach(['Gold','Silver','Bronze'] as $medal)
                     <td class="border px-3 py-3 align-top">
 
-                        <div x-data="{ selectedAthlete: null }">
+                        <div x-data="{ athletes:[{name:''}] }">
 
-                            {{-- 🔍 SEARCH --}}
-                            <input 
-                                list="athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}"
-                                x-model="selectedAthlete"
-                                placeholder="Type athlete name..."
-                                class="w-full border rounded px-2 py-1 text-sm">
+    <template x-for="(ath,index) in athletes" :key="index">
+        <div class="border rounded p-2 mb-2 bg-gray-50">
 
-                            {{-- DATALIST --}}
-                            <datalist id="athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}">
-                                @foreach($athletes as $athlete)
-                                    <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
-                                @endforeach
-                            </datalist>
+            {{-- SEARCH --}}
+            <input 
+                :list="'athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}'"
+                x-model="ath.name"
+                placeholder="Type athlete name..."
+                class="w-full border rounded px-2 py-1 text-sm">
 
-                            {{-- ================= HIDDEN VALUES ================= --}}
-                            <input type="hidden"
-                                   :value="getAthleteId(selectedAthlete)"
-                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][athlete]">
+            {{-- DATALIST --}}
+            <datalist id="athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}">
+                @foreach($athletes as $athlete)
+                    <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
+                @endforeach
+            </datalist>
 
-                            <input type="hidden"
-                                   :value="getAthleteSDO(selectedAthlete)"
-                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][sdo]">
+            {{-- ================= HIDDEN VALUES ================= --}}
 
-                            {{-- ✅ CRITICAL FIX (DIVISION + CATEGORY FROM SPORT) --}}
-                            <input type="hidden"
-                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][division]"
-                                   value="{{ $sport->division }}">
+            {{-- ✅ ATHLETE ID --}}
+            <input type="hidden"
+                :value="getAthleteId(ath.name)"
+                :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][athlete]'">
 
-                            <input type="hidden"
-                                   name="individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][category]"
-                                   value="{{ $sport->category }}">
+            {{-- ✅ SDO --}}
+            <input type="hidden"
+                :value="getAthleteSDO(ath.name)"
+                :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][sdo]'">
 
-                            {{-- INFO --}}
-                            <div class="text-xs text-gray-600 mt-1"
-                                 x-html="getAthleteInfo(selectedAthlete)"></div>
+            {{-- ✅ DIVISION --}}
+            <input type="hidden"
+                :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][division]'"
+                value="{{ $sport->division }}">
 
-                        </div>
+            {{-- ✅ CATEGORY --}}
+            <input type="hidden"
+                :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][category]'"
+                value="{{ $sport->category }}">
+
+            {{-- INFO --}}
+            <div class="text-xs text-gray-600 mt-1"
+                 x-html="getAthleteInfo(ath.name)"></div>
+
+            {{-- REMOVE --}}
+            <button type="button"
+                    x-show="athletes.length > 1"
+                    @click="athletes.splice(index,1)"
+                    class="mt-1 text-xs bg-red-500 text-white px-2 py-1 rounded">
+                Remove
+            </button>
+
+        </div>
+    </template>
+
+    {{-- ADD BUTTON --}}
+    <button type="button"
+            @click="athletes.push({name:''})"
+            class="text-green-600 text-xs hover:underline">
+        + Add Athlete
+    </button>
+
+</div>
 
                     </td>
                     @endforeach

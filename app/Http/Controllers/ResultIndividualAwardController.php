@@ -48,86 +48,88 @@ class ResultIndividualAwardController extends Controller
 
             if (!is_array($medals)) continue;
 
-            foreach ($medals as $medalName => $data) {
+            foreach ($medals as $medalName => $entries) {
 
-                if (!is_array($data)) continue;
+    if (!is_array($entries)) continue;
 
-                $athleteId = $data['athlete'] ?? null;
-                $division  = $data['division'] ?? null;   // ✅ FROM FORM
-                $category  = $data['category'] ?? null;   // ✅ FROM FORM
+    foreach ($entries as $data) {
 
-                if (!$athleteId) continue;
+        if (!is_array($data)) continue;
 
-                // ================= GET ATHLETE =================
-                $athlete = \App\Models\Athlete::find($athleteId);
-                if (!$athlete) continue;
+        $athleteId = $data['athlete'] ?? null;
+        $division  = $data['division'] ?? null;
+        $category  = $data['category'] ?? null;
 
-                // ================= AUTO SDO =================
-                $sdo = $athlete->school_division
-                    ? 'SDO - ' . $athlete->school_division
-                    : null;
+        if (!$athleteId) continue;
 
-                // ================= CHECK EXISTING =================
-                $existing = IndividualAwardResult::where([
-                    'event_id' => $event->id,
-                    'sport_id' => $sportId,
-                    'type_id'  => $typeId ?: null,
-                    'medal'    => $medalName,
-                ])->first();
+        // ================= GET ATHLETE =================
+        $athlete = \App\Models\Athlete::find($athleteId);
+        if (!$athlete) continue;
 
-                $oldValues = $existing ? $existing->toArray() : null;
+        // ================= AUTO SDO =================
+        $sdo = $athlete->school_division
+            ? 'SDO - ' . $athlete->school_division
+            : null;
 
-                // ================= SAVE =================
-                $award = IndividualAwardResult::updateOrCreate(
-                    [
-                        'event_id' => $event->id,
-                        'sport_id' => $sportId,
-                        'type_id'  => $typeId ?: null,
-                        'medal'    => $medalName,
-                    ],
-                    [
-                        // ✅ FIX: USE FORM VALUES
-                        'division' => $division,
-                        'category' => $category,
+        // ================= CHECK EXISTING =================
+        $existing = IndividualAwardResult::where([
+            'event_id' => $event->id,
+            'sport_id' => $sportId,
+            'type_id'  => $typeId ?: null,
+            'medal'    => $medalName,
+            'athlete_id' => $athleteId, // ✅ IMPORTANT FOR MULTIPLE
+        ])->first();
 
-                        'athlete_id' => $athleteId,
-                        'sdo' => $sdo,
-                        'status' => $status,
-                        'awarded_by' => $user->id,
-                        'validation_file' => $filePath,
-                    ]
-                );
+        $oldValues = $existing ? $existing->toArray() : null;
 
-                // ================= AUDIT =================
-                AuditLog::create([
-                    'model_type' => 'IndividualAwardResult',
-                    'model_id'   => $award->id,
-                    'user_id'    => $user->id,
-                    'action'     => $existing
-                        ? "Updated Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName"
-                        : "Created Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName",
-                    'old_values' => $oldValues ? json_encode($oldValues) : null,
-                    'new_values' => json_encode($award->toArray()),
-                    'description' => json_encode([
-                        'performed_by' => $user->name,
-                        'role' => $roleName,
-                        'event_id' => $event->id,
-                        'sport_id' => $sportId,
-                        'type_id' => $typeId,
+        // ================= SAVE =================
+        $award = IndividualAwardResult::updateOrCreate(
+            [
+                'event_id' => $event->id,
+                'sport_id' => $sportId,
+                'type_id'  => $typeId ?: null,
+                'medal'    => $medalName,
+                'athlete_id' => $athleteId, // ✅ UNIQUE PER ATHLETE
+            ],
+            [
+                'division' => $division,
+                'category' => $category,
+                'sdo' => $sdo,
+                'status' => $status,
+                'awarded_by' => $user->id,
+                'validation_file' => $filePath,
+            ]
+        );
 
-                        // ✅ LOG CORRECT VALUES
-                        'division' => $division,
-                        'category' => $category,
+        // ================= AUDIT =================
+        AuditLog::create([
+            'model_type' => 'IndividualAwardResult',
+            'model_id'   => $award->id,
+            'user_id'    => $user->id,
+            'action'     => $existing
+                ? "Updated Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName"
+                : "Created Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName",
+            'old_values' => $oldValues ? json_encode($oldValues) : null,
+            'new_values' => json_encode($award->toArray()),
+            'description' => json_encode([
+                'performed_by' => $user->name,
+                'role' => $roleName,
+                'event_id' => $event->id,
+                'sport_id' => $sportId,
+                'type_id' => $typeId,
+                'division' => $division,
+                'category' => $category,
+                'athlete_id' => $athleteId,
+                'sdo' => $sdo,
+                'medal' => $medalName,
+                'status' => $status,
+                'ip_address' => request()->ip(),
+                'user_agent' => request()->userAgent(),
+            ]),
+        ]);
 
-                        'athlete_id' => $athleteId,
-                        'sdo' => $sdo,
-                        'medal' => $medalName,
-                        'status' => $status,
-                        'ip_address' => request()->ip(),
-                        'user_agent' => request()->userAgent(),
-                    ]),
-                ]);
-            }
+    }
+}
         }
     }
 
