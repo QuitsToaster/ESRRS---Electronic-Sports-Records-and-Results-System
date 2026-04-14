@@ -270,190 +270,277 @@
 </div>
 
 {{-- ============================================================= --}}
-{{-- 📋 TOURNAMENT SECRETARIES TABLES --}}
+{{-- 📋 TOURNAMENT SECRETARIES TABLES WITH LIGHT PAGINATION --}}
 {{-- ============================================================= --}}
 
 @if(auth()->user()->role->name === 'Super Admin')
 <div class="space-y-8 mb-10">
-    
-{{-- ================= PENDING AWARDS ================= --}}
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-    <div class="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-transparent px-6 py-4">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                    </svg>
-                </div>
-                <h2 class="text-lg font-semibold text-gray-900">Pending Award Submissions</h2>
-            </div>
 
-            {{-- EXPORT PDF --}}
-            <a href="{{ route('dashboard.secretaries.export', 'pending') }}"
-               class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
-               Export PDF
-            </a>
-        </div>
+{{-- ================= PENDING AWARDS ================= --}}
+@php
+    $pendingChunks = $secretariesPendingAwards->chunk(10);
+@endphp
+
+<div x-data="{ page: 0 }" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+
+    <div class="border-b border-gray-100 bg-gradient-to-r from-blue-50 to-transparent px-6 py-4 flex justify-between items-center">
+        <h2 class="text-lg font-semibold text-gray-900">Pending Award Submissions</h2>
+
+        <a href="{{ route('dashboard.secretaries.export', 'pending') }}"
+           class="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+           Export PDF
+        </a>
+    </div>
+
+    {{-- PAGE TABS --}}
+    <div class="flex gap-2 px-6 py-3 border-b bg-gray-50 flex-wrap">
+        @foreach($pendingChunks as $index => $chunk)
+            <button @click="page = {{ $index }}"
+                :class="page === {{ $index }} ? 'bg-blue-600 text-white' : 'bg-white text-gray-600 border'"
+                class="px-3 py-1 text-xs rounded-lg border">
+                Page {{ $index + 1 }}
+            </button>
+        @endforeach
     </div>
 
     {{-- TABLE --}}
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Number</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sport</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pending</th>
-                </tr>
-            </thead>
+    @foreach($pendingChunks as $index => $chunk)
+    <div x-show="page === {{ $index }}" x-cloak>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Secretary</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Contact</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Event</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Event Type</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Level</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Category</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Pending</th>
+                    </tr>
+                </thead>
 
-            <tbody class="bg-white divide-y divide-gray-200">
-                @foreach($secretariesPendingAwards as $secretary)
-                <tr>
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
+                <tbody class="divide-y">
+                    @foreach($chunk as $secretary)
+                    <tr>
+                        <td class="px-6 py-3 text-sm">{{ $secretary->name }}</td>
+                        <td class="px-6 py-3 text-sm">{{ $secretary->contact_number }}</td>
 
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ collect($secretary->sports_access ?? [])
-                        ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)
-                        ->filter()->implode(', ') ?: 'N/A' }}
-                    </td>
+                        <td class="px-6 py-3 text-sm">
+                            {{ collect($secretary->sports_access ?? [])
+                                ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)
+                                ->filter()->implode(', ') ?: 'N/A' }}
+                        </td>
 
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ collect($secretary->sport_type_access ?? [])
-                        ->map(fn($id)=>optional($sportTypes->firstWhere('id',$id))->type_name)
-                        ->filter()->implode(', ') ?: 'N/A' }}
-                    </td>
+                        <td class="px-6 py-3 text-sm">
+                            {{ collect($secretary->sport_type_access ?? [])
+                                ->map(fn($id)=>optional($sportTypes->firstWhere('id',$id))->type_name)
+                                ->filter()->implode(', ') ?: 'N/A' }}
+                        </td>
 
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
-                    </td>
+                        <td class="px-6 py-3 text-sm">{{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}</td>
+                        <td class="px-6 py-3 text-sm">{{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}</td>
 
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
-                    </td>
-
-                    <td class="px-6 py-4">
-                        <span class="px-3 py-1 text-sm font-medium text-blue-700 bg-blue-50 rounded-full">
-                            {{ $secretary->all_awards_pending_count + $secretary->individual_awards_pending_count }}
-                        </span>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
+                        <td class="px-6 py-3">
+                            <span class="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded">
+                                {{ $secretary->all_awards_pending_count + $secretary->individual_awards_pending_count }}
+                            </span>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
+    @endforeach
 </div>
 
 
 {{-- ================= NEEDS REVISION ================= --}}
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+@php
+    $revisionChunks = $secretaryRevisionList->chunk(10);
+@endphp
 
-    <div class="border-b border-gray-100 bg-gradient-to-r from-rose-50 to-transparent px-6 py-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">Awards Needing Revision</h2>
+<div x-data="{ page: 0 }" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-            {{-- EXPORT --}}
-            <a href="{{ route('dashboard.secretaries.export', 'revision') }}"
-               class="text-sm bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg">
-               Export PDF
-            </a>
+    <div class="border-b border-gray-100 bg-gradient-to-r from-rose-50 px-6 py-4 flex justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Awards Needing Revision</h2>
+
+        <a href="{{ route('dashboard.secretaries.export', 'revision') }}"
+           class="text-sm bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded-lg">
+           Export PDF
+        </a>
+    </div>
+
+    {{-- PAGE TABS --}}
+    <div class="flex gap-2 px-6 py-3 border-b bg-gray-50 flex-wrap">
+        @foreach($revisionChunks as $index => $chunk)
+            <button @click="page = {{ $index }}"
+                :class="page === {{ $index }} ? 'bg-rose-600 text-white' : 'bg-white text-gray-600 border'"
+                class="px-3 py-1 text-xs rounded-lg border">
+                Page {{ $index + 1 }}
+            </button>
+        @endforeach
+    </div>
+
+    {{-- TABLE --}}
+    @foreach($revisionChunks as $index => $chunk)
+    <div x-show="page === {{ $index }}" x-cloak>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                
+                {{-- HEADER (SAME AS PENDING) --}}
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Secretary</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Contact Number</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Event</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Event Type</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Level</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Category</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase text-center">All</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase text-center">Individual</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase text-center">Total</th>
+                    </tr>
+                </thead>
+
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($chunk as $secretary)
+                    @php 
+                        $total = $secretary->all_awards_revision_count + $secretary->individual_awards_revision_count; 
+                    @endphp
+                    <tr>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
+
+                        {{-- SPORT --}}
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ collect($secretary->sports_access ?? [])
+                                ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)
+                                ->filter()->implode(', ') ?: 'N/A' }}
+                        </td>
+
+                        {{-- TYPE --}}
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ collect($secretary->sport_type_access ?? [])
+                                ->map(fn($id)=>optional($sportTypes->firstWhere('id',$id))->type_name)
+                                ->filter()->implode(', ') ?: 'N/A' }}
+                        </td>
+
+                        {{-- LEVEL --}}
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
+                        </td>
+
+                        {{-- CATEGORY --}}
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
+                        </td>
+
+                        {{-- COUNTS --}}
+                        <td class="px-6 py-4 text-center text-rose-600 font-semibold">
+                            {{ $secretary->all_awards_revision_count }}
+                        </td>
+
+                        <td class="px-6 py-4 text-center text-rose-600 font-semibold">
+                            {{ $secretary->individual_awards_revision_count }}
+                        </td>
+
+                        <td class="px-6 py-4 text-center">
+                            <span class="px-3 py-1 text-sm font-medium text-rose-700 bg-rose-50 rounded-full">
+                                {{ $total }}
+                            </span>
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
         </div>
     </div>
-
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Number</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">All Awards</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Individual</th>
-                    <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Total</th>
-                </tr>
-            </thead>
-
-            <tbody class="bg-white divide-y divide-gray-200">
-                @foreach($secretaryRevisionList as $secretary)
-                @php $total = $secretary->all_awards_revision_count + $secretary->individual_awards_revision_count; @endphp
-                <tr>
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
-                    <td class="px-6 py-4 text-center text-rose-600 font-semibold">{{ $secretary->all_awards_revision_count }}</td>
-                    <td class="px-6 py-4 text-center text-rose-600 font-semibold">{{ $secretary->individual_awards_revision_count }}</td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="px-3 py-1 text-sm font-medium text-rose-700 bg-rose-50 rounded-full">{{ $total }}</span>
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-        </table>
-    </div>
+    @endforeach
 </div>
 
 
+
 {{-- ================= NO SUBMISSIONS ================= --}}
-<div class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+@php
+    $noSubmissionChunks = $secretariesNoAwards->chunk(10);
+@endphp
 
-    <div class="border-b border-gray-100 bg-gradient-to-r from-amber-50 to-transparent px-6 py-4">
-        <div class="flex items-center justify-between">
-            <h2 class="text-lg font-semibold text-gray-900">Secretaries Without Submissions</h2>
+<div x-data="{ page: 0 }" class="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
-            {{-- EXPORT --}}
-            <a href="{{ route('dashboard.secretaries.export', 'no_submissions') }}"
-               class="text-sm bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg">
-               Export PDF
-            </a>
+    <div class="border-b border-gray-100 bg-gradient-to-r from-amber-50 px-6 py-4 flex justify-between">
+        <h2 class="text-lg font-semibold text-gray-900">Secretaries Without Submissions</h2>
+
+        <a href="{{ route('dashboard.secretaries.export', 'no_submissions') }}"
+           class="text-sm bg-amber-600 hover:bg-amber-700 text-white px-4 py-2 rounded-lg">
+           Export PDF
+        </a>
+    </div>
+
+    {{-- PAGE TABS --}}
+    <div class="flex gap-2 px-6 py-3 border-b bg-gray-50 flex-wrap">
+        @foreach($noSubmissionChunks as $index => $chunk)
+            <button @click="page = {{ $index }}"
+                :class="page === {{ $index }} ? 'bg-amber-600 text-white' : 'bg-white text-gray-600 border'"
+                class="px-3 py-1 text-xs rounded-lg border">
+                Page {{ $index + 1 }}
+            </button>
+        @endforeach
+    </div>
+
+    {{-- TABLE --}}
+    @foreach($noSubmissionChunks as $index => $chunk)
+    <div x-show="page === {{ $index }}" x-cloak>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+
+                {{-- SAME HEADER AS PENDING --}}
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Secretary</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Contact Number</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Event</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Event Type</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Level</th>
+                        <th class="px-6 py-3 text-xs text-gray-500 uppercase">Category</th>
+                    </tr>
+                </thead>
+
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @foreach($chunk as $secretary)
+                    <tr>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
+
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ collect($secretary->sports_access ?? [])
+                                ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)
+                                ->filter()->implode(', ') ?: 'N/A' }}
+                        </td>
+
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ collect($secretary->sport_type_access ?? [])
+                                ->map(fn($id)=>optional($sportTypes->firstWhere('id',$id))->type_name)
+                                ->filter()->implode(', ') ?: 'N/A' }}
+                        </td>
+
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
+                        </td>
+
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
+                        </td>
+                    </tr>
+                    @endforeach
+                </tbody>
+
+            </table>
         </div>
     </div>
-
-    <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Secretary</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact Number</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sport</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Level</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                </tr>
-            </thead>
-
-            <tbody class="bg-white divide-y divide-gray-200">
-                @foreach($secretariesNoAwards as $secretary)
-                <tr>
-                    <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ $secretary->name }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">{{ $secretary->contact_number }}</td>
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ collect($secretary->sports_access ?? [])
-                        ->map(fn($id)=>optional($sports->firstWhere('id',$id))->name)
-                        ->filter()->implode(', ') ?: 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ collect($secretary->sport_type_access ?? [])
-                        ->map(fn($id)=>optional($sportTypes->firstWhere('id',$id))->type_name)
-                        ->filter()->implode(', ') ?: 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ implode(', ', $secretary->level_access ?? []) ?: 'N/A' }}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-600">
-                        {{ implode(', ', $secretary->category_access ?? []) ?: 'N/A' }}
-                    </td>
-                </tr>
-                @endforeach
-            </tbody>
-
-        </table>
-    </div>
-
+    @endforeach
 </div>
 
 </div>
