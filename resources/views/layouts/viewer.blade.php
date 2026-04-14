@@ -232,17 +232,6 @@
     @yield('content')
 </main>
 
-{{-- Scroll to Top Button (clean version) --}}
-<button x-show="showTop" 
-        x-cloak
-        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-        x-transition
-        class="fixed bottom-6 right-6 z-50 p-3 bg-white hover:bg-gray-50 text-gray-700 rounded-full shadow-lg hover:shadow-xl border border-gray-200 transform hover:scale-110 transition-all duration-200">
-    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-    </svg>
-</button>
-
 <style>
     @keyframes marquee {
         0% { transform: translateX(0); }
@@ -275,31 +264,40 @@
         modalOpen: false,
         modalContent: null,
         showScrollTop: false,
+
         openModal(content) { 
             this.modalContent = content; 
             this.modalOpen = true;
-            // Pause crawler when modal is open
             document.querySelector('.crawler-content')?.style.setProperty('animation-play-state', 'paused');
         },
+
         closeModal() { 
             this.modalOpen = false; 
             this.modalContent = null;
-            // Resume crawler
             document.querySelector('.crawler-content')?.style.setProperty('animation-play-state', 'running');
         },
-        handleScroll() { 
-            this.showScrollTop = window.scrollY + window.innerHeight >= document.body.scrollHeight * 0.8;
+
+        handleScroll() {
+            // ✅ SIMPLE + RELIABLE (FIXED)
+            this.showScrollTop = window.scrollY > 200;
         }
     }"
-     x-init="
-        setInterval(() => time = new Date(), 1000); 
-        window.addEventListener('scroll', handleScroll);
-        // Add keyboard support for modal
+
+    x-init="
+        setInterval(() => time = new Date(), 1000);
+
+        // ✅ FORCE INITIAL CHECK
+        handleScroll();
+
+        window.addEventListener('scroll', () => handleScroll());
+
         window.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && modalOpen) closeModal();
         });
-     "
-     class="fixed bottom-0 left-0 right-0 z-[70] font-['Inter',system-ui,sans-serif]">
+    "
+
+    class="fixed bottom-0 left-0 right-0 z-[70] font-['Inter',system-ui,sans-serif]"
+>
 
     {{-- DESKTOP TV NEWS STYLE --}}
     <div class="hidden md:block w-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-t-2 border-red-600 shadow-2xl">
@@ -515,16 +513,37 @@
         </div>
     </div>
 
-    {{-- Scroll to Top Button --}}
-    <button x-show="showScrollTop"
-            x-transition
-            @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
-            class="fixed bottom-24 right-4 z-[80] px-3 py-2 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 rounded-lg text-white font-semibold shadow-xl flex items-center gap-2 border border-blue-400/30 backdrop-blur-sm">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-        </svg>
-        TOP
-    </button>
+    {{-- ================= SCROLL TO TOP (FINAL FIX) ================= --}}
+<button x-show="showScrollTop"
+        x-cloak
+        x-transition
+        @click="window.scrollTo({ top: 0, behavior: 'smooth' })"
+
+        class="
+        fixed
+        z-[999]
+
+        bottom-3 right-3 md:bottom-20 md:right-6
+
+        bg-blue-600 hover:bg-blue-700
+        text-white font-semibold
+
+        rounded-full
+        shadow-xl
+        border border-blue-400/30
+
+        flex items-center justify-center
+        w-10 h-10 md:w-auto md:h-auto md:px-3 md:py-2
+
+        transition-all duration-300
+        hover:scale-110
+        "
+>
+    <svg class="w-5 h-5 md:w-4 md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+    </svg>
+</button>
 </div>
 
 {{-- ================= CRAWLER ANIMATIONS ================= --}}
