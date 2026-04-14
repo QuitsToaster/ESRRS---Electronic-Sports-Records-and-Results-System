@@ -69,21 +69,24 @@
     let interval = null;
 
     function startTextRotation() {
-        if (!loaderText) return;
+    if (!loaderText) return;
 
-        let index = 0;
+    let index = 0;
 
-        interval = setInterval(() => {
-            loaderText.style.opacity = 0;
+    if (interval) clearInterval(interval);
 
-            setTimeout(() => {
-                index = (index + 1) % messages.length;
-                loaderText.innerText = messages[index];
-                loaderText.style.opacity = 1;
-            }, 200);
+    // ✅ FORCE FIRST CHANGE EXACTLY AFTER 1 SECOND
+    setTimeout(() => {
+        index = (index + 1) % messages.length;
+        loaderText.innerText = messages[index];
+    }, 1000);
 
-        }, 1200);
-    }
+    // ✅ THEN CONTINUE EVERY 1 SECOND
+    interval = setInterval(() => {
+        index = (index + 1) % messages.length;
+        loaderText.innerText = messages[index];
+    }, 1000);
+}
 
     function stopTextRotation() {
         if (interval) clearInterval(interval);
@@ -111,7 +114,7 @@
             loader.style.display = 'flex';
             loader.style.opacity = '1';
 
-            // Random starting message
+            // ✅ RANDOM START
             if (loaderText) {
                 const randomIndex = Math.floor(Math.random() * messages.length);
                 loaderText.innerText = messages[randomIndex];
