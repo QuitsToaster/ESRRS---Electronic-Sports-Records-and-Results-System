@@ -39,7 +39,7 @@ public function type()
 
 public function user()
 {
-    return $this->belongsTo(\App\Models\User::class);
+    return $this->belongsTo(\App\Models\User::class, 'awarded_by');
 }
 
 }

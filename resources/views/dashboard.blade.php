@@ -110,7 +110,12 @@
 
         <div class="grid grid-cols-3 gap-3">
             {{-- Pending --}}
-            <div @click="openModal = true; modalTitle='All Awards - Pending'; modalAwards=@js(App\Models\AllAwardResult::where('status','pending')->with(['sport','event','user'])->get());"
+            {{-- ================= ALL AWARDS STATUS ================= --}}
+<div @click="openModal = true; modalTitle='All Awards - Pending'; modalAwards=@js(
+    App\Models\AllAwardResult::where('status','pending')
+    ->with(['sport','type','user'])
+    ->get()
+);"
                  class="group relative bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
                 <div class="relative">
                     <div class="text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">Pending</div>
@@ -120,7 +125,12 @@
             </div>
 
             {{-- Approved --}}
-            <div @click="openModal = true; modalTitle='All Awards - Approved'; modalAwards=@js(App\Models\AllAwardResult::where('status','approved')->with(['sport','event','user'])->get());"
+            {{-- ================= ALL AWARDS STATUS ================= --}}
+<div @click="openModal = true; modalTitle='All Awards - Approved'; modalAwards=@js(
+    App\Models\AllAwardResult::where('status','approved')
+    ->with(['sport','type','user'])
+    ->get()
+);"
                  class="group relative bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
                 <div class="relative">
                     <div class="text-xs font-medium text-emerald-700 uppercase tracking-wider mb-1">Approved</div>
@@ -130,7 +140,12 @@
             </div>
 
             {{-- Needs Revision --}}
-            <div @click="openModal = true; modalTitle='All Awards - Needs Revision'; modalAwards=@js(App\Models\AllAwardResult::where('status','needs_revision')->with(['sport','event','user'])->get());"
+            {{-- ================= ALL AWARDS STATUS ================= --}}
+<div @click="openModal = true; modalTitle='All Awards - Needs Revision'; modalAwards=@js(
+    App\Models\AllAwardResult::where('status','needs_revision')
+    ->with(['sport','type','user'])
+    ->get()
+);"
                  class="group relative bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
                 <div class="relative">
                     <div class="text-xs font-medium text-rose-700 uppercase tracking-wider mb-1">Needs Revision</div>
@@ -142,49 +157,71 @@
     </div>
 
     {{-- INDIVIDUAL AWARDS STATUS --}}
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <div class="flex items-center gap-3 mb-6">
-            <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
-                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-            </div>
-            <h2 class="text-lg font-semibold text-gray-900">Individual Awards Status</h2>
+<div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+    <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 bg-purple-50 rounded-xl flex items-center justify-center">
+            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
         </div>
-
-        <div class="grid grid-cols-3 gap-3">
-            {{-- Pending --}}
-            <div @click="openModal = true; modalTitle='Individual Awards - Pending'; modalAwards=@js(App\Models\IndividualAwardResult::where('status','pending')->with(['sport','event','user'])->get());"
-                 class="group relative bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
-                <div class="relative">
-                    <div class="text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">Pending</div>
-                    <div class="text-2xl font-bold text-amber-900">{{ $individualAwardsPending }}</div>
-                    <div class="absolute top-0 right-0 w-8 h-8 bg-amber-200/50 rounded-full group-hover:scale-150 transition-transform duration-300 opacity-0 group-hover:opacity-100"></div>
-                </div>
-            </div>
-
-            {{-- Approved --}}
-            <div @click="openModal = true; modalTitle='Individual Awards - Approved'; modalAwards=@js(App\Models\IndividualAwardResult::where('status','approved')->with(['sport','event','user'])->get());"
-                 class="group relative bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
-                <div class="relative">
-                    <div class="text-xs font-medium text-emerald-700 uppercase tracking-wider mb-1">Approved</div>
-                    <div class="text-2xl font-bold text-emerald-900">{{ $individualAwardsApproved }}</div>
-                    <div class="absolute top-0 right-0 w-8 h-8 bg-emerald-200/50 rounded-full group-hover:scale-150 transition-transform duration-300 opacity-0 group-hover:opacity-100"></div>
-                </div>
-            </div>
-
-            {{-- Needs Revision --}}
-            <div @click="openModal = true; modalTitle='Individual Awards - Needs Revision'; modalAwards=@js(App\Models\IndividualAwardResult::where('status','needs_revision')->with(['sport','event','user'])->get());"
-                 class="group relative bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
-                <div class="relative">
-                    <div class="text-xs font-medium text-rose-700 uppercase tracking-wider mb-1">Needs Revision</div>
-                    <div class="text-2xl font-bold text-rose-900">{{ $individualAwardsRevision }}</div>
-                    <div class="absolute top-0 right-0 w-8 h-8 bg-rose-200/50 rounded-full group-hover:scale-150 transition-transform duration-300 opacity-0 group-hover:opacity-100"></div>
-                </div>
-            </div>
-        </div>
+        <h2 class="text-lg font-semibold text-gray-900">Individual Awards Status</h2>
     </div>
 
+    <div class="grid grid-cols-3 gap-3">
+
+        {{-- Pending --}}
+        <div 
+            @click="openModal = true; 
+                    modalTitle='Individual Awards - Pending'; 
+                    modalAwards=@js(
+                        App\Models\IndividualAwardResult::where('status','pending')
+                        ->with(['sport','type','user'])
+                        ->get()
+                    );"
+            class="group relative bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
+            
+            <div class="relative">
+                <div class="text-xs font-medium text-amber-700 uppercase tracking-wider mb-1">Pending</div>
+                <div class="text-2xl font-bold text-amber-900">{{ $individualAwardsPending }}</div>
+            </div>
+        </div>
+
+        {{-- Approved --}}
+        <div 
+            @click="openModal = true; 
+                    modalTitle='Individual Awards - Approved'; 
+                    modalAwards=@js(
+                        App\Models\IndividualAwardResult::where('status','approved')
+                        ->with(['sport','type','user'])
+                        ->get()
+                    );"
+            class="group relative bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
+            
+            <div class="relative">
+                <div class="text-xs font-medium text-emerald-700 uppercase tracking-wider mb-1">Approved</div>
+                <div class="text-2xl font-bold text-emerald-900">{{ $individualAwardsApproved }}</div>
+            </div>
+        </div>
+
+        {{-- Needs Revision --}}
+        <div 
+            @click="openModal = true; 
+                    modalTitle='Individual Awards - Needs Revision'; 
+                    modalAwards=@js(
+                        App\Models\IndividualAwardResult::where('status','needs_revision')
+                        ->with(['sport','type','user'])
+                        ->get()
+                    );"
+            class="group relative bg-gradient-to-br from-rose-50 to-rose-100/50 rounded-xl p-4 cursor-pointer hover:shadow-lg transition-all duration-300">
+            
+            <div class="relative">
+                <div class="text-xs font-medium text-rose-700 uppercase tracking-wider mb-1">Needs Revision</div>
+                <div class="text-2xl font-bold text-rose-900">{{ $individualAwardsRevision }}</div>
+            </div>
+        </div>
+
+    </div>
+</div>
     {{-- MODAL --}}
     <div x-show="openModal" class="fixed inset-0 flex items-center justify-center z-50" x-cloak>
         <div class="absolute inset-0 bg-gray-900/50 backdrop-blur-sm" @click="openModal = false"></div>
@@ -210,9 +247,11 @@
                     <tbody class="bg-white divide-y divide-gray-200">
                         <template x-for="award in modalAwards" :key="award.id">
                             <tr class="hover:bg-gray-50 transition-colors">
-                                <td class="px-4 py-3 text-sm text-gray-900" x-text="award.user?.name || 'N/A'"></td>
+                                <td class="px-4 py-3 text-sm text-gray-900"
+    x-text="award.user && award.user.name ? award.user.name : 'N/A'"></td>
                                 <td class="px-4 py-3 text-sm text-gray-600" x-text="award.sport?.name || 'N/A'"></td>
-                                <td class="px-4 py-3 text-sm text-gray-600" x-text="award.event?.name || 'N/A'"></td>
+                                <td class="px-4 py-3 text-sm text-gray-600"
+    x-text="award.type?.type_name || 'N/A'"></td>
                                 <td class="px-4 py-3 text-sm font-medium">
                                     <span x-text="award.medal" 
                                           :class="{
