@@ -524,18 +524,40 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
         </p>
     </div>
 
-    {{-- ================= MODERN NOTE ================= --}}
-    <div class="mt-5 max-w-2xl mx-auto text-center">
-        <div class="bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 backdrop-blur-sm rounded-2xl px-5 py-3 border border-yellow-400/30 shadow-sm transition-all duration-300 hover:border-yellow-400/60 hover:shadow-md">
-            <div class="flex items-center justify-center gap-2 mb-1">
-                <svg class="w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
-                <p class="font-bold text-xs uppercase tracking-wider text-yellow-200">Important Note</p>
-            </div>
-            <p class="text-xs md:text-sm text-white/90 font-medium">
-                Medal tally is based on the official reports submitted by the Tournament Secretary and validated by the Tournament Director.
+    {{-- ================= MODERN NOTE (FORCED DESIGN FIX) ================= --}}
+<div class="mt-5 max-w-2xl mx-auto text-center">
+    
+    <div
+        class="backdrop-blur-sm rounded-2xl px-5 py-3 border shadow-sm transition-all duration-300 hover:shadow-md"
+        style="
+            background: linear-gradient(
+                90deg,
+                rgba(245,158,11,0.20),
+                rgba(234,179,8,0.20),
+                rgba(245,158,11,0.20)
+            );
+            border-color: rgba(250,204,21,0.30);
+        "
+    >
+
+        <div class="flex items-center justify-center gap-2 mb-1">
+            <svg class="w-4 h-4 text-yellow-300" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                      clip-rule="evenodd"></path>
+            </svg>
+
+            <p class="font-bold text-xs uppercase tracking-wider text-yellow-200">
+                Important Note
             </p>
         </div>
+
+        <p class="text-xs md:text-sm text-white/90 font-medium">
+            Medal tally is based on the reports submitted by the Tournament Secretary and validated by the Tournament Director.
+        </p>
+
     </div>
+</div>
 </div>
 
 
@@ -783,17 +805,23 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
     </div>
 </div>
 
-{{-- ================= TV NEWS STYLE MODAL (FULLSCREEN FIXED - Z INDEX FIX) ================= --}}
+{{-- ================= TV NEWS STYLE MODAL (FORCED FRONT FIX) ================= --}}
 <div
     x-show="open"
     x-transition.opacity
     @keydown.escape.window="open = false"
-    class="fixed inset-0 bg-black/60 z-[200] flex flex-col"
+    class="fixed inset-0 flex flex-col bg-black/70 backdrop-blur-sm"
+    style="
+        z-index: 999999 !important;
+        position: fixed !important;
+        inset: 0 !important;
+    "
 >
 
     <div
         @click.away="open = false"
         class="w-full h-full flex flex-col bg-white text-gray-800"
+        style="position: relative; z-index: 1000000;"
     >
 
         {{-- 🔴 TOP BAR --}}
