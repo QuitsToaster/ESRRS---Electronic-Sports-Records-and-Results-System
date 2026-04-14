@@ -596,207 +596,215 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
 </div>
 
 
-            {{-- ================= MEDAL TABLE ================= --}}
+           {{-- ================= MEDAL TABLE (RESPONSIVE FIX) ================= --}}
 <div class="flex-1 overflow-y-auto pr-2">
 
     {{-- ================= REGULAR TABLE ================= --}}
     <template x-if="activeTab === 'regular'">
-        <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
-            {{-- HEADER --}}
-            <div class="bg-black text-white text-sm font-bold"
-                 style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr;">
-                 
-                <div class="p-3 text-left">Division (SDO)</div>
+        {{-- ✅ MOBILE SCROLL WRAPPER --}}
+        <div class="w-full overflow-x-auto">
+            <div class="min-w-[700px] bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
-                <div class="p-3 text-center border-l">
-                    Elementary
-                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
-                        <span>G</span><span>S</span><span>B</span>
+                {{-- HEADER --}}
+                <div class="bg-black text-white text-sm font-bold"
+                     style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr;">
+                     
+                    <div class="p-3 text-left">Division (SDO)</div>
+
+                    <div class="p-3 text-center border-l">
+                        Elementary
+                        <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
+                            <span>G</span><span>S</span><span>B</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 text-center border-l">
+                        Secondary
+                        <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
+                            <span>G</span><span>S</span><span>B</span>
+                        </div>
+                    </div>
+
+                    <div class="p-3 text-center border-l">
+                        Overall
+                        <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
+                            <span>G</span><span>S</span><span>B</span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="p-3 text-center border-l">
-                    Secondary
-                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
-                        <span>G</span><span>S</span><span>B</span>
+                {{-- BODY --}}
+                @foreach($divisions as $division)
+
+                @php
+                    $all = \App\Models\AllAwardResult::with(['sport','sportType'])
+                        ->where('status','approved')
+                        ->where('sdo',$division->name)
+                        ->get();
+
+                    $mapped = $all->map(fn($r)=>[
+                        'id'=>$r->id,
+                        'sport'=>$r->sport,
+                        'sportType'=>$r->sportType,
+                        'type_name'=>$r->sportType->type_name ?? null,
+                        'type_id'=>$r->type_id,
+                        'division'=>$r->division,
+                        'category'=>$r->category,
+                        'created_at'=>$r->created_at,
+                        'medal'=>$r->medal,
+                    ]);
+
+                    $elem = $mapped->where('division','Elementary');
+                    $sec  = $mapped->where('division','Secondary');
+
+                    $elemGold   = $elem->where('medal','Gold')->count();
+                    $elemSilver = $elem->where('medal','Silver')->count();
+                    $elemBronze = $elem->where('medal','Bronze')->count();
+
+                    $secGold   = $sec->where('medal','Gold')->count();
+                    $secSilver = $sec->where('medal','Silver')->count();
+                    $secBronze = $sec->where('medal','Bronze')->count();
+
+                    $overall = $mapped->whereIn('division',['Elementary','Secondary']);
+                @endphp
+
+                <div class="border-t hover:bg-gray-50 transition"
+                     style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr;">
+
+                    {{-- SDO --}}
+                    <div class="p-3 font-semibold flex items-center gap-2 whitespace-nowrap">
+                        @if($division->logo)
+                            <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
+                        @endif
+                        {{ $division->name }}
                     </div>
+
+                    {{-- ELEMENTARY --}}
+                    <div 
+                        style="display:grid; grid-template-columns: repeat(3,1fr);"
+                        class="text-center border-l p-3 cursor-pointer hover:bg-yellow-50 active:bg-yellow-100"
+                        @click="openModal(@js($division), @js($elem->values()))"
+                    >
+                        <span class="font-bold text-yellow-600">{{ $elemGold }}</span>
+                        <span class="font-bold text-gray-600">{{ $elemSilver }}</span>
+                        <span class="font-bold text-orange-600">{{ $elemBronze }}</span>
+                    </div>
+
+                    {{-- SECONDARY --}}
+                    <div 
+                        style="display:grid; grid-template-columns: repeat(3,1fr);"
+                        class="text-center border-l p-3 cursor-pointer hover:bg-yellow-50 active:bg-yellow-100"
+                        @click="openModal(@js($division), @js($sec->values()))"
+                    >
+                        <span class="font-bold text-yellow-600">{{ $secGold }}</span>
+                        <span class="font-bold text-gray-600">{{ $secSilver }}</span>
+                        <span class="font-bold text-orange-600">{{ $secBronze }}</span>
+                    </div>
+
+                    {{-- OVERALL --}}
+                    <div 
+                        style="display:grid; grid-template-columns: repeat(3,1fr);"
+                        class="text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 active:bg-gray-200"
+                        @click="openModal(@js($division), @js($overall->values()))"
+                    >
+                        <span class="font-bold text-yellow-700">{{ $elemGold + $secGold }}</span>
+                        <span class="font-bold text-gray-700">{{ $elemSilver + $secSilver }}</span>
+                        <span class="font-bold text-orange-700">{{ $elemBronze + $secBronze }}</span>
+                    </div>
+
                 </div>
 
-                <div class="p-3 text-center border-l">
-                    Overall
-                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
-                        <span>G</span><span>S</span><span>B</span>
-                    </div>
-                </div>
+                @endforeach
+
             </div>
-
-            {{-- BODY --}}
-            @foreach($divisions as $division)
-
-            @php
-                $all = \App\Models\AllAwardResult::with(['sport','sportType'])
-                    ->where('status','approved')
-                    ->where('sdo',$division->name)
-                    ->get();
-
-                $mapped = $all->map(fn($r)=>[
-                    'id'=>$r->id,
-                    'sport'=>$r->sport,
-                    'sportType'=>$r->sportType,
-                    'type_name'=>$r->sportType->type_name ?? null,
-                    'type_id'=>$r->type_id,
-                    'division'=>$r->division,
-                    'category'=>$r->category,
-                    'created_at'=>$r->created_at,
-                    'medal'=>$r->medal,
-                ]);
-
-                $elem = $mapped->where('division','Elementary');
-                $sec  = $mapped->where('division','Secondary');
-
-                $elemGold   = $elem->where('medal','Gold')->count();
-                $elemSilver = $elem->where('medal','Silver')->count();
-                $elemBronze = $elem->where('medal','Bronze')->count();
-
-                $secGold   = $sec->where('medal','Gold')->count();
-                $secSilver = $sec->where('medal','Silver')->count();
-                $secBronze = $sec->where('medal','Bronze')->count();
-
-                $overall = $mapped->whereIn('division',['Elementary','Secondary']);
-            @endphp
-
-            <div class="border-t"
-                 style="display:grid; grid-template-columns: 2fr 1fr 1fr 1fr;">
-
-                {{-- SDO --}}
-                <div class="p-3 font-semibold flex items-center gap-2">
-                    @if($division->logo)
-                        <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
-                    @endif
-                    {{ $division->name }}
-                </div>
-
-                {{-- ELEMENTARY --}}
-                <div 
-                    style="display:grid; grid-template-columns: repeat(3,1fr);"
-                    class="text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
-                    @click="openModal(@js($division), @js($elem->values()))"
-                >
-                    <span class="font-bold text-yellow-600">{{ $elemGold }}</span>
-                    <span class="font-bold text-gray-600">{{ $elemSilver }}</span>
-                    <span class="font-bold text-orange-600">{{ $elemBronze }}</span>
-                </div>
-
-                {{-- SECONDARY --}}
-                <div 
-                    style="display:grid; grid-template-columns: repeat(3,1fr);"
-                    class="text-center border-l p-3 cursor-pointer hover:bg-yellow-50"
-                    @click="openModal(@js($division), @js($sec->values()))"
-                >
-                    <span class="font-bold text-yellow-600">{{ $secGold }}</span>
-                    <span class="font-bold text-gray-600">{{ $secSilver }}</span>
-                    <span class="font-bold text-orange-600">{{ $secBronze }}</span>
-                </div>
-
-                {{-- OVERALL --}}
-                <div 
-                    style="display:grid; grid-template-columns: repeat(3,1fr);"
-                    class="text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
-                    @click="openModal(@js($division), @js($overall->values()))"
-                >
-                    <span class="font-bold text-yellow-700">{{ $elemGold + $secGold }}</span>
-                    <span class="font-bold text-gray-700">{{ $elemSilver + $secSilver }}</span>
-                    <span class="font-bold text-orange-700">{{ $elemBronze + $secBronze }}</span>
-                </div>
-
-            </div>
-
-            @endforeach
-
         </div>
     </template>
 
     {{-- ================= PARAGAMES TABLE ================= --}}
     <template x-if="activeTab === 'para'">
-        <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
-            {{-- HEADER --}}
-            <div class="bg-purple-700 text-white text-sm font-bold"
-                 style="display:grid; grid-template-columns: 2fr 1fr 1fr;">
+        {{-- ✅ MOBILE SCROLL WRAPPER --}}
+        <div class="w-full overflow-x-auto">
+            <div class="min-w-[600px] bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
-                <div class="p-3 text-left">Division (SDO)</div>
+                {{-- HEADER --}}
+                <div class="bg-purple-700 text-white text-sm font-bold"
+                     style="display:grid; grid-template-columns: 2fr 1fr 1fr;">
 
-                <div class="p-3 text-center border-l">
-                    Paragames
-                    <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
-                        <span>G</span><span>S</span><span>B</span>
+                    <div class="p-3 text-left">Division (SDO)</div>
+
+                    <div class="p-3 text-center border-l">
+                        Paragames
+                        <div style="display:grid; grid-template-columns: repeat(3,1fr);" class="text-xs mt-1 font-semibold">
+                            <span>G</span><span>S</span><span>B</span>
+                        </div>
                     </div>
+
+                    <div class="p-3 text-center border-l">Total</div>
                 </div>
 
-                <div class="p-3 text-center border-l">Total</div>
+                @foreach($divisions as $division)
+
+                @php
+                    $paraRaw = \App\Models\AllAwardResult::with(['sport','sportType'])
+                        ->where('status','approved')
+                        ->where('sdo',$division->name)
+                        ->where('division','Paragames')
+                        ->get();
+
+                    $para = $paraRaw->map(fn($r)=>[
+                        'id'=>$r->id,
+                        'sport'=>$r->sport,
+                        'sportType'=>$r->sportType,
+                        'type_name'=>$r->sportType->type_name ?? null,
+                        'type_id'=>$r->type_id,
+                        'division'=>$r->division,
+                        'category'=>$r->category,
+                        'created_at'=>$r->created_at,
+                        'medal'=>$r->medal,
+                    ]);
+
+                    $gold   = $para->where('medal','Gold')->count();
+                    $silver = $para->where('medal','Silver')->count();
+                    $bronze = $para->where('medal','Bronze')->count();
+                @endphp
+
+                <div class="border-t hover:bg-gray-50 transition"
+                     style="display:grid; grid-template-columns: 2fr 1fr 1fr;">
+
+                    <div class="p-3 font-semibold flex items-center gap-2 whitespace-nowrap">
+                        @if($division->logo)
+                            <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
+                        @endif
+                        {{ $division->name }}
+                    </div>
+
+                    <div 
+                        style="display:grid; grid-template-columns: repeat(3,1fr);"
+                        class="text-center border-l p-3 cursor-pointer hover:bg-purple-50 active:bg-purple-100"
+                        @click="openModal(@js($division), @js($para->values()))"
+                    >
+                        <span class="font-bold text-yellow-600">{{ $gold }}</span>
+                        <span class="font-bold text-gray-600">{{ $silver }}</span>
+                        <span class="font-bold text-orange-600">{{ $bronze }}</span>
+                    </div>
+
+                    <div 
+                        style="display:grid; grid-template-columns: repeat(3,1fr);"
+                        class="text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100 active:bg-gray-200"
+                        @click="openModal(@js($division), @js($para->values()))"
+                    >
+                        <span class="font-bold text-yellow-700">{{ $gold }}</span>
+                        <span class="font-bold text-gray-700">{{ $silver }}</span>
+                        <span class="font-bold text-orange-700">{{ $bronze }}</span>
+                    </div>
+
+                </div>
+
+                @endforeach
+
             </div>
-
-            @foreach($divisions as $division)
-
-            @php
-                $paraRaw = \App\Models\AllAwardResult::with(['sport','sportType'])
-                    ->where('status','approved')
-                    ->where('sdo',$division->name)
-                    ->where('division','Paragames')
-                    ->get();
-
-                $para = $paraRaw->map(fn($r)=>[
-                    'id'=>$r->id,
-                    'sport'=>$r->sport,
-                    'sportType'=>$r->sportType,
-                    'type_name'=>$r->sportType->type_name ?? null,
-                    'type_id'=>$r->type_id,
-                    'division'=>$r->division,
-                    'category'=>$r->category,
-                    'created_at'=>$r->created_at,
-                    'medal'=>$r->medal,
-                ]);
-
-                $gold   = $para->where('medal','Gold')->count();
-                $silver = $para->where('medal','Silver')->count();
-                $bronze = $para->where('medal','Bronze')->count();
-            @endphp
-
-            <div class="border-t"
-                 style="display:grid; grid-template-columns: 2fr 1fr 1fr;">
-
-                <div class="p-3 font-semibold flex items-center gap-2">
-                    @if($division->logo)
-                        <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
-                    @endif
-                    {{ $division->name }}
-                </div>
-
-                <div 
-                    style="display:grid; grid-template-columns: repeat(3,1fr);"
-                    class="text-center border-l p-3 cursor-pointer hover:bg-purple-50"
-                    @click="openModal(@js($division), @js($para->values()))"
-                >
-                    <span class="font-bold text-yellow-600">{{ $gold }}</span>
-                    <span class="font-bold text-gray-600">{{ $silver }}</span>
-                    <span class="font-bold text-orange-600">{{ $bronze }}</span>
-                </div>
-
-                <div 
-                    style="display:grid; grid-template-columns: repeat(3,1fr);"
-                    class="text-center border-l p-3 bg-gray-50 cursor-pointer hover:bg-gray-100"
-                    @click="openModal(@js($division), @js($para->values()))"
-                >
-                    <span class="font-bold text-yellow-700">{{ $gold }}</span>
-                    <span class="font-bold text-gray-700">{{ $silver }}</span>
-                    <span class="font-bold text-orange-700">{{ $bronze }}</span>
-                </div>
-
-            </div>
-
-            @endforeach
-
         </div>
     </template>
 
