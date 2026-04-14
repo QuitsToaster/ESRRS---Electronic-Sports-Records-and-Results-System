@@ -7,6 +7,9 @@ use App\Models\IndividualAwardResult;
 use App\Models\Event;
 use Illuminate\Support\Facades\Storage;
 use App\Models\AuditLog;
+use App\Models\Sport;
+use App\Models\SportType;
+use App\Models\Athlete;
 use Illuminate\Support\Facades\Auth;
 
 class ResultIndividualAwardController extends Controller
@@ -101,32 +104,42 @@ class ResultIndividualAwardController extends Controller
             ]
         );
 
-        // ================= AUDIT =================
-        AuditLog::create([
-            'model_type' => 'IndividualAwardResult',
-            'model_id'   => $award->id,
-            'user_id'    => $user->id,
-            'action'     => $existing
-                ? "Updated Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName"
-                : "Created Individual Award | Sport: $sportId | Type: $typeId | Medal: $medalName",
-            'old_values' => $oldValues ? json_encode($oldValues) : null,
-            'new_values' => json_encode($award->toArray()),
-            'description' => json_encode([
-                'performed_by' => $user->name,
-                'role' => $roleName,
-                'event_id' => $event->id,
-                'sport_id' => $sportId,
-                'type_id' => $typeId,
-                'division' => $division,
-                'category' => $category,
-                'athlete_id' => $athleteId,
-                'sdo' => $sdo,
-                'medal' => $medalName,
-                'status' => $status,
-                'ip_address' => request()->ip(),
-                'user_agent' => request()->userAgent(),
-            ]),
-        ]);
+        // ================= GET RELATED DATA =================
+$sport = Sport::find($sportId);
+$type  = $typeId ? SportType::find($typeId) : null;
+
+$athleteName = strtoupper(
+    $athlete->last_name . ', ' .
+    $athlete->first_name . ' ' .
+    ($athlete->middle_initial ?? '')
+);
+
+// ================= AUDIT =================
+AuditLog::create([
+    'model_type' => 'IndividualAwardResult',
+    'model_id'   => $award->id,
+    'user_id'    => $user->id,
+    'action'     => $existing
+        ? "Updated Individual Award | Athlete: {$athleteName} | Sport: " . ($sport->name ?? 'N/A') . " | Type: " . ($type->type_name ?? 'N/A') . " | Medal: {$medalName}"
+        : "Created Individual Award | Athlete: {$athleteName} | Sport: " . ($sport->name ?? 'N/A') . " | Type: " . ($type->type_name ?? 'N/A') . " | Medal: {$medalName}",
+    'old_values' => $oldValues ? json_encode($oldValues) : null,
+    'new_values' => json_encode($award->toArray()),
+    'description' => json_encode([
+        'performed_by' => $user->name,
+        'role' => $roleName,
+        'event_id' => $event->id,
+        'sport' => $sport->name ?? null,
+        'type' => $type->type_name ?? null,
+        'division' => $division,
+        'category' => $category,
+        'athlete' => $athleteName,
+        'sdo' => $sdo,
+        'medal' => $medalName,
+        'status' => $status,
+        'ip_address' => request()->ip(),
+        'user_agent' => request()->userAgent(),
+    ]),
+]);
 
     }
 }
@@ -155,15 +168,23 @@ class ResultIndividualAwardController extends Controller
 
         $user = Auth::user();
         $roleName = optional($user->role)->name;
+        $sport = Sport::find($award->sport_id);
+        $type  = $award->type_id ? SportType::find($award->type_id) : null;
+        $athlete = Athlete::find($award->athlete_id);
+
+        $athleteName = $athlete
+            ? strtoupper($athlete->last_name . ', ' . $athlete->first_name . ' ' . ($athlete->middle_initial ?? ''))
+            : 'N/A';
 
         AuditLog::create([
             'model_type' => 'IndividualAwardResult',
             'model_id' => $award->id,
             'user_id' => $user->id,
             'action' => sprintf(
-                'Approved Individual Award | Athlete ID: %s | Sport ID: %s | Medal: %s | SDO: %s',
-                $award->athlete_id,
-                $award->sport_id,
+                'Approved Individual Award | Athlete: %s | Sport: %s | Type: %s | Medal: %s | SDO: %s',
+                $athleteName,
+                $sport->name ?? 'N/A',
+                $type->type_name ?? 'N/A',
                 strtoupper($award->medal),
                 $award->sdo
             ),
@@ -189,6 +210,13 @@ class ResultIndividualAwardController extends Controller
             'status' => 'needs_revision',
             'revision_message' => $request->message,
         ]);
+        $sport = Sport::find($award->sport_id);
+        $type  = $award->type_id ? SportType::find($award->type_id) : null;
+        $athlete = Athlete::find($award->athlete_id);
+
+        $athleteName = $athlete
+            ? strtoupper($athlete->last_name . ', ' . $athlete->first_name . ' ' . ($athlete->middle_initial ?? ''))
+            : 'N/A';
 
         $user = Auth::user();
 
@@ -197,12 +225,13 @@ class ResultIndividualAwardController extends Controller
             'model_id' => $award->id,
             'user_id' => $user->id,
             'action' => sprintf(
-                'Rejected Individual Award | Athlete ID: %s | Sport ID: %s | Medal: %s | Reason: %s',
-                $award->athlete_id,
-                $award->sport_id,
-                strtoupper($award->medal),
-                $request->message
-            ),
+    'Rejected Individual Award | Athlete: %s | Sport: %s | Type: %s | Medal: %s | Reason: %s',
+    $athleteName,
+    $sport->name ?? 'N/A',
+    $type->type_name ?? 'N/A',
+    strtoupper($award->medal),
+    $request->message
+),
             'old_values' => json_encode($old),
             'new_values' => json_encode($award->toArray()),
             'description' => json_encode([
@@ -221,21 +250,28 @@ class ResultIndividualAwardController extends Controller
         $award = IndividualAwardResult::findOrFail($id);
         $old = $award->toArray();
         $user = Auth::user();
+        $sport = Sport::find($award->sport_id);
+$type  = $award->type_id ? SportType::find($award->type_id) : null;
+$athlete = Athlete::find($award->athlete_id);
+
+$athleteName = $athlete
+    ? strtoupper($athlete->last_name . ', ' . $athlete->first_name . ' ' . ($athlete->middle_initial ?? ''))
+    : 'N/A';
 
         AuditLog::create([
             'model_type' => 'IndividualAwardResult',
             'model_id'   => $award->id,
             'user_id'    => $user->id,
-            'action'     => sprintf(
-                'Deleted Individual Award for Revision | Division: %s | Category: %s | Sport ID: %s | Type ID: %s | Athlete ID: %s | Medal: %s | SDO: %s',
-                $award->division,
-                $award->category ?? 'N/A',
-                $award->sport_id,
-                $award->type_id,
-                $award->athlete_id,
-                strtoupper($award->medal),
-                $award->sdo
-            ),
+            'action' => sprintf(
+    'Deleted Individual Award for Revision | Athlete: %s | Division: %s | Category: %s | Sport: %s | Type: %s | Medal: %s | SDO: %s',
+    $athleteName,
+    $award->division,
+    $award->category ?? 'N/A',
+    $sport->name ?? 'N/A',
+    $type->type_name ?? 'N/A',
+    strtoupper($award->medal),
+    $award->sdo
+),
             'old_values' => json_encode($old),
             'new_values' => json_encode([]),
             'description' => json_encode([
