@@ -1066,51 +1066,60 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
                     @foreach(['Gold','Silver','Bronze'] as $medal)
                     <td class="border px-2 py-2 align-top">
-                        <div x-data="{ divisions:[''] }">
+    @php
+        $divisionValue = in_array($sport->division, ['Elementary', 'Secondary', 'Paragames'])
+            ? $sport->division
+            : '';
 
-                            <template x-for="(division,index) in divisions" :key="index">
-                                <div class="flex gap-2 mb-2">
+        $categoryValue = $sport->category;
+    @endphp
 
-                                    <select
-                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][{{ $loop->index }}][sdo]"
-                                        class="w-full border rounded px-2 py-1 text-sm"
-                                    >
-                                        <option value="">-- Select Division / SDO --</option>
-                                        @foreach($divisions as $divisionOption)
-                                            <option value="{{ $divisionOption->name }}">
-                                                {{ $divisionOption->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
+    <div x-data="{ entries: [{ sdo: '' }] }">
 
-                                    {{-- ✅ PASS DIVISION --}}
-                                    <input type="hidden"
-                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][{{ $loop->index }}][division]"
-                                        value="{{ $sport->division }}">
+        <template x-for="(entry, index) in entries" :key="index">
+            <div class="flex gap-2 mb-2 items-start">
 
-                                    {{-- ✅ PASS CATEGORY --}}
-                                    <input type="hidden"
-                                        name="results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][{{ $loop->index }}][category]"
-                                        value="{{ $sport->category }}">
+                <select
+                    x-model="entry.sdo"
+                    :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][sdo]'"
+                    class="w-full border rounded px-2 py-1 text-sm"
+                >
+                    <option value="">-- Select Division / SDO --</option>
+                    @foreach($divisions as $divisionOption)
+                        <option value="{{ $divisionOption->name }}">
+                            {{ $divisionOption->name }}
+                        </option>
+                    @endforeach
+                </select>
 
-                                    <button type="button"
-                                            x-show="divisions.length > 1"
-                                            @click="divisions.splice(index,1)"
-                                            class="bg-red-500 text-white px-2 rounded text-xs">
-                                        ✕
-                                    </button>
+                {{-- ALWAYS SAVE SPORT DIVISION: Elementary / Secondary / Paragames --}}
+                <input type="hidden"
+                    :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][division]'"
+                    value="{{ $divisionValue }}">
 
-                                </div>
-                            </template>
+                {{-- SAVE SPORT CATEGORY --}}
+                <input type="hidden"
+                    :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][category]'"
+                    value="{{ $categoryValue }}">
 
-                            <button type="button"
-                                    @click="divisions.push('')"
-                                    class="text-blue-600 text-xs hover:underline">
-                                + Add Division
-                            </button>
+                <button type="button"
+                        x-show="entries.length > 1"
+                        @click="entries.splice(index, 1)"
+                        class="bg-red-500 text-white px-2 py-1 rounded text-xs shrink-0">
+                    ✕
+                </button>
 
-                        </div>
-                    </td>
+            </div>
+        </template>
+
+        <button type="button"
+                @click="entries.push({ sdo: '' })"
+                class="text-blue-600 text-xs hover:underline">
+            + Add Division
+        </button>
+
+    </div>
+</td>
                     @endforeach
 
                 </tr>

@@ -450,7 +450,7 @@ $medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
     $bronze = $rows->where('medal','Bronze')->sum('total');
 
     return (object)[
-        'id'     => $division->id, // ✅ FIX ADDED
+        'id'     => $division->id,
         'name'   => $division->name,
         'logo'   => $division->logo,
         'gold'   => $gold,
@@ -458,22 +458,28 @@ $medalTallyPara = $divisions->map(function($division) use ($paraRaw) {
         'bronze' => $bronze,
         'total'  => $gold + $silver + $bronze,
         'results'=> AllAwardResult::with(['sport','sportType'])
-        ->where('status','approved')
-        ->whereIn('division',['Elementary','Secondary'])
-        ->where('sdo',$division->name)
-        ->get()
-        ->map(function($r){
-            return [
-                'id' => $r->id,
-                'sport' => $r->sport,
-                'sportType' => $r->sportType, // ✅ FORCE INCLUDE
-                'type_id' => $r->type_id,
-                'division' => $r->division,
-                'category' => $r->category,
-                'created_at' => $r->created_at,
-                'medal' => $r->medal,
-            ];
-        }),
+            ->where('status','approved')
+            ->where('division','Paragames')
+            ->where('sdo',$division->name)
+            ->get()
+            ->map(function($r){
+                return [
+                    'id' => $r->id,
+                    'sport' => $r->sport ? [
+                        'id' => $r->sport->id,
+                        'name' => $r->sport->name,
+                    ] : null,
+                    'sportType' => $r->sportType ? [
+                        'id' => $r->sportType->id,
+                        'type_name' => $r->sportType->type_name,
+                    ] : null,
+                    'type_id' => $r->type_id,
+                    'division' => $r->division,
+                    'category' => $r->category,
+                    'created_at' => optional($r->created_at)->toISOString(),
+                    'medal' => $r->medal,
+                ];
+            }),
     ];
 });
 
@@ -751,72 +757,69 @@ $medalTallyPara    = $medalTallyPara->sort($sortFn)->values();
     </template>
 
     {{-- ================= PARAGAMES TABLE ================= --}}
-    <template x-if="activeTab === 'para'">
-        <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
+<template x-if="activeTab === 'para'">
+    <div class="bg-white/95 rounded-xl overflow-hidden shadow-lg">
 
-            {{-- HEADER --}}
-            <div class="hidden md:grid bg-purple-700 text-white text-sm font-bold"
-                 style="grid-template-columns: 2fr 1fr 1fr;">
-                <div class="p-3 text-left">Division (SDO)</div>
-                <div class="p-3 text-center border-l">Paragames</div>
-                <div class="p-3 text-center border-l">Total</div>
-            </div>
-
-            @foreach($divisions as $division)
-
-            @php
-                $para = \App\Models\AllAwardResult::where('status','approved')
-                    ->where('sdo',$division->name)
-                    ->where('division','Paragames')
-                    ->get();
-
-                $gold   = $para->where('medal','Gold')->count();
-                $silver = $para->where('medal','Silver')->count();
-                $bronze = $para->where('medal','Bronze')->count();
-            @endphp
-
-            {{-- MOBILE --}}
-            <div class="md:hidden border-b p-3 space-y-2">
-                <div class="font-semibold flex items-center gap-2">
-                    {{ $division->name }}
-                </div>
-
-                <div class="flex justify-between bg-purple-50 p-2 rounded cursor-pointer"
-                     @click="openModal(@js($division), @js($para->values()))">
-                    <span>Paragames</span>
-                    <div class="flex gap-3 font-bold">
-                        <span class="text-yellow-600">{{ $gold }}</span>
-                        <span class="text-gray-600">{{ $silver }}</span>
-                        <span class="text-orange-600">{{ $bronze }}</span>
-                    </div>
-                </div>
-            </div>
-
-            {{-- DESKTOP --}}
-            <div class="hidden md:grid border-t"
-                 style="grid-template-columns: 2fr 1fr 1fr;">
-
-                <div class="p-3 font-semibold">{{ $division->name }}</div>
-
-                <div class="grid grid-cols-3 text-center border-l p-3 cursor-pointer"
-                     @click="openModal(@js($division), @js($para->values()))">
-                    <span class="text-yellow-600 font-bold">{{ $gold }}</span>
-                    <span class="text-gray-600 font-bold">{{ $silver }}</span>
-                    <span class="text-orange-600 font-bold">{{ $bronze }}</span>
-                </div>
-
-                <div class="grid grid-cols-3 text-center border-l p-3 bg-gray-50 cursor-pointer"
-                     @click="openModal(@js($division), @js($para->values()))">
-                    <span class="text-yellow-700 font-bold">{{ $gold }}</span>
-                    <span class="text-gray-700 font-bold">{{ $silver }}</span>
-                    <span class="text-orange-700 font-bold">{{ $bronze }}</span>
-                </div>
-
-            </div>
-
-            @endforeach
+        {{-- HEADER --}}
+        <div class="hidden md:grid bg-purple-700 text-white text-sm font-bold"
+             style="grid-template-columns: 2fr 1fr 1fr;">
+            <div class="p-3 text-left">Division (SDO)</div>
+            <div class="p-3 text-center border-l">Paragames</div>
+            <div class="p-3 text-center border-l">Total</div>
         </div>
-    </template>
+
+        @foreach($medalTallyPara as $division)
+
+        {{-- MOBILE --}}
+        <div class="md:hidden border-b p-3 space-y-2">
+            <div class="font-semibold flex items-center gap-2">
+                @if($division->logo)
+                    <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
+                @endif
+                {{ $division->name }}
+            </div>
+
+            <div class="flex justify-between bg-purple-50 p-2 rounded cursor-pointer"
+                 @click="openModal(@js($division), @js($division->results))">
+                <span>Paragames</span>
+                <div class="flex gap-3 font-bold">
+                    <span class="text-yellow-600">{{ $division->gold }}</span>
+                    <span class="text-gray-600">{{ $division->silver }}</span>
+                    <span class="text-orange-600">{{ $division->bronze }}</span>
+                </div>
+            </div>
+        </div>
+
+        {{-- DESKTOP --}}
+        <div class="hidden md:grid border-t"
+             style="grid-template-columns: 2fr 1fr 1fr;">
+
+            <div class="p-3 font-semibold flex items-center gap-2">
+                @if($division->logo)
+                    <img src="{{ asset('storage/'.$division->logo) }}" class="w-6 h-6 object-contain">
+                @endif
+                {{ $division->name }}
+            </div>
+
+            <div class="grid grid-cols-3 text-center border-l p-3 cursor-pointer"
+                 @click="openModal(@js($division), @js($division->results))">
+                <span class="text-yellow-600 font-bold">{{ $division->gold }}</span>
+                <span class="text-gray-600 font-bold">{{ $division->silver }}</span>
+                <span class="text-orange-600 font-bold">{{ $division->bronze }}</span>
+            </div>
+
+            <div class="grid grid-cols-3 text-center border-l p-3 bg-gray-50 cursor-pointer"
+                 @click="openModal(@js($division), @js($division->results))">
+                <span class="text-yellow-700 font-bold">{{ $division->gold }}</span>
+                <span class="text-gray-700 font-bold">{{ $division->silver }}</span>
+                <span class="text-orange-700 font-bold">{{ $division->bronze }}</span>
+            </div>
+
+        </div>
+
+        @endforeach
+    </div>
+</template>
 
 </div>
         </div>
