@@ -303,7 +303,7 @@
 
     {{-- DESKTOP TV NEWS STYLE --}}
     <div class="hidden md:block w-full bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 border-t-2 border-red-600 shadow-2xl">
-        <div class="flex items-stretch h-20">
+        <div class="flex items-stretch h-14">
             {{-- LIVE TV BADGE WITH GLOW EFFECT --}}
             <div class="relative flex-shrink-0 w-40 bg-gradient-to-br from-red-700 to-red-800 flex items-center justify-center overflow-hidden">
                 <div class="absolute inset-0 bg-white/10 skew-x-12 -translate-x-20 group-hover:translate-x-40 transition-transform duration-1000"></div>
@@ -339,12 +339,12 @@
                 <div class="absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-gray-800 to-transparent z-10"></div>
 
                 {{-- Marquee Content --}}
-                <div class="crawler-content flex gap-12 pl-48 py-6 animate-crawler items-center whitespace-nowrap">
+                <div class="crawler-content flex gap-8 pl-40 py-2 animate-crawler items-center whitespace-nowrap">
                     @foreach($announcements as $announcement)
                         <div @click="openModal({{ json_encode($announcement) }})" 
-                             class="inline-flex items-center gap-4 cursor-pointer group hover:scale-105 transition-transform duration-200">
+                             class="inline-flex items-center gap-2 cursor-pointer group hover:scale-105 transition-transform duration-200">
                             {{-- Category Badge --}}
-                            <span class="px-2 py-1 text-xs font-bold rounded 
+                            <span class="px-1.5 py-0.5 text-[10px] font-bold rounded 
                                 @if($announcement->type === 'Urgent') bg-red-600 text-white
                                 @elseif($announcement->type === 'Update') bg-blue-600 text-white
                                 @else bg-gray-700 text-gray-200
@@ -353,7 +353,7 @@
                             </span>
                             
                             {{-- Title --}}
-                            <span class="text-white font-medium group-hover:text-amber-400 transition-colors">
+                            <span class="text-white text-sm font-medium group-hover:text-amber-400 transition-colors">
                                 {{ $announcement->event_name ?? $announcement->title }}
                             </span>
                             
@@ -384,7 +384,7 @@
         </div>
 
         {{-- Secondary Info Bar --}}
-        <div class="bg-gradient-to-r from-blue-900 to-blue-800 text-white/80 text-[10px] px-4 py-1 flex items-center justify-between border-t border-blue-700">
+        <div class="bg-gradient-to-r from-blue-900 to-blue-800 text-white/80 text-[9px] px-4 py-0.5 flex items-center justify-between border-t border-blue-700">
             <div class="flex items-center gap-4">
                 <span class="flex items-center gap-1">
                     <svg class="w-3 h-3 text-amber-400" fill="currentColor" viewBox="0 0 20 20">
@@ -406,7 +406,7 @@
 
     {{-- MOBILE VIEW --}}
     <div class="md:hidden w-full bg-gradient-to-r from-gray-900 to-gray-800 border-t-2 border-red-600 shadow-2xl">
-        <div class="flex items-stretch h-16">
+        <div class="flex items-stretch h-12">
             {{-- Mobile LIVE Badge --}}
             <div class="flex-shrink-0 w-24 bg-gradient-to-br from-red-700 to-red-800 flex items-center justify-center">
                 <div class="text-center">
@@ -427,7 +427,7 @@
 
             {{-- Mobile Crawler --}}
             <div class="flex-1 overflow-hidden relative bg-gray-800/50">
-                <div class="crawler-content-mobile flex gap-6 pl-24 py-5 animate-crawler-mobile items-center whitespace-nowrap">
+                <div class="crawler-content-mobile flex gap-4 pl-20 py-2 animate-crawler-mobile items-center whitespace-nowrap">
                     @foreach($announcements as $announcement)
                         <div @click="openModal({{ json_encode($announcement) }})" 
                              class="inline-flex items-center gap-2 cursor-pointer">
