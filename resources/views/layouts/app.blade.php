@@ -17,10 +17,6 @@
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
 
     <style>
-        /* Ensure loader covers scrollbar too */
-html, body {
-    overflow: hidden;
-}
 
 [x-data][x-show="loading"] {
     pointer-events: all;
@@ -31,51 +27,125 @@ html, body {
 
 <body class="font-sans antialiased bg-gray-100">
 
-<!-- {{-- FULL PAGE LOADER --}}
-<div
-    x-data="{ loading: true }"
-    x-init="
-        window.addEventListener('load', () => {
-            setTimeout(() => loading = false, 500);
-        });
+{{-- ================= GLOBAL FULL PAGE LOADER ================= --}}
+<div id="globalLoader"
+     class="fixed inset-0 flex items-center justify-center bg-white"
+     style="z-index:999999;">
 
-        document.addEventListener('alpine:initializing', () => {
-            loading = true;
-        });
-    "
-    x-show="loading"
-    x-transition.opacity.duration.300ms
-    style="display: none"
-    class="fixed inset-0 z-[10000] flex items-center justify-center bg-white"
->
     <div class="flex flex-col items-center gap-4">
+
         {{-- Spinner --}}
         <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
-        {{-- Loading Text --}}
-        <p class="text-sm font-medium text-gray-600 tracking-wide">
-            Loading ESRRS…
+
+        {{-- Dynamic Text --}}
+        <p id="loaderText"
+           class="text-sm font-semibold text-gray-600 tracking-wide transition-opacity duration-300">
+            Loading ESRRS...
         </p>
+
     </div>
-</div> -->
+</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-    const loader = document.querySelector('[x-data="{ loading: true }"]') || document.querySelector('[x-data]');
-    
-    document.querySelectorAll('a[href]').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const href = link.getAttribute('href');
+(function () {
 
-            // Ignore anchors, javascript, new tabs
-            if (!href || href.startsWith('#') || href.startsWith('javascript') || link.target === '_blank') return;
+    const loader = document.getElementById('globalLoader');
+    const loaderText = document.getElementById('loaderText');
 
-            // Show loader
-            if (loader && loader.__x) {
-                loader.__x.$data.loading = true;
+    // ================= LOADING MESSAGES =================
+    const messages = [
+        "Loading ESRRS...",
+        "Preparing dashboard...",
+        "Fetching data...",
+        "Initializing system...",
+        "Almost ready...",
+        "Syncing records...",
+        "Loading athletes...",
+        "Processing results...",
+        "Setting things up...",
+        "Getting everything ready..."
+    ];
+
+    let interval = null;
+
+    function startTextRotation() {
+        if (!loaderText) return;
+
+        let index = 0;
+
+        interval = setInterval(() => {
+            loaderText.style.opacity = 0;
+
+            setTimeout(() => {
+                index = (index + 1) % messages.length;
+                loaderText.innerText = messages[index];
+                loaderText.style.opacity = 1;
+            }, 200);
+
+        }, 1200);
+    }
+
+    function stopTextRotation() {
+        if (interval) clearInterval(interval);
+    }
+
+    // ================= INITIAL LOAD =================
+    startTextRotation();
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (loader) {
+                loader.style.opacity = '0';
+                stopTextRotation();
+
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 300);
             }
+        }, 400);
+    });
+
+    // ================= SHOW LOADER =================
+    function showLoader() {
+        if (loader) {
+            loader.style.display = 'flex';
+            loader.style.opacity = '1';
+
+            // Random starting message
+            if (loaderText) {
+                const randomIndex = Math.floor(Math.random() * messages.length);
+                loaderText.innerText = messages[randomIndex];
+            }
+
+            startTextRotation();
+        }
+    }
+
+    // ================= LINKS =================
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', function () {
+
+            const href = this.getAttribute('href');
+
+            if (
+                !href ||
+                href.startsWith('#') ||
+                href.startsWith('javascript') ||
+                this.target === '_blank'
+            ) return;
+
+            showLoader();
         });
     });
-});
+
+    // ================= FORMS =================
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', () => {
+            showLoader();
+        });
+    });
+
+})();
 </script>
 
 
