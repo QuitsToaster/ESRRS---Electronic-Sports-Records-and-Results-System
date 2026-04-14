@@ -68,35 +68,34 @@ function medalCountFromPreloaded($allAwards, $division, $category, $sdo, $medal)
         : 0;
 }
 
-{{-- =========================== --}}
-{{-- MAP OVERALL SUMMARY --}}
-{{-- =========================== --}}
-@php
+// ===========================
+// MAP OVERALL SUMMARY
+// ===========================
 $overall = $allDivisions->map(function ($division) use ($allAwards) {
 
     $division->total_gold =
-        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys',  $division->name, 'Gold') +
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold') +
         medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold') +
         medalCountFromPreloaded($allAwards, 'Elementary', 'Mixed', $division->name, 'Gold') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys',   $division->name, 'Gold') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls',  $division->name, 'Gold') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed',  $division->name, 'Gold');
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Gold') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed', $division->name, 'Gold');
 
     $division->total_silver =
-        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys',  $division->name, 'Silver') +
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Silver') +
         medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Silver') +
         medalCountFromPreloaded($allAwards, 'Elementary', 'Mixed', $division->name, 'Silver') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys',   $division->name, 'Silver') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls',  $division->name, 'Silver') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed',  $division->name, 'Silver');
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Silver') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Silver') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed', $division->name, 'Silver');
 
     $division->total_bronze =
-        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys',  $division->name, 'Bronze') +
+        medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Bronze') +
         medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Bronze') +
         medalCountFromPreloaded($allAwards, 'Elementary', 'Mixed', $division->name, 'Bronze') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys',   $division->name, 'Bronze') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls',  $division->name, 'Bronze') +
-        medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed',  $division->name, 'Bronze');
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze') +
+        medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed', $division->name, 'Bronze');
 
     $division->total_points =
         ($division->total_gold * 3) +
@@ -110,7 +109,6 @@ $overall = $allDivisions->map(function ($division) use ($allAwards) {
     if ($a->total_silver !== $b->total_silver) return $b->total_silver <=> $a->total_silver;
     return $b->total_bronze <=> $a->total_bronze;
 })->values();
-@endphp
 
 // ===========================
 // INDIVIDUAL AWARDS
