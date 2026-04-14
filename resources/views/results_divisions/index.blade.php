@@ -241,29 +241,67 @@ $allAwardsPara = AllAwardResult::where('status','approved')
             <thead>
                 <tr class="bg-gray-900 text-white uppercase text-sm">
                     <th rowspan="2" class="px-4 py-3 text-left">SDO</th>
+
                     <th colspan="3" class="bg-blue-700">Boys</th>
                     <th colspan="3" class="bg-pink-600">Girls</th>
+                    <th colspan="3" class="bg-purple-700">Mixed</th> {{-- ✅ NEW --}}
                 </tr>
+
                 <tr class="bg-gray-100 text-gray-700">
+                    {{-- Boys --}}
                     <th>Gold</th><th>Silver</th><th>Bronze</th>
+
+                    {{-- Girls --}}
+                    <th>Gold</th><th>Silver</th><th>Bronze</th>
+
+                    {{-- Mixed --}}
                     <th>Gold</th><th>Silver</th><th>Bronze</th>
                 </tr>
             </thead>
+
             <tbody>
-                @foreach($allDivisions as $division) {{-- SDO list --}}
+                @foreach($allDivisions as $division)
+
                     <tr class="border-t hover:bg-gray-50">
-                        <td class="px-4 py-3 text-left font-semibold">{{ $division->name }}</td>
+                        <td class="px-4 py-3 text-left font-semibold">
+                            {{ $division->name }}
+                        </td>
 
-                        {{-- Boys --}}
-                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold') }}</td>
-                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Silver') }}</td>
-                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Bronze') }}</td>
+                        {{-- ================= BOYS ================= --}}
+                        <td class="font-bold text-yellow-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Gold') }}
+                        </td>
+                        <td class="font-bold text-gray-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Silver') }}
+                        </td>
+                        <td class="font-bold text-orange-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Boys', $division->name, 'Bronze') }}
+                        </td>
 
-                        {{-- Girls --}}
-                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold') }}</td>
-                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Silver') }}</td>
-                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Bronze') }}</td>
+                        {{-- ================= GIRLS ================= --}}
+                        <td class="font-bold text-yellow-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Gold') }}
+                        </td>
+                        <td class="font-bold text-gray-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Silver') }}
+                        </td>
+                        <td class="font-bold text-orange-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Girls', $division->name, 'Bronze') }}
+                        </td>
+
+                        {{-- ================= MIXED (NEW) ================= --}}
+                        <td class="font-bold text-yellow-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Mixed', $division->name, 'Gold') }}
+                        </td>
+                        <td class="font-bold text-gray-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Mixed', $division->name, 'Silver') }}
+                        </td>
+                        <td class="font-bold text-orange-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Elementary', 'Mixed', $division->name, 'Bronze') }}
+                        </td>
+
                     </tr>
+
                 @endforeach
             </tbody>
         </table>
@@ -281,29 +319,67 @@ $allAwardsPara = AllAwardResult::where('status','approved')
             <thead>
                 <tr class="bg-gray-900 text-white uppercase text-sm">
                     <th rowspan="2" class="px-4 py-3 text-left">SDO</th>
+
                     <th colspan="3" class="bg-blue-700">Boys</th>
                     <th colspan="3" class="bg-pink-600">Girls</th>
+                    <th colspan="3" class="bg-purple-700">Mixed</th> {{-- ✅ NEW --}}
                 </tr>
+
                 <tr class="bg-gray-100 text-gray-700">
+                    {{-- Boys --}}
                     <th>Gold</th><th>Silver</th><th>Bronze</th>
+
+                    {{-- Girls --}}
+                    <th>Gold</th><th>Silver</th><th>Bronze</th>
+
+                    {{-- Mixed --}}
                     <th>Gold</th><th>Silver</th><th>Bronze</th>
                 </tr>
             </thead>
+
             <tbody>
                 @foreach($allDivisions as $division)
+
                     <tr class="border-t hover:bg-gray-50">
-                        <td class="px-4 py-3 text-left font-semibold">{{ $division->name }}</td>
+                        <td class="px-4 py-3 text-left font-semibold">
+                            {{ $division->name }}
+                        </td>
 
-                        {{-- Boys --}}
-                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold') }}</td>
-                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Silver') }}</td>
-                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze') }}</td>
+                        {{-- ================= BOYS ================= --}}
+                        <td class="font-bold text-yellow-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Gold') }}
+                        </td>
+                        <td class="font-bold text-gray-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Silver') }}
+                        </td>
+                        <td class="font-bold text-orange-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Boys', $division->name, 'Bronze') }}
+                        </td>
 
-                        {{-- Girls --}}
-                        <td class="font-bold text-yellow-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Gold') }}</td>
-                        <td class="font-bold text-gray-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Silver') }}</td>
-                        <td class="font-bold text-orange-500">{{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze') }}</td>
+                        {{-- ================= GIRLS ================= --}}
+                        <td class="font-bold text-yellow-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Gold') }}
+                        </td>
+                        <td class="font-bold text-gray-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Silver') }}
+                        </td>
+                        <td class="font-bold text-orange-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Girls', $division->name, 'Bronze') }}
+                        </td>
+
+                        {{-- ================= MIXED ================= --}}
+                        <td class="font-bold text-yellow-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed', $division->name, 'Gold') }}
+                        </td>
+                        <td class="font-bold text-gray-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed', $division->name, 'Silver') }}
+                        </td>
+                        <td class="font-bold text-orange-500">
+                            {{ medalCountFromPreloaded($allAwards, 'Secondary', 'Mixed', $division->name, 'Bronze') }}
+                        </td>
+
                     </tr>
+
                 @endforeach
             </tbody>
         </table>
