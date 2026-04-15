@@ -301,6 +301,20 @@
     </div>
 @endif
 
+{{-- ================= HISTORY (TS & TM ONLY) ================= --}}
+@php
+    $roleName = optional(auth()->user()->role)->name;
+@endphp
+
+@if(in_array($roleName, ['Tournament Secretary', 'Tournament Manager']))
+    <a data-nav
+       href="{{ route('history.index') }}"
+       class="w-full flex justify-between items-center px-6 py-3 hover:bg-blue-700
+       {{ request()->routeIs('history.*') ? 'bg-blue-900 font-semibold' : '' }}">
+        History
+    </a>
+@endif
+
 
 {{-- Event --}}
 @if(in_array('events', $access))

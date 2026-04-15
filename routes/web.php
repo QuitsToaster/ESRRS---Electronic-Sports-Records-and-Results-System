@@ -11,6 +11,7 @@ use App\Http\Controllers\CoachController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\HistoryController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OfficialController;
 use App\Http\Controllers\ResultDivisionController;
@@ -331,6 +332,9 @@ Route::prefix('results/all-awards')->group(function () {
     Route::delete('/revise/{id}', [ResultAllAwardController::class, 'revise'])
         ->name('all-awards.revise');
 });
+
+Route::get('/history', [HistoryController::class, 'index'])
+    ->name('history.index');
 
     /*
     |--------------------------------------------------------------------------
