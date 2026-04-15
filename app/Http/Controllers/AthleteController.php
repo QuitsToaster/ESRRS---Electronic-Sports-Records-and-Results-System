@@ -764,5 +764,24 @@ public function publicView($qr)
     ));
 }
 
+public function ajaxSearch(Request $request)
+{
+    $q = $request->get('q');
+
+    return \App\Models\Athlete::select(
+            'id',
+            \DB::raw("CONCAT(last_name, ', ', first_name) as name"),
+            'school_division as sdo'
+        )
+        ->when($q, function($query) use ($q) {
+            $query->where(function($sub) use ($q) {
+                $sub->where('last_name', 'like', "%$q%")
+                    ->orWhere('first_name', 'like', "%$q%");
+            });
+        })
+        ->limit(10)
+        ->get();
+}
+
 
 }

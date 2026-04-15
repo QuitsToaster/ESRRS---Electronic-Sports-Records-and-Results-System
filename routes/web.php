@@ -199,6 +199,13 @@ Route::post('/events/bulk-upload', [EventController::class, 'bulkUpload'])
 
     // Add this route with your other athlete routes
 Route::get('/athletes/filter-count', [AthleteController::class, 'getFilterCount'])->name('athletes.filterCount');
+
+Route::get('/ajax/athletes', [AthleteController::class, 'ajaxSearch'])
+    ->name('ajax.athletes');
+
+Route::get('/ajax/divisions', function () {
+    return \App\Models\Division::orderBy('name')->pluck('name');
+})->name('ajax.divisions');
     
     /*
     |--------------------------------------------------------------------------

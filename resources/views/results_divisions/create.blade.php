@@ -496,14 +496,6 @@ $pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','
 
 </div>
 
-@php
-$athletes = \App\Models\Athlete::select(
-    'id',
-    \DB::raw("CONCAT(last_name, ', ', first_name) as name"),
-    'school_division as sdo'
-)->orderBy('last_name')->get();
-@endphp
-
 {{-- ================= ALPINE SCRIPT ================= --}}
 <script>
 function editAwardModal() {
@@ -516,8 +508,9 @@ function editAwardModal() {
 
         // 🔍 athlete search
         search: '',
-        athletes: @json($athletes),
+        athletes: [],
         filtered: [],
+        loading: false,
         selectedAthlete: null,
 
         openModal(id, type, medal, sdo) {
@@ -533,13 +526,27 @@ function editAwardModal() {
             this.show = true;
         },
 
-        filterAthletes() {
-            let q = this.search.toLowerCase();
+        async filterAthletes() {
+    let q = this.search;
 
-            this.filtered = this.athletes.filter(a =>
-                a.name.toLowerCase().includes(q)
-            ).slice(0, 10);
-        },
+    if (q.length < 2) {
+        this.filtered = [];
+        return;
+    }
+
+    this.loading = true;
+
+    let res = await fetch(`/ajax/athletes?q=${q}`);
+    let data = await res.json();
+
+    this.filtered = data.map(a => ({
+        id: a.id,
+        name: a.name,
+        sdo: 'SDO - ' + a.sdo
+    }));
+
+    this.loading = false;
+}
 
         selectAthlete(ath) {
             this.selectedAthlete = ath;
@@ -1074,51 +1081,50 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         $categoryValue = $sport->category;
     @endphp
 
-    <div x-data="{ entries: [{ sdo: '' }] }">
+    <div x-data="divisionDropdown()">
 
-        <template x-for="(entry, index) in entries" :key="index">
-            <div class="flex gap-2 mb-2 items-start">
+    <template x-for="(entry, index) in entries" :key="index">
+        <div class="flex gap-2 mb-2 items-start">
 
-                <select
-                    x-model="entry.sdo"
-                    :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][sdo]'"
-                    class="w-full border rounded px-2 py-1 text-sm"
-                >
-                    <option value="">-- Select Division / SDO --</option>
-                    @foreach($divisions as $divisionOption)
-                        <option value="{{ $divisionOption->name }}">
-                            {{ $divisionOption->name }}
-                        </option>
-                    @endforeach
-                </select>
+            <select
+                x-model="entry.sdo"
+                @click="loadDivisions"
+                :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][sdo]'"
+                class="w-full border rounded px-2 py-1 text-sm"
+            >
+                <option value="">-- Select Division / SDO --</option>
 
-                {{-- ALWAYS SAVE SPORT DIVISION: Elementary / Secondary / Paragames --}}
-                <input type="hidden"
-                    :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][division]'"
-                    value="{{ $divisionValue }}">
+                <template x-for="d in divisions" :key="d">
+                    <option :value="d" x-text="d"></option>
+                </template>
+            </select>
 
-                {{-- SAVE SPORT CATEGORY --}}
-                <input type="hidden"
-                    :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][category]'"
-                    value="{{ $categoryValue }}">
+            {{-- HIDDEN --}}
+            <input type="hidden"
+                :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][division]'"
+                value="{{ $divisionValue }}">
 
-                <button type="button"
-                        x-show="entries.length > 1"
-                        @click="entries.splice(index, 1)"
-                        class="bg-red-500 text-white px-2 py-1 rounded text-xs shrink-0">
-                    ✕
-                </button>
+            <input type="hidden"
+                :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][category]'"
+                value="{{ $categoryValue }}">
 
-            </div>
-        </template>
+            <button type="button"
+                x-show="entries.length > 1"
+                @click="entries.splice(index, 1)"
+                class="bg-red-500 text-white px-2 py-1 rounded text-xs">
+                ✕
+            </button>
 
-        <button type="button"
-                @click="entries.push({ sdo: '' })"
-                class="text-blue-600 text-xs hover:underline">
-            + Add Division
-        </button>
+        </div>
+    </template>
 
-    </div>
+    <button type="button"
+        @click="entries.push({ sdo: '' })"
+        class="text-blue-600 text-xs hover:underline">
+        + Add Division
+    </button>
+
+</div>
 </td>
                     @endforeach
 
@@ -1193,9 +1199,6 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
 <input type="hidden" name="event_id" value="{{ $currentEvent?->id }}">
 
-@php
-    $athletes = \App\Models\Athlete::with('school')->orderBy('last_name')->get();
-@endphp
 
 {{-- ================= UNIVERSAL VIEW ================= --}}
 @foreach($sports as $sport)
@@ -1286,50 +1289,53 @@ $divisions = \App\Models\Division::orderBy('name')->get();
                     @foreach(['Gold','Silver','Bronze'] as $medal)
                     <td class="border px-3 py-3 align-top">
 
-                        <div x-data="{ athletes:[{name:''}] }">
+                     <div x-data="individualAwardsForm()">
 
     <template x-for="(ath,index) in athletes" :key="index">
         <div class="border rounded p-2 mb-2 bg-gray-50">
 
-            {{-- SEARCH --}}
+            {{-- ✅ SINGLE INPUT ONLY --}}
             <input 
-                :list="'athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}'"
+                type="text"
                 x-model="ath.name"
+                @input.debounce.400ms="searchAthletes(index)"
                 placeholder="Type athlete name..."
                 class="w-full border rounded px-2 py-1 text-sm">
 
-            {{-- DATALIST --}}
-            <datalist id="athletes_list_{{ $sport->id }}_{{ $type->id }}_{{ $medal }}">
-                @foreach($athletes as $athlete)
-                    <option value="{{ $athlete->last_name }}, {{ $athlete->first_name }}"></option>
-                @endforeach
-            </datalist>
+            {{-- ✅ RESULTS --}}
+            <div x-show="ath.results.length"
+                 class="border mt-1 rounded bg-white max-h-40 overflow-y-auto">
 
-            {{-- ================= HIDDEN VALUES ================= --}}
+                <template x-for="item in ath.results" :key="item.id">
+                    <div @click="selectAthlete(index, item)"
+                         class="px-2 py-1 hover:bg-gray-100 cursor-pointer">
+                        <span x-text="item.name"></span>
+                        <span class="text-xs text-gray-500 ml-2"
+                              x-text="'(' + item.sdo + ')'"></span>
+                    </div>
+                </template>
+            </div>
 
-            {{-- ✅ ATHLETE ID --}}
+            {{-- ✅ HIDDEN VALUES --}}
             <input type="hidden"
-                :value="getAthleteId(ath.name)"
+                :value="ath.selected ? ath.selected.id : ''"
                 :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][athlete]'">
 
-            {{-- ✅ SDO --}}
             <input type="hidden"
-                :value="getAthleteSDO(ath.name)"
+                :value="ath.selected ? ath.selected.sdo : ''"
                 :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][sdo]'">
 
-            {{-- ✅ DIVISION --}}
             <input type="hidden"
                 :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][division]'"
                 value="{{ $sport->division }}">
 
-            {{-- ✅ CATEGORY --}}
             <input type="hidden"
                 :name="'individual_results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}]['+index+'][category]'"
                 value="{{ $sport->category }}">
 
             {{-- INFO --}}
             <div class="text-xs text-gray-600 mt-1"
-                 x-html="getAthleteInfo(ath.name)"></div>
+                 x-text="ath.selected ? ath.selected.sdo : ''"></div>
 
             {{-- REMOVE --}}
             <button type="button"
@@ -1342,9 +1348,9 @@ $divisions = \App\Models\Division::orderBy('name')->get();
         </div>
     </template>
 
-    {{-- ADD BUTTON --}}
+    {{-- ADD --}}
     <button type="button"
-            @click="athletes.push({name:''})"
+            @click="athletes.push({name:'', results:[], selected:null})"
             class="text-green-600 text-xs hover:underline">
         + Add Athlete
     </button>
@@ -1382,30 +1388,48 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 <script>
 function individualAwardsForm() {
     return {
-        athletesData: [
-            @foreach($athletes as $athlete)
-                {
-                    id: "{{ $athlete->id }}",
-                    name: "{{ $athlete->last_name }}, {{ $athlete->first_name }}",
-                    sdo: "SDO - {{ $athlete->school_division ?? '' }}",
-                    school: "{{ $athlete->school?->name ?? '' }}"
-                },
-            @endforeach
-        ],
 
-        getAthleteId(selectedName) {
-            let athlete = this.athletesData.find(a => a.name === selectedName);
-            return athlete ? athlete.id : '';
+        athletes: [{ name:'', results:[], selected:null }],
+        cache: {},
+
+        async searchAthletes(index) {
+
+            let athlete = this.athletes[index];
+            let q = athlete.name;
+
+            if (!q || q.length < 2) {
+                athlete.results = [];
+                return;
+            }
+
+            // ✅ cache
+            if (this.cache[q]) {
+                athlete.results = this.cache[q];
+                return;
+            }
+
+            try {
+                let res = await fetch(`/ajax/athletes?q=${q}`);
+                let data = await res.json();
+
+                let formatted = data.map(a => ({
+                    id: a.id,
+                    name: a.name,
+                    sdo: 'SDO - ' + a.sdo
+                }));
+
+                this.cache[q] = formatted;
+                athlete.results = formatted;
+
+            } catch (e) {
+                console.error(e);
+            }
         },
 
-        getAthleteSDO(selectedName) {
-            let athlete = this.athletesData.find(a => a.name === selectedName);
-            return athlete ? athlete.sdo : '';
-        },
-
-        getAthleteInfo(selectedName) {
-            let athlete = this.athletesData.find(a => a.name === selectedName);
-            return athlete ? `${athlete.sdo}<br>${athlete.school}` : '';
+        selectAthlete(index, item) {
+            this.athletes[index].name = item.name;
+            this.athletes[index].selected = item;
+            this.athletes[index].results = [];
         }
     }
 }
@@ -1414,12 +1438,51 @@ function individualAwardsForm() {
 
 </div>
 
-<script>
+<!-- <script>
 function awardApp(){
     return {
         activeTab:'{{ array_key_first($tabs) }}',
         awardType:'all',
         individualResults:@json($prefillIndividual),
+    }
+}
+</script> -->
+<script>
+    function awardApp(){
+    return {
+        activeTab:'{{ array_key_first($tabs) }}',
+        awardType:'all',
+        individualResults:@json($prefillIndividual),
+
+        // ✅ NEW
+        divisions: [],
+        loadedDivisions: false,
+
+        async loadDivisions() {
+            if (this.loadedDivisions) return;
+
+            let res = await fetch('/ajax/divisions');
+            this.divisions = await res.json();
+
+            this.loadedDivisions = true;
+        }
+    }
+}
+
+function divisionDropdown() {
+    return {
+        entries: [{ sdo: '' }],
+        divisions: [],
+        loaded: false,
+
+        async loadDivisions() {
+            if (this.loaded) return;
+
+            let res = await fetch('/ajax/divisions');
+            this.divisions = await res.json();
+
+            this.loaded = true;
+        }
     }
 }
 </script>
