@@ -766,20 +766,48 @@ public function publicView($qr)
 
 public function ajaxSearch(Request $request)
 {
-    $q = $request->get('q');
+    $q = strtolower(trim($request->get('q')));
+
+    // normalize input (remove commas, extra spaces)
+    $clean = str_replace(',', ' ', $q);
+    $words = array_filter(explode(' ', $clean));
 
     return \App\Models\Athlete::select(
             'id',
-            \DB::raw("CONCAT(last_name, ', ', first_name) as name"),
+            \DB::raw("CONCAT(last_name, ', ', first_name, ' ', IFNULL(middle_initial,'')) as name"),
             'school_division as sdo'
         )
-        ->when($q, function($query) use ($q) {
-            $query->where(function($sub) use ($q) {
-                $sub->where('last_name', 'like', "%$q%")
-                    ->orWhere('first_name', 'like', "%$q%");
+        ->when($q, function($query) use ($words, $q) {
+
+            $query->where(function($main) use ($words, $q) {
+
+                // 🔥 WORD-BY-WORD MATCH (BEST FIX)
+                foreach ($words as $word) {
+                    $main->where(function($sub) use ($word) {
+                        $sub->whereRaw('LOWER(first_name) LIKE ?', ["%{$word}%"])
+                            ->orWhereRaw('LOWER(last_name) LIKE ?', ["%{$word}%"])
+                            ->orWhereRaw('LOWER(middle_initial) LIKE ?', ["%{$word}%"]);
+                    });
+                }
+
+                // 🔥 FULL NAME MATCH (ANY ORDER)
+                $main->orWhereRaw("
+                    LOWER(CONCAT(first_name,' ',last_name)) LIKE ?
+                    OR LOWER(CONCAT(last_name,' ',first_name)) LIKE ?
+                    OR LOWER(CONCAT(first_name,' ',middle_initial,' ',last_name)) LIKE ?
+                    OR LOWER(CONCAT(last_name,' ',first_name,' ',middle_initial)) LIKE ?
+                ", [
+                    "%{$q}%",
+                    "%{$q}%",
+                    "%{$q}%",
+                    "%{$q}%"
+                ]);
+
             });
+
         })
-        ->limit(10)
+        ->orderBy('last_name')
+        ->limit(40)
         ->get();
 }
 

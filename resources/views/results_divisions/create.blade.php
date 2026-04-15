@@ -896,7 +896,9 @@ if (in_array($user->role->name, ['Tournament Manager', 'Super Admin'])) {
                         </div>
 
                         <div class="text-sm">
-                            {{ $r->athlete?->last_name }}, {{ $r->athlete?->first_name }}
+                            {{ $r->athlete?->last_name }},
+{{ $r->athlete?->first_name }}
+{{ $r->athlete?->middle_initial ? $r->athlete->middle_initial . '.' : '' }}
                         </div>
 
                         <div class="text-sm">{{ $r->sdo }}</div>
@@ -1432,27 +1434,37 @@ function individualAwardsForm() {
                 return;
             }
 
-            // ✅ cache
+            // cache
             if (this.cache[q]) {
                 athlete.results = this.cache[q];
                 return;
             }
 
             try {
-                let res = await fetch(`/ajax/athletes?q=${q}`);
+                let res = await fetch(`{{ url('/ajax/athletes') }}?q=${encodeURIComponent(q)}`);
                 let data = await res.json();
 
-                let formatted = data.map(a => ({
-                    id: a.id,
-                    name: a.name,
-                    sdo: 'SDO - ' + a.sdo
-                }));
+                // ✅ FIX: BUILD NAME MANUALLY
+                let formatted = data.map(a => {
+
+                    let last = a.last_name ?? '';
+                    let first = a.first_name ?? '';
+                    let middle = a.middle_initial ? a.middle_initial + '.' : '';
+
+                    let fullName = `${last}, ${first} ${middle}`.trim();
+
+                    return {
+                        id: a.id,
+                        name: fullName,
+                        sdo: 'SDO - ' + a.sdo
+                    };
+                });
 
                 this.cache[q] = formatted;
                 athlete.results = formatted;
 
             } catch (e) {
-                console.error(e);
+                console.error('Athlete search error:', e);
             }
         },
 
