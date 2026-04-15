@@ -273,7 +273,7 @@
                 <span class="text-gray-300">Silver</span>
                 <span class="text-orange-400">Bronze</span>
             </div>
-            <div class="text-center font-bold text-4xl text-red-600">Total</div>
+            <!-- <div class="text-center font-bold text-4xl text-red-600">Total</div> -->
         </div>
 
         @foreach($medalTallyRegular as $index => $division)
@@ -303,9 +303,9 @@
                     <span class="text-orange-400">{{ $division->bronze }}</span>
                 </div>
 
-                <div class="text-center text-red-700 font-extrabold text-6xl">
+                <!-- <div class="text-center text-red-700 font-extrabold text-6xl">
                     {{ $division->total }}
-                </div>
+                </div> -->
             </div>
         @endforeach
 
@@ -329,7 +329,7 @@
         <span class="text-gray-300">Silver</span>
         <span class="text-orange-400">Bronze</span>
     </div>
-    <div class="text-center font-bold text-4xl text-red-600">Total</div>
+    <!-- <div class="text-center font-bold text-4xl text-red-600">Total</div> -->
 </div>
 
 @foreach($medalTallyPara as $index => $division)
@@ -373,9 +373,9 @@
         </div>
 
         {{-- Total --}}
-        <div class="text-center text-red-700 font-extrabold text-6xl">
+        <!-- <div class="text-center text-red-700 font-extrabold text-6xl">
             {{ $division->total }}
-        </div>
+        </div> -->
     </div>
 @endforeach
 
