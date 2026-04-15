@@ -180,7 +180,9 @@ $pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','
     ->get();
 @endphp
 
-<div x-data="editAwardModal()" class="p-6 mb-6 bg-white rounded-2xl shadow-sm border border-gray-100">
+<div 
+    x-data="editAwardModal()" 
+    class="p-6 mb-6 bg-white rounded-2xl shadow-sm border border-gray-100">
 
     <div class="flex items-center gap-3 mb-6">
         <div class="p-2 bg-red-50 rounded-xl">
@@ -273,7 +275,17 @@ $pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','
                                 @endif
 
                                 {{-- EDIT BUTTON --}}
-                                <button @click="openModal({{ $r->id }}, 'all', '{{ $r->medal }}', '{{ $r->sdo }}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex-shrink-0">
+                                <button
+                                    type="button"
+                                    @click.stop="
+openEditModal(
+    {{ $r->id }},
+    'all',
+    '{{ $r->medal }}',
+    '{{ $r->sdo }}'
+)
+"
+                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex-shrink-0">
                                     Edit
                                 </button>
                             </div>
@@ -372,10 +384,19 @@ $pendingIndividualSecretary = \App\Models\IndividualAwardResult::with(['sport','
                                 @endif
 
                                 {{-- EDIT BUTTON --}}
-                                <button @click="openModal({{ $r->id }}, 'individual', '{{ $r->medal }}', '{{ $r->sdo }}')" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex-shrink-0">
+                                <button
+                                    type="button"
+                                   @click.stop="
+openEditModal(
+    {{ $r->id }},
+    'individual',
+    '{{ $r->medal }}',
+    '{{ $r->sdo }}'
+)
+"
+                                    class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm flex-shrink-0">
                                     Edit
                                 </button>
-                            </div>
                         </div>
                     </div>
                 @endforeach
@@ -513,7 +534,12 @@ function editAwardModal() {
         loading: false,
         selectedAthlete: null,
 
-        openModal(id, type, medal, sdo) {
+        // ✅ RENAMED FUNCTION (IMPORTANT)
+        openEditModal(id, type, medal, sdo) {
+
+            // ✅ FORCE STOP GLOBAL CONFLICT
+            this.show = false;
+
             this.awardId = id;
             this.type = type;
             this.medal = medal;
@@ -523,35 +549,38 @@ function editAwardModal() {
             this.filtered = [];
             this.selectedAthlete = null;
 
-            this.show = true;
+            // ✅ FORCE OPEN AFTER RESET
+            setTimeout(() => {
+                this.show = true;
+            }, 10);
         },
 
         async filterAthletes() {
-    let q = this.search;
+            let q = this.search;
 
-    if (q.length < 2) {
-        this.filtered = [];
-        return;
-    }
+            if (q.length < 2) {
+                this.filtered = [];
+                return;
+            }
 
-    this.loading = true;
+            this.loading = true;
 
-    let res = await fetch(`/ajax/athletes?q=${q}`);
-    let data = await res.json();
+            let res = await fetch(`/ajax/athletes?q=${q}`);
+            let data = await res.json();
 
-    this.filtered = data.map(a => ({
-        id: a.id,
-        name: a.name,
-        sdo: 'SDO - ' + a.sdo
-    }));
+            this.filtered = data.map(a => ({
+                id: a.id,
+                name: a.name,
+                sdo: 'SDO - ' + a.sdo
+            }));
 
-    this.loading = false;
-}
+            this.loading = false;
+        },
 
         selectAthlete(ath) {
             this.selectedAthlete = ath;
             this.search = ath.name;
-            this.sdo = ath.sdo; // ✅ AUTO SET SDO
+            this.sdo = ath.sdo;
             this.filtered = [];
         }
     }
