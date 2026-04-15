@@ -1088,7 +1088,8 @@ $divisions = \App\Models\Division::orderBy('name')->get();
 
             <select
                 x-model="entry.sdo"
-                @click="loadDivisions"
+                @click="loadDivisions(); $event.target.size = divisions.length ? divisions.length : 5"
+@blur="$event.target.size = 1"
                 :name="'results[{{ $sport->id }}][{{ $type->id ?? 0 }}][{{ $medal }}][' + index + '][sdo]'"
                 class="w-full border rounded px-2 py-1 text-sm"
             >
@@ -1448,23 +1449,28 @@ function awardApp(){
 }
 </script> -->
 <script>
-    function awardApp(){
+function awardApp(){
     return {
         activeTab:'{{ array_key_first($tabs) }}',
         awardType:'all',
         individualResults:@json($prefillIndividual),
 
-        // ✅ NEW
         divisions: [],
         loadedDivisions: false,
 
         async loadDivisions() {
             if (this.loadedDivisions) return;
 
-            let res = await fetch('/ajax/divisions');
-            this.divisions = await res.json();
+            try {
+                let res = await fetch("{{ url('/ajax/divisions') }}");
+                let data = await res.json();
 
-            this.loadedDivisions = true;
+                this.divisions = data;
+                this.loadedDivisions = true;
+
+            } catch (e) {
+                console.error('Division fetch error:', e);
+            }
         }
     }
 }
@@ -1478,10 +1484,65 @@ function divisionDropdown() {
         async loadDivisions() {
             if (this.loaded) return;
 
-            let res = await fetch('/ajax/divisions');
-            this.divisions = await res.json();
+            try {
+                let res = await fetch("{{ url('/ajax/divisions') }}");
+                let data = await res.json();
 
-            this.loaded = true;
+                this.divisions = data;
+                this.loaded = true;
+
+            } catch (e) {
+                console.error('Division dropdown error:', e);
+            }
+        }
+    }
+}
+
+/* ================= INDIVIDUAL SEARCH FIX ================= */
+function individualAwardsForm() {
+    return {
+
+        athletes: [{ name:'', results:[], selected:null }],
+        cache: {},
+
+        async searchAthletes(index) {
+
+            let athlete = this.athletes[index];
+            let q = athlete.name;
+
+            if (!q || q.length < 2) {
+                athlete.results = [];
+                return;
+            }
+
+            // cache
+            if (this.cache[q]) {
+                athlete.results = this.cache[q];
+                return;
+            }
+
+            try {
+                let res = await fetch(`{{ url('/ajax/athletes') }}?q=${encodeURIComponent(q)}`);
+                let data = await res.json();
+
+                let formatted = data.map(a => ({
+                    id: a.id,
+                    name: a.name,
+                    sdo: 'SDO - ' + a.sdo
+                }));
+
+                this.cache[q] = formatted;
+                athlete.results = formatted;
+
+            } catch (e) {
+                console.error('Athlete search error:', e);
+            }
+        },
+
+        selectAthlete(index, item) {
+            this.athletes[index].name = item.name;
+            this.athletes[index].selected = item;
+            this.athletes[index].results = [];
         }
     }
 }
