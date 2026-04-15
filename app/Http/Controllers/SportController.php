@@ -49,21 +49,17 @@ class SportController extends Controller
     public function store(Request $request)
 {
     $request->validate([
-        'name' => [
-            'required',
-            'string',
-            Rule::unique('sports')->where(function ($query) use ($request) {
-                return $query->where('division', $request->level)
-                             ->where('category', $request->category);
-            }),
-        ],
-        'level' => 'required|in:Elementary,Secondary',
+    'name' => [
+        'required',
+        'string',
+    ],
+    'level' => 'required|in:Elementary,Secondary',
 
-        // ✅ UPDATED HERE (added Mixed)
-        'category' => 'required|in:Boys,Girls,Mixed',
+    // ✅ keep Mixed
+    'category' => 'required|in:Boys,Girls,Mixed',
 
-        'type_of_game.*' => 'nullable|string',
-    ]);
+    'type_of_game.*' => 'nullable|string',
+]);
 
     $sport = Sport::create([
         'name'     => $request->name,
@@ -177,13 +173,9 @@ class SportController extends Controller
 
     $request->validate([
         'name' => [
-            'required',
-            'string',
-            Rule::unique('sports')->where(function ($query) use ($request, $sport) {
-                return $query->where('division', $request->level)
-                             ->where('category', $request->category);
-            })->ignore($sport->id),
-        ],
+                'required',
+                'string',
+            ],
         'level' => 'required|in:Elementary,Secondary',
         'category' => 'required|in:Boys,Girls,Mixed',
         'type_of_game.*' => 'nullable|string',
@@ -297,13 +289,9 @@ public function paraStore(Request $request)
 {
     $request->validate([
         'name' => [
-            'required',
-            'string',
-            Rule::unique('sports')->where(function ($query) use ($request) {
-                return $query->where('division', 'Paragames')
-                             ->where('category', $request->category);
-            }),
-        ],
+    'required',
+    'string',
+],
 
         // ✅ UPDATED (added Mixed)
         'category' => 'required|in:Boys,Girls,Mixed',
@@ -353,13 +341,9 @@ public function paraUpdate(Request $request, Sport $sport)
 
     $request->validate([
         'name' => [
-            'required',
-            'string',
-            Rule::unique('sports')->where(function ($query) use ($request) {
-                return $query->where('division', 'Paragames')
-                             ->where('category', $request->category);
-            })->ignore($sport->id),
-        ],
+    'required',
+    'string',
+],
         'category' => 'required|in:Boys,Girls,Mixed',
         'type_of_game.*' => 'nullable|string',
     ]);
