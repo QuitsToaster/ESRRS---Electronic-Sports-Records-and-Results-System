@@ -307,6 +307,7 @@
         'viewer.home',
         'viewer.medalTally',
         'viewer.participants',
+        'viewer.participants-show',
     ];
 @endphp
 
