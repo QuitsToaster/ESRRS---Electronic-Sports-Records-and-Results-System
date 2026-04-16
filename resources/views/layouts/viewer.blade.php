@@ -21,6 +21,134 @@
 
 <body class="bg-gray-50 font-['Poppins',sans-serif] overflow-x-hidden">
 
+{{-- ================= GLOBAL FULL PAGE LOADER (FOR VIEWER) ================= --}}
+<div id="globalLoader"
+     class="fixed inset-0 flex items-center justify-center bg-white"
+     style="z-index:9999999; pointer-events: all;">
+
+    <div class="flex flex-col items-center gap-4">
+
+        {{-- Spinner --}}
+        <div class="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></div>
+
+        {{-- Text --}}
+        <p id="loaderText"
+           class="text-sm font-semibold text-gray-600 tracking-wide transition-opacity duration-300">
+            Loading ESRRS...
+        </p>
+
+    </div>
+</div>
+
+<script>
+(function () {
+
+    const loader = document.getElementById('globalLoader');
+    const loaderText = document.getElementById('loaderText');
+
+    // ================= LOADING MESSAGES =================
+    const messages = [
+        "Loading ESRRS...",
+        "Preparing dashboard...",
+        "Fetching data...",
+        "Initializing system...",
+        "Almost ready...",
+        "Syncing records...",
+        "Loading athletes...",
+        "Processing results...",
+        "Setting things up...",
+        "Getting everything ready..."
+    ];
+
+    let interval = null;
+
+    // ================= TEXT ROTATION (MATCH APP.BLADE EXACTLY) =================
+    function startTextRotation() {
+        if (!loaderText) return;
+
+        let index = 0;
+
+        if (interval) clearInterval(interval);
+
+        // ✅ FORCE FIRST CHANGE AFTER EXACTLY 1 SECOND
+        setTimeout(() => {
+            index = (index + 1) % messages.length;
+            loaderText.innerText = messages[index];
+        }, 1000);
+
+        // ✅ CONTINUE LOOP EVERY 1 SECOND
+        interval = setInterval(() => {
+            index = (index + 1) % messages.length;
+            loaderText.innerText = messages[index];
+        }, 1000);
+    }
+
+    function stopTextRotation() {
+        if (interval) clearInterval(interval);
+    }
+
+    // ================= INITIAL LOAD =================
+    startTextRotation();
+
+    window.addEventListener('load', () => {
+        setTimeout(() => {
+            if (loader) {
+                loader.style.opacity = '0';
+                stopTextRotation();
+
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 300);
+            }
+        }, 400);
+    });
+
+    // ================= SHOW LOADER =================
+    function showLoader() {
+        if (!loader) return;
+
+        loader.style.display = 'flex';
+        loader.style.opacity = '1';
+
+        // ✅ RANDOM START (IMPORTANT)
+        if (loaderText) {
+            const randomIndex = Math.floor(Math.random() * messages.length);
+            loaderText.innerText = messages[randomIndex];
+        }
+
+        startTextRotation();
+    }
+
+    // ================= LINKS =================
+    document.querySelectorAll('a[href]').forEach(link => {
+        link.addEventListener('click', function () {
+
+            const href = this.getAttribute('href');
+
+            if (
+                !href ||
+                href.startsWith('#') ||
+                href.startsWith('javascript') ||
+                this.target === '_blank'
+            ) return;
+
+            showLoader();
+        });
+    });
+
+    // ================= FORMS =================
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', () => {
+            showLoader();
+        });
+    });
+
+    // ================= GLOBAL ACCESS (FOR ALPINE / SCANNER) =================
+    window.showGlobalLoader = showLoader;
+
+})();
+</script>
+
 {{-- ================= CLEAN WHITE NAVBAR ================= --}}
 <nav class="fixed top-0 inset-x-0 z-[60] pointer-events-auto bg-white/95 backdrop-blur-md shadow-md border-b border-gray-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
