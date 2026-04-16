@@ -297,19 +297,35 @@
 {{-- Navbar Spacer --}}
 <div class="h-16"></div>
 
-{{-- ================= FORCE FULL PAGE STANDBY OVERLAY (PRODUCTION SAFE) ================= --}}
+{{-- ================= FORCE FULL PAGE STANDBY OVERLAY (FINAL - ROOT FIX) ================= --}}
 @php
     $lockViewer = true;
 
+    // 🔥 ROUTE NAMES
     $lockRoutes = [
         'viewer.home',
         'viewer.medalTally',
         'viewer.participants',
         'viewer.participants-show',
     ];
+
+    // 🔥 ALSO CHECK URL PATH (FOR "/")
+    $lockPaths = [
+        '/',            // root
+        'viewer/home',
+        'viewer',
+    ];
+
+    $currentPath = request()->path();
 @endphp
 
-@if($lockViewer && request()->routeIs($lockRoutes))
+@if(
+    $lockViewer &&
+    (
+        request()->routeIs($lockRoutes) ||
+        in_array($currentPath, $lockPaths)
+    )
+)
 
 <!-- 🔥 FORCE OVERLAY ROOT -->
 <div id="standbyOverlayRoot"></div>
@@ -317,7 +333,6 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
-    // 🔥 CREATE OVERLAY ELEMENT (NOT DEPENDENT ON BLADE POSITION)
     const overlay = document.createElement('div');
     overlay.id = "standbyOverlay";
 
@@ -326,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function () {
     overlay.style.left = "0";
     overlay.style.width = "100vw";
     overlay.style.height = "100vh";
-    overlay.style.zIndex = "2147483647"; // MAX
+    overlay.style.zIndex = "2147483647";
     overlay.style.background = "linear-gradient(to bottom right, #111827, #000000, #111827)";
     overlay.style.display = "flex";
     overlay.style.alignItems = "center";
@@ -358,10 +373,7 @@ document.addEventListener('DOMContentLoaded', function () {
         </div>
     `;
 
-    // 🔥 APPEND DIRECTLY TO BODY (BYPASS ALL STACKING ISSUES)
     document.body.appendChild(overlay);
-
-    // 🔥 FORCE NO SCROLL
     document.body.style.overflow = "hidden";
 
 });
