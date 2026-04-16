@@ -415,7 +415,8 @@
             <th style="width:20%">SDO</th>
             <th style="width:20%">Athlete</th>
             <th style="width:15%">School</th>
-            <th style="width:15%">Location</th>
+            <th style="width:12%">Municipality</th>
+            <th style="width:12%">District</th>
         </tr>
     </thead>
     <tbody>
@@ -436,9 +437,10 @@
 
             <td>
                 {{ $row['municipality'] ?? '—' }}
-                @if(!empty($row['district']))
-                    <br><small>{{ $row['district'] }}</small>
-                @endif
+            </td>
+
+            <td>
+                {{ $row['district'] ?? '—' }}
             </td>
         </tr>
         @endforeach
