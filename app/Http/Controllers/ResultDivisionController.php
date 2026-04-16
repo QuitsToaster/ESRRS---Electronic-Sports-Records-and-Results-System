@@ -179,64 +179,82 @@ class ResultDivisionController extends Controller
 
 public function export()
 {
-    // =====================
-    // LOAD ALL SDOs FROM DATABASE (NO HARDCODE)
-    // =====================
-    $divisions = Division::orderBy('name')->get();
+    ini_set('memory_limit', '512M');
 
     // =====================
-    // LOAD APPROVED AWARDS (WITH TYPE)
+    // LOAD DIVISIONS
     // =====================
-    $allAwards = AllAwardResult::with(['sport','event','type']) // ✅ added type
+    $divisions = Division::select('name')->orderBy('name')->get();
+
+    // =====================
+    // ALL AWARDS (HAS COUNT)
+    // =====================
+    $allAwards = AllAwardResult::select(
+            'division','category','sport_id','type_id','event_id',
+            'medal','sdo','count','created_at'
+        )
+        ->with(['sport:id,name','event:id,name','type:id,type_name'])
         ->where('status','approved')
         ->get();
 
-    $individualAwards = IndividualAwardResult::with(['sport','event','type']) // ✅ added type
+    // =====================
+    // INDIVIDUAL AWARDS (NO COUNT)
+    // =====================
+    $individualAwards = IndividualAwardResult::select(
+            'division','category','sport_id','type_id','event_id',
+            'medal','sdo','created_at'
+        )
+        ->with(['sport:id,name','event:id,name','type:id,type_name'])
         ->where('status','approved')
-        ->get();
+        ->get()
+        ->map(function ($item) {
+            $item->count = 1; // ✅ FIX HERE
+            return $item;
+        });
 
     // =====================
-    // COMBINE ALL RESULTS
+    // COMBINE
     // =====================
-    $combined = $allAwards->merge($individualAwards);
+    $combined = $allAwards->concat($individualAwards);
 
     // =====================
-    // BUILD MEDAL TALLY (DYNAMIC SDO)
+    // MEDAL TALLY
     // =====================
-    $medalTally = $divisions->map(function ($division) use ($combined) {
+    $medalTally = [];
+
+    foreach ($divisions as $division) {
 
         $sdoName = $division->name;
 
-        $group = $combined->filter(fn($item) => $item->sdo === $sdoName);
+        $gold = $combined->where('sdo', $sdoName)->where('medal','Gold')->sum('count');
+        $silver = $combined->where('sdo', $sdoName)->where('medal','Silver')->sum('count');
+        $bronze = $combined->where('sdo', $sdoName)->where('medal','Bronze')->sum('count');
 
-        $gold   = $group->where('medal','Gold')->sum('count');
-        $silver = $group->where('medal','Silver')->sum('count');
-        $bronze = $group->where('medal','Bronze')->sum('count');
-
-        return (object)[
+        $medalTally[] = (object)[
             'name'   => $sdoName,
             'gold'   => $gold,
             'silver' => $silver,
             'bronze' => $bronze,
             'points' => ($gold * 3) + ($silver * 2) + ($bronze * 1),
         ];
-    });
+    }
 
     // =====================
     // SORT + RANK
     // =====================
-    $medalTally = $medalTally
-        ->sortByDesc(fn($d) => [$d->points, $d->gold, $d->silver, $d->bronze])
-        ->values();
+    usort($medalTally, function($a, $b) {
+        return [$b->points, $b->gold, $b->silver, $b->bronze]
+             <=> [$a->points, $a->gold, $a->silver, $a->bronze];
+    });
 
     foreach ($medalTally as $index => $item) {
         $item->rank = $index + 1;
     }
 
     // =====================
-    // PREPARE PDF RESULTS (WITH TYPE NAME)
+    // LIMIT PDF DATA (DOMPDF SAFE)
     // =====================
-    $pdfResults = $combined->map(function($item) {
+    $pdfResults = $combined->take(500)->map(function($item) {
 
         $sportName = $item->sport->name ?? '-';
         $typeName  = $item->type->type_name ?? null;
@@ -244,21 +262,16 @@ public function export()
         return [
             'division' => $item->division,
             'category' => $item->category,
-
-            // ✅ COMBINE SPORT + TYPE
-            'sport'    => $typeName 
-                            ? $sportName . ' - ' . $typeName 
-                            : $sportName,
-
+            'sport'    => $typeName ? $sportName . ' - ' . $typeName : $sportName,
             'event'    => $item->event->name ?? '-',
             'medal'    => $item->medal,
             'sdo'      => $item->sdo ?? '-',
-            'date'     => $item->created_at?->format('M d, Y') ?? '-',
+            'date'     => optional($item->created_at)->format('M d, Y'),
         ];
     });
 
     // =====================
-    // LOAD PDF
+    // GENERATE PDF
     // =====================
     return PDF::loadView('results_divisions.export', [
         'medalTally' => $medalTally,
@@ -266,6 +279,10 @@ public function export()
         'levels'     => ['Elementary', 'Secondary', 'Paragames'],
     ])
     ->setPaper('letter', 'portrait')
+    ->setOptions([
+        'isHtml5ParserEnabled' => true,
+        'isRemoteEnabled' => true,
+    ])
     ->stream('Official_Results_CAVRAA_2026.pdf');
 }
 
