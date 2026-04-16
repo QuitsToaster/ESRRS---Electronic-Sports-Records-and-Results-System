@@ -276,23 +276,30 @@ public function export()
     }
 
     // =====================
-    // LIMIT PDF DATA (SAFE FOR SERVER)
-    // =====================
-    $pdfResults = $combined->take(500)->map(function($item) {
+// LIMIT PDF DATA (SAFE FOR SERVER)
+// =====================
+$pdfResults = $combined->take(500)->map(function($item) {
 
-        $sportName = $item->sport->name ?? '-';
-        $typeName  = $item->type->type_name ?? null;
+    $sportName = $item->sport->name ?? '-';     // ✅ MAIN FIX
+    $typeName  = $item->type->type_name ?? null;
 
-        return [
-            'division' => $item->division,
-            'category' => $item->category,
-            'sport'    => $typeName ? $sportName . ' - ' . $typeName : $sportName,
-            'event'    => $item->event->name ?? '-',
-            'medal'    => $item->medal,
-            'sdo'      => $item->sdo ?? '-',
-            'date'     => optional($item->created_at)->format('M d, Y'),
-        ];
-    });
+    return [
+        'division' => $item->division,
+        'category' => $item->category,
+
+        // ✅ THIS IS FOR "Sport Event" COLUMN
+        'event' => $sportName,
+
+        // ✅ THIS IS FOR "Discipline" COLUMN
+        'sport' => $typeName 
+                    ? $sportName . ' - ' . $typeName 
+                    : $sportName,
+
+        'medal' => $item->medal,
+        'sdo'   => $item->sdo ?? '-',
+        'date'  => optional($item->created_at)->format('M d, Y'),
+    ];
+});
 
     // =====================
     // GENERATE PDF
