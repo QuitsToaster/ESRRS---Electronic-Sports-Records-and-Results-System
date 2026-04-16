@@ -187,7 +187,18 @@ public function export()
     $divisions = Division::select('name')->orderBy('name')->get();
 
     // =====================
-    // ALL AWARDS (HAS COUNT)
+    // ALL AWARDS (FOR MEDAL TALLY ONLY)
+    // EXCLUDE PARAGAMES
+    // =====================
+    $allAwardsForTally = AllAwardResult::select(
+            'division','medal','sdo','count'
+        )
+        ->where('status','approved')
+        ->where('division','!=','Paragames') // ✅ EXCLUDE PARAGAMES
+        ->get();
+
+    // =====================
+    // ALL AWARDS (FULL DATA FOR PDF)
     // =====================
     $allAwards = AllAwardResult::select(
             'division','category','sport_id','type_id','event_id',
@@ -198,7 +209,7 @@ public function export()
         ->get();
 
     // =====================
-    // INDIVIDUAL AWARDS (NO COUNT)
+    // INDIVIDUAL AWARDS (FOR DETAILS ONLY)
     // =====================
     $individualAwards = IndividualAwardResult::select(
             'division','category','sport_id','type_id','event_id',
@@ -208,17 +219,17 @@ public function export()
         ->where('status','approved')
         ->get()
         ->map(function ($item) {
-            $item->count = 1; // ✅ FIX HERE
+            $item->count = 1;
             return $item;
         });
 
     // =====================
-    // COMBINE
+    // COMBINE (FOR PDF ONLY)
     // =====================
     $combined = $allAwards->concat($individualAwards);
 
     // =====================
-    // MEDAL TALLY
+    // MEDAL TALLY (ALL AWARDS ONLY)
     // =====================
     $medalTally = [];
 
@@ -226,15 +237,28 @@ public function export()
 
         $sdoName = $division->name;
 
-        $gold = $combined->where('sdo', $sdoName)->where('medal','Gold')->sum('count');
-        $silver = $combined->where('sdo', $sdoName)->where('medal','Silver')->sum('count');
-        $bronze = $combined->where('sdo', $sdoName)->where('medal','Bronze')->sum('count');
+        $gold = $allAwardsForTally
+            ->where('sdo', $sdoName)
+            ->where('medal','Gold')
+            ->sum('count');
+
+        $silver = $allAwardsForTally
+            ->where('sdo', $sdoName)
+            ->where('medal','Silver')
+            ->sum('count');
+
+        $bronze = $allAwardsForTally
+            ->where('sdo', $sdoName)
+            ->where('medal','Bronze')
+            ->sum('count');
 
         $medalTally[] = (object)[
             'name'   => $sdoName,
             'gold'   => $gold,
             'silver' => $silver,
             'bronze' => $bronze,
+
+            // ✅ KEEP OR REMOVE (your choice)
             'points' => ($gold * 3) + ($silver * 2) + ($bronze * 1),
         ];
     }
@@ -252,7 +276,7 @@ public function export()
     }
 
     // =====================
-    // LIMIT PDF DATA (DOMPDF SAFE)
+    // LIMIT PDF DATA (SAFE FOR SERVER)
     // =====================
     $pdfResults = $combined->take(500)->map(function($item) {
 
