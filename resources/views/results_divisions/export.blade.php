@@ -216,6 +216,55 @@
         .event-category {
             font-weight: 500;
         }
+
+        .page-break {
+            page-break-before: always;
+        }
+
+        .signatures {
+            page-break-inside: avoid;
+        }
+
+        .sign-cell {
+            width: 25%;
+            text-align: center;
+            padding: 28px 8px;
+            vertical-align: top;
+        }
+
+        .sign-space {
+            height: 45px;
+            border-bottom: 1px solid #8f9eb2;
+            width: 80%;
+            margin: 0 auto 6px auto;
+        }
+
+        .director-line {
+            height: 55px;
+            border-bottom: 1.5px solid #1e4663;
+            width: 70%;
+        }
+
+        .director-name {
+            font-size: 11pt;
+            font-weight: 700;
+        }
+
+        /* ================= REMOVE TABLE LINES FOR SIGNATURES ONLY ================= */
+        .signatures table,
+        .signatures tr,
+        .signatures td {
+            border: none !important;
+        }
+
+        .signatures table {
+            border-collapse: collapse;
+        }
+
+        /* keep spacing clean */
+        .signatures td {
+            padding: 20px 5px;
+        }
     </style>
 </head>
 <body>
@@ -300,84 +349,111 @@
 </div>
 @endforeach
 
-{{-- ================= SIGNATURE SECTION (Professional, structured) ================= --}}
-<div class="signatures">
-    <h3>CERTIFICATION & APPROVAL</h3>
-    <div style="font-size:9.5pt; margin-bottom: 15px;"><strong>Prepared by: GAMES RESULTS & RSAC COMMITTEE</strong> · Official Results Division</div>
+{{-- ================= SIGNATURE PAGE (FIXED - DOMPDF SAFE) ================= --}}
+<div style="page-break-before: always;"></div>
 
-    <div class="sign-grid">
-        {{-- LEADERS first row --}}
-        <div class="sign-block">
-            <div class="sign-space"></div>
-            <div class="sign-name">DENIS M. AGBAYANI</div>
-            <div class="sign-role">Chairperson</div>
-        </div>
-        <div class="sign-block">
-            <div class="sign-space"></div>
-            <div class="sign-name">DR. KAE PARAGAS MAMBA</div>
-            <div class="sign-role">Medical Officer</div>
-        </div>
-        <div class="sign-block">
-            <div class="sign-space"></div>
-            <div class="sign-name">DR. JANNIFER TULIAO</div>
-            <div class="sign-role">Dental Officer</div>
-        </div>
-        <div class="sign-block">
-            <div class="sign-space"></div>
-            <div class="sign-name">KEVIN VILLACETE</div>
-            <div class="sign-role">Legal Officer</div>
-        </div>
+<div class="signatures" style="margin-top:0; border-top:none;">
 
-        {{-- MEMBERS (full committee) --}}
-        @foreach([
-            ['KYM CLYDE MORO','Member'],
-            ['BERNADETTE MIRANDA','Member'],
-            ['FAITH NOEL REYES','Member'],
-            ['ROLDAN LOPEZ','Member'],
-            ['DANTE P. CAPUCHINO','Member'],
-            ['JONATHAN PITA','Member'],
-            ['REYMA CASARENO','Member'],
-            ['JOEL DOMINGO','Member'],
-            ['ATTY. JEREMY MARAMAG','Member'],
-            ['EMERSON RESPONZO','Data Group'],
-            ['ROSANDRO A. GADDI','Data Group'],
-            ['ANGELICA RESPONZO','Data Group'],
-            ['RONNIE BIBAS','Records'],
-            ['ABRAHAM C. ACOSTA','Records'],
-            ['NOR ALDEEN QADDOUMI','ICT / Games Results'],
-            ['JAYWARD C. BUCAYU','ICT / Games Results'],
-            ['RICARDO Q. CABUGAO','ICT / Games Results'],
-            ['KRISTIAN E. SACCUAN','ICT / Games Results'],
-            ['ANDREW TORIBIO B. TAACA','ICT / Games Results'],
-            ['BRYAN LLOYD T. TAN','ICT / Games Results'],
-            ['GANO SPENCER D. CHUMILANG','ICT / Games Results'],
-            ['TIMOTHY JOHN M. LARDIZABAL','ICT / Games Results'],
-            ['JAN ELLISSON G. SEBASTIAN','ICT / Games Results'],
-        ] as $person)
-            <div class="sign-block">
-                <div class="sign-space"></div>
-                <div class="sign-name">{{ $person[0] }}</div>
-                <div class="sign-role">{{ $person[1] }}</div>
-            </div>
-        @endforeach
+    <h2 style="border-left:none; padding-left:0; background:none; margin-top:0;">
+        CERTIFICATION & APPROVAL
+    </h2>
+
+    <div style="font-size:10pt; margin: 10px 0 20px 0;">
+        <strong>Prepared by: GAMES RESULTS & RSAC COMMITTEE</strong> · Official Results Division
     </div>
 
-    {{-- DIRECTORS row (full width separate) --}}
-    <div style="display: flex; justify-content: space-between; gap: 20px; margin-top: 15px; flex-wrap: wrap;">
-        <div class="sign-block director-block">
-            <div class="sign-space"></div>
-            <div class="sign-name">FLORANTE E. VERGARA</div>
-            <div class="sign-role">ASSISTANT REGIONAL DIRECTOR</div>
-        </div>
-        <div class="sign-block director-block">
-            <div class="sign-space"></div>
-            <div class="sign-name">BENJAMIN D. PARAGAS</div>
-            <div class="sign-role">REGIONAL DIRECTOR</div>
-        </div>
-    </div>
+    {{-- ================= SIGNATURE GRID (TABLE = STABLE) ================= --}}
+    <table style="width:100%; border:none;">
+        <tbody>
+
+            {{-- LEADERS --}}
+            <tr>
+                <td class="sign-cell">
+                    <div class="sign-space"></div>
+                    <div class="sign-name">DENIS M. AGBAYANI</div>
+                    <div class="sign-role">Chairperson</div>
+                </td>
+                <td class="sign-cell">
+                    <div class="sign-space"></div>
+                    <div class="sign-name">DR. KAE PARAGAS MAMBA</div>
+                    <div class="sign-role">Medical Officer</div>
+                </td>
+                <td class="sign-cell">
+                    <div class="sign-space"></div>
+                    <div class="sign-name">DR. JANNIFER TULIAO</div>
+                    <div class="sign-role">Dental Officer</div>
+                </td>
+                <td class="sign-cell">
+                    <div class="sign-space"></div>
+                    <div class="sign-name">KEVIN VILLACETE</div>
+                    <div class="sign-role">Legal Officer</div>
+                </td>
+            </tr>
+
+            {{-- MEMBERS LOOP --}}
+            @php
+                $people = [
+                    ['KYM CLYDE MORO','Member'],
+                    ['BERNADETTE MIRANDA','Member'],
+                    ['FAITH NOEL REYES','Member'],
+                    ['ROLDAN LOPEZ','Member'],
+                    ['DANTE P. CAPUCHINO','Member'],
+                    ['JONATHAN PITA','Member'],
+                    ['REYMA CASARENO','Member'],
+                    ['JOEL DOMINGO','Member'],
+                    ['ATTY. JEREMY MARAMAG','Member'],
+                    ['EMERSON RESPONZO','Data Group'],
+                    ['ROSANDRO A. GADDI','Data Group'],
+                    ['ANGELICA RESPONZO','Data Group'],
+                    ['RONNIE BIBAS','Records'],
+                    ['NOR ALDEEN QADDOUMI','ICT / Games Results'],
+                    ['JAYWARD C. BUCAYU','ICT / Games Results'],
+                    ['RICARDO Q. CABUGAO','ICT / Games Results'],
+                    ['KRISTIAN E. SACCUAN','ICT / Games Results'],
+                    ['ANDREW TORIBIO B. TAACA','ICT / Games Results'],
+                    ['BRYAN LLOYD T. TAN','ICT / Games Results'],
+                    ['GANO SPENCER D. CHUMILANG','ICT / Games Results'],
+                    ['TIMOTHY JOHN M. LARDIZABAL','ICT / Games Results'],
+                    ['JAN ELLISSON G. SEBASTIAN','ICT / Games Results'],
+                ];
+            @endphp
+
+            @foreach(array_chunk($people, 4) as $row)
+            <tr>
+                @foreach($row as $person)
+                <td class="sign-cell">
+                    <div class="sign-space"></div>
+                    <div class="sign-name">{{ $person[0] }}</div>
+                    <div class="sign-role">{{ $person[1] }}</div>
+                </td>
+                @endforeach
+            </tr>
+            @endforeach
+
+        </tbody>
+    </table>
+
+    {{-- ================= DIRECTORS ================= --}}
+    <table style="width:100%; margin-top:30px; border:none;">
+        <tr>
+            <td style="width:50%; text-align:center;">
+                <div class="sign-space director-line"></div>
+                <div class="sign-name director-name">FLORANTE E. VERGARA</div>
+                <div class="sign-role">ASSISTANT REGIONAL DIRECTOR</div>
+            </td>
+            <td style="width:50%; text-align:center;">
+                <div class="sign-space director-line"></div>
+                <div class="sign-name director-name">BENJAMIN D. PARAGAS</div>
+                <div class="sign-role">REGIONAL DIRECTOR</div>
+            </td>
+        </tr>
+    </table>
+
     <div class="footer-note">
-        This document is electronically generated and validated by the Games Results & RSAC. All medal counts are official as of final results.
+        This document is electronically generated and validated by the Games Results & RSAC. 
+        All medal counts are official as of final results.
     </div>
+
 </div>
 
 </body>
