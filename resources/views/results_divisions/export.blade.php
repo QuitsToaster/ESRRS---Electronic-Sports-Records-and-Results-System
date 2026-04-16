@@ -271,8 +271,27 @@
 
 <div class="report-header">
     <h1>OFFICIAL MEDAL TALLY</h1>
+
+    {{-- ✅ NEW LABEL --}}
+    <div style="
+        font-size: 12px;
+        font-weight: 700;
+        color: #ffffff;
+        background: {{ ($reportType ?? '') === 'PARAGAMES' ? '#7b1fa2' : '#1e4663' }};
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 4px;
+        margin-bottom: 6px;
+        letter-spacing: 1px;
+    ">
+        {{ ($reportType ?? '') === 'PARAGAMES' ? 'PARAGAMES' : 'REGULAR GAMES' }}
+    </div>
+
     <div class="sub">{{ date('Y') }} CAVRAA · RESULTS & MEDAL TALLY</div>
-    <div style="font-size: 9pt; margin-top: 8px;">DepEd Regional Sports Competition · GAMES RESULTS & RSAC</div>
+
+    <div style="font-size: 9pt; margin-top: 8px;">
+        DepEd · GAMES RESULTS & RSAC
+    </div>
 </div>
 
 {{-- ================= MEDAL SUMMARY BY SDO (Division) ================= --}}
@@ -281,7 +300,7 @@
     <thead>
         <tr>
             <th style="width:8%">Rank</th>
-            <th style="width:42%">SDO / Division</th>
+            <th style="width:42%">SDO</th>
             <th style="width:15%">Gold</th>
             <th style="width:15%">Silver</th>
             <th style="width:20%">Bronze</th>
@@ -311,7 +330,7 @@
                 <th style="width:18%">Category</th>
                 <th style="width:20%">Discipline</th>
                 <th style="width:12%">Medal</th>
-                <th style="width:18%">SDO / Team</th>
+                <th style="width:18%">SDO</th>
                 <th style="width:10%">Date</th>
             </tr>
         </thead>
