@@ -192,127 +192,148 @@ public function export()
     // =====================
     // ALL AWARDS
     // =====================
-    $allAwards = AllAwardResult::select(
-            'division','category','sport_id','type_id','event_id',
-            'medal','sdo','count','created_at'
-        )
-        ->with(['sport:id,name','event:id,name','type:id,type_name'])
+    $allAwards = AllAwardResult::with(['sport:id,name','event:id,name','type:id,type_name'])
         ->where('status','approved')
         ->get();
 
     // =====================
     // INDIVIDUAL AWARDS
     // =====================
-    $individualAwards = IndividualAwardResult::select(
-            'division','category','sport_id','type_id','event_id',
-            'medal','sdo','created_at'
-        )
-        ->with(['sport:id,name','event:id,name','type:id,type_name','athlete'])
+    $individualAwards = IndividualAwardResult::with(['sport:id,name','event:id,name','type:id,type_name','athlete'])
         ->where('status','approved')
-        ->get()
-        ->map(function ($item) {
-            $item->count = 1;
-            return $item;
-        });
-
-    $combined = $allAwards->concat($individualAwards);
+        ->get();
 
     // =====================
-    // SPLIT DATA
+    // FORMAT FUNCTION (LIGHTWEIGHT)
     // =====================
-    $regularAwards = $allAwards->where('division','!=','Paragames');
-    $paraAwards    = $allAwards->where('division','Paragames');
-
-    $regularCombined = $combined->where('division','!=','Paragames');
-    $paraCombined    = $combined->where('division','Paragames');
-
-    // =====================
-    // FUNCTION FOR MEDAL TALLY
-    // =====================
-    $buildTally = function($awards, $divisions) {
-        $tally = [];
-
-        foreach ($divisions as $division) {
-
-            $sdoName = $division->name;
-
-            $gold = $awards->where('sdo',$sdoName)->where('medal','Gold')->sum('count');
-            $silver = $awards->where('sdo',$sdoName)->where('medal','Silver')->sum('count');
-            $bronze = $awards->where('sdo',$sdoName)->where('medal','Bronze')->sum('count');
-
-            $tally[] = (object)[
-                'name'   => $sdoName,
-                'gold'   => $gold,
-                'silver' => $silver,
-                'bronze' => $bronze,
-                'points' => ($gold*3)+($silver*2)+($bronze*1),
+    $formatAll = function($items) {
+        return $items->map(function($item){
+            return [
+                'division' => $item->division,
+                'category' => $item->category,
+                'event'    => $item->sport->name ?? '-',
+                'sport'    => ($item->type && $item->type->type_name)
+                                ? $item->sport->name.' - '.$item->type->type_name
+                                : ($item->sport->name ?? '-'),
+                'medal'    => $item->medal,
+                'sdo'      => $item->sdo,
+                'athlete'  => null,
+                'school'   => null,
+                'municipality' => null,
+                'district' => null,
             ];
-        }
-
-        usort($tally, fn($a,$b) =>
-            [$b->points,$b->gold,$b->silver,$b->bronze]
-            <=>
-            [$a->points,$a->gold,$a->silver,$a->bronze]
-        );
-
-        foreach ($tally as $i => $row) {
-            $row->rank = $i + 1;
-        }
-
-        return $tally;
+        });
     };
 
-    // =====================
-    // BUILD BOTH TALLIES
-    // =====================
-    $regularTally = $buildTally($regularAwards, $divisions);
-    $paraTally    = $buildTally($paraAwards, $divisions);
+    $formatIndividual = function($items) {
+        return $items->map(function($item){
 
-    // =====================
-    // FORMAT RESULTS
-    // =====================
-    $formatResults = function($data) {
-        return $data->take(500)->map(function($item){
-
-            $sportName = $item->sport->name ?? '-';
-            $typeName  = $item->type->type_name ?? null;
+            $athlete = $item->athlete;
 
             return [
                 'division' => $item->division,
                 'category' => $item->category,
-                'event'    => $sportName,
-                'sport'    => $typeName ? $sportName.' - '.$typeName : $sportName,
+                'event'    => $item->sport->name ?? '-',
+                'sport'    => ($item->type && $item->type->type_name)
+                                ? $item->sport->name.' - '.$item->type->type_name
+                                : ($item->sport->name ?? '-'),
                 'medal'    => $item->medal,
-                'sdo'      => $item->sdo ?? '-',
-                'date'     => optional($item->created_at)->format('M d, Y'),
+                'sdo'      => $item->sdo,
+                'athlete'  => $athlete
+                    ? strtoupper($athlete->last_name.', '.$athlete->first_name.' '.($athlete->middle_initial ?? ''))
+                    : null,
+                'school'   => $athlete->school_name ?? null,
+                'municipality' => $athlete->municipality ?? null,
+                'district' => $athlete->legislative_district ?? null,
             ];
         });
     };
 
-    $regularResults = $formatResults($regularCombined);
-    $paraResults    = $formatResults($paraCombined);
+    // =====================
+    // SPLIT REGULAR / PARA
+    // =====================
+    $regularData = $formatAll($allAwards->where('division','!=','Paragames'))
+        ->concat($formatIndividual($individualAwards->where('division','!=','Paragames')));
+
+    $paraData = $formatAll($allAwards->where('division','Paragames'))
+        ->concat($formatIndividual($individualAwards->where('division','Paragames')));
 
     // =====================
-    // GENERATE PDFs
+    // GROUPING FUNCTION
     // =====================
-    // REGULAR PDF
+    $groupData = function($data){
+        return $data->groupBy(function($item){
+            return ($item['division'] ?? 'N/A')
+                .'||'.($item['event'] ?? 'N/A')
+                .'||'.($item['sport'] ?? 'N/A')
+                .'||'.($item['category'] ?? 'N/A');
+        });
+    };
+
+    $regularGrouped = $groupData($regularData);
+    $paraGrouped    = $groupData($paraData);
+
+    // =====================
+// BUILD MEDAL TALLY (FIXED)
+// =====================
+$buildTally = function($data, $divisions) {
+
+    $tally = [];
+
+    foreach ($divisions as $division) {
+
+        $sdo = $division->name;
+
+        $gold   = collect($data)->where('sdo',$sdo)->where('medal','Gold')->count();
+        $silver = collect($data)->where('sdo',$sdo)->where('medal','Silver')->count();
+        $bronze = collect($data)->where('sdo',$sdo)->where('medal','Bronze')->count();
+
+        $tally[] = (object)[
+            'name'   => $sdo,
+            'gold'   => $gold,
+            'silver' => $silver,
+            'bronze' => $bronze,
+            'points' => ($gold*3)+($silver*2)+($bronze*1),
+        ];
+    }
+
+    // sort ranking
+    usort($tally, fn($a,$b) =>
+        [$b->points,$b->gold,$b->silver,$b->bronze]
+        <=>
+        [$a->points,$a->gold,$a->silver,$a->bronze]
+    );
+
+    foreach ($tally as $i => $row) {
+        $row->rank = $i + 1;
+    }
+
+    return $tally;
+};
+
+// =====================
+// BUILD TALLIES
+// =====================
+$regularTally = $buildTally($regularData, $divisions);
+$paraTally    = $buildTally($paraData, $divisions);
+
+// =====================
+// PDF GENERATION (FIXED)
+// =====================
 $regularPdf = PDF::loadView('results_divisions.export', [
-    'medalTally' => $regularTally,
-    'pdfResults' => $regularResults,
-    'levels'     => ['Elementary','Secondary'],
-    'reportType' => 'REGULAR', // ✅ ADD THIS
+    'groupedData' => $regularGrouped,
+    'medalTally'  => $regularTally, // ✅ FIX
+    'reportType'  => 'REGULAR'
 ])->setPaper('letter','portrait');
 
-    // PARAGAMES PDF
 $paraPdf = PDF::loadView('results_divisions.export', [
-    'medalTally' => $paraTally,
-    'pdfResults' => $paraResults,
-    'levels'     => ['Paragames'],
-    'reportType' => 'PARAGAMES', // ✅ ADD THIS
+    'groupedData' => $paraGrouped,
+    'medalTally'  => $paraTally, // ✅ FIX
+    'reportType'  => 'PARAGAMES'
 ])->setPaper('letter','portrait');
 
     // =====================
-    // SAVE TEMP FILES
+    // SAVE FILES
     // =====================
     $regularPath = storage_path('app/public/Regular.pdf');
     $paraPath    = storage_path('app/public/Paragames.pdf');
@@ -321,7 +342,7 @@ $paraPdf = PDF::loadView('results_divisions.export', [
     file_put_contents($paraPath, $paraPdf->output());
 
     // =====================
-    // ZIP FILE
+    // ZIP
     // =====================
     $zipPath = storage_path('app/public/Results.zip');
     $zip = new ZipArchive;
@@ -332,9 +353,6 @@ $paraPdf = PDF::loadView('results_divisions.export', [
         $zip->close();
     }
 
-    // =====================
-    // DOWNLOAD ZIP
-    // =====================
     return response()->download($zipPath)->deleteFileAfterSend(true);
 }
 

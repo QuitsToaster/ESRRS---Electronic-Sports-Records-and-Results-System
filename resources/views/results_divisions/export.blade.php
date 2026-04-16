@@ -307,85 +307,43 @@
         </tr>
     </thead>
     <tbody>
-        @foreach($medalTally as $division)
-        <tr>
-            <td class="rank-col">{{ $division->rank }}</td>
-            <td><strong>{{ $division->name }}</strong></td>
-            <td style="text-align:center; font-weight:600;">{{ $division->gold }}</td>
-            <td style="text-align:center; font-weight:600;">{{ $division->silver }}</td>
-            <td style="text-align:center; font-weight:600;">{{ $division->bronze }}</td>
-        </tr>
-        @endforeach
-    </tbody>
+@if(!empty($medalTally) && count($medalTally))
+    @foreach($medalTally as $division)
+    <tr>
+        <td class="rank-col">{{ $division->rank }}</td>
+        <td><strong>{{ $division->name }}</strong></td>
+        <td style="text-align:center; font-weight:600;">{{ $division->gold }}</td>
+        <td style="text-align:center; font-weight:600;">{{ $division->silver }}</td>
+        <td style="text-align:center; font-weight:600;">{{ $division->bronze }}</td>
+    </tr>
+    @endforeach
+@else
+    <tr>
+        <td colspan="5" style="text-align:center; color:#6b7280;">
+            No medal data available
+        </td>
+    </tr>
+@endif
+</tbody>
 </table>
 
 {{-- ================= GROUPED RESULTS (ALL + INDIVIDUAL) ================= --}}
 
-@php
-    // ================= FILTER BASED ON REPORT TYPE =================
-    $isPara = ($reportType ?? '') === 'PARAGAMES';
+{{-- ⚠️ IMPORTANT:
+     This Blade now expects $groupedData from the controller.
+     NO database queries here anymore (prevents HTTP 500).
+--}}
 
-    // Filter main results
-    $filteredResults = collect($pdfResults)->filter(function($item) use ($isPara){
-        return $isPara
-            ? ($item['division'] === 'Paragames')
-            : ($item['division'] !== 'Paragames');
-    });
-
-    // ================= INDIVIDUAL AWARDS =================
-    $individuals = \App\Models\IndividualAwardResult::with(['athlete','sport','type'])
-        ->where('status','approved')
-        ->get()
-        ->filter(function($item) use ($isPara){
-            return $isPara
-                ? ($item->division === 'Paragames')
-                : ($item->division !== 'Paragames');
-        })
-        ->map(function($item){
-
-            $athlete = $item->athlete;
-
-            return [
-                'division' => $item->division,
-                'category' => $item->category,
-                'event'    => $item->sport->name ?? '-',
-                'sport'    => ($item->type && $item->type->type_name)
-                                ? $item->sport->name.' - '.$item->type->type_name
-                                : ($item->sport->name ?? '-'),
-                'medal'    => $item->medal,
-                'sdo'      => $item->sdo,
-                'date'     => optional($item->created_at)->format('M d, Y'),
-
-                'athlete' => $athlete
-                    ? strtoupper($athlete->last_name.', '.$athlete->first_name.' '.($athlete->middle_initial ?? ''))
-                    : null,
-                'school' => $athlete->school_name ?? null,
-                'municipality' => $athlete->municipality ?? null,
-                'district' => $athlete->legislative_district ?? null,
-            ];
-        });
-
-    // ================= MERGE =================
-    $allData = $filteredResults->concat($individuals);
-
-    // ================= GROUPING =================
-    $grouped = $allData->groupBy(function($item){
-        return ($item['division'] ?? 'N/A')
-            .'||'.($item['event'] ?? 'N/A')
-            .'||'.($item['sport'] ?? 'N/A')
-            .'||'.($item['category'] ?? 'N/A');
-    });
-@endphp
-
-
-@foreach($grouped as $key => $items)
+@foreach($groupedData as $key => $items)
 
 @php
     [$division, $event, $sport, $category] = explode('||', $key);
 @endphp
 
+{{-- ================= DIVISION HEADER ================= --}}
 <h2>{{ $division }} DIVISION</h2>
 
+{{-- ================= SPORT + CATEGORY HEADER ================= --}}
 <h3 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
 
     <span>{{ $sport }}</span>
@@ -407,14 +365,15 @@
 
 </h3>
 
+{{-- ================= TABLE ================= --}}
 <table>
     <thead>
         <tr>
-            <th style="width:18%">Event</th>
-            <th style="width:12%">Medal</th>
-            <th style="width:20%">SDO</th>
-            <th style="width:20%">Athlete</th>
-            <th style="width:15%">School</th>
+            <th style="width:16%">Event</th>
+            <th style="width:10%">Medal</th>
+            <th style="width:16%">SDO</th>
+            <th style="width:18%">Athlete</th>
+            <th style="width:16%">School</th>
             <th style="width:12%">Municipality</th>
             <th style="width:12%">District</th>
         </tr>
@@ -431,9 +390,13 @@
 
             <td>{{ $row['sdo'] }}</td>
 
-            <td>{{ $row['athlete'] ?? '—' }}</td>
+            <td>
+                {{ $row['athlete'] ?? '—' }}
+            </td>
 
-            <td>{{ $row['school'] ?? '—' }}</td>
+            <td>
+                {{ $row['school'] ?? '—' }}
+            </td>
 
             <td>
                 {{ $row['municipality'] ?? '—' }}
