@@ -319,52 +319,82 @@
     </tbody>
 </table>
 
-{{-- ================= DETAILED RESULTS BY LEVEL/DIVISION ================= --}}
+{{-- ================= DETAILED RESULTS BY LEVEL / SPORT / CATEGORY ================= --}}
 @foreach($levels as $level)
+
+@php
+    // Filter per level
+    $levelResults = collect($pdfResults)
+        ->where('division', $level);
+
+    // Group by SPORT + CATEGORY
+    $grouped = $levelResults->groupBy(function($item) {
+        return $item['event'].'||'.($item['category'] ?? 'N/A');
+    });
+@endphp
+
 <div style="margin-top: 10px;">
     <h2>{{ $level }} DIVISION · OFFICIAL RESULTS</h2>
-    <table class="event-detail">
-        <thead>
-            <tr>
-                <th style="width:22%">Sport Event</th>
-                <th style="width:18%">Category</th>
-                <th style="width:20%">Discipline</th>
-                <th style="width:12%">Medal</th>
-                <th style="width:18%">SDO</th>
-                <th style="width:10%">Date</th>
-            </tr>
-        </thead>
-        <tbody>
-            @php $hasResults = false; @endphp
-            @foreach($pdfResults as $result)
-                @if($result['division'] === $level)
-                @php $hasResults = true; @endphp
+
+    @if($grouped->count())
+
+        @foreach($grouped as $groupKey => $items)
+
+        @php
+            [$sportName, $category] = explode('||', $groupKey);
+        @endphp
+
+        {{-- ================= GROUP HEADER ================= --}}
+        <h3>
+            {{ $sportName }} · {{ $category }}
+        </h3>
+
+        <table class="event-detail">
+            <thead>
                 <tr>
-                    <td><strong>{{ $result['event'] }}</strong></td>
-                    <td>{{ $result['category'] ?? '—' }}</td>
+                    <th style="width:30%">Discipline</th>
+                    <th style="width:15%">Medal</th>
+                    <th style="width:35%">SDO</th>
+                    <th style="width:20%">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                @foreach($items as $result)
+                <tr>
                     <td>{{ $result['sport'] ?? '—' }}</td>
+
                     <td style="text-align:center;">
-                        @if(isset($result['medal']))
-                            @if($result['medal'] == 'Gold') Gold
-                            @elseif($result['medal'] == 'Silver') Silver
-                            @elseif($result['medal'] == 'Bronze') Bronze
-                            @else {{ $result['medal'] }}
-                            @endif
-                        @else —
+                        @if($result['medal'] == 'Gold') Gold
+                        @elseif($result['medal'] == 'Silver') Silver
+                        @elseif($result['medal'] == 'Bronze') Bronze
+                        @else {{ $result['medal'] }}
                         @endif
                     </td>
+
                     <td>{{ $result['sdo'] }}</td>
-                    <td style="text-align:center;">{{ $result['date'] }}</td>
+
+                    <td style="text-align:center;">
+                        {{ $result['date'] }}
+                    </td>
                 </tr>
-                @endif
-            @endforeach
-            @if(!$hasResults)
-                <tr>
-                    <td colspan="6" style="text-align:center; color:#6b7280;">No detailed results recorded for {{ $level }} division</td>
-                </tr>
-            @endif
-        </tbody>
-    </table>
+                @endforeach
+
+            </tbody>
+        </table>
+
+        @endforeach
+
+    @else
+        <table>
+            <tr>
+                <td style="text-align:center; color:#6b7280;">
+                    No detailed results recorded for {{ $level }} division
+                </td>
+            </tr>
+        </table>
+    @endif
+
 </div>
 @endforeach
 
