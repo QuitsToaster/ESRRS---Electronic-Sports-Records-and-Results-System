@@ -297,12 +297,10 @@
 {{-- Navbar Spacer --}}
 <div class="h-16"></div>
 
-{{-- ================= FULL PAGE STANDBY OVERLAY ================= --}}
+{{-- ================= FORCE FULL PAGE STANDBY OVERLAY (PRODUCTION SAFE) ================= --}}
 @php
-    // 🔥 TOGGLE (TURN ON/OFF HERE)
     $lockViewer = true;
 
-    // 🔥 TARGET PAGES ONLY
     $lockRoutes = [
         'viewer.home',
         'viewer.medalTally',
@@ -312,41 +310,70 @@
 @endphp
 
 @if($lockViewer && request()->routeIs($lockRoutes))
-<div 
-    class="fixed inset-0 z-[99999999] flex items-center justify-center 
-           bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
 
-    <div class="text-center px-6 max-w-2xl">
+<!-- 🔥 FORCE OVERLAY ROOT -->
+<div id="standbyOverlayRoot"></div>
 
-        {{-- LOGO / TITLE --}}
-        <h1 class="text-2xl md:text-4xl font-extrabold tracking-wide mb-4">
-            OFFICIAL MEDAL TALLY
-        </h1>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
 
-        {{-- DIVIDER --}}
-        <div class="w-24 h-1 bg-yellow-400 mx-auto mb-6"></div>
+    // 🔥 CREATE OVERLAY ELEMENT (NOT DEPENDENT ON BLADE POSITION)
+    const overlay = document.createElement('div');
+    overlay.id = "standbyOverlay";
 
-        {{-- MESSAGE --}}
-        <p class="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
-            Please standby for the final posting of the official medal tally.
-            <br class="hidden md:block">
-            Results are currently undergoing final validation and verification.
-        </p>
+    overlay.style.position = "fixed";
+    overlay.style.top = "0";
+    overlay.style.left = "0";
+    overlay.style.width = "100vw";
+    overlay.style.height = "100vh";
+    overlay.style.zIndex = "2147483647"; // MAX
+    overlay.style.background = "linear-gradient(to bottom right, #111827, #000000, #111827)";
+    overlay.style.display = "flex";
+    overlay.style.alignItems = "center";
+    overlay.style.justifyContent = "center";
+    overlay.style.pointerEvents = "all";
 
-        {{-- LOADING STYLE --}}
-        <div class="flex items-center justify-center gap-2 mb-4">
-            <span class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"></span>
-            <span class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
-            <span class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+    overlay.innerHTML = `
+        <div style="text-align:center; padding:20px; max-width:600px; color:white;">
+            <h1 style="font-size:32px; font-weight:800; margin-bottom:16px;">
+                OFFICIAL MEDAL TALLY
+            </h1>
+
+            <div style="width:100px; height:4px; background:#facc15; margin:0 auto 20px;"></div>
+
+            <p style="font-size:16px; color:#e5e7eb; margin-bottom:20px; line-height:1.6;">
+                Please standby for the final posting of the official medal tally.<br>
+                Results are currently undergoing final validation and verification.
+            </p>
+
+            <div style="display:flex; justify-content:center; gap:8px; margin-bottom:12px;">
+                <span style="width:10px;height:10px;background:#facc15;border-radius:50%;animation:bounce 1s infinite;"></span>
+                <span style="width:10px;height:10px;background:#facc15;border-radius:50%;animation:bounce 1s infinite 0.2s;"></span>
+                <span style="width:10px;height:10px;background:#facc15;border-radius:50%;animation:bounce 1s infinite 0.4s;"></span>
+            </div>
+
+            <p style="font-size:12px; color:#9ca3af;">
+                Please wait for official release
+            </p>
         </div>
+    `;
 
-        {{-- SUB TEXT --}}
-        <p class="text-xs text-gray-500 tracking-wide">
-            Please wait for official release
-        </p>
+    // 🔥 APPEND DIRECTLY TO BODY (BYPASS ALL STACKING ISSUES)
+    document.body.appendChild(overlay);
 
-    </div>
-</div>
+    // 🔥 FORCE NO SCROLL
+    document.body.style.overflow = "hidden";
+
+});
+</script>
+
+<style>
+@keyframes bounce {
+    0%,100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+</style>
+
 @endif
 
 {{-- ================= PUBLIC QR SCANNER MODAL ================= --}}
