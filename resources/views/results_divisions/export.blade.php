@@ -51,10 +51,9 @@
         <tr>
             <th>Event</th>
             <th>Category</th>
-            <th>Sport</th>
+            <th>Event</th>
             <th>Medal</th>
             <th>SDO</th>
-            <th>Awarded By</th>
             <th>Date</th>
         </tr>
     </thead>
@@ -67,7 +66,6 @@
                 <td>{{ $result['sport'] ?? '-' }}</td>
                 <td>{{ $result['medal'] ?? '-' }}</td>
                 <td>{{ $result['sdo'] }}</td>
-                <td>{{ $result['awarded_by'] }}</td>
                 <td>{{ $result['date'] }}</td>
             </tr>
             @endif
@@ -80,76 +78,98 @@
 <div class="signatures">
     <h3>Prepared by: GAMES RESULTS & RSAC</h3>
 
+    <style>
+        .sign-block {
+            display: inline-block;
+            width: 24%;
+            text-align: center;
+            vertical-align: top;
+            margin-bottom: 25px;
+        }
+
+        .sign-space {
+            height: 40px; /* 🔥 space for signature */
+        }
+
+        .sign-name {
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .sign-role {
+            font-size: 10px;
+        }
+    </style>
+
+    {{-- ================= LEADERS ================= --}}
     <div class="sign-block">
-        EMERSON R. RESPONZO<br>MEMBER, GAMES RESULT
-    </div>
-    <div class="sign-block">
-        JAMI DAVE G. SERRANO<br>MEMBER, GAMES RESULT
-    </div>
-    <div class="sign-block">
-        RONNIE B. BIBAS<br>MEMBER, GAMES RESULT
-    </div>
-    <div class="sign-block">
-        ROXALYN A. AGUSTIN<br>MEMBER, GAMES RESULT
+        <div class="sign-space"></div>
+        <div class="sign-name">DENIS M. AGBAYANI</div>
+        <div class="sign-role">Chairperson</div>
     </div>
 
     <div class="sign-block">
-        JAYWARD C. BUCAYU<br>MEMBER, GAMES RESULT
-    </div>
-    <div class="sign-block">
-        FERDINAND ASTELERO<br>MEMBER, GAMES RESULT
-    </div>
-    <div class="sign-block">
-        KYM CLYDE MORO<br>MEMBER, RSAC
-    </div>
-    <div class="sign-block">
-        BERNADETTE MIRANDA<br>MEMBER, RSAC
+        <div class="sign-space"></div>
+        <div class="sign-name">DR. KAE PARAGAS MAMBA</div>
+        <div class="sign-role">Medical Officer</div>
     </div>
 
     <div class="sign-block">
-        ROLDAN LOPEZ<br>MEMBER, RSAC
-    </div>
-    <div class="sign-block">
-        FAITH NOEL REYES<br>MEMBER, RSAC
-    </div>
-    <div class="sign-block">
-        DANTE M. CAPUCHINO<br>MEMBER, RSAC
-    </div>
-    <div class="sign-block">
-        FANIVER MARCELO<br>MEMBER, RSAC
+        <div class="sign-space"></div>
+        <div class="sign-name">DR. JANNIFER TULIAO</div>
+        <div class="sign-role">Dental Officer</div>
     </div>
 
     <div class="sign-block">
-        REYMA CASARENO<br>MEMBER, RSAC
-    </div>
-    <div class="sign-block">
-        RANDY B. MINA<br>MEMBER, RSAC
-    </div>
-    <div class="sign-block">
-        ATTY. JEREMY MARAMAG<br>MEMBER, RSAC
-    </div>
-    <div class="sign-block">
-        ATTY. ABEGAIL D. JACOB<br>Legal Officer
+        <div class="sign-space"></div>
+        <div class="sign-name">KEVIN VILLACETE</div>
+        <div class="sign-role">Legal Officer</div>
     </div>
 
-    <div class="sign-block">
-        DR. KAE PARAGAS MAMBA<br>Medical Officer
-    </div>
-    <div class="sign-block">
-        DR. RYAN R. PACQUING<br>CO-CHAIRPERSON, RSAC
-    </div>
-    <div class="sign-block">
-        DENIS M. AGBAYANI<br>CHAIRPERSON, RSAC & GAMES RESULT
+    {{-- ================= MEMBERS ================= --}}
+    @foreach([
+        ['KYM CLYDE MORO','Member'],
+        ['BERNADETTE MIRANDA','Member'],
+        ['FAITH NOEL REYES','Member'],
+        ['ROLDAN LOPEZ','Member'],
+        ['DANTE P. CAPUCHINO','Member'],
+        ['JONATHAN PITA','Member'],
+        ['REYMA CASARENO','Member'],
+        ['JOEL DOMINGO','Member'],
+        ['ATTY. JEREMY MARAMAG','Member'],
+        ['EMERSON RESPONZO','Data Group'],
+        ['ROSANDRO A. GADDI','Data Group'],
+        ['ANGELICA RESPONZO','Data Group'],
+        ['RONNIE BIBAS','Records'],
+        ['ABRAHAM C. ACOSTA','Records'],
+        ['NOR ALDEEN QADDOUMI','ICT / Games Results'],
+        ['JAYWARD C. BUCAYU','ICT / Games Results'],
+        ['RICARDO Q. CABUGAO','ICT / Games Results'],
+        ['KRISTIAN E. SACCUAN','ICT / Games Results'],
+        ['ANDREW TORIBIO B. TAACA','ICT / Games Results'],
+        ['BRYAN LLOYD T. TAN','ICT / Games Results'],
+        ['GANO SPENCER D. CHUMILANG','ICT / Games Results'],
+        ['TIMOTHY JOHN M. LARDIZABAL','ICT / Games Results'],
+        ['JAN ELLISSON G. SEBASTIAN','ICT / Games Results'],
+    ] as $person)
+        <div class="sign-block">
+            <div class="sign-space"></div>
+            <div class="sign-name">{{ $person[0] }}</div>
+            <div class="sign-role">{{ $person[1] }}</div>
+        </div>
+    @endforeach
+
+    {{-- ================= DIRECTORS ================= --}}
+    <div class="sign-block" style="width: 48%;">
+        <div class="sign-space" style="height:60px;"></div>
+        <div class="sign-name">FLORANTE E. VERGARA</div>
+        <div class="sign-role">ASSISTANT REGIONAL DIRECTOR</div>
     </div>
 
-    <div class="sign-block">
-        JOSELITO L. NARAG<br>Tournament Director
-    </div>
-    <div class="sign-block">
-        FLORANTE E. VERGARA<br>ASSISTANT REGIONAL DIRECTOR
-    </div>
-    <div class="sign-block">
-        BENJAMIN D. PARAGAS<br>REGIONAL DIRECTOR
+    <div class="sign-block" style="width: 48%;">
+        <div class="sign-space" style="height:60px;"></div>
+        <div class="sign-name">BENJAMIN D. PARAGAS</div>
+        <div class="sign-role">REGIONAL DIRECTOR</div>
     </div>
 </div>
 

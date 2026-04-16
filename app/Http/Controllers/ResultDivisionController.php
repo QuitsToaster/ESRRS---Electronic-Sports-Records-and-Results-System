@@ -180,87 +180,82 @@ class ResultDivisionController extends Controller
 public function export()
 {
     // =====================
-    // FETCH APPROVED RESULTS
+    // LOAD ALL SDOs FROM DATABASE (NO HARDCODE)
     // =====================
-    $allAwards = AllAwardResult::with(['sport', 'event'])
-                    ->where('status', 'approved')
-                    ->get();
-
-    $individualAwards = IndividualAwardResult::with(['sport', 'event'])
-                        ->where('status', 'approved')
-                        ->get();
+    $divisions = Division::orderBy('name')->get();
 
     // =====================
-    // MAP RESULTS FOR PDF
+    // LOAD APPROVED AWARDS (WITH TYPE)
     // =====================
-    $allResults = $allAwards->map(fn($item) => [
-        'division'   => $item->division,
-        'category'   => $item->category,
-        'sport'      => $item->sport->name ?? '-',
-        'event'      => $item->event->name ?? '-',
-        'medal'      => $item->medal,
-        'sdo'        => $item->sdo ?? '-',
-        'awarded_by' => $item->awarded_by ?? '-',
-        'date'       => $item->created_at?->format('M d, Y') ?? '-',
-        'count'      => $item->count ?? 1,
-    ]);
+    $allAwards = AllAwardResult::with(['sport','event','type']) // ✅ added type
+        ->where('status','approved')
+        ->get();
 
-    $individualResults = $individualAwards->map(fn($item) => [
-        'division'   => $item->division,
-        'category'   => $item->category,
-        'sport'      => $item->sport->name ?? '-',
-        'event'      => $item->event->name ?? '-',
-        'medal'      => $item->medal,
-        'sdo'        => $item->sdo ?? '-',
-        'awarded_by' => $item->awarded_by ?? '-',
-        'date'       => $item->created_at?->format('M d, Y') ?? '-',
-        'count'      => $item->count ?? 1,
-    ]);
-
-    $pdfResults = $allResults->merge($individualResults);
+    $individualAwards = IndividualAwardResult::with(['sport','event','type']) // ✅ added type
+        ->where('status','approved')
+        ->get();
 
     // =====================
-    // MEDAL SUMMARY BY SDO (INCLUDE ZERO MEDALS)
+    // COMBINE ALL RESULTS
     // =====================
-    $allResultsCombined = $allAwards->merge($individualAwards);
+    $combined = $allAwards->merge($individualAwards);
 
-    // Define all SDOs manually or fetch from a table
-    $allSDOs = [
-        'SDO - Batanes',
-        'SDO - Cagayan',
-        'SDO - Isabela',
-        'SDO - Nueva Vizcaya',
-        'SDO - Quirino',
-        // Add all other SDOs here
-    ];
+    // =====================
+    // BUILD MEDAL TALLY (DYNAMIC SDO)
+    // =====================
+    $medalTally = $divisions->map(function ($division) use ($combined) {
 
-    $medalTally = collect();
+        $sdoName = $division->name;
 
-    foreach ($allSDOs as $sdo) {
-        $divisionGroup = $allResultsCombined->where('sdo', $sdo);
+        $group = $combined->filter(fn($item) => $item->sdo === $sdoName);
 
-        $gold   = $divisionGroup->where('medal', 'Gold')->sum('count');
-        $silver = $divisionGroup->where('medal', 'Silver')->sum('count');
-        $bronze = $divisionGroup->where('medal', 'Bronze')->sum('count');
-        $points = $gold * 3 + $silver * 2 + $bronze * 1;
+        $gold   = $group->where('medal','Gold')->sum('count');
+        $silver = $group->where('medal','Silver')->sum('count');
+        $bronze = $group->where('medal','Bronze')->sum('count');
 
-        $medalTally->push((object)[
-            'name'   => $sdo,
+        return (object)[
+            'name'   => $sdoName,
             'gold'   => $gold,
             'silver' => $silver,
             'bronze' => $bronze,
-            'points' => $points,
-        ]);
+            'points' => ($gold * 3) + ($silver * 2) + ($bronze * 1),
+        ];
+    });
+
+    // =====================
+    // SORT + RANK
+    // =====================
+    $medalTally = $medalTally
+        ->sortByDesc(fn($d) => [$d->points, $d->gold, $d->silver, $d->bronze])
+        ->values();
+
+    foreach ($medalTally as $index => $item) {
+        $item->rank = $index + 1;
     }
 
-    // Sort and rank
-    $medalTally = $medalTally->sortByDesc(fn($d) => [$d->points, $d->gold, $d->silver, $d->bronze])->values();
-    $rank = 1;
-    foreach ($medalTally as $division) {
-        $division->rank = $rank++;
-    }
+    // =====================
+    // PREPARE PDF RESULTS (WITH TYPE NAME)
+    // =====================
+    $pdfResults = $combined->map(function($item) {
 
-    $allSports = Sport::orderBy('name')->get();
+        $sportName = $item->sport->name ?? '-';
+        $typeName  = $item->type->type_name ?? null;
+
+        return [
+            'division' => $item->division,
+            'category' => $item->category,
+
+            // ✅ COMBINE SPORT + TYPE
+            'sport'    => $typeName 
+                            ? $sportName . ' - ' . $typeName 
+                            : $sportName,
+
+            'event'    => $item->event->name ?? '-',
+            'medal'    => $item->medal,
+            'sdo'      => $item->sdo ?? '-',
+            'date'     => $item->created_at?->format('M d, Y') ?? '-',
+        ];
+    });
 
     // =====================
     // LOAD PDF
@@ -268,9 +263,10 @@ public function export()
     return PDF::loadView('results_divisions.export', [
         'medalTally' => $medalTally,
         'pdfResults' => $pdfResults,
-        'levels'     => ['Elementary', 'Secondary', 'Para Games'],
-        'allSports'  => $allSports,
-    ])->setPaper('letter', 'portrait')->download('Official_Results_CAVRAA_2026.pdf');
+        'levels'     => ['Elementary', 'Secondary', 'Paragames'],
+    ])
+    ->setPaper('letter', 'portrait')
+    ->stream('Official_Results_CAVRAA_2026.pdf');
 }
 
 
