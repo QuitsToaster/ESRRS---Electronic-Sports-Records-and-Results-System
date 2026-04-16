@@ -190,21 +190,18 @@ public function export()
     $divisions = Division::select('name')->orderBy('name')->get();
 
     // =====================
-    // ALL AWARDS
+    // GET ALL AWARDS (LIGHT)
     // =====================
-    $allAwards = AllAwardResult::with(['sport:id,name','event:id,name','type:id,type_name'])
+    $allAwards = AllAwardResult::with(['sport:id,name','type:id,type_name'])
+        ->where('status','approved')
+        ->get();
+
+    $individualAwards = IndividualAwardResult::with(['sport:id,name','type:id,type_name','athlete'])
         ->where('status','approved')
         ->get();
 
     // =====================
-    // INDIVIDUAL AWARDS
-    // =====================
-    $individualAwards = IndividualAwardResult::with(['sport:id,name','event:id,name','type:id,type_name','athlete'])
-        ->where('status','approved')
-        ->get();
-
-    // =====================
-    // FORMAT FUNCTION (LIGHTWEIGHT)
+    // FORMAT DATA (LIGHT)
     // =====================
     $formatAll = function($items) {
         return $items->map(function($item){
@@ -250,7 +247,7 @@ public function export()
     };
 
     // =====================
-    // SPLIT REGULAR / PARA
+    // SPLIT DATA
     // =====================
     $regularData = $formatAll($allAwards->where('division','!=','Paragames'))
         ->concat($formatIndividual($individualAwards->where('division','!=','Paragames')));
@@ -259,7 +256,7 @@ public function export()
         ->concat($formatIndividual($individualAwards->where('division','Paragames')));
 
     // =====================
-    // GROUPING FUNCTION
+    // GROUPING
     // =====================
     $groupData = function($data){
         return $data->groupBy(function($item){
@@ -274,63 +271,57 @@ public function export()
     $paraGrouped    = $groupData($paraData);
 
     // =====================
-// BUILD MEDAL TALLY (FIXED)
-// =====================
-$buildTally = function($data, $divisions) {
+    // SAFE MEDAL TALLY (DB BASED)
+    // =====================
+    $getTally = function($divisionFilter = null) {
 
-    $tally = [];
+        $query = AllAwardResult::selectRaw("
+                sdo,
+                SUM(CASE WHEN medal = 'Gold' THEN count ELSE 0 END) as gold,
+                SUM(CASE WHEN medal = 'Silver' THEN count ELSE 0 END) as silver,
+                SUM(CASE WHEN medal = 'Bronze' THEN count ELSE 0 END) as bronze
+            ")
+            ->where('status','approved')
+            ->groupBy('sdo');
 
-    foreach ($divisions as $division) {
+        if ($divisionFilter === 'PARA') {
+            $query->where('division','Paragames');
+        } else {
+            $query->where('division','!=','Paragames');
+        }
 
-        $sdo = $division->name;
+        $results = $query->get();
 
-        $gold   = collect($data)->where('sdo',$sdo)->where('medal','Gold')->count();
-        $silver = collect($data)->where('sdo',$sdo)->where('medal','Silver')->count();
-        $bronze = collect($data)->where('sdo',$sdo)->where('medal','Bronze')->count();
+        // ranking
+        $results = $results->map(function($row){
+            $row->points = ($row->gold * 3) + ($row->silver * 2) + ($row->bronze * 1);
+            return $row;
+        })->sortByDesc('points')->values();
 
-        $tally[] = (object)[
-            'name'   => $sdo,
-            'gold'   => $gold,
-            'silver' => $silver,
-            'bronze' => $bronze,
-            'points' => ($gold*3)+($silver*2)+($bronze*1),
-        ];
-    }
+        foreach ($results as $i => $row) {
+            $row->rank = $i + 1;
+        }
 
-    // sort ranking
-    usort($tally, fn($a,$b) =>
-        [$b->points,$b->gold,$b->silver,$b->bronze]
-        <=>
-        [$a->points,$a->gold,$a->silver,$a->bronze]
-    );
+        return $results;
+    };
 
-    foreach ($tally as $i => $row) {
-        $row->rank = $i + 1;
-    }
+    $regularTally = $getTally('REGULAR');
+    $paraTally    = $getTally('PARA');
 
-    return $tally;
-};
+    // =====================
+    // GENERATE PDF
+    // =====================
+    $regularPdf = PDF::loadView('results_divisions.export', [
+        'groupedData' => $regularGrouped,
+        'medalTally'  => $regularTally,
+        'reportType'  => 'REGULAR'
+    ])->setPaper('letter','portrait');
 
-// =====================
-// BUILD TALLIES
-// =====================
-$regularTally = $buildTally($regularData, $divisions);
-$paraTally    = $buildTally($paraData, $divisions);
-
-// =====================
-// PDF GENERATION (FIXED)
-// =====================
-$regularPdf = PDF::loadView('results_divisions.export', [
-    'groupedData' => $regularGrouped,
-    'medalTally'  => $regularTally, // ✅ FIX
-    'reportType'  => 'REGULAR'
-])->setPaper('letter','portrait');
-
-$paraPdf = PDF::loadView('results_divisions.export', [
-    'groupedData' => $paraGrouped,
-    'medalTally'  => $paraTally, // ✅ FIX
-    'reportType'  => 'PARAGAMES'
-])->setPaper('letter','portrait');
+    $paraPdf = PDF::loadView('results_divisions.export', [
+        'groupedData' => $paraGrouped,
+        'medalTally'  => $paraTally,
+        'reportType'  => 'PARAGAMES'
+    ])->setPaper('letter','portrait');
 
     // =====================
     // SAVE FILES
@@ -345,9 +336,9 @@ $paraPdf = PDF::loadView('results_divisions.export', [
     // ZIP
     // =====================
     $zipPath = storage_path('app/public/Results.zip');
-    $zip = new ZipArchive;
+    $zip = new \ZipArchive;
 
-    if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE)) {
+    if ($zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE)) {
         $zip->addFile($regularPath, 'Regular_Results.pdf');
         $zip->addFile($paraPath, 'Paragames_Results.pdf');
         $zip->close();
