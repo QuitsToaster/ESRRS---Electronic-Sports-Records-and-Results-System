@@ -207,7 +207,7 @@ public function export()
             'division','category','sport_id','type_id','event_id',
             'medal','sdo','created_at'
         )
-        ->with(['sport:id,name','event:id,name','type:id,type_name'])
+        ->with(['sport:id,name','event:id,name','type:id,type_name','athlete'])
         ->where('status','approved')
         ->get()
         ->map(function ($item) {

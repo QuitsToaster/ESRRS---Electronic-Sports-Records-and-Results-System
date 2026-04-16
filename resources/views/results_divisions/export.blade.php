@@ -319,83 +319,133 @@
     </tbody>
 </table>
 
-{{-- ================= DETAILED RESULTS BY LEVEL / SPORT / CATEGORY ================= --}}
-@foreach($levels as $level)
+{{-- ================= GROUPED RESULTS (ALL + INDIVIDUAL) ================= --}}
 
 @php
-    // Filter per level
-    $levelResults = collect($pdfResults)
-        ->where('division', $level);
+    // ================= FILTER BASED ON REPORT TYPE =================
+    $isPara = ($reportType ?? '') === 'PARAGAMES';
 
-    // Group by SPORT + CATEGORY
-    $grouped = $levelResults->groupBy(function($item) {
-        return $item['event'].'||'.($item['category'] ?? 'N/A');
+    // Filter main results
+    $filteredResults = collect($pdfResults)->filter(function($item) use ($isPara){
+        return $isPara
+            ? ($item['division'] === 'Paragames')
+            : ($item['division'] !== 'Paragames');
+    });
+
+    // ================= INDIVIDUAL AWARDS =================
+    $individuals = \App\Models\IndividualAwardResult::with(['athlete','sport','type'])
+        ->where('status','approved')
+        ->get()
+        ->filter(function($item) use ($isPara){
+            return $isPara
+                ? ($item->division === 'Paragames')
+                : ($item->division !== 'Paragames');
+        })
+        ->map(function($item){
+
+            $athlete = $item->athlete;
+
+            return [
+                'division' => $item->division,
+                'category' => $item->category,
+                'event'    => $item->sport->name ?? '-',
+                'sport'    => ($item->type && $item->type->type_name)
+                                ? $item->sport->name.' - '.$item->type->type_name
+                                : ($item->sport->name ?? '-'),
+                'medal'    => $item->medal,
+                'sdo'      => $item->sdo,
+                'date'     => optional($item->created_at)->format('M d, Y'),
+
+                'athlete' => $athlete
+                    ? strtoupper($athlete->last_name.', '.$athlete->first_name.' '.($athlete->middle_initial ?? ''))
+                    : null,
+                'school' => $athlete->school_name ?? null,
+                'municipality' => $athlete->municipality ?? null,
+                'district' => $athlete->legislative_district ?? null,
+            ];
+        });
+
+    // ================= MERGE =================
+    $allData = $filteredResults->concat($individuals);
+
+    // ================= GROUPING =================
+    $grouped = $allData->groupBy(function($item){
+        return ($item['division'] ?? 'N/A')
+            .'||'.($item['event'] ?? 'N/A')
+            .'||'.($item['sport'] ?? 'N/A')
+            .'||'.($item['category'] ?? 'N/A');
     });
 @endphp
 
-<div style="margin-top: 10px;">
-    <h2>{{ $level }} DIVISION · OFFICIAL RESULTS</h2>
 
-    @if($grouped->count())
+@foreach($grouped as $key => $items)
 
-        @foreach($grouped as $groupKey => $items)
+@php
+    [$division, $event, $sport, $category] = explode('||', $key);
+@endphp
 
-        @php
-            [$sportName, $category] = explode('||', $groupKey);
-        @endphp
+<h2>{{ $division }} DIVISION</h2>
 
-        {{-- ================= GROUP HEADER ================= --}}
-        <h3>
-            {{ $sportName }} · {{ $category }}
-        </h3>
+<h3 style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
 
-        <table class="event-detail">
-            <thead>
-                <tr>
-                    <th style="width:30%">Discipline</th>
-                    <th style="width:15%">Medal</th>
-                    <th style="width:35%">SDO</th>
-                    <th style="width:20%">Date</th>
-                </tr>
-            </thead>
-            <tbody>
+    <span>{{ $sport }}</span>
 
-                @foreach($items as $result)
-                <tr>
-                    <td>{{ $result['sport'] ?? '—' }}</td>
+    <span style="color:#9ca3af;">·</span>
 
-                    <td style="text-align:center;">
-                        @if($result['medal'] == 'Gold') Gold
-                        @elseif($result['medal'] == 'Silver') Silver
-                        @elseif($result['medal'] == 'Bronze') Bronze
-                        @else {{ $result['medal'] }}
-                        @endif
-                    </td>
+    {{-- 🔥 HIGHLIGHTED CATEGORY --}}
+    <span style="
+        background: #1e4663;
+        color: #ffffff;
+        padding: 2px 10px;
+        font-size: 10pt;
+        font-weight: 700;
+        border-radius: 4px;
+        letter-spacing: 0.5px;
+    ">
+        {{ strtoupper($category) }}
+    </span>
 
-                    <td>{{ $result['sdo'] }}</td>
+</h3>
 
-                    <td style="text-align:center;">
-                        {{ $result['date'] }}
-                    </td>
-                </tr>
-                @endforeach
+<table>
+    <thead>
+        <tr>
+            <th style="width:18%">Event</th>
+            <th style="width:12%">Medal</th>
+            <th style="width:20%">SDO</th>
+            <th style="width:20%">Athlete</th>
+            <th style="width:15%">School</th>
+            <th style="width:15%">Location</th>
+        </tr>
+    </thead>
+    <tbody>
 
-            </tbody>
-        </table>
+        @foreach($items as $row)
+        <tr>
+            <td>{{ $row['sport'] }}</td>
 
+            <td style="text-align:center;">
+                {{ $row['medal'] }}
+            </td>
+
+            <td>{{ $row['sdo'] }}</td>
+
+            <td>{{ $row['athlete'] ?? '—' }}</td>
+
+            <td>{{ $row['school'] ?? '—' }}</td>
+
+            <td>
+                {{ $row['municipality'] ?? '—' }}
+                @if(!empty($row['district']))
+                    <br><small>{{ $row['district'] }}</small>
+                @endif
+            </td>
+        </tr>
         @endforeach
 
-    @else
-        <table>
-            <tr>
-                <td style="text-align:center; color:#6b7280;">
-                    No detailed results recorded for {{ $level }} division
-                </td>
-            </tr>
-        </table>
-    @endif
+    </tbody>
+</table>
 
-</div>
 @endforeach
 
 {{-- ================= SIGNATURE PAGE (FIXED - DOMPDF SAFE) ================= --}}
