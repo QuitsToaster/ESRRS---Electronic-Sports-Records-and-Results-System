@@ -297,6 +297,57 @@
 {{-- Navbar Spacer --}}
 <div class="h-16"></div>
 
+{{-- ================= FULL PAGE STANDBY OVERLAY ================= --}}
+@php
+    // 🔥 TOGGLE (TURN ON/OFF HERE)
+    $lockViewer = true;
+
+    // 🔥 TARGET PAGES ONLY
+    $lockRoutes = [
+        'viewer.home',
+        'viewer.medalTally',
+        'viewer.participants',
+    ];
+@endphp
+
+@if($lockViewer && request()->routeIs($lockRoutes))
+<div 
+    class="fixed inset-0 z-[99999999] flex items-center justify-center 
+           bg-gradient-to-br from-gray-900 via-black to-gray-900 text-white">
+
+    <div class="text-center px-6 max-w-2xl">
+
+        {{-- LOGO / TITLE --}}
+        <h1 class="text-2xl md:text-4xl font-extrabold tracking-wide mb-4">
+            OFFICIAL MEDAL TALLY
+        </h1>
+
+        {{-- DIVIDER --}}
+        <div class="w-24 h-1 bg-yellow-400 mx-auto mb-6"></div>
+
+        {{-- MESSAGE --}}
+        <p class="text-base md:text-lg text-gray-300 leading-relaxed mb-6">
+            Please standby for the final posting of the official medal tally.
+            <br class="hidden md:block">
+            Results are currently undergoing final validation and verification.
+        </p>
+
+        {{-- LOADING STYLE --}}
+        <div class="flex items-center justify-center gap-2 mb-4">
+            <span class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce"></span>
+            <span class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce [animation-delay:0.2s]"></span>
+            <span class="w-3 h-3 bg-yellow-400 rounded-full animate-bounce [animation-delay:0.4s]"></span>
+        </div>
+
+        {{-- SUB TEXT --}}
+        <p class="text-xs text-gray-500 tracking-wide">
+            Please wait for official release
+        </p>
+
+    </div>
+</div>
+@endif
+
 {{-- ================= PUBLIC QR SCANNER MODAL ================= --}}
 <div x-show="scannerOpen"
      x-cloak
