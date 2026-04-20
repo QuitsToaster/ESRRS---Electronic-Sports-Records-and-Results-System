@@ -294,8 +294,11 @@
     </div>
 </div>
 
-{{-- ================= MEDAL SUMMARY BY SDO (Division) ================= --}}
+{{-- ================= MEDAL SUMMARY BY SDO ================= --}}
+@if(isset($medalTally) && count($medalTally))
+
 <h2>MEDAL SUMMARY BY SDO</h2>
+
 <table class="table-medal-summary">
     <thead>
         <tr>
@@ -306,26 +309,35 @@
             <th style="width:20%">Bronze</th>
         </tr>
     </thead>
+
     <tbody>
-@if(!empty($medalTally) && count($medalTally))
-    @foreach($medalTally as $division)
-    <tr>
-        <td class="rank-col">{{ $division->rank }}</td>
-        <td><strong>{{ $division->name }}</strong></td>
-        <td style="text-align:center; font-weight:600;">{{ $division->gold }}</td>
-        <td style="text-align:center; font-weight:600;">{{ $division->silver }}</td>
-        <td style="text-align:center; font-weight:600;">{{ $division->bronze }}</td>
-    </tr>
-    @endforeach
-@else
-    <tr>
-        <td colspan="5" style="text-align:center; color:#6b7280;">
-            No medal data available
-        </td>
-    </tr>
-@endif
-</tbody>
+
+        @foreach($medalTally as $division)
+        <tr>
+            <td class="rank-col">{{ $division->rank }}</td>
+
+            <td>
+                <strong>{{ $division->name }}</strong>
+            </td>
+
+            <td style="text-align:center; font-weight:600;">
+                {{ $division->gold }}
+            </td>
+
+            <td style="text-align:center; font-weight:600;">
+                {{ $division->silver }}
+            </td>
+
+            <td style="text-align:center; font-weight:600;">
+                {{ $division->bronze }}
+            </td>
+        </tr>
+        @endforeach
+
+    </tbody>
 </table>
+
+@endif
 
 {{-- ================= GROUPED RESULTS (ALL + INDIVIDUAL) ================= --}}
 

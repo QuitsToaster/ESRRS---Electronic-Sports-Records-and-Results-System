@@ -25,13 +25,117 @@
         </a>
         @endif
 
-        {{-- Export PDF (ONLY Tournament Secretary & Super Admin) --}}
-        @if(in_array(auth()->user()->role->name, ['Super Admin']))
-            <a href="{{ route('results_divisions.export') }}" target="_blank"
-               class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
-                📄 Export PDF
-            </a>
-        @endif
+        {{-- ===================================================== --}}
+{{-- REPLACE ONLY THE EXPORT PDF BUTTON BLOCK IN index.blade.php --}}
+{{-- FIND THIS BLOCK: --}}
+{{-- Export PDF (ONLY Tournament Secretary & Super Admin) --}}
+{{-- ===================================================== --}}
+
+@if(in_array(auth()->user()->role->name, ['Super Admin']))
+<div x-data="{ exportOpen:false }" class="relative">
+
+    {{-- OPEN MODAL BUTTON --}}
+    <button
+        @click="exportOpen = true"
+        type="button"
+        class="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 text-white font-semibold rounded-xl shadow hover:bg-blue-700 transition">
+        📄 Export PDF
+    </button>
+
+    {{-- ================= EXPORT MODAL ================= --}}
+    <div
+        x-show="exportOpen"
+        x-transition.opacity
+        x-cloak
+        class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center px-4">
+
+        <div
+            @click.away="exportOpen = false"
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+
+            {{-- HEADER --}}
+            <div class="bg-blue-600 text-white px-6 py-4 flex justify-between items-center">
+                <h2 class="text-xl font-bold">Export Official Results</h2>
+
+                <button
+                    @click="exportOpen = false"
+                    class="text-white text-2xl leading-none hover:scale-110 transition">
+                    &times;
+                </button>
+            </div>
+
+            {{-- BODY --}}
+            <div class="p-6 space-y-5">
+
+                <p class="text-sm text-gray-500">
+                    Select the SDO to export official medal tally results.
+                </p>
+
+                {{-- ================= FORM ================= --}}
+                <form method="GET" action="{{ route('results_divisions.export') }}" target="_blank">
+
+                    {{-- SDO --}}
+                    <div class="mb-4">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Select SDO
+                        </label>
+
+                        <select
+                            name="sdo"
+                            required
+                            class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500">
+
+                            <option value="">-- Choose SDO --</option>
+
+                            <option value="ALL">ALL SDO</option>
+
+                            @foreach(\App\Models\Division::orderBy('name')->get() as $division)
+                                <option value="{{ $division->name }}">
+                                    {{ $division->name }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+
+                    {{-- REPORT TYPE --}}
+                    <div class="mb-6">
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Export Type
+                        </label>
+
+                        <select
+                            name="type"
+                            required
+                            class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500">
+
+                            <option value="regular">Regular Games PDF</option>
+                            <option value="paragames">Paragames PDF</option>
+                        </select>
+                    </div>
+
+                    {{-- ACTIONS --}}
+                    <div class="flex gap-3">
+                        <button
+                            type="button"
+                            @click="exportOpen = false"
+                            class="flex-1 px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold hover:bg-gray-300 transition">
+                            Cancel
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-semibold hover:bg-blue-700 transition">
+                            Export PDF
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+@endif
     </div>
 </div>
 
